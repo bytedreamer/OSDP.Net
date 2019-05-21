@@ -30,3 +30,9 @@ steps:
     feedsToUse: 'select'
     versioningScheme: 'off'
 
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration Release'
+    versioningScheme: 'off'
