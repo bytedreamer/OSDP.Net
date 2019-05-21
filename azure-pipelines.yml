@@ -15,8 +15,11 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- powershell: choco install dotnetcore-sdk --version 3.0.100-preview4-011223 --pre
-  displayName: Install .NET Core 3.0 preview 4
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '3.0.100-preview4-011223'
+    includePreviewVersions: true
 
 - task: NuGetToolInstaller@0
 
