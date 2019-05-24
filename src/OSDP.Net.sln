@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSDP.Net", "OSDP.Net\OSDP.N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "Console\Console.csproj", "{182D66E4-7909-4B18-AF01-BF0FE8B932BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSDP.Net.Tests", "OSDP.Net.Tests\OSDP.Net.Tests.csproj", "{0018DA90-BBB2-491D-A6C3-086F21D7C29A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,17 @@ Global
 		{182D66E4-7909-4B18-AF01-BF0FE8B932BC}.Release|x64.Build.0 = Release|Any CPU
 		{182D66E4-7909-4B18-AF01-BF0FE8B932BC}.Release|x86.ActiveCfg = Release|Any CPU
 		{182D66E4-7909-4B18-AF01-BF0FE8B932BC}.Release|x86.Build.0 = Release|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Debug|x64.Build.0 = Debug|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Debug|x86.Build.0 = Debug|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Release|x64.ActiveCfg = Release|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Release|x64.Build.0 = Release|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Release|x86.ActiveCfg = Release|Any CPU
+		{0018DA90-BBB2-491D-A6C3-086F21D7C29A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

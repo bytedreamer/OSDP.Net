@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.IO.Ports;
+﻿using System.IO.Ports;
 using System.Threading.Tasks;
 
 namespace OSDP.Net
@@ -8,7 +6,6 @@ namespace OSDP.Net
     public class SerialPortOsdpConnection : IOsdpConnection
     {
         private readonly SerialPort _serialPort = new SerialPort();
-        private readonly ConcurrentQueue<byte> _queue = new ConcurrentQueue<byte>();
 
         public bool IsOpen => _serialPort.IsOpen;
 

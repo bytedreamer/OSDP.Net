@@ -18,19 +18,19 @@ namespace Console
 
             System.Console.WriteLine(BitConverter.ToString(await controlPanel.SendCommand(command.ToArray())));
             
-//            while (true)
-//            {
-//                Thread.Sleep(TimeSpan.FromSeconds(0.1));
-//                if (sequence > 3)
-//                {
-//                    sequence = 1;
-//                }
-//                
-//                command = new List<byte> {0x53, 0x00, 0x08, 0x00, (byte)(0x04 + sequence++), 0x60};
-//                command.AddRange(SplitUShort(CalculateCrc(command.ToArray())));
-//
-//                await connection.Write(command.ToArray());
-//            }
+            while (true)
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+                if (sequence > 3)
+                {
+                    sequence = 1;
+                }
+                
+                command = new List<byte> {0x53, 0x00, 0x08, 0x00, (byte)(0x04 + sequence++), 0x60};
+                command.AddRange(SplitUShort(CalculateCrc(command.ToArray())));
+
+                System.Console.WriteLine(BitConverter.ToString(await controlPanel.SendCommand(command.ToArray())));
+            }
 
             controlPanel.Shutdown(); 
         }
