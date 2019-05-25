@@ -6,7 +6,7 @@ namespace OSDP.Net.Messages
     {
         protected const byte StartOfMessage = 0x53;
 
-        protected byte[] ConvertShortToBytes(ushort value)
+        protected static byte[] ConvertShortToBytes(ushort value)
         {
             return BitConverter.GetBytes(value);
         }
