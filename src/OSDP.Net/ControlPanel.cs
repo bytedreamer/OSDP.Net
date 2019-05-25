@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using OSDP.Net.Messages;
 
 namespace OSDP.Net
 {
@@ -16,14 +18,18 @@ namespace OSDP.Net
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        public async Task<byte[]> SendCommand(byte[] command)
+        public async Task<byte[]> SendCommand(CommandBase command)
         {
             if (!_connection.IsOpen)
             {
                 _connection.Open();
             }
 
-            await _connection.Write(command);
+            var data = new List<byte> {0xFF};
+            data.AddRange(command.BuildCommand(0, 
+                new Control(0, true, false)));
+
+            await _connection.Write(data.ToArray());
 
             var replyBuffer = new Collection<byte>();
 
