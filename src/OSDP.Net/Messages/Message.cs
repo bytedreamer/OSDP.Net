@@ -1,41 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using OSDP.Net;
+using System;
 
-namespace Console
+namespace OSDP.Net.Messages
 {
-    class Program
+    public abstract class Message
     {
-        static async Task Main(string[] args) 
+        protected const byte StartOfMessage = 0x53;
+
+        protected byte[] ConvertShortToBytes(ushort value)
         {
-            var controlPanel = new ControlPanel(new SerialPortOsdpConnection());
-
-            byte sequence = 0;
-            var command = new List<byte> {0x53, 0x00, 0x08, 0x00, (byte)(0x04 + sequence++), 0x60};
-            command.AddRange(SplitUShort(CalculateCrc(command.ToArray())));
-
-            System.Console.WriteLine(BitConverter.ToString(await controlPanel.SendCommand(command.ToArray())));
-            
-            while (true)
+            return BitConverter.GetBytes(value);
+        }
+      
+        protected static ushort CalculateCrc(byte[] data)
+        {
+            ushort crc = 0x1D0F;
+            foreach (var t in data)
             {
-                Thread.Sleep(TimeSpan.FromSeconds(1));
-                if (sequence > 3)
-                {
-                    sequence = 1;
-                }
-                
-                command = new List<byte> {0x53, 0x00, 0x08, 0x00, (byte)(0x04 + sequence++), 0x60};
-                command.AddRange(SplitUShort(CalculateCrc(command.ToArray())));
-
-                System.Console.WriteLine(BitConverter.ToString(await controlPanel.SendCommand(command.ToArray())));
+                crc = (ushort)((crc << 8) ^ CrcTable[((crc >> 8) ^ t) & 0xFF]);
             }
 
-            controlPanel.Shutdown(); 
+            return crc;
         }
-
-        static readonly ushort[] CrcTable =
+        
+        private static readonly ushort[] CrcTable =
         {
             0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7, 0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C,
             0xD1AD, 0xE1CE, 0xF1EF, 0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6, 0x9339, 0x8318,
@@ -58,22 +45,5 @@ namespace Console
             0x5C64, 0x4C45, 0x3CA2, 0x2C83, 0x1CE0, 0x0CC1, 0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9,
             0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
         };
-
-        static ushort CalculateCrc(byte[] data)
-        {
-            ushort crc = 0x1D0F;
-            foreach (var t in data)
-            {
-                crc = (ushort)((crc << 8) ^ CrcTable[((crc >> 8) ^ t) & 0xFF]);
-            }
-
-            return crc;
-        }
-
-        static byte[] SplitUShort(ushort number)
-        {
-            return new [] {(byte)(number & 0xFF), (byte)(number >> 8)};
-        }
     }
 }
-
