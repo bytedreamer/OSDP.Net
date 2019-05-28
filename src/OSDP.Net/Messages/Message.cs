@@ -8,7 +8,13 @@ namespace OSDP.Net.Messages
 
         protected static byte[] ConvertShortToBytes(ushort value)
         {
-            return BitConverter.GetBytes(value);
+            var byteArray = BitConverter.GetBytes(value);
+            if (!BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(byteArray);
+            }
+
+            return byteArray;
         }
       
         protected static ushort CalculateCrc(byte[] data)
