@@ -56,8 +56,7 @@ namespace OSDP.Net.Messages
 
         private static void AddChecksum(IList<byte> command)
         {
-            command[command.Count - 1] =
-                (byte) (0x100 - command.Aggregate(0, (source, element) => source + element) & 0xff);
+            command[command.Count - 1] = CalculateChecksum(command.Take(command.Count - 1).ToArray());
         }
     }
 }
