@@ -29,7 +29,15 @@ namespace OSDP.Net
 
         public async Task<int> Read(byte[] buffer)
         {
-            return await _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length);
+            var readTask =  _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length);
+            var delayTask = Task.Delay(_serialPort.ReadTimeout);
+            var task = await Task.WhenAny(readTask, delayTask);
+            if (task == readTask)
+            {
+                return await readTask;
+            }
+
+            return 0;
         }
     }
 }

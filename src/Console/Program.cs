@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using OSDP.Net;
-using OSDP.Net.Messages;
 
 namespace Console
 {
@@ -11,9 +11,30 @@ namespace Console
         {
             var controlPanel = new ControlPanel(new SerialPortOsdpConnection());
 
-            System.Console.WriteLine(BitConverter.ToString(await controlPanel.SendCommand(new PollCommand())));
+            using (var cancellationTokenSource = new CancellationTokenSource())
+            {
+                var keyBoardTask = Task.Run(() =>
+                {
+                    System.Console.WriteLine("Press enter to cancel");
+                    System.Console.ReadKey();
 
-            System.Console.ReadKey();
+                    // Cancel the task
+                    cancellationTokenSource.Cancel();
+                });
+                try
+                {
+                    var longRunningTask = controlPanel.StartPolling(0, cancellationTokenSource.Token);
+
+                    await longRunningTask;
+                    System.Console.WriteLine("Press enter to continue");
+                }
+                catch (TaskCanceledException)
+                {
+                    System.Console.WriteLine("Task was cancelled");
+                }
+
+                await keyBoardTask;
+            }
 
             controlPanel.Shutdown(); 
         }
