@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using OSDP.Net;
 
@@ -9,7 +8,7 @@ namespace Console
     {
         static async Task Main(string[] args) 
         {
-            var controlPanel = new ControlPanel(new SerialPortOsdpConnection());
+            var controlPanel = new ControlPanel();
 
             using (var cancellationTokenSource = new CancellationTokenSource())
             {
@@ -21,9 +20,10 @@ namespace Console
                     // Cancel the task
                     cancellationTokenSource.Cancel();
                 });
+                
                 try
                 {
-                    var longRunningTask = controlPanel.StartPolling(0, cancellationTokenSource.Token);
+                    var longRunningTask = controlPanel.AddBus(new Bus(new SerialPortOsdpConnection()), cancellationTokenSource.Token);
 
                     await longRunningTask;
                     System.Console.WriteLine("Press enter to continue");

@@ -1,4 +1,5 @@
 ﻿using System.IO.Ports;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OSDP.Net
@@ -12,7 +13,6 @@ namespace OSDP.Net
         public void Open()
         {
             _serialPort.PortName = "/dev/tty.SLAB_USBtoUART";
-            _serialPort.ReadTimeout = 200;
 
             _serialPort.Open();
         }
@@ -22,22 +22,14 @@ namespace OSDP.Net
             _serialPort.Close();
         }
 
-        public async Task Write(byte[] buffer)
+        public async Task WriteAsync(byte[] buffer)
         {
             await _serialPort.BaseStream.WriteAsync(buffer, 0, buffer.Length);
         }
 
-        public async Task<int> Read(byte[] buffer)
+        public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
-            var readTask =  _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length);
-            var delayTask = Task.Delay(_serialPort.ReadTimeout);
-            var task = await Task.WhenAny(readTask, delayTask);
-            if (task == readTask)
-            {
-                return await readTask;
-            }
-
-            return 0;
+            return await _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length, token);
         }
     }
 }

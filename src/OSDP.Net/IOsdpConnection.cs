@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OSDP.Net
@@ -23,13 +24,14 @@ namespace OSDP.Net
          /// Write to connection
          /// </summary>
          /// <param name="buffer">Array of bytes to write</param>
-        Task Write(byte[] buffer);
-         
+        Task WriteAsync(byte[] buffer);
+
          /// <summary>
          /// Read from connection
          /// </summary>
          /// <param name="buffer">Array of bytes to read</param>
+         /// <param name="token">Cancellation token to end reading of bytes</param>
          /// <returns>Number of actual bytes read</returns>
-        Task<int> Read(byte[] buffer);
+         Task<int> ReadAsync(byte[] buffer, CancellationToken token);
     }
 }
