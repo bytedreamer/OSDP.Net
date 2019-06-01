@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OSDP.Net.Messages;
 
 namespace OSDP.Net
 {
@@ -14,6 +13,7 @@ namespace OSDP.Net
         
         private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
         private readonly IOsdpConnection _connection;
+        private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
 
         public Bus(IOsdpConnection connection)
         {
@@ -22,7 +22,8 @@ namespace OSDP.Net
 
         public async Task StartPollingAsync(byte address, CancellationToken cancellationToken)
         {
-            byte sequence = 0;
+            _configuredDevices.Add(new Device(0));
+            
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -32,14 +33,8 @@ namespace OSDP.Net
                     _connection.Open();
                 }
 
-                if (sequence > 3)
-                {
-                    sequence = 1;
-                }
-
                 var data = new List<byte> {0xFF};
-                data.AddRange(new PollCommand().BuildCommand(address,
-                    new Control(sequence++, true, false)));
+                data.AddRange(_configuredDevices.First().GetNextCommandData());
 
                 await _connection.WriteAsync(data.ToArray());
 
