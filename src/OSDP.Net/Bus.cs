@@ -64,11 +64,14 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < replyLength)
             {
-                byte[] readBuffer = new byte[1];
+                byte[] readBuffer = new byte[sizeof(byte)];
                 int bytesRead = await TimeOutReadAsync(readBuffer);
-                if (bytesRead == 1)
+                if (bytesRead > 0)
                 {
-                    replyBuffer.Add(readBuffer[0]);
+                    for (byte index = 0; index < bytesRead; index++)
+                    {
+                        replyBuffer.Add(readBuffer[index]);
+                    }
                 }
                 else
                 {
@@ -83,11 +86,14 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < 4)
             {
-                byte[] readBuffer = new byte[1];
+                byte[] readBuffer = new byte[4];
                 int bytesRead = await TimeOutReadAsync(readBuffer);
-                if (bytesRead == 1)
+                if (bytesRead > 0)
                 {
-                    replyBuffer.Add(readBuffer[0]);
+                    for (byte index = 0; index < bytesRead; index++)
+                    {
+                        replyBuffer.Add(readBuffer[index]);
+                    }
                 }
                 else
                 {
