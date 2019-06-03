@@ -4,9 +4,9 @@ using OSDP.Net;
 
 namespace Console
 {
-    class Program
+    internal static class Program
     {
-        static async Task Main(string[] args) 
+        static async Task Main() 
         {
             var controlPanel = new ControlPanel();
 
@@ -18,6 +18,7 @@ namespace Console
                     System.Console.ReadKey();
 
                     // Cancel the task
+                    // ReSharper disable once AccessToDisposedClosure
                     cancellationTokenSource.Cancel();
                 });
                 

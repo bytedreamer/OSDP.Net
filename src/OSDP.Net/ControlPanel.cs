@@ -11,7 +11,7 @@ namespace OSDP.Net
         public async Task AddBus(Bus bus, CancellationToken token)
         {
             _buses.Add(bus);
-            await bus.StartPollingAsync(0, token);
+            await bus.StartPollingAsync(token);
         }
         
         public void Shutdown()
