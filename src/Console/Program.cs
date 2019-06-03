@@ -14,7 +14,7 @@ namespace Console
             {
                 var keyBoardTask = Task.Run(() =>
                 {
-                    System.Console.WriteLine("Press enter to cancel");
+                    System.Console.WriteLine("Press enter to shutdown bus");
                     System.Console.ReadKey();
 
                     // Cancel the task
@@ -31,7 +31,7 @@ namespace Console
                 }
                 catch (TaskCanceledException)
                 {
-                    System.Console.WriteLine("Task was cancelled");
+                    System.Console.WriteLine("Shutting down bus");
                 }
 
                 await keyBoardTask;

@@ -37,8 +37,11 @@ namespace OSDP.Net
                 }
 
                 var data = new List<byte> {DriverByte};
-                data.AddRange(_configuredDevices.First().GetNextCommandData());
+                var commandData = _configuredDevices.First().GetNextCommandData().ToArray();
+                data.AddRange(commandData);
 
+                Console.WriteLine($"Write: {BitConverter.ToString(commandData)}");
+                
                 await _connection.WriteAsync(data.ToArray());
 
                 var replyBuffer = new Collection<byte>();
@@ -49,7 +52,7 @@ namespace OSDP.Net
 
                 if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
 
-                Console.WriteLine(BitConverter.ToString(replyBuffer.ToArray()));
+                Console.WriteLine($"Reply: {BitConverter.ToString(replyBuffer.ToArray())}");
 
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
@@ -64,7 +67,7 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < replyLength)
             {
-                byte[] readBuffer = new byte[sizeof(byte)];
+                byte[] readBuffer = new byte[byte.MaxValue];
                 int bytesRead = await TimeOutReadAsync(readBuffer);
                 if (bytesRead > 0)
                 {

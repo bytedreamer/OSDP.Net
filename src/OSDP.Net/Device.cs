@@ -18,19 +18,20 @@ namespace OSDP.Net
             _commands.Enqueue(new PollCommand());
         }
 
-        public byte Address { get; }
-        
-        public Control MessageControl { get; }
+        private byte Address { get; }
 
-        public byte[] GetNextCommandData()
+        private Control MessageControl { get; }
+
+        public IEnumerable<byte> GetNextCommandData()
         {
             if (!_commands.TryDequeue(out var command))
             {
                 command = new PollCommand();
             }
 
+            var commandData = command.BuildCommand(Address, MessageControl);
             MessageControl.IncrementSequence();
-            return command.BuildCommand(Address, MessageControl);
+            return commandData;
         }
 
         /// <inheritdoc />
