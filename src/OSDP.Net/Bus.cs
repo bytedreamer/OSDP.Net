@@ -37,7 +37,8 @@ namespace OSDP.Net
                 }
 
                 var data = new List<byte> {DriverByte};
-                var commandData = _configuredDevices.First().GetNextCommandData().ToArray();
+                var command = _configuredDevices.First().GetNextCommandData();
+                var commandData = command.BuildCommand();
                 data.AddRange(commandData);
 
                 Console.WriteLine($"Write: {BitConverter.ToString(commandData)}");
@@ -52,18 +53,24 @@ namespace OSDP.Net
 
                 if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
 
+                var reply = new Reply(replyBuffer);
+                
+                if (!reply.IsValidReply(command)) continue;
+                
+                _configuredDevices.First().ValidReplyHasBeenReceived();
+
                 Console.WriteLine($"Reply: {BitConverter.ToString(replyBuffer.ToArray())}");
 
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
         }
 
-        private static ushort ExtractMessageLength(Collection<byte> replyBuffer)
+        private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
         {
             return BitConverter.ToUInt16(new[] {replyBuffer[2], replyBuffer[3]}, 0);
         }
 
-        private async Task<bool> WaitForRestOfMessage(Collection<byte> replyBuffer, ushort replyLength)
+        private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength)
         {
             while (replyBuffer.Count < replyLength)
             {

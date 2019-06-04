@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace OSDP.Net.Messages
@@ -7,7 +8,7 @@ namespace OSDP.Net.Messages
     {
         public const byte StartOfMessage = 0x53;
 
-        protected static byte[] ConvertShortToBytes(ushort value)
+        protected static IEnumerable<byte> ConvertShortToBytes(ushort value)
         {
             var byteArray = BitConverter.GetBytes(value);
             if (!BitConverter.IsLittleEndian)
@@ -17,8 +18,19 @@ namespace OSDP.Net.Messages
 
             return byteArray;
         }
+        
+        protected static ushort ConvertBytesToShort(IEnumerable<byte> data)
+        {
+            var byteArray = data.ToArray();
+            if (!BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(byteArray);
+            }
+            
+            return BitConverter.ToUInt16(byteArray, 0);
+        }
       
-        protected static ushort CalculateCrc(byte[] data)
+        protected static ushort CalculateCrc(IEnumerable<byte> data)
         {
             ushort crc = 0x1D0F;
             foreach (var t in data)

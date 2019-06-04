@@ -3,31 +3,35 @@ using System.Linq;
 
 namespace OSDP.Net.Messages
 {
-    public abstract class CommandBase : Message
+    public abstract class Command : Message
     {
         protected abstract byte CommandCode { get; }
         
-        public byte[] BuildCommand(byte address, Control control)
+        protected abstract byte Address { get; }
+        
+        public abstract Control Control { get; }
+        
+        public byte[] BuildCommand()
         {
             var command = new List<byte>
             {
                 StartOfMessage,
-                address,
+                Address,
                 0x0,
                 0x0,
-                control.ControlByte,
+                Control.ControlByte,
                 CommandCode,
                 0x0
             };
 
-            if (control.UseCrc)
+            if (Control.UseCrc)
             {
                 command.Add(0x0);
             }
 
             AddPacketLength(command);
 
-            if (control.UseCrc)
+            if (Control.UseCrc)
             {
                 AddCrc(command);
             }
@@ -41,7 +45,7 @@ namespace OSDP.Net.Messages
         
         private static void AddPacketLength(IList<byte> command)
         {
-            var packetLength = ConvertShortToBytes((ushort)command.Count);
+            var packetLength = ConvertShortToBytes((ushort)command.Count).ToArray();
             command[2] = packetLength[0];
             command[3] = packetLength[1];
         }
@@ -49,7 +53,7 @@ namespace OSDP.Net.Messages
         private static void AddCrc(IList<byte> command)
         {
             ushort crc = CalculateCrc(command.Take(command.Count - 2).ToArray());
-            var crcBytes = ConvertShortToBytes(crc);
+            var crcBytes = ConvertShortToBytes(crc).ToArray();
             command[command.Count - 2] = crcBytes[0];
             command[command.Count - 1] = crcBytes[1];
         }
