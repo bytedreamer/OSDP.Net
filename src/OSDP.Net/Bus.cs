@@ -11,10 +11,10 @@ namespace OSDP.Net
     public class Bus
     {
         private const byte DriverByte = 0xFF;
-        
-        private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
-        private readonly IOsdpConnection _connection;
         private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
+        private readonly IOsdpConnection _connection;
+
+        private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
 
         private bool _isShuttingDown;
 
@@ -26,6 +26,7 @@ namespace OSDP.Net
         public async Task StartPollingAsync(CancellationToken cancellationToken)
         {
             _configuredDevices.Add(new Device(0));
+            DateTime lastMessageSentTime = DateTime.UtcNow;
 
             while (!_isShuttingDown)
             {
@@ -35,7 +36,10 @@ namespace OSDP.Net
                 {
                     _connection.Open();
                 }
-
+                
+                TimeSpan timeDifference = TimeSpan.FromSeconds(1) - (DateTime.UtcNow - lastMessageSentTime);
+                await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero, cancellationToken);
+                
                 var data = new List<byte> {DriverByte};
                 var command = _configuredDevices.First().GetNextCommandData();
                 var commandData = command.BuildCommand();
@@ -43,8 +47,10 @@ namespace OSDP.Net
 
                 Console.WriteLine($"Write: {BitConverter.ToString(commandData)}");
                 
+                lastMessageSentTime = DateTime.UtcNow;
+                
                 await _connection.WriteAsync(data.ToArray());
-
+                
                 var replyBuffer = new Collection<byte>();
 
                 if (!await WaitForStartOfMessage(replyBuffer)) continue;
@@ -60,8 +66,7 @@ namespace OSDP.Net
                 _configuredDevices.First().ValidReplyHasBeenReceived();
 
                 Console.WriteLine($"Reply: {BitConverter.ToString(replyBuffer.ToArray())}");
-
-                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                
             }
         }
 
