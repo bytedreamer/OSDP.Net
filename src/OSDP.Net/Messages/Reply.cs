@@ -5,14 +5,24 @@ namespace OSDP.Net.Messages
 {
     public class Reply : Message
     {
-        private readonly IReadOnlyCollection<byte> _data;
+        private readonly IReadOnlyList<byte> _data;
 
-        public Reply(IReadOnlyCollection<byte> data)
+        public Reply(IReadOnlyList<byte> data)
         {
             _data = data;
         }
 
         public bool IsValidReply(Command command)
+        {
+            return IsCorrectAddress(command) && IsDataCorrect(command);
+        }
+
+        private bool IsCorrectAddress(Command command)
+        {
+            return command.Address == (_data[1] & 0x7F);
+        }
+
+        private bool IsDataCorrect(Command command)
         {
             return command.Control.UseCrc
                 ? CalculateCrc(_data.Take(_data.Count - 2).ToArray()) ==

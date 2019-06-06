@@ -9,7 +9,7 @@ namespace OSDP.Net.Messages
         }
 
         protected override byte CommandCode => 0x60;
-        protected override byte Address { get; }
+        public override byte Address { get; }
         public override Control Control { get; }
     }
 }

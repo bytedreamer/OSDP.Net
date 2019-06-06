@@ -26,7 +26,7 @@ namespace OSDP.Net
         public async Task StartPollingAsync(CancellationToken cancellationToken)
         {
             _configuredDevices.Add(new Device(0));
-            DateTime lastMessageSentTime = DateTime.UtcNow;
+            DateTime lastMessageSentTime = DateTime.MinValue;
 
             while (!_isShuttingDown)
             {
@@ -45,7 +45,7 @@ namespace OSDP.Net
                 var commandData = command.BuildCommand();
                 data.AddRange(commandData);
 
-                Console.WriteLine($"Write: {BitConverter.ToString(commandData)}");
+                Console.WriteLine($"Raw write data: {BitConverter.ToString(commandData)}");
                 
                 lastMessageSentTime = DateTime.UtcNow;
                 
@@ -60,12 +60,12 @@ namespace OSDP.Net
                 if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
 
                 var reply = new Reply(replyBuffer);
-                
+                 
                 if (!reply.IsValidReply(command)) continue;
                 
                 _configuredDevices.First().ValidReplyHasBeenReceived();
 
-                Console.WriteLine($"Reply: {BitConverter.ToString(replyBuffer.ToArray())}");
+                Console.WriteLine($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}");
                 
             }
         }

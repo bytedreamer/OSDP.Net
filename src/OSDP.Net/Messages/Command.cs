@@ -6,11 +6,11 @@ namespace OSDP.Net.Messages
     public abstract class Command : Message
     {
         protected abstract byte CommandCode { get; }
-        
-        protected abstract byte Address { get; }
-        
+
+        public abstract byte Address { get; }
+
         public abstract Control Control { get; }
-        
+
         public byte[] BuildCommand()
         {
             var command = new List<byte>
@@ -42,7 +42,7 @@ namespace OSDP.Net.Messages
 
             return command.ToArray();
         }
-        
+
         private static void AddPacketLength(IList<byte> command)
         {
             var packetLength = ConvertShortToBytes((ushort)command.Count).ToArray();
