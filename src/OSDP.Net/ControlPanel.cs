@@ -1,24 +1,46 @@
-using System.Collections.Generic;
-using System.Threading;
+using System;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using OSDP.Net.Messages;
 
 namespace OSDP.Net
 {
     public class ControlPanel
     {
-        private readonly List<Bus> _buses = new List<Bus>();
+        private readonly ConcurrentDictionary<Guid, Bus> _buses = new ConcurrentDictionary<Guid, Bus>();
+        private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
 
-        public async Task AddBus(Bus bus, CancellationToken token)
+        public ControlPanel()
         {
-            _buses.Add(bus);
-            await bus.StartPollingAsync(token);
+            Task.Factory.StartNew(() =>
+            {
+                foreach (var reply in _replies.GetConsumingEnumerable())
+                {
+                    Console.WriteLine($"Received a reply {reply}");
+                }
+            }, TaskCreationOptions.LongRunning);
         }
-        
+
+        public Guid StartConnection(IOsdpConnection connection)
+        {
+            var newBus = new Bus(connection, _replies);
+            Guid id = Guid.NewGuid();
+            
+            _buses[id] = newBus;
+
+            Task.Factory.StartNew(async () =>
+            {
+                await newBus.StartPollingAsync();
+            }, TaskCreationOptions.LongRunning);
+
+            return id;
+        }
+
         public void Shutdown()
         {
             foreach (var bus in _buses)
             {
-                bus.Close();
+                bus.Value.Close();
             }
         }
     }

@@ -12,14 +12,21 @@ namespace OSDP.Net.Messages
             _data = data;
         }
 
+        private byte Address => (byte) (_data[1] & 0x7F);
+
         public bool IsValidReply(Command command)
         {
             return IsCorrectAddress(command) && IsDataCorrect(command);
         }
 
+        public override string ToString()
+        {
+            return $"Address: {Address}";
+        }
+
         private bool IsCorrectAddress(Command command)
         {
-            return command.Address == (_data[1] & 0x7F);
+            return command.Address == Address;
         }
 
         private bool IsDataCorrect(Command command)

@@ -8,9 +8,9 @@ namespace OSDP.Net
 {
     public class Device : IComparer<byte>
     {
-        private readonly Comparer _comparer = new Comparer(CultureInfo.InvariantCulture);
         private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
-        
+        private readonly Comparer _comparer = new Comparer(CultureInfo.InvariantCulture);
+
         public Device(byte address)
         {
             Address = address;
@@ -22,6 +22,12 @@ namespace OSDP.Net
 
         private Control MessageControl { get; }
 
+        /// <inheritdoc />
+        public int Compare(byte x, byte y)
+        {
+            return _comparer.Compare(x, y);
+        }
+
         public Command GetNextCommandData()
         {
             if (!_commands.TryPeek(out var command))
@@ -32,16 +38,10 @@ namespace OSDP.Net
             return command;
         }
 
-        public void ValidReplyHasBeenReceived()
+        public void ValidReplyHasBeenReceived(Reply reply)
         {
             _commands.TryDequeue(out var command);
             MessageControl.IncrementSequence();
-        }
-
-        /// <inheritdoc />
-        public int Compare(byte x, byte y)
-        {
-            return _comparer.Compare(x, y);
         }
     }
 }

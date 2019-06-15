@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -15,30 +16,36 @@ namespace OSDP.Net
         private readonly IOsdpConnection _connection;
 
         private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
+        private readonly BlockingCollection<Reply> _replies;
 
         private bool _isShuttingDown;
 
-        public Bus(IOsdpConnection connection)
+        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            _replies = replies ?? throw new ArgumentNullException(nameof(replies));
         }
 
-        public async Task StartPollingAsync(CancellationToken cancellationToken)
+        public void Close()
+        {
+            _isShuttingDown = true;
+            _connection.Close();
+        }
+
+        public async Task StartPollingAsync()
         {
             _configuredDevices.Add(new Device(0));
             DateTime lastMessageSentTime = DateTime.MinValue;
 
             while (!_isShuttingDown)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
                 if (!_connection.IsOpen)
                 {
                     _connection.Open();
                 }
                 
                 TimeSpan timeDifference = TimeSpan.FromSeconds(1) - (DateTime.UtcNow - lastMessageSentTime);
-                await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero, cancellationToken);
+                await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
                 
                 var data = new List<byte> {DriverByte};
                 var command = _configuredDevices.First().GetNextCommandData();
@@ -63,10 +70,15 @@ namespace OSDP.Net
                  
                 if (!reply.IsValidReply(command)) continue;
                 
-                _configuredDevices.First().ValidReplyHasBeenReceived();
+                // ** Determine correct device to send reply received notice **
+                
+                _configuredDevices.First().ValidReplyHasBeenReceived(reply);
+                
+                _replies.Add(reply);
+                
+                // ** Idle delay needs to be added **
 
                 Console.WriteLine($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}");
-                
             }
         }
 
@@ -140,12 +152,6 @@ namespace OSDP.Net
             }
 
             return true;
-        }
-
-        public void Close()
-        {
-            _isShuttingDown = true;
-            _connection.Close();
         }
 
         private async Task<int> TimeOutReadAsync(byte[] buffer)
