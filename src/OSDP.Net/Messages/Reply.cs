@@ -6,6 +6,8 @@ namespace OSDP.Net.Messages
 {
     public class Reply : Message
     {
+        private const byte AddressMask = 0x7F;
+
         private readonly Guid _connectionId;
         private readonly IReadOnlyList<byte> _data;
 
@@ -15,7 +17,7 @@ namespace OSDP.Net.Messages
             _connectionId = connectionId;
         }
 
-        private byte Address => (byte) (_data[1] & 0x7F);
+        private byte Address => (byte) (_data[1] & AddressMask);
         private ReplyType Type => (ReplyType) _data[5];
 
         public bool IsValidReply(Command command)
@@ -40,27 +42,5 @@ namespace OSDP.Net.Messages
                   ConvertBytesToShort(_data.Skip(_data.Count - 2).Take(2).ToArray())
                 : CalculateChecksum(_data.Take(_data.Count - 1).ToArray()) == _data.Last();
         }
-    }
-
-    public enum ReplyType
-    {
-        Ack = 0x40,
-        Nak = 0x41,
-        PdIdReport = 0x45,
-        PdCapabilitiesReport = 0x46,
-        LocalStatusReport = 0x48,
-        InputStatusReport = 0x49,
-        OutputReaderReport = 0x4A,
-        ReaderStatusReport = 0x4B,
-        RawReaderData = 0x50,
-        FormattedReaderData = 0x51,
-        KeypadData = 0x53,
-        PdCommunicationsConfigurationReport = 0x54,
-        BiometricData = 0x57,
-        BiometricMatchResult = 0x58,
-        CrypticData = 0x76,
-        InitialRMac = 0x78,
-        Busy = 0x79,
-        ManufactureSpecific = 0x90
     }
 }

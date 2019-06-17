@@ -77,6 +77,8 @@ namespace OSDP.Net
                 
                 // ** Determine correct device to send reply received notice **
                 
+                // ** Handle busy replies
+                
                 _configuredDevices.First().ValidReplyHasBeenReceived(reply);
                 
                 _replies.Add(reply);
