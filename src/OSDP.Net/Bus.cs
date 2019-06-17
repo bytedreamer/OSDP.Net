@@ -24,7 +24,11 @@ namespace OSDP.Net
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
+            
+            Id = Guid.NewGuid();
         }
+
+        public Guid Id { get; }
 
         public void Close()
         {
@@ -66,7 +70,7 @@ namespace OSDP.Net
 
                 if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
 
-                var reply = new Reply(replyBuffer);
+                var reply = new Reply(replyBuffer, Id);
                  
                 if (!reply.IsValidReply(command)) continue;
                 

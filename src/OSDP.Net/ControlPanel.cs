@@ -7,7 +7,7 @@ namespace OSDP.Net
 {
     public class ControlPanel
     {
-        private readonly ConcurrentDictionary<Guid, Bus> _buses = new ConcurrentDictionary<Guid, Bus>();
+        private readonly ConcurrentBag<Bus> _buses = new ConcurrentBag<Bus>();
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
 
         public ControlPanel()
@@ -24,23 +24,22 @@ namespace OSDP.Net
         public Guid StartConnection(IOsdpConnection connection)
         {
             var newBus = new Bus(connection, _replies);
-            Guid id = Guid.NewGuid();
             
-            _buses[id] = newBus;
+            _buses.Add(newBus);
 
             Task.Factory.StartNew(async () =>
             {
                 await newBus.StartPollingAsync();
             }, TaskCreationOptions.LongRunning);
 
-            return id;
+            return newBus.Id;
         }
 
         public void Shutdown()
         {
             foreach (var bus in _buses)
             {
-                bus.Value.Close();
+                bus.Close();
             }
         }
     }

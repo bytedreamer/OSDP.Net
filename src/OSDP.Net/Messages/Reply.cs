@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -5,11 +6,13 @@ namespace OSDP.Net.Messages
 {
     public class Reply : Message
     {
+        private readonly Guid _connectionId;
         private readonly IReadOnlyList<byte> _data;
 
-        public Reply(IReadOnlyList<byte> data)
+        public Reply(IReadOnlyList<byte> data, Guid connectionId)
         {
             _data = data;
+            _connectionId = connectionId;
         }
 
         private byte Address => (byte) (_data[1] & 0x7F);
@@ -21,7 +24,7 @@ namespace OSDP.Net.Messages
 
         public override string ToString()
         {
-            return $"Address: {Address}";
+            return $"Connection ID: {_connectionId} Address: {Address}";
         }
 
         private bool IsCorrectAddress(Command command)
