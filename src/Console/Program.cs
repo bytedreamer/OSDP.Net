@@ -11,7 +11,6 @@ namespace Console
 
             Guid id = controlPanel.StartConnection(new SerialPortOsdpConnection());
 
-
             System.Console.WriteLine("Press enter to shutdown connection");
             System.Console.ReadKey();
 
