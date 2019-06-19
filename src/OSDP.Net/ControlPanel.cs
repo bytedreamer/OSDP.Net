@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
 using OSDP.Net.Messages;
 
@@ -33,6 +34,11 @@ namespace OSDP.Net
             }, TaskCreationOptions.LongRunning);
 
             return newBus.Id;
+        }
+
+        public void SendCommand(Guid connectionId, Command command)
+        {
+            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.SendCommand(command);
         }
 
         public void Shutdown()

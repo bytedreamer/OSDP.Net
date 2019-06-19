@@ -37,6 +37,11 @@ namespace OSDP.Net
             _connection.Close();
         }
 
+        public void SendCommand(Command command)
+        {
+            _configuredDevices.FirstOrDefault(device => device.Address == command.Address)?.SendCommand(command);
+        }
+
         public async Task StartPollingAsync()
         {
             _configuredDevices.Add(new Device(0));
@@ -77,9 +82,10 @@ namespace OSDP.Net
                 
                 // ** Determine correct device to send reply received notice **
                 
-                // ** Handle busy replies
-                
-                _configuredDevices.First().ValidReplyHasBeenReceived(reply);
+                if (!(reply.Type == ReplyType.Nak || reply.Type == ReplyType.Busy))
+                {
+                    _configuredDevices.First().ValidReplyHasBeenReceived();
+                }
                 
                 _replies.Add(reply);
                 

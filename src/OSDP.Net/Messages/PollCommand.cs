@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace OSDP.Net.Messages
 {
     public class PollCommand : Command
@@ -9,7 +11,10 @@ namespace OSDP.Net.Messages
         }
 
         protected override byte CommandCode => 0x60;
-        public override byte Address { get; }
-        public override Control Control { get; }
+
+        protected override IEnumerable<byte> GetData()
+        {
+            return new byte[] { };
+        }
     }
 }

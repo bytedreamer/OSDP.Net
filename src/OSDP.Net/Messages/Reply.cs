@@ -18,7 +18,7 @@ namespace OSDP.Net.Messages
         }
 
         private byte Address => (byte) (_data[1] & AddressMask);
-        private ReplyType Type => (ReplyType) _data[5];
+        public ReplyType Type => (ReplyType) _data[5];
 
         public bool IsValidReply(Command command)
         {

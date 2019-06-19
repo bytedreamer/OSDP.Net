@@ -7,9 +7,11 @@ namespace OSDP.Net.Messages
     {
         protected abstract byte CommandCode { get; }
 
-        public abstract byte Address { get; }
+        public byte Address { get; protected set; }
 
-        public abstract Control Control { get; }
+        public Control Control { get; set; }
+
+        protected abstract IEnumerable<byte> GetData();
 
         public byte[] BuildCommand()
         {
@@ -20,10 +22,13 @@ namespace OSDP.Net.Messages
                 0x0,
                 0x0,
                 Control.ControlByte,
-                CommandCode,
-                0x0
+                CommandCode
             };
+            
+            command.AddRange(GetData());
 
+            command.Add(0x0);
+            
             if (Control.UseCrc)
             {
                 command.Add(0x0);

@@ -18,7 +18,7 @@ namespace OSDP.Net
             _commands.Enqueue(new PollCommand(Address, MessageControl));
         }
 
-        private byte Address { get; }
+        public byte Address { get; }
 
         private Control MessageControl { get; }
 
@@ -38,7 +38,13 @@ namespace OSDP.Net
             return command;
         }
 
-        public void ValidReplyHasBeenReceived(Reply reply)
+        public void SendCommand(Command command)
+        {
+            command.Control = MessageControl;
+            _commands.Enqueue(command);
+        }
+
+        public void ValidReplyHasBeenReceived()
         {
             _commands.TryDequeue(out var command);
             MessageControl.IncrementSequence();
