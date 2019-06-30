@@ -2,12 +2,14 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
+using OSDP.Net.Logging;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net
 {
     public class ControlPanel
     {
+        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
         private readonly ConcurrentBag<Bus> _buses = new ConcurrentBag<Bus>();
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
 
@@ -17,7 +19,7 @@ namespace OSDP.Net
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    Console.WriteLine($"Received a reply {reply}");
+                    Logger.Debug($"Received a reply {reply}");
                 }
             }, TaskCreationOptions.LongRunning);
         }

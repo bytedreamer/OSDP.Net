@@ -2,10 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using OSDP.Net.Logging;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net
@@ -13,6 +13,9 @@ namespace OSDP.Net
     public class Bus
     {
         private const byte DriverByte = 0xFF;
+
+        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
+
         private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
         private readonly IOsdpConnection _connection;
 
@@ -62,7 +65,7 @@ namespace OSDP.Net
                 var commandData = command.BuildCommand();
                 data.AddRange(commandData);
 
-                Console.WriteLine($"Raw write data: {BitConverter.ToString(commandData)}");
+                Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}");
                 
                 lastMessageSentTime = DateTime.UtcNow;
                 
@@ -91,7 +94,7 @@ namespace OSDP.Net
                 
                 // ** Idle delay needs to be added **
 
-                Console.WriteLine($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}");
+                Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}");
             }
         }
 
