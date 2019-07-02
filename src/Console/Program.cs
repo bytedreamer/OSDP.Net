@@ -1,4 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using log4net;
+using log4net.Config;
 using OSDP.Net;
 using OSDP.Net.Messages;
 using Terminal.Gui;
@@ -7,52 +12,64 @@ namespace Console
 {
     internal static class Program
     {
+        private static readonly ControlPanel ControlPanel = new ControlPanel();
+        private static readonly TextView MessageView = new TextView();
+        private static readonly Queue<string> Messages = new Queue<string>();
+        private static readonly object MessageLock =  new object();
+
         static void Main()
         {
-            var controlPanel = new ControlPanel();
+            XmlConfigurator.Configure(
+                LogManager.GetRepository(Assembly.GetAssembly(typeof(LogManager))),
+                new FileInfo("log4net.config"));
 
-            Guid id = controlPanel.StartConnection(new SerialPortOsdpConnection());
-            
-            Application.Init ();
+            Guid id = ControlPanel.StartConnection(new SerialPortOsdpConnection());
+
+            Application.Init();
             var top = Application.Top;
 
-            var window = new Window ("OSDP.Net") {
+            var window = new Window("OSDP.Net Logging")
+            {
                 X = 0,
                 Y = 1, // Leave one row for the toplevel menu
 
-                Width = Dim.Fill (),
-                Height = Dim.Fill ()
+                Width = Dim.Fill(),
+                Height = Dim.Fill()
             };
-            top.Add (window);
-            
-            var menu = new MenuBar (new MenuBarItem [] {
-                new MenuBarItem ("_File", new MenuItem [] {
-                    new MenuItem ("_Quit", "", () => { top.Running = false; })
+            top.Add(window);
+
+            var menu = new MenuBar(new[]
+            {
+                new MenuBarItem("_File", new[]
+                {
+                    new MenuItem("_Quit", "", () => { top.Running = false; })
+                }),
+                new MenuBarItem("_Command", new[]
+                {
+                    new MenuItem("_ID Report", "", () => { ControlPanel.SendCommand(id, new IdReportCommand(0)); })
                 })
             });
-            top.Add (menu);
-            
+            top.Add(menu);
+
+            window.Add(MessageView);
+
             Application.Run();
 
-            /*
-            System.Console.WriteLine("1 - Send Id Report");
-            System.Console.WriteLine("0 - Exit");
+            ControlPanel.Shutdown();
+        }
 
-            int command;
-            do
+        public static void AddLogMessage(string message)
+        {
+            lock (MessageLock)
             {
-                int.TryParse(System.Console.ReadLine(), out command);
-
-                if (command == 1)
+                Messages.Enqueue(message);
+                while (Messages.Count > MessageView.Bounds.Height)
                 {
-                    
-                    controlPanel.SendCommand(id, new IdReportCommand(0));
+                    Messages.Dequeue();
                 }
-            } while (command != 0);
-*/
 
-
-            controlPanel.Shutdown();
+                MessageView.Text = string.Join("", Messages.ToArray());
+            }
         }
     }
 }

@@ -46,7 +46,7 @@ namespace OSDP.Net
 
         public void ValidReplyHasBeenReceived()
         {
-            _commands.TryDequeue(out var command);
+            _commands.TryDequeue(out _);
             MessageControl.IncrementSequence();
         }
     }
