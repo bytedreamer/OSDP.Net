@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using OSDP.Net.Connections;
 using OSDP.Net.Logging;
 using OSDP.Net.Messages;
 

@@ -1,19 +1,26 @@
-﻿using System.IO.Ports;
+﻿using System;
+using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace OSDP.Net
+namespace OSDP.Net.Connections
 {
     public class SerialPortOsdpConnection : IOsdpConnection
     {
         private readonly SerialPort _serialPort = new SerialPort();
 
+        public SerialPortOsdpConnection(string portName, int baudRate)
+        {
+            _serialPort.PortName = portName ?? throw new ArgumentNullException(nameof(portName));
+            _serialPort.BaudRate = baudRate;
+        }
+
+        public int BaudRate => _serialPort.BaudRate;
+
         public bool IsOpen => _serialPort.IsOpen;
 
         public void Open()
         {
-            _serialPort.PortName = "/dev/tty.SLAB_USBtoUART";
-
             _serialPort.Open();
         }
 

@@ -16,4 +16,8 @@
       <PackageReference Include="Terminal.Gui" Version="0.24.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="appsettings.config" />
+    </ItemGroup>
+
 </Project>

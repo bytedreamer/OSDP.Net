@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text.Json.Serialization;
+using Console.Configuration;
 using log4net;
 using log4net.Config;
 using OSDP.Net;
+using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using Terminal.Gui;
 
@@ -23,7 +26,12 @@ namespace Console
                 LogManager.GetRepository(Assembly.GetAssembly(typeof(LogManager))),
                 new FileInfo("log4net.config"));
 
-            Guid id = ControlPanel.StartConnection(new SerialPortOsdpConnection());
+            var settings = GetConnectionSettings();
+
+
+            Guid id = ControlPanel.StartConnection(new SerialPortOsdpConnection(
+                settings.ConnectionSettings.PortName,
+                settings.ConnectionSettings.BaudRate));
 
             Application.Init();
             var top = Application.Top;
@@ -55,6 +63,8 @@ namespace Console
 
             Application.Run();
 
+            SetConnectionSettings(settings);
+
             ControlPanel.Shutdown();
         }
 
@@ -69,6 +79,32 @@ namespace Console
                 }
 
                 MessageView.Text = string.Join("", Messages.ToArray());
+            }
+        }
+
+        private static Settings GetConnectionSettings()
+        {
+            try
+            {
+                string json = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.config"));
+                return JsonSerializer.Parse<Settings>(json);
+            }
+            catch 
+            {
+                return new Settings();
+            }
+        }
+
+        private static void SetConnectionSettings(Settings connectionSettings)
+        {
+            try
+            {
+                File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.config"),
+                    JsonSerializer.ToString(connectionSettings));
+            }
+            catch
+            {
+                // ignored
             }
         }
     }
