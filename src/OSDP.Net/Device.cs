@@ -20,7 +20,7 @@ namespace OSDP.Net
 
         public byte Address { get; }
 
-        private Control MessageControl { get; }
+        public Control MessageControl { get; }
 
         /// <inheritdoc />
         public int Compare(byte x, byte y)

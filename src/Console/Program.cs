@@ -28,7 +28,6 @@ namespace Console
 
             var settings = GetConnectionSettings();
 
-
             Guid id = ControlPanel.StartConnection(new SerialPortOsdpConnection(
                 settings.ConnectionSettings.PortName,
                 settings.ConnectionSettings.BaudRate));

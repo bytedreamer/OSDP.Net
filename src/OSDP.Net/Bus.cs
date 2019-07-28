@@ -43,7 +43,10 @@ namespace OSDP.Net
 
         public void SendCommand(Command command)
         {
-            _configuredDevices.FirstOrDefault(device => device.Address == command.Address)?.SendCommand(command);
+            var foundDevice = _configuredDevices.First(device => device.Address == command.Address);
+
+            command.Control = foundDevice.MessageControl;
+            foundDevice.SendCommand(command);
         }
 
         public async Task StartPollingAsync()
