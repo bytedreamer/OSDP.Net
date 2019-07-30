@@ -51,5 +51,15 @@ namespace OSDP.Net
                 bus.Close();
             }
         }
+
+        public void AddDevice(Guid connectionId, byte address)
+        {
+            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.AddDevice(address);
+        }
+
+        public void RemoveDevice(Guid connectionId, byte address)
+        {
+            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.RemoveDevice(address);
+        }
     }
 }

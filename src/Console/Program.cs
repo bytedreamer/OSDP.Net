@@ -20,6 +20,9 @@ namespace Console
         private static readonly Queue<string> Messages = new Queue<string>();
         private static readonly object MessageLock =  new object();
 
+        private static Window _loggingWindow;
+        private static MenuBar _menuBar;
+
         static void Main()
         {
             XmlConfigurator.Configure(
@@ -31,21 +34,22 @@ namespace Console
             Guid id = ControlPanel.StartConnection(new SerialPortOsdpConnection(
                 settings.ConnectionSettings.PortName,
                 settings.ConnectionSettings.BaudRate));
+            ControlPanel.AddDevice(id, 0);
 
             Application.Init();
             var top = Application.Top;
 
-            var window = new Window("OSDP.Net Logging")
+            _loggingWindow = new Window("OSDP.Net Logging")
             {
                 X = 0,
                 Y = 1, // Leave one row for the toplevel menu
 
                 Width = Dim.Fill(),
-                Height = Dim.Fill()
+                Height = Dim.Fill() - 1
             };
-            top.Add(window);
+            top.Add(_loggingWindow);
 
-            var menu = new MenuBar(new[]
+            _menuBar = new MenuBar(new[]
             {
                 new MenuBarItem("_File", new[]
                 {
@@ -56,9 +60,9 @@ namespace Console
                     new MenuItem("_ID Report", "", () => { ControlPanel.SendCommand(id, new IdReportCommand(0)); })
                 })
             });
-            top.Add(menu);
+            top.Add(_menuBar);
 
-            window.Add(MessageView);
+            _loggingWindow.Add(MessageView);
 
             Application.Run();
 

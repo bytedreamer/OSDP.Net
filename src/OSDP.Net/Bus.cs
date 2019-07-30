@@ -49,9 +49,22 @@ namespace OSDP.Net
             foundDevice.SendCommand(command);
         }
 
+        public void AddDevice(byte address)
+        {
+            _configuredDevices.Add(new Device(address));
+        }
+
+        public void RemoveDevice(byte address)
+        {
+            var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
+            if (foundDevice != null)
+            {
+                _configuredDevices.Remove(foundDevice);
+            }
+        }
+
         public async Task StartPollingAsync()
         {
-            _configuredDevices.Add(new Device(0));
             DateTime lastMessageSentTime = DateTime.MinValue;
 
             while (!_isShuttingDown)
@@ -60,45 +73,48 @@ namespace OSDP.Net
                 {
                     _connection.Open();
                 }
-                
+
                 TimeSpan timeDifference = TimeSpan.FromSeconds(1) - (DateTime.UtcNow - lastMessageSentTime);
                 await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
-                
-                var data = new List<byte> {DriverByte};
-                var command = _configuredDevices.First().GetNextCommandData();
-                var commandData = command.BuildCommand();
-                data.AddRange(commandData);
 
-                Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}");
-                
-                lastMessageSentTime = DateTime.UtcNow;
-                
-                await _connection.WriteAsync(data.ToArray());
-                
-                var replyBuffer = new Collection<byte>();
-
-                if (!await WaitForStartOfMessage(replyBuffer)) continue;
-
-                if (!await WaitForMessageLength(replyBuffer)) continue;
-
-                if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
-
-                var reply = new Reply(replyBuffer, Id);
-                 
-                if (!reply.IsValidReply(command)) continue;
-                
-                // ** Determine correct device to send reply received notice **
-                
-                if (!(reply.Type == ReplyType.Nak || reply.Type == ReplyType.Busy))
+                foreach (var device in _configuredDevices)
                 {
-                    _configuredDevices.First().ValidReplyHasBeenReceived();
-                }
-                
-                _replies.Add(reply);
-                
-                // ** Idle delay needs to be added **
+                    var data = new List<byte> {DriverByte};
+                    var command = device.GetNextCommandData();
+                    var commandData = command.BuildCommand();
+                    data.AddRange(commandData);
 
-                Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}");
+                    Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}");
+
+                    lastMessageSentTime = DateTime.UtcNow;
+
+                    await _connection.WriteAsync(data.ToArray());
+
+                    var replyBuffer = new Collection<byte>();
+
+                    if (!await WaitForStartOfMessage(replyBuffer)) continue;
+
+                    if (!await WaitForMessageLength(replyBuffer)) continue;
+
+                    if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
+
+                    var reply = new Reply(replyBuffer, Id);
+
+                    if (!reply.IsValidReply(command)) continue;
+
+                    // ** Determine correct device to send reply received notice **
+
+                    if (!(reply.Type == ReplyType.Nak || reply.Type == ReplyType.Busy))
+                    {
+                        device.ValidReplyHasBeenReceived();
+                    }
+
+                    _replies.Add(reply);
+
+                    // ** Idle delay needs to be added **
+
+                    Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}");
+                }
             }
         }
 
