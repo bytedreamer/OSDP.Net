@@ -33,6 +33,8 @@ namespace OSDP.Net
             Id = Guid.NewGuid();
         }
 
+        private TimeSpan IdleLineDelay => TimeSpan.FromSeconds(1.0/_connection.BaudRate * 16.0);
+
         public Guid Id { get; }
 
         public void Close()
@@ -102,18 +104,16 @@ namespace OSDP.Net
 
                     if (!reply.IsValidReply(command)) continue;
 
-                    // ** Determine correct device to send reply received notice **
-
                     if (!(reply.Type == ReplyType.Nak || reply.Type == ReplyType.Busy))
                     {
                         device.ValidReplyHasBeenReceived();
                     }
 
                     _replies.Add(reply);
-
-                    // ** Idle delay needs to be added **
-
+                    
                     Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}");
+
+                    await Task.Delay(IdleLineDelay);
                 }
             }
         }

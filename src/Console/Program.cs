@@ -37,7 +37,18 @@ namespace Console
             ControlPanel.AddDevice(id, 0);
 
             Application.Init();
-            var top = Application.Top;
+            
+            _menuBar = new MenuBar(new[]
+            {
+                new MenuBarItem("_File", new[]
+                {
+                    new MenuItem("_Quit", "", Application.RequestStop)
+                }),
+                new MenuBarItem("_Command", new[]
+                {
+                    new MenuItem("_ID Report", "", () => { ControlPanel.SendCommand(id, new IdReportCommand(0)); })
+                })
+            });
 
             _loggingWindow = new Window("OSDP.Net Logging")
             {
@@ -47,22 +58,9 @@ namespace Console
                 Width = Dim.Fill(),
                 Height = Dim.Fill() - 1
             };
-            top.Add(_loggingWindow);
-
-            _menuBar = new MenuBar(new[]
-            {
-                new MenuBarItem("_File", new[]
-                {
-                    new MenuItem("_Quit", "", () => { top.Running = false; })
-                }),
-                new MenuBarItem("_Command", new[]
-                {
-                    new MenuItem("_ID Report", "", () => { ControlPanel.SendCommand(id, new IdReportCommand(0)); })
-                })
-            });
-            top.Add(_menuBar);
-
             _loggingWindow.Add(MessageView);
+            
+            Application.Top.Add (_menuBar, _loggingWindow);
 
             Application.Run();
 
