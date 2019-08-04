@@ -18,6 +18,9 @@
 
     <ItemGroup>
       <None Remove="appsettings.config" />
+      <None Update="log4net.config">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

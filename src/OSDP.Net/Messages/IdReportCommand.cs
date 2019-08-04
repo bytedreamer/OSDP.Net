@@ -11,7 +11,12 @@ namespace OSDP.Net.Messages
 
         protected override byte CommandCode => 0x61;
 
-        protected override IEnumerable<byte> GetData()
+        protected override IEnumerable<byte> SecurityControlBlock()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        protected override IEnumerable<byte> Data()
         {
             return new byte[] { 0x00 };
         }

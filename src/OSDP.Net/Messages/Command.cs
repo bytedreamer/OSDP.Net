@@ -9,34 +9,47 @@ namespace OSDP.Net.Messages
 
         public byte Address { get; protected set; }
 
-        public Control Control { get; set; }
+        public bool UsingCrc { get; private set; }
 
-        protected abstract IEnumerable<byte> GetData();
+        public bool Securing { get; private set; }
 
-        public byte[] BuildCommand()
+        protected abstract IEnumerable<byte> SecurityControlBlock();
+
+        protected abstract IEnumerable<byte> Data();
+
+        public byte[] BuildCommand(Control control)
         {
+            UsingCrc = control.UseCrc;
+            Securing = control.HasSecurityControlBlock;
+            
             var command = new List<byte>
             {
                 StartOfMessage,
                 Address,
                 0x0,
                 0x0,
-                Control.ControlByte,
-                CommandCode
+                control.ControlByte
             };
+
+            if (Securing)
+            {
+                command.AddRange(SecurityControlBlock());
+            }
+
+            command.Add(CommandCode);
             
-            command.AddRange(GetData());
+            command.AddRange(Data());
 
             command.Add(0x0);
             
-            if (Control.UseCrc)
+            if (UsingCrc)
             {
                 command.Add(0x0);
             }
 
             AddPacketLength(command);
 
-            if (Control.UseCrc)
+            if (UsingCrc)
             {
                 AddCrc(command);
             }

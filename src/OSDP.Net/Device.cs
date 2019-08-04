@@ -30,6 +30,8 @@ namespace OSDP.Net
 
         public Command GetNextCommandData()
         {
+            //return new SecurityInitializationRequestCommand(Address);
+            
             if (!_commands.TryPeek(out var command))
             {
                 command = new PollCommand(Address, MessageControl);
@@ -40,7 +42,6 @@ namespace OSDP.Net
 
         public void SendCommand(Command command)
         {
-            command.Control = MessageControl;
             _commands.Enqueue(command);
         }
 

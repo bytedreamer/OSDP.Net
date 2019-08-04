@@ -11,8 +11,8 @@ namespace OSDP.Net.Tests.Messages
         [TestCaseSource(typeof(IdReportCommandDataClass), nameof(IdReportCommandDataClass.TestCases))]
         public string PollCommand_TestCases(byte address, Control control)
         {
-            var idReportCommand = new IdReportCommand(address){ Control = control};
-            return BitConverter.ToString(idReportCommand.BuildCommand());
+            var idReportCommand = new IdReportCommand(address);
+            return BitConverter.ToString(idReportCommand.BuildCommand(control));
         }
 
         private class IdReportCommandDataClass

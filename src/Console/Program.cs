@@ -46,7 +46,10 @@ namespace Console
                 }),
                 new MenuBarItem("_Command", new[]
                 {
-                    new MenuItem("_ID Report", "", () => { ControlPanel.SendCommand(id, new IdReportCommand(0)); })
+                    new MenuItem("_ID Report", "", async () =>
+                    {
+                        var reply = await ControlPanel.SendCommand(id, new IdReportCommand(0));
+                    })
                 })
             });
 
@@ -58,6 +61,7 @@ namespace Console
                 Width = Dim.Fill(),
                 Height = Dim.Fill() - 1
             };
+            MessageView.Text = string.Empty;
             _loggingWindow.Add(MessageView);
             
             Application.Top.Add (_menuBar, _loggingWindow);

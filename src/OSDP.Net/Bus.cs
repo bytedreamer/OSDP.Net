@@ -46,8 +46,7 @@ namespace OSDP.Net
         public void SendCommand(Command command)
         {
             var foundDevice = _configuredDevices.First(device => device.Address == command.Address);
-
-            command.Control = foundDevice.MessageControl;
+            
             foundDevice.SendCommand(command);
         }
 
@@ -83,7 +82,7 @@ namespace OSDP.Net
                 {
                     var data = new List<byte> {DriverByte};
                     var command = device.GetNextCommandData();
-                    var commandData = command.BuildCommand();
+                    var commandData = command.BuildCommand(device.MessageControl);
                     data.AddRange(commandData);
 
                     Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}");
