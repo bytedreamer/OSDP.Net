@@ -8,39 +8,6 @@ namespace OSDP.Net.Messages
     {
         public const byte StartOfMessage = 0x53;
 
-        protected static IEnumerable<byte> ConvertShortToBytes(ushort value)
-        {
-            var byteArray = BitConverter.GetBytes(value);
-            if (!BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(byteArray);
-            }
-
-            return byteArray;
-        }
-        
-        protected static ushort ConvertBytesToShort(IEnumerable<byte> data)
-        {
-            var byteArray = data.ToArray();
-            if (!BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(byteArray);
-            }
-            
-            return BitConverter.ToUInt16(byteArray, 0);
-        }
-      
-        protected static ushort CalculateCrc(IEnumerable<byte> data)
-        {
-            ushort crc = 0x1D0F;
-            foreach (var t in data)
-            {
-                crc = (ushort)((crc << 8) ^ CrcTable[((crc >> 8) ^ t) & 0xFF]);
-            }
-
-            return crc;
-        }
-        
         private static readonly ushort[] CrcTable =
         {
             0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7, 0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C,
@@ -64,7 +31,40 @@ namespace OSDP.Net.Messages
             0x5C64, 0x4C45, 0x3CA2, 0x2C83, 0x1CE0, 0x0CC1, 0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9,
             0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
         };
-        
+
+        protected static IEnumerable<byte> ConvertShortToBytes(ushort value)
+        {
+            var byteArray = BitConverter.GetBytes(value);
+            if (!BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(byteArray);
+            }
+
+            return byteArray;
+        }
+
+        public static ushort ConvertBytesToShort(IEnumerable<byte> data)
+        {
+            var byteArray = data.ToArray();
+            if (!BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(byteArray);
+            }
+            
+            return BitConverter.ToUInt16(byteArray, 0);
+        }
+
+        protected static ushort CalculateCrc(IEnumerable<byte> data)
+        {
+            ushort crc = 0x1D0F;
+            foreach (var t in data)
+            {
+                crc = (ushort)((crc << 8) ^ CrcTable[((crc >> 8) ^ t) & 0xFF]);
+            }
+
+            return crc;
+        }
+
         protected static byte CalculateChecksum(byte[] data)
         {
             return (byte) (0x100 - data.Aggregate(0, (source, element) => source + element) & 0xff);

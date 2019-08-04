@@ -21,6 +21,16 @@ namespace OSDP.Net
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
                     Logger.Debug($"Received a reply {reply}");
+                    if (reply.Type == ReplyType.FormattedReaderData)
+                    {
+                        Logger.Debug(
+                            $"Formatted Reader Data {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
+                    }
+                    else if (reply.Type == ReplyType.RawReaderData)
+                    {
+                        Logger.Debug(
+                            $"Raw Reader Data: {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
+                    }
                 }
             }, TaskCreationOptions.LongRunning);
         }

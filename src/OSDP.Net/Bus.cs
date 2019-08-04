@@ -100,11 +100,11 @@ namespace OSDP.Net
 
                     if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
 
-                    var reply = new Reply(replyBuffer, Id);
+                    var reply = new Reply(replyBuffer, command, Id);
 
-                    if (!reply.IsValidReply(command)) continue;
+                    if (!reply.IsValidReply()) continue;
 
-                    if (!(reply.Type == ReplyType.Nak || reply.Type == ReplyType.Busy))
+                    if (reply.Type != ReplyType.Busy)
                     {
                         device.ValidReplyHasBeenReceived();
                     }
@@ -120,7 +120,7 @@ namespace OSDP.Net
 
         private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
         {
-            return BitConverter.ToUInt16(new[] {replyBuffer[2], replyBuffer[3]}, 0);
+            return Message.ConvertBytesToShort(new[] {replyBuffer[2], replyBuffer[3]});
         }
 
         private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength)
