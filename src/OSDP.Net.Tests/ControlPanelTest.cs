@@ -1,13 +1,9 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using NUnit.Framework;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
@@ -27,7 +23,7 @@ namespace OSDP.Net.Tests
 
             var panel = new ControlPanel();
             Guid id = panel.StartConnection(connection);
-            panel.AddDevice(id, 0);
+            panel.AddDevice(id, 0, false);
 
             // Act
             var reply = await panel.SendCommand(id, new IdReportCommand(0));
@@ -43,7 +39,7 @@ namespace OSDP.Net.Tests
             var connection = new TestConnection();
             var panel = new ControlPanel();
             Guid id = panel.StartConnection(connection);
-            panel.AddDevice(id, 0);
+            panel.AddDevice(id, 0, false);
 
             // Act
             panel.Shutdown();
@@ -64,7 +60,7 @@ namespace OSDP.Net.Tests
 
             // Act
             Guid id = panel.StartConnection(connection);
-            panel.AddDevice(id, 0);
+            panel.AddDevice(id, 0, false);
 
             // Assert
             await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),

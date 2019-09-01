@@ -13,7 +13,7 @@ namespace OSDP.Net.Messages
 
         public bool UsingCrc { get; private set; }
 
-        public bool Securing { get; private set; }
+        public bool Securing { get; set; }
 
         protected abstract IEnumerable<byte> SecurityControlBlock();
 

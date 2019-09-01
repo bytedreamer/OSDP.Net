@@ -56,9 +56,9 @@ namespace OSDP.Net
             foundDevice.SendCommand(command);
         }
 
-        public void AddDevice(byte address)
+        public void AddDevice(byte address, bool useSecureChannel)
         {
-            _configuredDevices.Add(new Device(address));
+            _configuredDevices.Add(new Device(address, useSecureChannel));
         }
 
         public void RemoveDevice(byte address)

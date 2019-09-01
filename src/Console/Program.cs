@@ -34,7 +34,7 @@ namespace Console
             Guid id = ControlPanel.StartConnection(new SerialPortOsdpConnection(
                 settings.ConnectionSettings.PortName,
                 settings.ConnectionSettings.BaudRate));
-            ControlPanel.AddDevice(id, 0);
+            ControlPanel.AddDevice(id, 1, true);
 
             Application.Init();
             

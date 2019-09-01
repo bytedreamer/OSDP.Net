@@ -10,11 +10,14 @@ namespace OSDP.Net
     {
         private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
         private readonly Comparer _comparer = new Comparer(CultureInfo.InvariantCulture);
+        private readonly bool _useSecureChannel;
+        private byte[] _hostCryptogram = { };
 
-        public Device(byte address)
+        public Device(byte address, bool useSecureChannel)
         {
+            _useSecureChannel = useSecureChannel;
             Address = address;
-            MessageControl = new Control(0, true, false);
+            MessageControl = new Control(0, true, useSecureChannel);
             _commands.Enqueue(new PollCommand(Address));
         }
 
@@ -30,7 +33,10 @@ namespace OSDP.Net
 
         public Command GetNextCommandData()
         {
-            //return new SecurityInitializationRequestCommand(Address);
+            if (_useSecureChannel && _hostCryptogram.Length == 0)
+            {
+                return new SecurityInitializationRequestCommand(Address);
+            }
             
             if (!_commands.TryPeek(out var command))
             {

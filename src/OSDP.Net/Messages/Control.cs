@@ -9,7 +9,7 @@ namespace OSDP.Net.Messages
             HasSecurityControlBlock = hasSecurityControlBlock;
         }
 
-        private byte Sequence { get; set; }
+        public byte Sequence { get; private set; }
         public bool UseCrc { get; }
         public bool HasSecurityControlBlock { get; }
 

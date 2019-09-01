@@ -24,7 +24,7 @@ namespace OSDP.Net.Messages
 
         private ushort ReplyMessageFooterSize => (ushort)(_issuingCommand.UsingCrc ? 2 : 1);
 
-        public ReplyType Type => (ReplyType) _data[5];
+        public ReplyType Type => (ReplyType) (_issuingCommand.Securing ? _data[5 + _data[5]] : _data[5]);
 
         public IEnumerable<byte> ExtractReplyData =>
             _data.Skip(ReplyMessageHeaderSize).Take(_data.Count - ReplyMessageHeaderSize - ReplyMessageFooterSize);

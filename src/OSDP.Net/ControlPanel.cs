@@ -87,9 +87,15 @@ namespace OSDP.Net
             }
         }
 
-        public void AddDevice(Guid connectionId, byte address)
+        /// <summary>
+        /// Add a PD to the control panel
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device</param>
+        /// <param name="address">Address assigned to the device</param>
+        /// <param name="useSecureChannel">Require the device to communicate with a secure channel</param>
+        public void AddDevice(Guid connectionId, byte address, bool useSecureChannel)
         {
-            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.AddDevice(address);
+            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.AddDevice(address, useSecureChannel);
         }
 
         public void RemoveDevice(Guid connectionId, byte address)
