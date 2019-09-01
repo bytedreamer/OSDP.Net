@@ -11,7 +11,10 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net
 {
-    public class Bus
+    /// <summary>
+    /// A group of OSDP devices sharing communications
+    /// </summary>
+    internal class Bus
     {
         private const byte DriverByte = 0xFF;
 
@@ -35,6 +38,9 @@ namespace OSDP.Net
 
         private TimeSpan IdleLineDelay => TimeSpan.FromSeconds(1.0/_connection.BaudRate * 16.0);
 
+        /// <summary>
+        /// Unique identifier of the bus
+        /// </summary>
         public Guid Id { get; }
 
         public void Close()
@@ -85,7 +91,7 @@ namespace OSDP.Net
                     var commandData = command.BuildCommand(device.MessageControl);
                     data.AddRange(commandData);
 
-                    Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}");
+                    Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
 
                     lastMessageSentTime = DateTime.UtcNow;
 
@@ -109,8 +115,9 @@ namespace OSDP.Net
                     }
 
                     _replies.Add(reply);
-                    
-                    Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}");
+
+                    Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
+                        command.Address);
 
                     await Task.Delay(IdleLineDelay);
                 }

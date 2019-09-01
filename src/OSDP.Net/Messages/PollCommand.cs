@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace OSDP.Net.Messages
 {
-    public class PollCommand : Command
+    internal class PollCommand : Command
     {
-        public PollCommand(byte address, Control control)
+        public PollCommand(byte address)
         {
             Address = address;
         }

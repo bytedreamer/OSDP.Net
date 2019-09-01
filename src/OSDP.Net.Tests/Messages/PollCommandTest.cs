@@ -11,7 +11,7 @@ namespace OSDP.Net.Tests.Messages
         [TestCaseSource(typeof(PollCommandDataClass), nameof(PollCommandDataClass.TestCases))]
         public string PollCommand_TestCases(byte address, Control control)
         {
-            return BitConverter.ToString(new PollCommand(address, control).BuildCommand(control));
+            return BitConverter.ToString(new PollCommand(address).BuildCommand(control));
         }
     }
 

@@ -6,7 +6,7 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net
 {
-    public class Device : IComparer<byte>
+    internal class Device : IComparer<byte>
     {
         private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
         private readonly Comparer _comparer = new Comparer(CultureInfo.InvariantCulture);
@@ -15,7 +15,7 @@ namespace OSDP.Net
         {
             Address = address;
             MessageControl = new Control(0, true, false);
-            _commands.Enqueue(new PollCommand(Address, MessageControl));
+            _commands.Enqueue(new PollCommand(Address));
         }
 
         public byte Address { get; }
@@ -34,7 +34,7 @@ namespace OSDP.Net
             
             if (!_commands.TryPeek(out var command))
             {
-                command = new PollCommand(Address, MessageControl);
+                command = new PollCommand(Address);
             }
 
             return command;

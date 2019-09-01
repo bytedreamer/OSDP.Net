@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("OSDP.Net.Tests")]
 namespace OSDP.Net.Messages
 {
     public abstract class Command : Message
@@ -61,14 +63,14 @@ namespace OSDP.Net.Messages
             return command.ToArray();
         }
 
-        private static void AddPacketLength(IList<byte> command)
+        internal static void AddPacketLength(IList<byte> command)
         {
             var packetLength = ConvertShortToBytes((ushort)command.Count).ToArray();
             command[2] = packetLength[0];
             command[3] = packetLength[1];
         }
 
-        private static void AddCrc(IList<byte> command)
+        internal static void AddCrc(IList<byte> command)
         {
             ushort crc = CalculateCrc(command.Take(command.Count - 2).ToArray());
             var crcBytes = ConvertShortToBytes(crc).ToArray();
@@ -76,7 +78,7 @@ namespace OSDP.Net.Messages
             command[command.Count - 1] = crcBytes[1];
         }
 
-        private static void AddChecksum(IList<byte> command)
+        internal static void AddChecksum(IList<byte> command)
         {
             command[command.Count - 1] = CalculateChecksum(command.Take(command.Count - 1).ToArray());
         }
