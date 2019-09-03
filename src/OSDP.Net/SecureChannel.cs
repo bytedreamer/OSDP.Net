@@ -69,11 +69,13 @@ namespace OSDP.Net
             IsEstablished = true;
         }
 
-        public byte[] GenerateMac(byte[] buffer)
+        public byte[] GenerateMac(byte[] buffer, bool isCommand)
         {
-            var encryptBuffer = new byte[16];
-            buffer.CopyTo(encryptBuffer, 0);
-            encryptBuffer[buffer.Length] = 0x80; 
+            const byte cryptoLength = 16;
+            const byte paddingStart = 0x80;
+            
+            var mac = new byte[cryptoLength];
+            int currentLocation = 0;
             
             using (var messageAuthenticationCodeAlgorithm = Aes.Create())
             {
@@ -86,14 +88,43 @@ namespace OSDP.Net
                 messageAuthenticationCodeAlgorithm.KeySize = 128;
                 messageAuthenticationCodeAlgorithm.BlockSize = 128;
                 messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
-                messageAuthenticationCodeAlgorithm.Key = _smac2;
-                messageAuthenticationCodeAlgorithm.IV = _rmac;
-            
-                using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
+                messageAuthenticationCodeAlgorithm.IV = isCommand ? _rmac : _cmac;
+                messageAuthenticationCodeAlgorithm.Key = _smac1;
+
+                while (currentLocation < buffer.Length)
                 {
-                    _cmac = encryptor.TransformFinalBlock(encryptBuffer, 0, encryptBuffer.Length);
-                    return _cmac;
+                    // Get first 16
+                    var inputBuffer = new byte[cryptoLength];
+                    buffer.Skip(currentLocation).ToArray().CopyTo(inputBuffer, 0);
+
+                    currentLocation += cryptoLength;
+                    if (currentLocation > buffer.Length)
+                    {
+                        messageAuthenticationCodeAlgorithm.Key = _smac2;
+                        if (buffer.Length % cryptoLength != 0)
+                        {
+                            inputBuffer[buffer.Length % cryptoLength] = paddingStart;
+                        }
+                    }
+
+                    using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
+                    {
+                        mac = encryptor.TransformFinalBlock(inputBuffer, 0, inputBuffer.Length);
+                    }
+
+                    messageAuthenticationCodeAlgorithm.IV = mac;
                 }
+                
+                if (isCommand)
+                {
+                    _cmac = mac;
+                }
+                else
+                {
+                    _rmac = mac;
+                }
+
+                return mac;
             }
         }
 

@@ -83,7 +83,7 @@ namespace OSDP.Net
 
         public IEnumerable<byte> GenerateMac(byte[] buffer)
         {
-            return _secureChannel.GenerateMac(buffer);
+            return _secureChannel.GenerateMac(buffer, true);
         }
 
         public void ResetSecurity()
