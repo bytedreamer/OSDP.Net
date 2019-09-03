@@ -15,9 +15,8 @@ namespace OSDP.Net.Messages
         {
             return new byte[]
             {
-                0x03,
-                0x15,
-                0x00
+                0x02,
+                0x15
             };
         }
 

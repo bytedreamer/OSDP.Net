@@ -9,10 +9,10 @@ namespace OSDP.Net.Tests.Messages
     public class IdReportCommandTest
     {
         [TestCaseSource(typeof(IdReportCommandDataClass), nameof(IdReportCommandDataClass.TestCases))]
-        public string PollCommand_TestCases(byte address, Control control)
+        public string PollCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
             var idReportCommand = new IdReportCommand(address);
-            return BitConverter.ToString(idReportCommand.BuildCommand(control));
+            return BitConverter.ToString(idReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
 
         private class IdReportCommandDataClass
@@ -21,9 +21,9 @@ namespace OSDP.Net.Tests.Messages
             {
                 get
                 {
-                    yield return new TestCaseData((byte) 0x0, new Control(0, true, false)).Returns(
+                    yield return new TestCaseData((byte) 0x0, false, true).Returns(
                         "53-00-09-00-04-61-00-C0-66");
-                    yield return new TestCaseData((byte) 0x0, new Control(0, false, false)).Returns(
+                    yield return new TestCaseData((byte) 0x0, false, false).Returns(
                         "53-00-08-00-00-61-00-44");
                 }
             }

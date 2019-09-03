@@ -11,56 +11,54 @@ namespace OSDP.Net.Messages
 
         public byte Address { get; protected set; }
 
-        public bool UsingCrc { get; private set; }
-
-        public bool Securing { get; set; }
-
         protected abstract IEnumerable<byte> SecurityControlBlock();
 
         protected abstract IEnumerable<byte> Data();
 
-        public byte[] BuildCommand(Control control)
+        internal byte[] BuildCommand(Device device)
         {
-            UsingCrc = control.UseCrc;
-            Securing = control.HasSecurityControlBlock;
-            
-            var command = new List<byte>
+            var commandBuffer = new List<byte>
             {
                 StartOfMessage,
                 Address,
                 0x0,
                 0x0,
-                control.ControlByte
+                device.MessageControl.ControlByte
             };
 
-            if (Securing)
+            if ( device.MessageControl.HasSecurityControlBlock)
             {
-                command.AddRange(SecurityControlBlock());
+                commandBuffer.AddRange(SecurityControlBlock());
             }
 
-            command.Add(CommandCode);
+            commandBuffer.Add(CommandCode);
             
-            command.AddRange(Data());
-
-            command.Add(0x0);
+            commandBuffer.AddRange(Data());
             
-            if (UsingCrc)
+            if ( device.MessageControl.HasSecurityControlBlock && device.IsSecurityEstablished)
             {
-                command.Add(0x0);
+                commandBuffer.AddRange(device.GenerateMac(commandBuffer.ToArray()).Take(4));
             }
 
-            AddPacketLength(command);
-
-            if (UsingCrc)
+            commandBuffer.Add(0x0);
+            
+            if (device.MessageControl.UseCrc)
             {
-                AddCrc(command);
+                commandBuffer.Add(0x0);
+            }
+
+            AddPacketLength(commandBuffer);
+
+            if (device.MessageControl.UseCrc)
+            {
+                AddCrc(commandBuffer);
             }
             else
             {
-                AddChecksum(command);
+                AddChecksum(commandBuffer);
             }
-
-            return command.ToArray();
+            
+            return commandBuffer.ToArray();
         }
 
         internal static void AddPacketLength(IList<byte> command)
@@ -78,7 +76,7 @@ namespace OSDP.Net.Messages
             command[command.Count - 1] = crcBytes[1];
         }
 
-        internal static void AddChecksum(IList<byte> command)
+        private static void AddChecksum(IList<byte> command)
         {
             command[command.Count - 1] = CalculateChecksum(command.Take(command.Count - 1).ToArray());
         }

@@ -9,9 +9,9 @@ namespace OSDP.Net.Tests.Messages
     public class PollCommandTest
     {
         [TestCaseSource(typeof(PollCommandDataClass), nameof(PollCommandDataClass.TestCases))]
-        public string PollCommand_TestCases(byte address, Control control)
+        public string PollCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
-            return BitConverter.ToString(new PollCommand(address).BuildCommand(control));
+            return BitConverter.ToString(new PollCommand(address).BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
     }
 
@@ -21,9 +21,9 @@ namespace OSDP.Net.Tests.Messages
         {
             get
             {
-                yield return new TestCaseData((byte) 0x0, new Control(0, true, false)).Returns(
+                yield return new TestCaseData((byte) 0x0, true, false).Returns(
                     "53-00-08-00-04-60-EB-AA");
-                yield return new TestCaseData((byte) 0x0, new Control(0, false, false)).Returns(
+                yield return new TestCaseData((byte) 0x0, false, false).Returns(
                     "53-00-07-00-00-60-46");
             }
         }

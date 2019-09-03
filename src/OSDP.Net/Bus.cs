@@ -58,7 +58,7 @@ namespace OSDP.Net
 
         public void AddDevice(byte address, bool useSecureChannel)
         {
-            _configuredDevices.Add(new Device(address, useSecureChannel));
+            _configuredDevices.Add(new Device(address, true, useSecureChannel));
         }
 
         public void RemoveDevice(byte address)
@@ -88,7 +88,7 @@ namespace OSDP.Net
                 {
                     var data = new List<byte> {DriverByte};
                     var command = device.GetNextCommandData();
-                    var commandData = command.BuildCommand(device.MessageControl);
+                    var commandData = command.BuildCommand(device);
                     data.AddRange(commandData);
 
                     Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
@@ -114,6 +114,21 @@ namespace OSDP.Net
                         device.ValidReplyHasBeenReceived();
                     }
 
+                    if (reply.Type == ReplyType.Nak && reply.ExtractReplyData.First() == 0x06)
+                    {
+                        device.ResetSecurity();
+                    }
+
+                    switch (reply.Type)
+                    {
+                        case ReplyType.CrypticData:
+                            device.SendCommand(new ServerCryptogramCommand(device.Address,
+                                device.InitializeSecureChannel(reply).ToArray()));
+                            break;
+                        case ReplyType.InitialRMac:
+                            device.ValidateSecureChannelEstablishment(reply);
+                            break;
+                    }
                     _replies.Add(reply);
 
                     Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,

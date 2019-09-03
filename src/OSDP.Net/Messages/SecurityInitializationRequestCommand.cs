@@ -5,12 +5,12 @@ namespace OSDP.Net.Messages
 {
     public class SecurityInitializationRequestCommand : Command
     {
-        private readonly byte[] _randomBytes = new byte[8];
+        private readonly byte[] _serverRandomNumber;
 
-        public SecurityInitializationRequestCommand(byte address)
+        internal SecurityInitializationRequestCommand(byte address, byte[] serverRandomNumber)
         {
             Address = address;
-            new Random().NextBytes(_randomBytes);
+            _serverRandomNumber = serverRandomNumber ?? throw new ArgumentNullException(nameof(serverRandomNumber));
         }
 
         protected override byte CommandCode => 0x76;
@@ -27,7 +27,7 @@ namespace OSDP.Net.Messages
 
         protected override IEnumerable<byte> Data()
         {
-            return _randomBytes;
+            return _serverRandomNumber;
         }
     }
 }
