@@ -34,9 +34,12 @@ namespace OSDP.Net.Messages
             commandBuffer.Add(CommandCode);
             
             commandBuffer.AddRange(Data());
-            
+           
             if ( device.MessageControl.HasSecurityControlBlock && device.IsSecurityEstablished)
             {
+                // include mac and crc in length before generating mac
+                AddPacketLength(commandBuffer, (ushort)(4 + (device.MessageControl.UseCrc ? 2 : 1)));
+                
                 commandBuffer.AddRange(device.GenerateMac(commandBuffer.ToArray()).Take(4));
             }
 
@@ -61,9 +64,9 @@ namespace OSDP.Net.Messages
             return commandBuffer.ToArray();
         }
 
-        internal static void AddPacketLength(IList<byte> command)
+        internal static void AddPacketLength(IList<byte> command, ushort additionalLength = 0)
         {
-            var packetLength = ConvertShortToBytes((ushort)command.Count).ToArray();
+            var packetLength = ConvertShortToBytes((ushort)(command.Count + additionalLength)).ToArray();
             command[2] = packetLength[0];
             command[3] = packetLength[1];
         }

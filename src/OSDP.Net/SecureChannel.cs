@@ -11,6 +11,7 @@ namespace OSDP.Net
             {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F};
 
         private readonly byte[] _serverRandomNumber = new byte[8];
+        private byte[] _cmac = new byte[16];
         private byte[] _enc = new byte[16];
         private byte[] _rmac = new byte[16];
         private byte[] _smac1 = new byte[16];
@@ -90,7 +91,8 @@ namespace OSDP.Net
             
                 using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
                 {
-                    return encryptor.TransformFinalBlock(encryptBuffer, 0, encryptBuffer.Length);
+                    _cmac = encryptor.TransformFinalBlock(encryptBuffer, 0, encryptBuffer.Length);
+                    return _cmac;
                 }
             }
         }
