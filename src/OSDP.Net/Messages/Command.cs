@@ -32,15 +32,19 @@ namespace OSDP.Net.Messages
             }
 
             commandBuffer.Add(CommandCode);
-            
-            commandBuffer.AddRange(Data());
 
-            if (device.MessageControl.HasSecurityControlBlock && device.IsSecurityEstablished)
+            if (device.IsSecurityEstablished)
             {
+                commandBuffer.AddRange(EncryptedData(device));
+                
                 // include mac and crc in length before generating mac
                 AddPacketLength(commandBuffer, (ushort) (4 + (device.MessageControl.UseCrc ? 2 : 1)));
 
                 commandBuffer.AddRange(device.GenerateMac(commandBuffer.ToArray(), true).Take(4));
+            }
+            else
+            {
+                commandBuffer.AddRange(Data());
             }
 
             commandBuffer.Add(0x0);
@@ -82,6 +86,11 @@ namespace OSDP.Net.Messages
         private static void AddChecksum(IList<byte> command)
         {
             command[command.Count - 1] = CalculateChecksum(command.Take(command.Count - 1).ToArray());
+        }
+
+        private IEnumerable<byte> EncryptedData(Device device)
+        {
+            return Data().Any() ? device.EncryptData(Data()) : Data();
         }
     }
 }

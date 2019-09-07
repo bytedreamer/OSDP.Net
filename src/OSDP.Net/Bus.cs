@@ -88,7 +88,19 @@ namespace OSDP.Net
                 {
                     var data = new List<byte> {DriverByte};
                     var command = device.GetNextCommandData();
-                    var commandData = command.BuildCommand(device);
+
+
+                    byte[] commandData;
+                    try
+                    {
+                        commandData = command.BuildCommand(device);
+                    }
+                    catch (Exception exception)
+                    {
+                        Logger.Error($"Error while building command {command}", exception);
+                        continue;
+                    }
+
                     data.AddRange(commandData);
 
                     Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);

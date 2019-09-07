@@ -76,7 +76,7 @@ namespace OSDP.Net
             
             var mac = new byte[cryptoLength];
             int currentLocation = 0;
-            
+
             using (var messageAuthenticationCodeAlgorithm = Aes.Create())
             {
                 if (messageAuthenticationCodeAlgorithm == null)
@@ -95,7 +95,7 @@ namespace OSDP.Net
                 {
                     // Get first 16
                     var inputBuffer = new byte[cryptoLength];
-                    message.Skip(currentLocation).ToArray().CopyTo(inputBuffer, 0);
+                    message.Skip(currentLocation).Take(cryptoLength).ToArray().CopyTo(inputBuffer, 0);
 
                     currentLocation += cryptoLength;
                     if (currentLocation > message.Length)
@@ -114,7 +114,7 @@ namespace OSDP.Net
 
                     messageAuthenticationCodeAlgorithm.IV = mac;
                 }
-                
+
                 if (isCommand)
                 {
                     _cmac = mac;
@@ -125,6 +125,38 @@ namespace OSDP.Net
                 }
 
                 return mac;
+            }
+        }
+
+        public IEnumerable<byte> EncryptData(IEnumerable<byte> data)
+        {
+            const byte cryptoLength = 16;
+            const byte paddingStart = 0x80;
+            
+            using (var messageAuthenticationCodeAlgorithm = Aes.Create())
+            {
+                if (messageAuthenticationCodeAlgorithm == null)
+                {
+                    throw new Exception("Unable to create key algorithm");
+                }
+
+                messageAuthenticationCodeAlgorithm.Mode = CipherMode.CBC;
+                messageAuthenticationCodeAlgorithm.KeySize = 128;
+                messageAuthenticationCodeAlgorithm.BlockSize = 128;
+                messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
+                messageAuthenticationCodeAlgorithm.IV = _rmac.Select(b => (byte) ~b).ToArray();
+                messageAuthenticationCodeAlgorithm.Key = _enc;
+
+                var paddedData = new List<byte>(data) {paddingStart};
+                while (paddedData.Count % cryptoLength != 0)
+                {
+                    paddedData.Add(0x00);
+                }
+                
+                using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
+                {
+                    return encryptor.TransformFinalBlock(paddedData.ToArray(), 0, paddedData.Count);
+                }
             }
         }
 

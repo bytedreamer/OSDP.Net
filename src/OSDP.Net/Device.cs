@@ -26,7 +26,7 @@ namespace OSDP.Net
 
         public Control MessageControl { get; }
 
-        public bool IsSecurityEstablished => _secureChannel.IsEstablished;
+        public bool IsSecurityEstablished => MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
 
         /// <inheritdoc />
         public int Compare(byte x, byte y)
@@ -41,7 +41,7 @@ namespace OSDP.Net
                 return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray());
             }
 
-            if (!_commands.TryPeek(out var command))
+            if (!_commands.TryDequeue(out var command))
             {
                 command = new PollCommand(Address);
             }
@@ -56,7 +56,6 @@ namespace OSDP.Net
 
         public void ValidReplyHasBeenReceived()
         {
-            _commands.TryDequeue(out _);
             MessageControl.IncrementSequence();
         }
 
@@ -89,6 +88,11 @@ namespace OSDP.Net
         public void ResetSecurity()
         {
             _secureChannel.Reset();
+        }
+
+        public IEnumerable<byte> EncryptData(IEnumerable<byte> data)
+        {
+            return _secureChannel.EncryptData(data);
         }
     }
 }

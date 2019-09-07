@@ -13,7 +13,11 @@ namespace OSDP.Net.Messages
 
         protected override IEnumerable<byte> SecurityControlBlock()
         {
-            throw new System.NotImplementedException();
+            return new byte[]
+            {
+                0x02,
+                0x17
+            };
         }
 
         protected override IEnumerable<byte> Data()

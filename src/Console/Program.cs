@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text.Json.Serialization;
+using System.Text.Json;
 using Console.Configuration;
 using log4net;
 using log4net.Config;
@@ -48,7 +48,7 @@ namespace Console
                 {
                     new MenuItem("_ID Report", "", async () =>
                     {
-                        var reply = await ControlPanel.SendCommand(id, new IdReportCommand(0));
+                        var reply = await ControlPanel.SendCommand(id, new IdReportCommand(1));
                     })
                 })
             });
@@ -92,7 +92,7 @@ namespace Console
             try
             {
                 string json = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.config"));
-                return JsonSerializer.Parse<Settings>(json);
+                return JsonSerializer.Deserialize<Settings>(json);
             }
             catch 
             {
@@ -105,7 +105,7 @@ namespace Console
             try
             {
                 File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.config"),
-                    JsonSerializer.ToString(connectionSettings));
+                    JsonSerializer.Serialize(connectionSettings));
             }
             catch
             {
