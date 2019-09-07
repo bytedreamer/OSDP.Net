@@ -81,9 +81,9 @@ namespace OSDP.Net
             return true;
         }
 
-        public IEnumerable<byte> GenerateMac(byte[] buffer)
+        public IEnumerable<byte> GenerateMac(byte[] message, bool isCommand)
         {
-            return _secureChannel.GenerateMac(buffer, true);
+            return _secureChannel.GenerateMac(message, isCommand);
         }
 
         public void ResetSecurity()

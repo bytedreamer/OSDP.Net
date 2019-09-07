@@ -69,7 +69,7 @@ namespace OSDP.Net
             IsEstablished = true;
         }
 
-        public byte[] GenerateMac(byte[] buffer, bool isCommand)
+        public byte[] GenerateMac(byte[] message, bool isCommand)
         {
             const byte cryptoLength = 16;
             const byte paddingStart = 0x80;
@@ -91,19 +91,19 @@ namespace OSDP.Net
                 messageAuthenticationCodeAlgorithm.IV = isCommand ? _rmac : _cmac;
                 messageAuthenticationCodeAlgorithm.Key = _smac1;
 
-                while (currentLocation < buffer.Length)
+                while (currentLocation < message.Length)
                 {
                     // Get first 16
                     var inputBuffer = new byte[cryptoLength];
-                    buffer.Skip(currentLocation).ToArray().CopyTo(inputBuffer, 0);
+                    message.Skip(currentLocation).ToArray().CopyTo(inputBuffer, 0);
 
                     currentLocation += cryptoLength;
-                    if (currentLocation > buffer.Length)
+                    if (currentLocation > message.Length)
                     {
                         messageAuthenticationCodeAlgorithm.Key = _smac2;
-                        if (buffer.Length % cryptoLength != 0)
+                        if (message.Length % cryptoLength != 0)
                         {
-                            inputBuffer[buffer.Length % cryptoLength] = paddingStart;
+                            inputBuffer[message.Length % cryptoLength] = paddingStart;
                         }
                     }
 

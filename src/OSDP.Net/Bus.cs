@@ -109,6 +109,16 @@ namespace OSDP.Net
 
                     if (!reply.IsValidReply()) continue;
 
+                    if (reply.IsSecureMessage)
+                    {
+                        var mac = device.GenerateMac(reply.MessageForMacGeneration(), false);
+                        if (!reply.IsValidMac(mac))
+                        {
+                            device.ResetSecurity();
+                            continue;
+                        }
+                    }
+
                     if (reply.Type != ReplyType.Busy)
                     {
                         device.ValidReplyHasBeenReceived();

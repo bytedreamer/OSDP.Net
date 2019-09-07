@@ -9,6 +9,7 @@ namespace OSDP.Net.Messages
         private const byte AddressMask = 0x7F;
         private const ushort ReplyMessageHeaderSize = 6;
         private const ushort ReplyTypeIndex = 5;
+        private const ushort MacSize = 4;
 
         private readonly Guid _connectionId;
         private readonly IReadOnlyList<byte> _data;
@@ -29,9 +30,23 @@ namespace OSDP.Net.Messages
 
         private bool IsUsingCrc => Convert.ToBoolean(_data[4] & 0x04);
 
-        private ushort SecureBlockSize => (ushort) (IsSecureControlBlockPresent ? _data[5] : 0);
+        private byte SecureBlockSize => (byte) (IsSecureControlBlockPresent ? _data[5] : 0);
+
+        private byte SecurityBlockType => (byte) (IsSecureControlBlockPresent ? _data[6] : 0);
+
+        private static IEnumerable<byte> SecureSessionMessages => new []
+        {
+            (byte) OSDP.Net.Messages.SecurityBlockType.CommandMessageWithNoDataSecurity,
+            (byte) OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity,
+            (byte) OSDP.Net.Messages.SecurityBlockType.CommandMessageWithDataSecurity,
+            (byte) OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity,
+        };
+
+        private int MessageLength => _data.Count - (IsUsingCrc ? 6 : 5);
 
         private IEnumerable<byte> SecureBlockData => _data.Skip(ReplyMessageHeaderSize + 2).Take(SecureBlockSize - 2);
+
+        private IEnumerable<byte> Mac => _data.Skip(MessageLength).Take(MacSize).ToArray();
 
         public ReplyType Type => (ReplyType) _data[ReplyTypeIndex + SecureBlockSize];
 
@@ -39,37 +54,32 @@ namespace OSDP.Net.Messages
             _data.Skip(ReplyMessageHeaderSize).Skip(SecureBlockSize)
                 .Take(_data.Count - ReplyMessageHeaderSize - SecureBlockSize - ReplyMessageFooterSize);
 
-        public bool IsValidReply()
-        {
-            return IsCorrectAddress() && IsDataCorrect();
-        }
+        public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType);
 
-        public bool SecureCryptogramHasBeenAccepted()
+        private bool IsCorrectAddress() => _issuingCommand.Address == Address;
+
+        private bool IsDataCorrect() =>
+            IsUsingCrc
+                ? CalculateCrc(_data.Take(_data.Count - 2).ToArray()) ==
+                  ConvertBytesToShort(_data.Skip(_data.Count - 2).Take(2).ToArray())
+                : CalculateChecksum(_data.Take(_data.Count - 1).ToArray()) == _data.Last();
+
+        public byte[] MessageForMacGeneration() => _data.Take(MessageLength).ToArray();
+
+        public bool IsValidReply() => IsCorrectAddress() && IsDataCorrect();
+
+        public bool SecureCryptogramHasBeenAccepted() => Convert.ToBoolean(SecureBlockData.First());
+
+        public bool MatchIssuingCommand(Command command) => command.Equals(_issuingCommand);
+
+        public bool IsValidMac(IEnumerable<byte> mac)
         {
-            return Convert.ToBoolean(SecureBlockData.First());
+            return mac.Take(MacSize).SequenceEqual(Mac);
         }
 
         public override string ToString()
         {
             return $"Connection ID: {_connectionId} Address: {Address} Type: {Type}";
-        }
-
-        public bool MatchIssuingCommand(Command command)
-        {
-            return command.Equals(_issuingCommand);
-        }
-
-        private bool IsCorrectAddress()
-        {
-            return _issuingCommand.Address == Address;
-        }
-
-        private bool IsDataCorrect()
-        {
-            return IsUsingCrc
-                ? CalculateCrc(_data.Take(_data.Count - 2).ToArray()) ==
-                  ConvertBytesToShort(_data.Skip(_data.Count - 2).Take(2).ToArray())
-                : CalculateChecksum(_data.Take(_data.Count - 1).ToArray()) == _data.Last();
         }
     }
 }

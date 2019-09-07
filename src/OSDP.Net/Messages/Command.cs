@@ -34,13 +34,13 @@ namespace OSDP.Net.Messages
             commandBuffer.Add(CommandCode);
             
             commandBuffer.AddRange(Data());
-           
-            if ( device.MessageControl.HasSecurityControlBlock && device.IsSecurityEstablished)
+
+            if (device.MessageControl.HasSecurityControlBlock && device.IsSecurityEstablished)
             {
                 // include mac and crc in length before generating mac
-                AddPacketLength(commandBuffer, (ushort)(4 + (device.MessageControl.UseCrc ? 2 : 1)));
-                
-                commandBuffer.AddRange(device.GenerateMac(commandBuffer.ToArray()).Take(4));
+                AddPacketLength(commandBuffer, (ushort) (4 + (device.MessageControl.UseCrc ? 2 : 1)));
+
+                commandBuffer.AddRange(device.GenerateMac(commandBuffer.ToArray(), true).Take(4));
             }
 
             commandBuffer.Add(0x0);
