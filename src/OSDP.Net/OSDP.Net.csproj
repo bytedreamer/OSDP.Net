@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibLog" Version="5.0.6" />
-    <PackageReference Include="System.IO.Ports" Version="4.6.0-preview5.19224.8" />
+    <PackageReference Include="System.IO.Ports" Version="4.6.0-preview9.19421.4" />
   </ItemGroup>
 
   <ItemGroup>
