@@ -81,7 +81,7 @@ namespace OSDP.Net
                     _connection.Open();
                 }
 
-                TimeSpan timeDifference = TimeSpan.FromSeconds(1) - (DateTime.UtcNow - lastMessageSentTime);
+                TimeSpan timeDifference = TimeSpan.FromMilliseconds(100) - (DateTime.UtcNow - lastMessageSentTime);
                 await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
 
                 foreach (var device in _configuredDevices)
@@ -129,6 +129,8 @@ namespace OSDP.Net
                             device.ResetSecurity();
                             continue;
                         }
+
+                        reply.DecryptData(device);
                     }
 
                     if (reply.Type != ReplyType.Busy)

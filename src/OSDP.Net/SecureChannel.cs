@@ -128,6 +128,47 @@ namespace OSDP.Net
             }
         }
 
+        public IEnumerable<byte> DecryptData(IEnumerable<byte> data)
+        {
+            const byte cryptoLength = 16;
+            const byte paddingStart = 0x80;
+            
+            using (var messageAuthenticationCodeAlgorithm = Aes.Create())
+            {
+                if (messageAuthenticationCodeAlgorithm == null)
+                {
+                    throw new Exception("Unable to create key algorithm");
+                }
+
+                messageAuthenticationCodeAlgorithm.Mode = CipherMode.CBC;
+                messageAuthenticationCodeAlgorithm.KeySize = 128;
+                messageAuthenticationCodeAlgorithm.BlockSize = 128;
+                messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
+                messageAuthenticationCodeAlgorithm.IV = _cmac.Select(b => (byte) ~b).ToArray();
+                messageAuthenticationCodeAlgorithm.Key = _enc;
+
+                List<byte> decryptedData = new List<byte>();
+                
+                using (var encryptor = messageAuthenticationCodeAlgorithm.CreateDecryptor())
+                {
+                    var enumerable = data as byte[] ?? data.ToArray();
+                    decryptedData.AddRange(encryptor.TransformFinalBlock(enumerable, 0, enumerable.Length));
+                }
+                
+                while (decryptedData.Any() && decryptedData.Last() != paddingStart)
+                {
+                    decryptedData.RemoveAt(decryptedData.Count - 1);
+                }
+                
+                if (decryptedData.Any() && decryptedData.Last() == paddingStart)
+                {
+                    decryptedData.RemoveAt(decryptedData.Count - 1);
+                }
+
+                return decryptedData;
+            } 
+        }
+
         public IEnumerable<byte> EncryptData(IEnumerable<byte> data)
         {
             const byte cryptoLength = 16;

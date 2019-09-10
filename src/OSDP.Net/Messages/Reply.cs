@@ -15,6 +15,8 @@ namespace OSDP.Net.Messages
         private readonly IReadOnlyList<byte> _data;
         private readonly Command _issuingCommand;
 
+        private byte[] _decryptedData = { };
+
         public Reply(IReadOnlyList<byte> data, Command issuingCommand, Guid connectionId)
         {
             _data = data;
@@ -34,7 +36,7 @@ namespace OSDP.Net.Messages
 
         private byte SecurityBlockType => (byte) (IsSecureControlBlockPresent ? _data[6] : 0);
 
-        private static IEnumerable<byte> SecureSessionMessages => new []
+        private static IEnumerable<byte> SecureSessionMessages => new[]
         {
             (byte) OSDP.Net.Messages.SecurityBlockType.CommandMessageWithNoDataSecurity,
             (byte) OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity,
@@ -50,9 +52,10 @@ namespace OSDP.Net.Messages
 
         public ReplyType Type => (ReplyType) _data[ReplyTypeIndex + SecureBlockSize];
 
-        public IEnumerable<byte> ExtractReplyData =>
-            _data.Skip(ReplyMessageHeaderSize).Skip(SecureBlockSize)
-                .Take(_data.Count - ReplyMessageHeaderSize - SecureBlockSize - ReplyMessageFooterSize);
+        public IEnumerable<byte> ExtractReplyData => _decryptedData.Any() ? _decryptedData :
+            _data.Skip(ReplyMessageHeaderSize + SecureBlockSize)
+                .Take(_data.Count - ReplyMessageHeaderSize - SecureBlockSize - ReplyMessageFooterSize -
+                      (IsSecureMessage ? MacSize : 0));
 
         public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType);
 
@@ -80,6 +83,13 @@ namespace OSDP.Net.Messages
         public override string ToString()
         {
             return $"Connection ID: {_connectionId} Address: {Address} Type: {Type}";
+        }
+
+        internal void DecryptData(Device device)
+        {
+            if (!ExtractReplyData.Any()) return;
+
+            _decryptedData = device.DecryptData(ExtractReplyData).ToArray();
         }
     }
 }

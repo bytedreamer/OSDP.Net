@@ -94,5 +94,10 @@ namespace OSDP.Net
         {
             return _secureChannel.EncryptData(data);
         }
+
+        public IEnumerable<byte> DecryptData(IEnumerable<byte> data)
+        {
+            return _secureChannel.DecryptData(data);
+        }
     }
 }
