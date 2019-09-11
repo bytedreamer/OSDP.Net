@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using OSDP.Net.Connections;
 using OSDP.Net.Logging;
 using OSDP.Net.Messages;
+using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net
 {
@@ -53,24 +54,30 @@ namespace OSDP.Net
             return newBus.Id;
         }
 
-        public async Task<Reply> SendCommand(Guid connectionId, Command command)
+        public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
         {
-            var tcs = new TaskCompletionSource<Reply>();
+            return DeviceIdentification.CreateDeviceIdentification(await SendCommand(connectionId,
+                new IdReportCommand(address)));
+        }
+
+        internal async Task<Reply> SendCommand(Guid connectionId, Command command)
+        {
+            var source = new TaskCompletionSource<Reply>();
 
             void EventHandler(object sender, ReplyEventArgs replyEventArgs)
             {
                 if (!replyEventArgs.Reply.MatchIssuingCommand(command)) return;
                 ReplyReceived -= EventHandler;
-                tcs.SetResult(replyEventArgs.Reply);
+                source.SetResult(replyEventArgs.Reply);
             }
 
             ReplyReceived += EventHandler;
             
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.SendCommand(command);
 
-            if (tcs.Task == await Task.WhenAny(tcs.Task, Task.Delay(_replyResponseTimeout)))
+            if (source.Task == await Task.WhenAny(source.Task, Task.Delay(_replyResponseTimeout)))
             {
-                return await tcs.Task;
+                return await source.Task;
             }
             else
             {

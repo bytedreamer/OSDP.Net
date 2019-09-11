@@ -8,7 +8,7 @@ using log4net;
 using log4net.Config;
 using OSDP.Net;
 using OSDP.Net.Connections;
-using OSDP.Net.Messages;
+using OSDP.Net.Model.ReplyData;
 using Terminal.Gui;
 
 namespace Console
@@ -16,14 +16,13 @@ namespace Console
     internal static class Program
     {
         private static readonly ControlPanel ControlPanel = new ControlPanel();
-        private static readonly TextView MessageView = new TextView();
         private static readonly Queue<string> Messages = new Queue<string>();
         private static readonly object MessageLock =  new object();
 
-        private static Window _loggingWindow;
+        private static Window _window;
         private static MenuBar _menuBar;
 
-        static void Main()
+        private static void Main()
         {
             XmlConfigurator.Configure(
                 LogManager.GetRepository(Assembly.GetAssembly(typeof(LogManager))),
@@ -38,6 +37,16 @@ namespace Console
 
             Application.Init();
             
+            _window = new Window("OSDP.Net")
+            {
+                X = 0,
+                Y = 1, // Leave one row for the toplevel menu
+
+                Width = Dim.Fill(),
+                Height = Dim.Fill() - 1
+            };
+            Application.Top.Add(_window);
+            
             _menuBar = new MenuBar(new[]
             {
                 new MenuBarItem("_File", new[]
@@ -48,23 +57,20 @@ namespace Console
                 {
                     new MenuItem("_ID Report", "", async () =>
                     {
-                        var reply = await ControlPanel.SendCommand(id, new IdReportCommand(1));
+                        DeviceIdentification deviceIdentification;
+                        try
+                        {
+                            deviceIdentification = await ControlPanel.IdReport(id, 1);
+                        }
+                        catch
+                        {
+                            
+                        }
                     })
                 })
             });
-
-            _loggingWindow = new Window("OSDP.Net Logging")
-            {
-                X = 0,
-                Y = 1, // Leave one row for the toplevel menu
-
-                Width = Dim.Fill(),
-                Height = Dim.Fill() - 1
-            };
-            MessageView.Text = string.Empty;
-            _loggingWindow.Add(MessageView);
             
-            Application.Top.Add (_menuBar, _loggingWindow);
+            Application.Top.Add (_menuBar);
 
             Application.Run();
 
@@ -78,12 +84,12 @@ namespace Console
             lock (MessageLock)
             {
                 Messages.Enqueue(message);
-                while (Messages.Count > MessageView.Bounds.Height)
+                while (Messages.Count > 100)
                 {
                     Messages.Dequeue();
                 }
 
-                MessageView.Text = string.Join("", Messages.ToArray());
+                // MessageView.Text = string.Join("", Messages.ToArray());
             }
         }
 
