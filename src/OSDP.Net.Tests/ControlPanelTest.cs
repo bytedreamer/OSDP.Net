@@ -14,22 +14,19 @@ namespace OSDP.Net.Tests
     public class ControlPanelTest
     {
         [Test]
-        public async Task SendCommandTest()
+        public async Task DeviceGoesOnlineTest()
         {
             // Arrange
             var connection = new TestConnection();
-            connection.ReplyValues.Enqueue(0x40);
-            connection.ReplyValues.Enqueue(0x45);
 
             var panel = new ControlPanel();
             Guid id = panel.StartConnection(connection);
             panel.AddDevice(id, 0, false);
 
             // Act
-            var reply = await panel.SendCommand(id, new IdReportCommand(0));
-
             // Assert
-            Assert.AreEqual(reply.Type, ReplyType.PdIdReport);
+            await TaskEx.WaitUntil(() => panel.IsOnline(id, 0), TimeSpan.FromMilliseconds(100),
+                TimeSpan.FromSeconds(1));
         }
 
         [Test]
@@ -70,8 +67,7 @@ namespace OSDP.Net.Tests
 
     class TestConnection : IOsdpConnection
     {
-        public readonly Queue<byte> ReplyValues = new Queue<byte>();
-        private MemoryStream _nextReply;
+        private readonly MemoryStream _stream = new MemoryStream();
 
         public int NumberOfTimesCalledClose { get; private set; }
 
@@ -90,27 +86,20 @@ namespace OSDP.Net.Tests
             NumberOfTimesCalledClose++;
         }
 
-        public Task WriteAsync(byte[] buffer)
+        public async Task WriteAsync(byte[] buffer)
         {
-            CreateReply(buffer.SkipWhile(b => b!=0x53).ToList());
-            return Task.CompletedTask;
+            await _stream.FlushAsync();
+
+            await _stream.WriteAsync(
+                new AckReply().BuildReply(0, 
+                    new Control((byte) (buffer[4] & 0x03), true, false)));
+
+            _stream.Position = 0;
         }
 
         public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
-            return await _nextReply.ReadAsync(buffer, 0, buffer.Length, token);
-        }
-
-        private void CreateReply(IReadOnlyList<byte> buffer)
-        {
-            var replyBuffer = new List<byte>();
-            replyBuffer.AddRange(new byte[] {0x53, (byte) (buffer[1] | 0x80), 0x00, 0x00});
-            replyBuffer.Add(buffer[4]);
-            replyBuffer.AddRange(new byte[] {ReplyValues.Dequeue(), 0x00, 0x00});
-
-            Command.AddPacketLength(replyBuffer);
-            Command.AddCrc(replyBuffer);
-            _nextReply = new MemoryStream(replyBuffer.ToArray());
+            return await _stream.ReadAsync(buffer, 0, buffer.Length, token);
         }
     }
     

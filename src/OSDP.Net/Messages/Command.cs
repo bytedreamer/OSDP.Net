@@ -9,11 +9,7 @@ namespace OSDP.Net.Messages
     {
         protected abstract byte CommandCode { get; }
 
-        public byte Address { get; protected set; }
-
         protected abstract IEnumerable<byte> SecurityControlBlock();
-
-        protected abstract IEnumerable<byte> Data();
 
         internal byte[] BuildCommand(Device device)
         {
@@ -66,31 +62,6 @@ namespace OSDP.Net.Messages
             }
             
             return commandBuffer.ToArray();
-        }
-
-        internal static void AddPacketLength(IList<byte> command, ushort additionalLength = 0)
-        {
-            var packetLength = ConvertShortToBytes((ushort)(command.Count + additionalLength)).ToArray();
-            command[2] = packetLength[0];
-            command[3] = packetLength[1];
-        }
-
-        internal static void AddCrc(IList<byte> command)
-        {
-            ushort crc = CalculateCrc(command.Take(command.Count - 2).ToArray());
-            var crcBytes = ConvertShortToBytes(crc).ToArray();
-            command[command.Count - 2] = crcBytes[0];
-            command[command.Count - 1] = crcBytes[1];
-        }
-
-        private static void AddChecksum(IList<byte> command)
-        {
-            command[command.Count - 1] = CalculateChecksum(command.Take(command.Count - 1).ToArray());
-        }
-
-        private IEnumerable<byte> EncryptedData(Device device)
-        {
-            return Data().Any() ? device.EncryptData(Data()) : Data();
         }
     }
 }

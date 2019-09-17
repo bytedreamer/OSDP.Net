@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace OSDP.Net
         private readonly Comparer _comparer = new Comparer(CultureInfo.InvariantCulture);
         private readonly SecureChannel _secureChannel = new SecureChannel();
         private readonly bool _useSecureChannel;
+        private DateTime _lastValidReply = DateTime.MinValue;
 
         public Device(byte address, bool useCrc, bool useSecureChannel)
         {
@@ -27,6 +29,8 @@ namespace OSDP.Net
         public Control MessageControl { get; }
 
         public bool IsSecurityEstablished => MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
+
+        public bool IsOnline => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow;
 
         /// <inheritdoc />
         public int Compare(byte x, byte y)
@@ -57,6 +61,7 @@ namespace OSDP.Net
         public void ValidReplyHasBeenReceived()
         {
             MessageControl.IncrementSequence();
+            _lastValidReply = DateTime.UtcNow;
         }
 
         public IEnumerable<byte> InitializeSecureChannel(Reply reply)

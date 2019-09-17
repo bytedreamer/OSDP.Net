@@ -130,7 +130,6 @@ namespace OSDP.Net
 
         public IEnumerable<byte> DecryptData(IEnumerable<byte> data)
         {
-            const byte cryptoLength = 16;
             const byte paddingStart = 0x80;
             
             using (var messageAuthenticationCodeAlgorithm = Aes.Create())
@@ -223,7 +222,7 @@ namespace OSDP.Net
             return keyAlgorithm;
         }
 
-        private byte[] GenerateKey(SymmetricAlgorithm algorithm, byte[] first, byte[] second, byte[] key)
+        private static byte[] GenerateKey(SymmetricAlgorithm algorithm, byte[] first, byte[] second, byte[] key)
         {
             var buffer = new byte[16];
             first.CopyTo(buffer, 0);

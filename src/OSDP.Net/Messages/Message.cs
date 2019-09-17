@@ -32,6 +32,10 @@ namespace OSDP.Net.Messages
             0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
         };
 
+        public byte Address { get; protected set; }
+
+        protected abstract IEnumerable<byte> Data();
+
         protected static IEnumerable<byte> ConvertShortToBytes(ushort value)
         {
             var byteArray = BitConverter.GetBytes(value);
@@ -65,9 +69,34 @@ namespace OSDP.Net.Messages
             return crc;
         }
 
-        protected static byte CalculateChecksum(byte[] data)
+        protected static byte CalculateChecksum(byte[] packet)
         {
-            return (byte) (0x100 - data.Aggregate(0, (source, element) => source + element) & 0xff);
+            return (byte) (0x100 - packet.Aggregate(0, (source, element) => source + element) & 0xff);
+        }
+
+        protected static void AddPacketLength(IList<byte> packet, ushort additionalLength = 0)
+        {
+            var packetLength = ConvertShortToBytes((ushort)(packet.Count + additionalLength)).ToArray();
+            packet[2] = packetLength[0];
+            packet[3] = packetLength[1];
+        }
+
+        protected static void AddCrc(IList<byte> packet)
+        {
+            ushort crc = CalculateCrc(packet.Take(packet.Count - 2).ToArray());
+            var crcBytes = ConvertShortToBytes(crc).ToArray();
+            packet[packet.Count - 2] = crcBytes[0];
+            packet[packet.Count - 1] = crcBytes[1];
+        }
+
+        protected static void AddChecksum(IList<byte> packet)
+        {
+            packet[packet.Count - 1] = CalculateChecksum(packet.Take(packet.Count - 1).ToArray());
+        }
+
+        internal IEnumerable<byte> EncryptedData(Device device)
+        {
+            return Data().Any() ? device.EncryptData(Data()) : Data();
         }
     }
 }

@@ -43,12 +43,19 @@ namespace OSDP.Net
         /// </summary>
         public Guid Id { get; }
 
+        /// <summary>
+        /// Closes down the connection
+        /// </summary>
         public void Close()
         {
             _isShuttingDown = true;
             _connection.Close();
         }
 
+        /// <summary>
+        /// Send a command to a device
+        /// </summary>
+        /// <param name="command">Details about the command</param>
         public void SendCommand(Command command)
         {
             var foundDevice = _configuredDevices.First(device => device.Address == command.Address);
@@ -56,11 +63,20 @@ namespace OSDP.Net
             foundDevice.SendCommand(command);
         }
 
+        /// <summary>
+        /// Add a device to the bus
+        /// </summary>
+        /// <param name="address">Address of the device</param>
+        /// <param name="useSecureChannel">Use a secure channel to communicate</param>
         public void AddDevice(byte address, bool useSecureChannel)
         {
             _configuredDevices.Add(new Device(address, true, useSecureChannel));
         }
 
+        /// <summary>
+        /// Remove a device from the bus
+        /// </summary>
+        /// <param name="address">Address of the device</param>
         public void RemoveDevice(byte address)
         {
             var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
@@ -70,6 +86,22 @@ namespace OSDP.Net
             }
         }
 
+        /// <summary>
+        /// Is the device currently online
+        /// </summary>
+        /// <param name="address">Address of the device</param>
+        /// <returns>True if the device is online</returns>
+        public bool IsOnline(byte address)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+            
+            return  foundDevice.IsOnline;
+        }
+
+        /// <summary>
+        /// Start polling the devices on the bus
+        /// </summary>
+        /// <returns></returns>
         public async Task StartPollingAsync()
         {
             DateTime lastMessageSentTime = DateTime.MinValue;
@@ -117,23 +149,21 @@ namespace OSDP.Net
 
                     if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
 
-                    var reply = new Reply(replyBuffer, command, Id);
+                    var reply = Reply.Parse(replyBuffer, Id, command, device);
 
-                    if (!reply.IsValidReply()) continue;
+                    if (!reply.IsValidReply(device.MessageControl.Sequence)) continue;
 
                     if (reply.IsSecureMessage)
                     {
-                        var mac = device.GenerateMac(reply.MessageForMacGeneration(), false);
+                        var mac = device.GenerateMac(reply.MessageForMacGeneration, false);
                         if (!reply.IsValidMac(mac))
                         {
                             device.ResetSecurity();
                             continue;
                         }
-
-                        reply.DecryptData(device);
                     }
 
-                    if (reply.Type != ReplyType.Busy)
+                    if (reply.Type != ReplyType.Busy || reply.Type != ReplyType.Nak)
                     {
                         device.ValidReplyHasBeenReceived();
                     }

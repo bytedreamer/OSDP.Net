@@ -9,6 +9,9 @@ using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net
 {
+    /// <summary>
+    /// The OSDP control panel
+    /// </summary>
     public class ControlPanel
     {
         private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
@@ -16,6 +19,9 @@ namespace OSDP.Net
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(5);
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public ControlPanel()
         {
             Task.Factory.StartNew(() =>
@@ -40,6 +46,11 @@ namespace OSDP.Net
             }, TaskCreationOptions.LongRunning);
         }
 
+        /// <summary>
+        /// Start polling on a connection
+        /// </summary>
+        /// <param name="connection">Details of the connection</param>
+        /// <returns>The id of the connection</returns>
         public Guid StartConnection(IOsdpConnection connection)
         {
             var newBus = new Bus(connection, _replies);
@@ -58,6 +69,11 @@ namespace OSDP.Net
         {
             return DeviceIdentification.CreateDeviceIdentification(await SendCommand(connectionId,
                 new IdReportCommand(address)));
+        }
+
+        public bool IsOnline(Guid connectionId, byte address)
+        {
+            return _buses.First(bus => bus.Id == connectionId).IsOnline(address);
         }
 
         internal async Task<Reply> SendCommand(Guid connectionId, Command command)
@@ -110,13 +126,13 @@ namespace OSDP.Net
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.RemoveDevice(address);
         }
 
-        private event EventHandler<ReplyEventArgs> ReplyReceived;
-
-        protected virtual void OnReplyReceived(Reply reply)
+        internal virtual void OnReplyReceived(Reply reply)
         {
             var handler = ReplyReceived;
             handler?.Invoke(this, new ReplyEventArgs {Reply = reply});
         }
+
+        private event EventHandler<ReplyEventArgs> ReplyReceived;
 
         private class ReplyEventArgs : EventArgs
         {

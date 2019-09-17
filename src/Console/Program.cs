@@ -62,7 +62,7 @@ namespace Console
                         {
                             deviceIdentification = await ControlPanel.IdReport(id, 1);
                         }
-                        catch
+                        catch (Exception exception)
                         {
                             
                         }
