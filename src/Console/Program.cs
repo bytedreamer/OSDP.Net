@@ -50,6 +50,7 @@ namespace Console
                 {
                     new MenuItem("_Start Connection", "", StartConnection),
                     new MenuItem("_Stop Connection", "", ControlPanel.Shutdown),
+                    new MenuItem("_Show Log", string.Empty, ShowLog), 
                     new MenuItem("_Quit", "", Application.RequestStop)
                 }),
                 new MenuBarItem("_Configuration", new[]
@@ -78,6 +79,23 @@ namespace Console
             Application.Run();
 
             ControlPanel.Shutdown();
+        }
+
+        private static void ShowLog()
+        {
+            _window.RemoveAll();
+            var scrollView = new ScrollView(new Rect(1, 0, _window.Frame.Width - 1, _window.Frame.Height - 1))
+            {
+                ContentSize = new Size(100, 100),
+                ShowVerticalScrollIndicator = true,
+                ShowHorizontalScrollIndicator = true
+            };
+            lock (MessageLock)
+            {
+                scrollView.Add(new Label(0, 0, string.Join("", Messages.ToArray())));
+            }
+
+            _window.Add(scrollView);
         }
 
         private static void StartConnection()
