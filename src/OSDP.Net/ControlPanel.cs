@@ -111,7 +111,7 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Add a PD to the control panel
+        /// Add a PD to the control panel. It will replace existing PD that is configured at the same address.
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device</param>
         /// <param name="address">Address assigned to the device</param>

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Console.Configuration;
 using log4net;
 using log4net.Config;
@@ -17,11 +19,21 @@ namespace Console
     {
         private static readonly ControlPanel ControlPanel = new ControlPanel();
         private static readonly Queue<string> Messages = new Queue<string>();
-        private static readonly object MessageLock =  new object();
+        private static readonly object MessageLock = new object();
+
+        private static readonly MenuBarItem DevicesMenuBarItem =
+            new MenuBarItem("_Devices", new[]
+            {
+                new MenuItem("_Add", "", AddDevice),
+                // new MenuItem("_List", "", AddDevice),
+                // new MenuItem("_Send Command", "", AddDevice),
+                // new MenuItem("_Remove", "", AddDevice)
+            });
 
         private static Guid _connectionId;
         private static Window _window;
         private static MenuBar _menuBar;
+
         private static Settings _settings;
 
         private static void Main()
@@ -33,7 +45,7 @@ namespace Console
             _settings = GetConnectionSettings();
 
             Application.Init();
-            
+
             _window = new Window("OSDP.Net")
             {
                 X = 0,
@@ -42,40 +54,28 @@ namespace Console
                 Width = Dim.Fill(),
                 Height = Dim.Fill() - 1
             };
-            Application.Top.Add(_window);
 
             _menuBar = new MenuBar(new[]
             {
                 new MenuBarItem("_System", new[]
                 {
                     new MenuItem("_Start Connection", "", StartConnection),
-                    new MenuItem("_Stop Connection", "", ControlPanel.Shutdown),
-                    new MenuItem("_Show Log", string.Empty, ShowLog), 
-                    new MenuItem("_Quit", "", Application.RequestStop)
-                }),
-                new MenuBarItem("_Configuration", new[]
-                {
-                    new MenuItem("_Save", "",() => SetConnectionSettings(_settings))
-                }),
-                new MenuBarItem("_Command", new[]
-                {
-                    new MenuItem("_ID Report", "", async () =>
+                    new MenuItem("Sto_p Connection", "", ControlPanel.Shutdown),
+                    new MenuItem("Show _Log", string.Empty, ShowLog),
+                    new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
+                    new MenuItem("_Quit", "", () =>
                     {
-                        DeviceIdentification deviceIdentification;
-                        try
+                        if (MessageBox.Query(40, 10, "Quit", "Quit program?", "Yes", "No") == 0)
                         {
-                            deviceIdentification = await ControlPanel.IdReport(_connectionId, 1);
-                        }
-                        catch (Exception exception)
-                        {
-                            
+                            Application.RequestStop();
                         }
                     })
-                })
+                }),
+                DevicesMenuBarItem
             });
-            
-            Application.Top.Add (_menuBar);
-            
+
+            Application.Top.Add(_menuBar, _window);
+
             Application.Run();
 
             ControlPanel.Shutdown();
@@ -92,7 +92,7 @@ namespace Console
             };
             lock (MessageLock)
             {
-                scrollView.Add(new Label(0, 0, string.Join("", Messages.ToArray())));
+                scrollView.Add(new Label(0, 0, string.Join("", Messages.Reverse().ToArray())));
             }
 
             _window.Add(scrollView);
@@ -108,14 +108,8 @@ namespace Console
                 _settings.ConnectionSettings.PortName = portNameTextField.Text.ToString();
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
-                    Application.Run(new Dialog("Error", 40, 10,
-                            new Button("OK")
-                            {
-                                Clicked = Application.RequestStop
-                            })
-                    {
-                        new Label(1, 1, "Invalid baud rate entered!")
-                    });
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid baud rate entered!", "OK");
                     return;
                 }
 
@@ -125,10 +119,13 @@ namespace Console
                 _connectionId = ControlPanel.StartConnection(
                     new SerialPortOsdpConnection(_settings.ConnectionSettings.PortName,
                         _settings.ConnectionSettings.BaudRate));
-                ControlPanel.AddDevice(_connectionId, 1, true);
+                foreach (var device in _settings.Devices)
+                {
+                    ControlPanel.AddDevice(_connectionId, device.Address, device.UseSecureChannel);
+                }
                 Application.RequestStop();
             }
-            
+
             Application.Run(new Dialog("Start Connection", 60, 10,
                 new Button("Start") {Clicked = StartConnectionButtonClicked},
                 new Button("Cancel") {Clicked = Application.RequestStop})
@@ -149,8 +146,19 @@ namespace Console
                 {
                     Messages.Dequeue();
                 }
+            }
+        }
 
-                // MessageView.Text = string.Join("", Messages.ToArray());
+        private static async Task SendIdReportCommand()
+        {
+            DeviceIdentification deviceIdentification;
+            try
+            {
+                deviceIdentification = await ControlPanel.IdReport(_connectionId, 0);
+            }
+            catch (Exception exception)
+            {
+                MessageBox.ErrorQuery(40, 10, "Error", exception.Message, "OK");
             }
         }
 
@@ -161,7 +169,7 @@ namespace Console
                 string json = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.config"));
                 return JsonSerializer.Deserialize<Settings>(json);
             }
-            catch 
+            catch
             {
                 return new Settings();
             }
@@ -177,6 +185,63 @@ namespace Console
             catch
             {
                 // ignored
+            }
+        }
+
+        private static void AddDevice()
+        {
+            var nameTextField = new TextField(15, 1, 35, string.Empty);
+            var addressTextField = new TextField(15, 3, 35, string.Empty);
+            var useSecureChannelCheckBox = new CheckBox(1, 5, "Use Secure Channel", true);
+
+            void AddDeviceButtonClicked()
+            {
+                if (!byte.TryParse(addressTextField.Text.ToString(), out var address))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid address entered!", "OK");
+                    return;
+                }
+
+
+                if (_settings.Devices.Any(device => device.Address == address))
+                {
+                    if (MessageBox.Query(60, 10, "Overwrite", "Device already exists at that address, overwrite?", "Yes", "No") == 1)
+                    {
+                        return;
+                    }
+                }
+                ControlPanel.AddDevice(_connectionId, address, useSecureChannelCheckBox.Checked);
+                _settings.Devices.Add(new DeviceSetting
+                {
+                    Address = address, Name = nameTextField.Text.ToString(),
+                    UseSecureChannel = useSecureChannelCheckBox.Checked
+                });
+            }
+
+            Application.Run(new Dialog("Add Device", 60, 13,
+                new Button("Add") {Clicked = AddDeviceButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                new Label(1, 1, "Name:"),
+                nameTextField,
+                new Label(1, 3, "Address:"),
+                addressTextField,
+                useSecureChannelCheckBox
+            });
+        }
+
+        private static void RemoveDevice()
+        {
+            var scrollView = new ScrollView(new Rect(1, 0, 20, 20))
+            {
+                ContentSize = new Size(20, _settings.Devices.Count * 2),
+                ShowVerticalScrollIndicator = true,
+                ShowHorizontalScrollIndicator = true
+            };
+            foreach (var device in _settings.Devices)
+            {
+                scrollView.Add(new Label(0, 0, device.Name));
             }
         }
     }

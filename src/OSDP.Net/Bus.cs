@@ -70,6 +70,11 @@ namespace OSDP.Net
         /// <param name="useSecureChannel">Use a secure channel to communicate</param>
         public void AddDevice(byte address, bool useSecureChannel)
         {
+            var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
+            if (foundDevice != null)
+            {
+                _configuredDevices.Remove(foundDevice);
+            }
             _configuredDevices.Add(new Device(address, true, useSecureChannel));
         }
 
