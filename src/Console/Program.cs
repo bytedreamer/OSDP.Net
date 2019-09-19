@@ -24,10 +24,10 @@ namespace Console
         private static readonly MenuBarItem DevicesMenuBarItem =
             new MenuBarItem("_Devices", new[]
             {
-                new MenuItem("_Add", "", AddDevice),
+                new MenuItem("_Add", string.Empty, AddDevice),
                 // new MenuItem("_List", "", AddDevice),
                 // new MenuItem("_Send Command", "", AddDevice),
-                // new MenuItem("_Remove", "", AddDevice)
+                new MenuItem("_Remove", string.Empty, RemoveDevice)
             });
 
         private static Guid _connectionId;
@@ -203,7 +203,6 @@ namespace Console
                     return;
                 }
 
-
                 if (_settings.Devices.Any(device => device.Address == address))
                 {
                     if (MessageBox.Query(60, 10, "Overwrite", "Device already exists at that address, overwrite?", "Yes", "No") == 1)
@@ -217,6 +216,7 @@ namespace Console
                     Address = address, Name = nameTextField.Text.ToString(),
                     UseSecureChannel = useSecureChannelCheckBox.Checked
                 });
+                Application.RequestStop();
             }
 
             Application.Run(new Dialog("Add Device", 60, 13,
@@ -233,16 +233,32 @@ namespace Console
 
         private static void RemoveDevice()
         {
-            var scrollView = new ScrollView(new Rect(1, 0, 20, 20))
+            var orderedDevices = _settings.Devices.OrderBy(device => device.Address).ToArray();
+            var scrollView = new ScrollView(new Rect(6, 1, 40, 6))
             {
-                ContentSize = new Size(20, _settings.Devices.Count * 2),
-                ShowVerticalScrollIndicator = true,
-                ShowHorizontalScrollIndicator = true
+                ContentSize = new Size(50, orderedDevices.Length * 2),
+                ShowVerticalScrollIndicator = orderedDevices.Length > 6,
+                ShowHorizontalScrollIndicator = false
             };
-            foreach (var device in _settings.Devices)
+
+            var deviceRadioGroup = new RadioGroup(0, 0,
+                orderedDevices.Select(device => $"{device.Address} : {device.Name}").ToArray());
+            scrollView.Add(deviceRadioGroup);
+            
+            void RemoveDeviceButtonClicked()
             {
-                scrollView.Add(new Label(0, 0, device.Name));
+                var removedDevice = orderedDevices[deviceRadioGroup.Selected];
+                ControlPanel.RemoveDevice(_connectionId, removedDevice.Address);
+                _settings.Devices.Remove(removedDevice);
+                Application.RequestStop();
             }
+
+            Application.Run(new Dialog("Remove Device", 60, 13,
+                new Button("Remove") {Clicked = RemoveDeviceButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                scrollView
+            });
         }
     }
 }

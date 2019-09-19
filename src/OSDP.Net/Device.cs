@@ -1,17 +1,14 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net
 {
-    internal class Device : IComparer<byte>
+    internal class Device : IComparable<Device>
     {
         private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
-        private readonly Comparer _comparer = new Comparer(CultureInfo.InvariantCulture);
         private readonly SecureChannel _secureChannel = new SecureChannel();
         private readonly bool _useSecureChannel;
         private DateTime _lastValidReply = DateTime.MinValue;
@@ -33,9 +30,11 @@ namespace OSDP.Net
         public bool IsOnline => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow;
 
         /// <inheritdoc />
-        public int Compare(byte x, byte y)
+        public int CompareTo(Device other)
         {
-            return _comparer.Compare(x, y);
+            if (ReferenceEquals(this, other)) return 0;
+            if (ReferenceEquals(null, other)) return 1;
+            return Address.CompareTo(other.Address);
         }
 
         public Command GetNextCommandData()
