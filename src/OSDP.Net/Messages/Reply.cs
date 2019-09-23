@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace OSDP.Net.Messages
 {
-    internal class Reply : Message
+    internal abstract class Reply : Message
     {
         private const byte AddressMask = 0x7F;
         private const ushort ReplyMessageHeaderSize = 6;
@@ -51,8 +51,8 @@ namespace OSDP.Net.Messages
             _issuingCommand = issuingCommand;
         }
 
-        private byte SecurityBlockType { get; }
-        private IEnumerable<byte> SecureBlockData { get; }
+        protected byte SecurityBlockType { get; }
+        protected IEnumerable<byte> SecureBlockData { get; }
         private IEnumerable<byte> Mac { get; }
         private bool IsDataCorrect { get; }
         private byte Sequence { get; }
@@ -71,11 +71,11 @@ namespace OSDP.Net.Messages
         public byte[] MessageForMacGeneration { get; }
         public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType);
 
-        protected virtual byte ReplyCode { get; }
+        protected abstract byte ReplyCode { get; }
 
         public static Reply Parse(IReadOnlyList<byte> data, Guid connectionId, Command issuingCommand, Device device)
         {
-            var reply = new Reply(data, connectionId, issuingCommand, device);
+            var reply = new UnknownReply(data, connectionId, issuingCommand, device);
 
             return reply;
         }
@@ -138,15 +138,7 @@ namespace OSDP.Net.Messages
             return commandBuffer.ToArray();
         }
 
-        protected virtual IEnumerable<byte> SecurityControlBlock()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override IEnumerable<byte> Data()
-        {
-            throw new NotImplementedException();
-        }
+        protected abstract IEnumerable<byte> SecurityControlBlock();
 
         public override string ToString()
         {
