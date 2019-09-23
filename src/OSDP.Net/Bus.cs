@@ -21,6 +21,7 @@ namespace OSDP.Net
         private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
 
         private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
+        private readonly object _configuredDevicesLock = new object();
         private readonly IOsdpConnection _connection;
 
         private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
@@ -71,11 +72,16 @@ namespace OSDP.Net
         public void AddDevice(byte address, bool useSecureChannel)
         {
             var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
-            if (foundDevice != null)
+
+            lock (_configuredDevicesLock)
             {
-                _configuredDevices.Remove(foundDevice);
+                if (foundDevice != null)
+                {
+                    _configuredDevices.Remove(foundDevice);
+                }
+
+                _configuredDevices.Add(new Device(address, true, useSecureChannel));
             }
-            _configuredDevices.Add(new Device(address, true, useSecureChannel));
         }
 
         /// <summary>
@@ -87,7 +93,10 @@ namespace OSDP.Net
             var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
             if (foundDevice != null)
             {
-                _configuredDevices.Remove(foundDevice);
+                lock (_configuredDevicesLock)
+                {
+                    _configuredDevices.Remove(foundDevice);
+                }
             }
         }
 
@@ -121,11 +130,10 @@ namespace OSDP.Net
                 TimeSpan timeDifference = TimeSpan.FromMilliseconds(100) - (DateTime.UtcNow - lastMessageSentTime);
                 await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
 
-                foreach (var device in _configuredDevices)
+                foreach (var device in _configuredDevices.ToArray())
                 {
                     var data = new List<byte> {DriverByte};
                     var command = device.GetNextCommandData();
-
 
                     byte[] commandData;
                     try
