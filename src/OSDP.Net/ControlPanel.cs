@@ -71,6 +71,12 @@ namespace OSDP.Net
                 new IdReportCommand(address)));
         }
 
+        public async Task<DeviceCapabilities> DeviceCapabilities(Guid connectionId, byte address)
+        {
+            return Model.ReplyData.DeviceCapabilities.CreateCapabilities(await SendCommand(connectionId,
+                new DeviceCapabilitiesCommand(address)));
+        }
+
         public bool IsOnline(Guid connectionId, byte address)
         {
             return _buses.First(bus => bus.Id == connectionId).IsOnline(address);

@@ -71,7 +71,11 @@ namespace Console
                         }
                     })
                 }),
-                DevicesMenuBarItem
+                DevicesMenuBarItem,
+                new MenuBarItem("_Commands", new[]
+                {
+                    new MenuItem("_Device Capabilities", "", async () => await SendDeviceCapabilitiesCommand()) 
+                }), 
             });
 
             Application.Top.Add(_menuBar, _window);
@@ -155,6 +159,19 @@ namespace Console
             try
             {
                 deviceIdentification = await ControlPanel.IdReport(_connectionId, 0);
+            }
+            catch (Exception exception)
+            {
+                MessageBox.ErrorQuery(40, 10, "Error", exception.Message, "OK");
+            }
+        }
+
+        private static async Task SendDeviceCapabilitiesCommand()
+        {
+            DeviceCapabilities deviceCapabilities;
+            try
+            {
+                deviceCapabilities = await ControlPanel.DeviceCapabilities(_connectionId, 1);
             }
             catch (Exception exception)
             {
