@@ -40,6 +40,6 @@ steps:
     command: 'publish'
     publishWebProjects: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r win10-x64 /p:PublishSingleFile=true'
-    zipAfterPublish: false
+    arguments: ''
+    zipAfterPublish: true
     modifyOutputPath: false
