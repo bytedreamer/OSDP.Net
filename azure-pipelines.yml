@@ -39,7 +39,7 @@ steps:
   inputs:
     command: 'publish'
     publishWebProjects: false
-    projects: 'Console/Console.csproj'
+    projects: 'src/Console/Console.csproj'
     arguments: '-r win-x64 /p:PublishSingleFile=true'
     zipAfterPublish: false
     modifyOutputPath: false
