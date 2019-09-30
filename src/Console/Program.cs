@@ -10,7 +10,6 @@ using log4net;
 using log4net.Config;
 using OSDP.Net;
 using OSDP.Net.Connections;
-using OSDP.Net.Model.ReplyData;
 using Terminal.Gui;
 
 namespace Console
@@ -74,8 +73,11 @@ namespace Console
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
                 {
-                    new MenuItem("_Device Capabilities", "", async () => await SendDeviceCapabilitiesCommand()) 
-                }), 
+                    new MenuItem("_ID Report", "", 
+                        () => SendCommand("ID Report Command", _connectionId, ControlPanel.IdReport)),
+                    new MenuItem("_Device Capabilities", "", 
+                        () => SendCommand("Device Capabilities Command", _connectionId, ControlPanel.DeviceCapabilities))
+                })
             });
 
             Application.Top.Add(_menuBar, _window);
@@ -150,32 +152,6 @@ namespace Console
                 {
                     Messages.Dequeue();
                 }
-            }
-        }
-
-        private static async Task SendIdReportCommand()
-        {
-            DeviceIdentification deviceIdentification;
-            try
-            {
-                deviceIdentification = await ControlPanel.IdReport(_connectionId, 0);
-            }
-            catch (Exception exception)
-            {
-                MessageBox.ErrorQuery(40, 10, "Error", exception.Message, "OK");
-            }
-        }
-
-        private static async Task SendDeviceCapabilitiesCommand()
-        {
-            DeviceCapabilities deviceCapabilities;
-            try
-            {
-                deviceCapabilities = await ControlPanel.DeviceCapabilities(_connectionId, 1);
-            }
-            catch (Exception exception)
-            {
-                MessageBox.ErrorQuery(40, 10, "Error", exception.Message, "OK");
             }
         }
 
@@ -272,6 +248,47 @@ namespace Console
 
             Application.Run(new Dialog("Remove Device", 60, 13,
                 new Button("Remove") {Clicked = RemoveDeviceButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                scrollView
+            });
+        }
+
+        private static void SendCommand<T>(string title, Guid connectionId, Func<Guid, byte, Task<T>> sendCommandFunction)
+        {
+            var orderedDevices = _settings.Devices.OrderBy(device => device.Address).ToArray();
+            var scrollView = new ScrollView(new Rect(6, 1, 40, 6))
+            {
+                ContentSize = new Size(50, orderedDevices.Length * 2),
+                ShowVerticalScrollIndicator = orderedDevices.Length > 6,
+                ShowHorizontalScrollIndicator = false
+            };
+
+            var deviceRadioGroup = new RadioGroup(0, 0,
+                orderedDevices.Select(device => $"{device.Address} : {device.Name}").ToArray());
+            scrollView.Add(deviceRadioGroup);
+
+            async Task SendCommandButtonClicked()
+            {
+                var selectedDevice = orderedDevices[deviceRadioGroup.Selected];
+                try
+                {
+                    var result = await sendCommandFunction(connectionId, selectedDevice.Address);
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", exception.Message, "OK");
+                }
+
+                Application.RequestStop();
+            }
+
+            Application.Run(new Dialog(title, 60, 13,
+                new Button("Send") {Clicked = async () =>
+                    {
+                        await SendCommandButtonClicked();
+                    }
+                },
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
                 scrollView
