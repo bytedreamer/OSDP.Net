@@ -40,6 +40,5 @@ steps:
     command: 'publish'
     publishWebProjects: false
     projects: 'src/Console/Console.csproj'
-    arguments: ''
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     zipAfterPublish: true
-    modifyOutputPath: false
