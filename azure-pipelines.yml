@@ -34,3 +34,12 @@ steps:
     command: 'test'
     projects: '**/*Tests/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: 'Console/Console.csproj'
+    arguments: '-r win-x64 /p:PublishSingleFile=true'
+    zipAfterPublish: false
+    modifyOutputPath: false
