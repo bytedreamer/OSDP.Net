@@ -35,11 +35,11 @@ namespace OSDP.Net.Model.ReplyData
         public override string ToString()
         {
             var build = new StringBuilder();
-            foreach (var capablity in Capabilities)
+            foreach (var capability in Capabilities)
             {
-                build.AppendLine($"  Function: {capablity.Function}");
-                build.AppendLine($"Compliance: {capablity.Compliance}");
-                build.AppendLine($" Number Of: {capablity.NumberOf}");
+                build.AppendLine($"  Function: {capability.Function}");
+                build.AppendLine($"Compliance: {capability.Compliance}");
+                build.AppendLine($" Number Of: {capability.NumberOf}");
                 build.AppendLine(string.Empty);
             }
 
