@@ -273,7 +273,23 @@ namespace Console
                 var selectedDevice = orderedDevices[deviceRadioGroup.Selected];
                 try
                 {
-                    var result = await sendCommandFunction(connectionId, selectedDevice.Address);
+                    string resultString = (await sendCommandFunction(connectionId, selectedDevice.Address)).ToString();
+                    var resultStringLines = resultString.Split(Environment.NewLine);
+
+                    var resultsView = new ScrollView(new Rect(5, 1, 50, 6))
+                    {
+                        ContentSize = new Size(resultStringLines.OrderByDescending(line => line.Length).First().Length,
+                            resultStringLines.Length),
+                        ShowVerticalScrollIndicator = true,
+                        ShowHorizontalScrollIndicator = true
+                    };
+                    resultsView.Add(new Label(resultString));
+
+                    Application.Run(new Dialog(title, 60, 13,
+                        new Button("OK") {Clicked = Application.RequestStop})
+                    {
+                        resultsView
+                    });
                 }
                 catch (Exception exception)
                 {

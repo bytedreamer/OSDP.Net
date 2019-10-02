@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
@@ -29,6 +30,20 @@ namespace OSDP.Net.Model.ReplyData
             };
 
             return deviceCapabilities;
+        }
+
+        public override string ToString()
+        {
+            var build = new StringBuilder();
+            foreach (var capablity in Capabilities)
+            {
+                build.AppendLine($"  Function: {capablity.Function}");
+                build.AppendLine($"Compliance: {capablity.Compliance}");
+                build.AppendLine($" Number Of: {capablity.NumberOf}");
+                build.AppendLine(string.Empty);
+            }
+
+            return build.ToString();
         }
     }
 

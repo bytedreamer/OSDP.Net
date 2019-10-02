@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Text;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
@@ -39,6 +40,18 @@ namespace OSDP.Net.Model.ReplyData
             };
 
             return deviceIdentification;
+        }
+
+        public override string ToString()
+        {
+            var build = new StringBuilder();
+            build.AppendLine($"     Vendor Code: {BitConverter.ToString(VendorCode)}");
+            build.AppendLine($"    Model Number: {ModelNumber}");
+            build.AppendLine($"         Version: {Version}");
+            build.AppendLine($"   Serial Number: {SerialNumber}");
+            build.AppendLine($"Firmware Version: {FirmwareMajor}.{FirmwareMinor}.{FirmwareBuild}");
+
+            return build.ToString();
         }
 
         private static int ConvertBytesToInt(byte[] bytes)
