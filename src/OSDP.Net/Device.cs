@@ -18,7 +18,6 @@ namespace OSDP.Net
             _useSecureChannel = useSecureChannel;
             Address = address;
             MessageControl = new Control(0, useCrc, useSecureChannel);
-            _commands.Enqueue(new PollCommand(Address));
         }
 
         public byte Address { get; }
@@ -39,9 +38,19 @@ namespace OSDP.Net
 
         public Command GetNextCommandData()
         {
+            if (MessageControl.Sequence == 0)
+            {
+                return new PollCommand(Address);
+            }
+            
             if (_useSecureChannel && !_secureChannel.IsInitialized)
             {
                 return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray());
+            }
+
+            if (_useSecureChannel && !_secureChannel.IsEstablished)
+            {
+                return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram);
             }
 
             if (!_commands.TryDequeue(out var command))
@@ -63,11 +72,11 @@ namespace OSDP.Net
             _lastValidReply = DateTime.UtcNow;
         }
 
-        public IEnumerable<byte> InitializeSecureChannel(Reply reply)
+        public void InitializeSecureChannel(Reply reply)
         {
             var replyData = reply.ExtractReplyData.ToArray();
             
-            return _secureChannel.Initialize(replyData.Take(8).ToArray(),
+            _secureChannel.Initialize(replyData.Take(8).ToArray(),
                 replyData.Skip(8).Take(8).ToArray(),
                 replyData.Skip(16).Take(16).ToArray());
         }

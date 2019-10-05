@@ -22,13 +22,15 @@ namespace OSDP.Net
             Reset();
         }
 
+        public byte[] ServerCryptogram { get; private set; }
+
         public bool IsInitialized { get; private set; }
 
         public bool IsEstablished { get; private set; }
 
         public IEnumerable<byte> ServerRandomNumber() => _serverRandomNumber;
 
-        public byte[] Initialize(byte[] cUID, byte[] clientRandomNumber, byte[] clientCryptogram)
+        public void Initialize(byte[] cUID, byte[] clientRandomNumber, byte[] clientCryptogram)
         {
             using (var keyAlgorithm = CreateKeyAlgorithm())
             {
@@ -57,9 +59,9 @@ namespace OSDP.Net
                         0x01, 0x02, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
                         _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
                     }, new byte[8], _defaultSecureChannelKey);
-
+                
+                ServerCryptogram = GenerateKey(keyAlgorithm, clientRandomNumber, _serverRandomNumber, _enc);
                 IsInitialized = true;
-                return GenerateKey(keyAlgorithm, clientRandomNumber, _serverRandomNumber, _enc);
             }
         }
 

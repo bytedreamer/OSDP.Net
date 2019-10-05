@@ -181,7 +181,7 @@ namespace OSDP.Net
                         device.ValidReplyHasBeenReceived();
                     }
 
-                    if (reply.Type == ReplyType.Nak && reply.ExtractReplyData.First() == 0x06)
+                    if (reply.Type == ReplyType.Nak && (reply.ExtractReplyData.First() == 0x05 || reply.ExtractReplyData.First() == 0x06))
                     {
                         device.ResetSecurity();
                     }
@@ -189,8 +189,7 @@ namespace OSDP.Net
                     switch (reply.Type)
                     {
                         case ReplyType.CrypticData:
-                            device.SendCommand(new ServerCryptogramCommand(device.Address,
-                                device.InitializeSecureChannel(reply).ToArray()));
+                            device.InitializeSecureChannel(reply);
                             break;
                         case ReplyType.InitialRMac:
                             device.ValidateSecureChannelEstablishment(reply);
