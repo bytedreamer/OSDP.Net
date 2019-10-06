@@ -38,8 +38,18 @@ namespace OSDP.Net.Model.ReplyData
             foreach (var capability in Capabilities)
             {
                 build.AppendLine($"  Function: {capability.Function}");
-                build.AppendLine($"Compliance: {capability.Compliance}");
-                build.AppendLine($" Number Of: {capability.NumberOf}");
+
+                if (capability.Function == CapabilityFunction.ReceiveBufferSize ||
+                    capability.Function == CapabilityFunction.LargestCombinedMessageSize)
+                {
+                    build.AppendLine($"      Size: {BitConverter.ToInt16(new[] {capability.Compliance, capability.NumberOf}, 0)}");
+                }
+                else
+                {
+                    build.AppendLine($"Compliance: {capability.Compliance}");
+                    build.AppendLine($" Number Of: {capability.NumberOf}");
+                }
+
                 build.AppendLine(string.Empty);
             }
 
