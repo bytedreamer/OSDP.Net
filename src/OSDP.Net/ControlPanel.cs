@@ -77,6 +77,12 @@ namespace OSDP.Net
                 new DeviceCapabilitiesCommand(address)));
         }
 
+        public async Task<LocalStatus> LocalStatus(Guid connectionId, byte address)
+        {
+            return Model.ReplyData.LocalStatus.CreateLocalStatus(await SendCommand(connectionId,
+                new LocalStatusReportCommand(address)));
+        }
+
         public bool IsOnline(Guid connectionId, byte address)
         {
             return _buses.First(bus => bus.Id == connectionId).IsOnline(address);

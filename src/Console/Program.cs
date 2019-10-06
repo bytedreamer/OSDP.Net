@@ -73,10 +73,12 @@ namespace Console
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
                 {
+                    new MenuItem("_Device Capabilities", "", 
+                        () => SendCommand("Device Capabilities Command", _connectionId, ControlPanel.DeviceCapabilities)),
                     new MenuItem("_ID Report", "", 
                         () => SendCommand("ID Report Command", _connectionId, ControlPanel.IdReport)),
-                    new MenuItem("_Device Capabilities", "", 
-                        () => SendCommand("Device Capabilities Command", _connectionId, ControlPanel.DeviceCapabilities))
+                    new MenuItem("_Local Status", "", 
+                        () => SendCommand("Local Status Command", _connectionId, ControlPanel.LocalStatus)),
                 })
             });
 
