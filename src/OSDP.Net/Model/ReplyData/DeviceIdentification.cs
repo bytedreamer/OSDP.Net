@@ -48,18 +48,10 @@ namespace OSDP.Net.Model.ReplyData
             build.AppendLine($"     Vendor Code: {BitConverter.ToString(VendorCode)}");
             build.AppendLine($"    Model Number: {ModelNumber}");
             build.AppendLine($"         Version: {Version}");
-            build.AppendLine($"   Serial Number: {SerialNumber}");
+            build.AppendLine($"   Serial Number: {BitConverter.ToString(ConvertIntToBytes(SerialNumber).ToArray())}");
             build.AppendLine($"Firmware Version: {FirmwareMajor}.{FirmwareMinor}.{FirmwareBuild}");
 
             return build.ToString();
-        }
-
-        private static int ConvertBytesToInt(byte[] bytes)
-        {
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(bytes);
-
-            return BitConverter.ToInt32(bytes, 0);
         }
     }
 }
