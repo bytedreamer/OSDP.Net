@@ -10,6 +10,7 @@ using log4net;
 using log4net.Config;
 using OSDP.Net;
 using OSDP.Net.Connections;
+using OSDP.Net.Model.ReplyData;
 using Terminal.Gui;
 
 namespace Console
@@ -32,6 +33,7 @@ namespace Console
         private static Guid _connectionId;
         private static Window _window;
         private static MenuBar _menuBar;
+        private static ControlPanel.NakReplyEventArgs LastNak = null;
 
         private static Settings _settings;
 
@@ -74,11 +76,11 @@ namespace Console
                 new MenuBarItem("_Commands", new[]
                 {
                     new MenuItem("_Device Capabilities", "", 
-                        () => SendCommand("Device Capabilities Command", _connectionId, ControlPanel.DeviceCapabilities)),
+                        () => SendCommand("Device capabilities", _connectionId, ControlPanel.DeviceCapabilities)),
                     new MenuItem("_ID Report", "", 
-                        () => SendCommand("ID Report Command", _connectionId, ControlPanel.IdReport)),
+                        () => SendCommand("ID report", _connectionId, ControlPanel.IdReport)),
                     new MenuItem("_Local Status", "", 
-                        () => SendCommand("Local Status Command", _connectionId, ControlPanel.LocalStatus)),
+                        () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus)),
                 })
             });
 
@@ -131,6 +133,27 @@ namespace Console
                 {
                     ControlPanel.AddDevice(_connectionId, device.Address, device.UseSecureChannel);
                 }
+
+                ControlPanel.NakReplyReceived += (sender, args) =>
+                {
+                    var lastNak = LastNak;
+                    if (lastNak != null && lastNak.Address == args.Address &&
+                        lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
+                    {
+                        return;
+                    }
+
+                    LastNak = lastNak;
+                    Application.MainLoop.Invoke(() =>
+                        DisplayMessage($"!!! Received NAK reply for address {args.Address} !!!",
+                            args.Nak.ToString()));
+                };
+                ControlPanel.RawCardDataReplyReceived += (sender, args) =>
+                {
+                    Application.MainLoop.Invoke(() =>
+                        DisplayMessage($"Received raw card data reply for address {args.Address}",
+                            args.RawCardData.ToString()));
+                };
                 Application.RequestStop();
             }
 
@@ -270,33 +293,21 @@ namespace Console
                 orderedDevices.Select(device => $"{device.Address} : {device.Name}").ToArray());
             scrollView.Add(deviceRadioGroup);
 
-            async Task SendCommandButtonClicked()
+            void SendCommandButtonClicked()
             {
                 var selectedDevice = orderedDevices[deviceRadioGroup.Selected];
-                try
+                Application.MainLoop.Invoke(async () =>
                 {
-                    string resultString = (await sendCommandFunction(connectionId, selectedDevice.Address)).ToString();
-                    var resultStringLines = resultString.Split(Environment.NewLine);
-
-                    var resultsView = new ScrollView(new Rect(5, 1, 50, 6))
+                    try
                     {
-                        ContentSize = new Size(resultStringLines.OrderByDescending(line => line.Length).First().Length,
-                            resultStringLines.Length),
-                        ShowVerticalScrollIndicator = true,
-                        ShowHorizontalScrollIndicator = true
-                    };
-                    resultsView.Add(new Label(resultString));
-
-                    Application.Run(new Dialog(title, 60, 13,
-                        new Button("OK") {Clicked = Application.RequestStop})
+                        DisplayMessage($"{title} for address {selectedDevice.Address}",
+                            (await sendCommandFunction(connectionId, selectedDevice.Address)).ToString());
+                    }
+                    catch (Exception exception)
                     {
-                        resultsView
-                    });
-                }
-                catch (Exception exception)
-                {
-                    MessageBox.ErrorQuery(40, 10, "Error", exception.Message, "OK");
-                }
+                        MessageBox.ErrorQuery(40, 10, $"Error on address {selectedDevice.Address}", exception.Message, "OK");
+                    }
+                });
 
                 Application.RequestStop();
             }
@@ -304,12 +315,32 @@ namespace Console
             Application.Run(new Dialog(title, 60, 13,
                 new Button("Send") {Clicked = async () =>
                     {
-                        await SendCommandButtonClicked();
+                        SendCommandButtonClicked();
                     }
                 },
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
                 scrollView
+            });
+        }
+
+        private static void DisplayMessage(string title, string message)
+        {
+            var resultStringLines = message.Split(Environment.NewLine);
+
+            var resultsView = new ScrollView(new Rect(5, 1, 50, 6))
+            {
+                ContentSize = new Size(resultStringLines.OrderByDescending(line => line.Length).First().Length,
+                    resultStringLines.Length),
+                ShowVerticalScrollIndicator = true,
+                ShowHorizontalScrollIndicator = true
+            };
+            resultsView.Add(new Label(message));
+
+            Application.Run(new Dialog(title, 60, 13,
+                new Button("OK") {Clicked = Application.RequestStop})
+            {
+                resultsView
             });
         }
     }

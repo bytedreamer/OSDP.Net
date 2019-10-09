@@ -37,12 +37,12 @@ namespace OSDP.Net.Model.ReplyData
             var build = new StringBuilder();
             foreach (var capability in Capabilities)
             {
-                build.AppendLine($"  Function: {capability.Function}");
+                build.AppendLine($"  Function: {SplitCamelCase(capability.Function.ToString())}");
 
                 if (capability.Function == CapabilityFunction.ReceiveBufferSize ||
                     capability.Function == CapabilityFunction.LargestCombinedMessageSize)
                 {
-                    build.AppendLine($"      Size: {BitConverter.ToInt16(new[] {capability.Compliance, capability.NumberOf}, 0)}");
+                    build.AppendLine($"      Size: {Message.ConvertBytesToShort(new[] {capability.Compliance, capability.NumberOf})}");
                 }
                 else
                 {

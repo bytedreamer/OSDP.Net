@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -22,6 +23,19 @@ namespace OSDP.Net.Model.ReplyData
             }
 
             return byteArray;
+        }
+
+        protected static string SplitCamelCase( string str )
+        {
+            return Regex.Replace( 
+                Regex.Replace( 
+                    str, 
+                    @"(\P{Ll})(\P{Ll}\p{Ll})", 
+                    "$1 $2" 
+                ), 
+                @"(\p{Ll})(\P{Ll})", 
+                "$1 $2" 
+            );
         }
     }
 }

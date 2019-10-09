@@ -28,20 +28,9 @@ namespace OSDP.Net
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    Logger.Debug($"Received a reply {reply}");
+                    Logger.Info($"Received a reply {reply}");
                     
                     OnReplyReceived(reply);
-                    
-                    if (reply.Type == ReplyType.FormattedReaderData)
-                    {
-                        Logger.Debug(
-                            $"Formatted Reader Data {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
-                    }
-                    else if (reply.Type == ReplyType.RawReaderData)
-                    {
-                        Logger.Debug(
-                            $"Raw Reader Data: {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
-                    }
                 }
             }, TaskCreationOptions.LongRunning);
         }
@@ -140,11 +129,61 @@ namespace OSDP.Net
 
         internal virtual void OnReplyReceived(Reply reply)
         {
-            var handler = ReplyReceived;
-            handler?.Invoke(this, new ReplyEventArgs {Reply = reply});
+            {
+                var handler = ReplyReceived;
+                handler?.Invoke(this, new ReplyEventArgs {Reply = reply});
+            }
+
+            switch (reply.Type)
+            {
+                case ReplyType.Nak:
+                {
+                    var handler = NakReplyReceived;
+                    handler?.Invoke(this, new NakReplyEventArgs(reply.Address, Nak.CreateNak(reply)));
+                    break;
+                }
+                case ReplyType.FormattedReaderData:
+                    Logger.Debug(
+                        $"Formatted Reader Data {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
+                    break;
+                case ReplyType.RawReaderData:
+                {
+                    var handler = RawCardDataReplyReceived;
+                    handler?.Invoke(this, new RawCardDataReplyEventArgs(reply.Address, RawCardData.CreateRawCardData(reply)));
+                    break;
+                }
+            }
         }
 
         private event EventHandler<ReplyEventArgs> ReplyReceived;
+
+        public event EventHandler<NakReplyEventArgs> NakReplyReceived;
+
+        public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
+
+        public class NakReplyEventArgs
+        {
+            public NakReplyEventArgs(byte address, Nak nak)
+            {
+                Address = address;
+                Nak = nak;
+            }
+
+            public byte Address { get; set; }
+            public Nak Nak { get; set; }
+        }
+
+        public class RawCardDataReplyEventArgs
+        {
+            public RawCardDataReplyEventArgs(byte address, RawCardData rawCardData)
+            {
+                Address = address;
+                RawCardData = rawCardData;
+            }
+
+            public byte Address { get; set; }
+            public RawCardData RawCardData { get; set; }
+        }
 
         private class ReplyEventArgs : EventArgs
         {
