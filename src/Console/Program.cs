@@ -137,13 +137,13 @@ namespace Console
                 ControlPanel.NakReplyReceived += (sender, args) =>
                 {
                     var lastNak = LastNak;
+                    LastNak = args;
                     if (lastNak != null && lastNak.Address == args.Address &&
                         lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
                     {
                         return;
                     }
-
-                    LastNak = lastNak;
+                    
                     Application.MainLoop.Invoke(() =>
                         DisplayMessage($"!!! Received NAK reply for address {args.Address} !!!",
                             args.Nak.ToString()));
