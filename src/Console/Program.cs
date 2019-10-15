@@ -57,10 +57,11 @@ namespace Console
 
             _menuBar = new MenuBar(new[]
             {
-                new MenuBarItem("_System", new[]
+                new MenuBarItem("_System", new []
                 {
-                    new MenuItem("_Start Connection", "", StartConnection),
-                    new MenuItem("Sto_p Connection", "", ControlPanel.Shutdown),
+                    new MenuItem("Start _Serial Connection", "", StartSerialConnection),
+                    new MenuItem("Start _TCP Server Connection", "", StartTcpServerConnection),
+                    new MenuItem("Sto_p Connections", "", ControlPanel.Shutdown),
                     new MenuItem("Show _Log", string.Empty, ShowLog),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
@@ -107,7 +108,7 @@ namespace Console
             _window.Add(scrollView);
         }
 
-        private static void StartConnection()
+        private static void StartSerialConnection()
         {
             var portNameTextField = new TextField(15, 1, 35, _settings.SerialConnectionSettings.PortName);
             var baudRateTextField = new TextField(15, 3, 35, _settings.SerialConnectionSettings.BaudRate.ToString());
@@ -123,40 +124,14 @@ namespace Console
                 }
 
                 _settings.SerialConnectionSettings.BaudRate = baudRate;
-
-                ControlPanel.Shutdown();
-                _connectionId = ControlPanel.StartConnection(
-                    new SerialPortOsdpConnection(_settings.SerialConnectionSettings.PortName,
-                        _settings.SerialConnectionSettings.BaudRate));
-                foreach (var device in _settings.Devices)
-                {
-                    ControlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel);
-                }
-
-                ControlPanel.NakReplyReceived += (sender, args) =>
-                {
-                    var lastNak = _lastNak;
-                    _lastNak = args;
-                    if (lastNak != null && lastNak.Address == args.Address &&
-                        lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
-                    {
-                        return;
-                    }
-                    
-                    Application.MainLoop.Invoke(() =>
-                        DisplayMessage($"!!! Received NAK reply for address {args.Address} !!!",
-                            args.Nak.ToString()));
-                };
-                ControlPanel.RawCardDataReplyReceived += (sender, args) =>
-                {
-                    Application.MainLoop.Invoke(() =>
-                        DisplayMessage($"Received raw card data reply for address {args.Address}",
-                            args.RawCardData.ToString()));
-                };
+                
+                StartConnection(new SerialPortOsdpConnection(_settings.SerialConnectionSettings.PortName,
+                    _settings.SerialConnectionSettings.BaudRate));
+                
                 Application.RequestStop();
             }
-
-            Application.Run(new Dialog("Start Connection", 60, 10,
+            
+            Application.Run(new Dialog("Start Serial Connection", 60, 10,
                 new Button("Start") {Clicked = StartConnectionButtonClicked},
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
@@ -165,6 +140,79 @@ namespace Console
                 new Label(1, 3, "Baud Rate:"),
                 baudRateTextField
             });
+        }
+
+        private static void StartTcpServerConnection()
+        {
+            var portNumberTextField = new TextField(15, 1, 35, _settings.TcpServerConnectionSettings.PortNumber.ToString());
+            var baudRateTextField = new TextField(15, 3, 35, _settings.SerialConnectionSettings.BaudRate.ToString());
+
+            void StartConnectionButtonClicked()
+            {
+                if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid port number entered!", "OK");
+                    return;
+                }
+                _settings.TcpServerConnectionSettings.BaudRate = portNumber;
+                
+                if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid baud rate entered!", "OK");
+                    return;
+                }
+                _settings.TcpServerConnectionSettings.BaudRate = baudRate;
+                
+                StartConnection( new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.BaudRate = portNumber,
+                    _settings.TcpServerConnectionSettings.BaudRate));
+                
+                Application.RequestStop();
+            }
+            
+            Application.Run(new Dialog("Start TCP Server Connection", 60, 10,
+                new Button("Start") {Clicked = StartConnectionButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                new Label(1, 1, "Port Number:"),
+                portNumberTextField,
+                new Label(1, 3, "Baud Rate:"),
+                baudRateTextField
+            });
+        }
+
+        private static void StartConnection(IOsdpConnection osdpConnection)
+        {
+            ControlPanel.Shutdown();
+
+            _connectionId = ControlPanel.StartConnection(osdpConnection);
+            
+            foreach (var device in _settings.Devices)
+            {
+                ControlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel);
+            }
+
+            ControlPanel.NakReplyReceived += (sender, args) =>
+            {
+                var lastNak = _lastNak;
+                _lastNak = args;
+                if (lastNak != null && lastNak.Address == args.Address &&
+                    lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
+                {
+                    return;
+                }
+
+                Application.MainLoop.Invoke(() =>
+                    DisplayMessage($"!!! Received NAK reply for address {args.Address} !!!",
+                        args.Nak.ToString()));
+            };
+            ControlPanel.RawCardDataReplyReceived += (sender, args) =>
+            {
+                Application.MainLoop.Invoke(() =>
+                    DisplayMessage($"Received raw card data reply for address {args.Address}",
+                        args.RawCardData.ToString()));
+            };
         }
 
         public static void AddLogMessage(string message)

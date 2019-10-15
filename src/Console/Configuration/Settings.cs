@@ -6,6 +6,8 @@ namespace Console.Configuration
     {
         public SerialConnectionSettings SerialConnectionSettings { get; set; } = new SerialConnectionSettings();
 
+        public TcpServerConnectionSettings TcpServerConnectionSettings { get; set; } = new TcpServerConnectionSettings();
+
         public List<DeviceSetting> Devices { get; set; } = new List<DeviceSetting>();
     }
 }
