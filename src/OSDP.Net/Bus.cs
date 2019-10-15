@@ -68,8 +68,9 @@ namespace OSDP.Net
         /// Add a device to the bus
         /// </summary>
         /// <param name="address">Address of the device</param>
+        /// <param name="useCrc">Use CRC for error checking</param>
         /// <param name="useSecureChannel">Use a secure channel to communicate</param>
-        public void AddDevice(byte address, bool useSecureChannel)
+        public void AddDevice(byte address, bool useCrc, bool useSecureChannel)
         {
             var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
 
@@ -80,7 +81,7 @@ namespace OSDP.Net
                     _configuredDevices.Remove(foundDevice);
                 }
 
-                _configuredDevices.Add(new Device(address, true, useSecureChannel));
+                _configuredDevices.Add(new Device(address, useCrc, useSecureChannel));
             }
         }
 

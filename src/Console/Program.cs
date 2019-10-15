@@ -10,7 +10,6 @@ using log4net;
 using log4net.Config;
 using OSDP.Net;
 using OSDP.Net.Connections;
-using OSDP.Net.Model.ReplyData;
 using Terminal.Gui;
 
 namespace Console
@@ -33,7 +32,7 @@ namespace Console
         private static Guid _connectionId;
         private static Window _window;
         private static MenuBar _menuBar;
-        private static ControlPanel.NakReplyEventArgs LastNak = null;
+        private static ControlPanel.NakReplyEventArgs _lastNak;
 
         private static Settings _settings;
 
@@ -110,12 +109,12 @@ namespace Console
 
         private static void StartConnection()
         {
-            var portNameTextField = new TextField(15, 1, 35, _settings.ConnectionSettings.PortName);
-            var baudRateTextField = new TextField(15, 3, 35, _settings.ConnectionSettings.BaudRate.ToString());
+            var portNameTextField = new TextField(15, 1, 35, _settings.SerialConnectionSettings.PortName);
+            var baudRateTextField = new TextField(15, 3, 35, _settings.SerialConnectionSettings.BaudRate.ToString());
 
             void StartConnectionButtonClicked()
             {
-                _settings.ConnectionSettings.PortName = portNameTextField.Text.ToString();
+                _settings.SerialConnectionSettings.PortName = portNameTextField.Text.ToString();
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
 
@@ -123,21 +122,21 @@ namespace Console
                     return;
                 }
 
-                _settings.ConnectionSettings.BaudRate = baudRate;
+                _settings.SerialConnectionSettings.BaudRate = baudRate;
 
                 ControlPanel.Shutdown();
                 _connectionId = ControlPanel.StartConnection(
-                    new SerialPortOsdpConnection(_settings.ConnectionSettings.PortName,
-                        _settings.ConnectionSettings.BaudRate));
+                    new SerialPortOsdpConnection(_settings.SerialConnectionSettings.PortName,
+                        _settings.SerialConnectionSettings.BaudRate));
                 foreach (var device in _settings.Devices)
                 {
-                    ControlPanel.AddDevice(_connectionId, device.Address, device.UseSecureChannel);
+                    ControlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel);
                 }
 
                 ControlPanel.NakReplyReceived += (sender, args) =>
                 {
-                    var lastNak = LastNak;
-                    LastNak = args;
+                    var lastNak = _lastNak;
+                    _lastNak = args;
                     if (lastNak != null && lastNak.Address == args.Address &&
                         lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
                     {
@@ -210,7 +209,8 @@ namespace Console
         {
             var nameTextField = new TextField(15, 1, 35, string.Empty);
             var addressTextField = new TextField(15, 3, 35, string.Empty);
-            var useSecureChannelCheckBox = new CheckBox(1, 5, "Use Secure Channel", true);
+            var useCrcCheckBox = new CheckBox(1, 5, "Use CRC", true);
+            var useSecureChannelCheckBox = new CheckBox(1, 6, "Use Secure Channel", true);
 
             void AddDeviceButtonClicked()
             {
@@ -223,16 +223,27 @@ namespace Console
 
                 if (_settings.Devices.Any(device => device.Address == address))
                 {
-                    if (MessageBox.Query(60, 10, "Overwrite", "Device already exists at that address, overwrite?", "Yes", "No") == 1)
+                    if (MessageBox.Query(60, 10, "Overwrite", "Device already exists at that address, overwrite?",
+                            "Yes", "No") == 1)
                     {
                         return;
                     }
                 }
-                ControlPanel.AddDevice(_connectionId, address, useSecureChannelCheckBox.Checked);
+
+                ControlPanel.AddDevice(_connectionId, address, useCrcCheckBox.Checked,
+                    useSecureChannelCheckBox.Checked);
+
+                var foundDevice = _settings.Devices.FirstOrDefault(device => device.Address == address);
+                if (foundDevice != null)
+                {
+                    _settings.Devices.Remove(foundDevice);
+                }
+
                 _settings.Devices.Add(new DeviceSetting
                 {
                     Address = address, Name = nameTextField.Text.ToString(),
-                    UseSecureChannel = useSecureChannelCheckBox.Checked
+                    UseSecureChannel = useSecureChannelCheckBox.Checked,
+                    UseCrc = useCrcCheckBox.Checked
                 });
                 Application.RequestStop();
             }
@@ -245,6 +256,7 @@ namespace Console
                 nameTextField,
                 new Label(1, 3, "Address:"),
                 addressTextField,
+                useCrcCheckBox,
                 useSecureChannelCheckBox
             });
         }
@@ -313,10 +325,7 @@ namespace Console
             }
 
             Application.Run(new Dialog(title, 60, 13,
-                new Button("Send") {Clicked = async () =>
-                    {
-                        SendCommandButtonClicked();
-                    }
+                new Button("Send") {Clicked = SendCommandButtonClicked
                 },
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {

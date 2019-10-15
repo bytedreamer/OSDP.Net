@@ -21,7 +21,7 @@ namespace OSDP.Net.Tests
 
             var panel = new ControlPanel();
             Guid id = panel.StartConnection(connection);
-            panel.AddDevice(id, 0, false);
+            panel.AddDevice(id, 0, TODO, false);
 
             // Act
             // Assert
@@ -36,7 +36,7 @@ namespace OSDP.Net.Tests
             var connection = new TestConnection();
             var panel = new ControlPanel();
             Guid id = panel.StartConnection(connection);
-            panel.AddDevice(id, 0, false);
+            panel.AddDevice(id, 0, TODO, false);
 
             // Act
             panel.Shutdown();
@@ -57,7 +57,7 @@ namespace OSDP.Net.Tests
 
             // Act
             Guid id = panel.StartConnection(connection);
-            panel.AddDevice(id, 0, false);
+            panel.AddDevice(id, 0, TODO, false);
 
             // Assert
             await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),

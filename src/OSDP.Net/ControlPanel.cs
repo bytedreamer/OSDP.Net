@@ -116,10 +116,11 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device</param>
         /// <param name="address">Address assigned to the device</param>
+        /// <param name="useCrc">Use CRC for error checking</param>
         /// <param name="useSecureChannel">Require the device to communicate with a secure channel</param>
-        public void AddDevice(Guid connectionId, byte address, bool useSecureChannel)
+        public void AddDevice(Guid connectionId, byte address, bool useCrc, bool useSecureChannel)
         {
-            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.AddDevice(address, useSecureChannel);
+            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.AddDevice(address, useCrc, useSecureChannel);
         }
 
         public void RemoveDevice(Guid connectionId, byte address)
