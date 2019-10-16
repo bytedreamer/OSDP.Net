@@ -85,7 +85,9 @@ namespace Console
                     new MenuItem("Input Status", "", 
                         () => SendCommand("Input status", _connectionId, ControlPanel.InputStatus)),
                     new MenuItem("_Local Status", "", 
-                        () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus))
+                        () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus)),
+                    new MenuItem("Output Status", "", 
+                        () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus))
                 }),
                 new MenuBarItem("_Invalid Commands", new[]
                 {
