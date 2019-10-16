@@ -223,6 +223,11 @@ namespace Console
                 DisplayReceivedReply($"Local status updated for address {args.Address}",
                     args.LocalStatus.ToString());
             };
+            ControlPanel.InputStatusReportReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Input status updated for address {args.Address}",
+                    args.InputStatus.ToString());
+            };
             ControlPanel.RawCardDataReplyReceived += (sender, args) =>
             {
                 DisplayReceivedReply($"Received raw card data reply for address {args.Address}",

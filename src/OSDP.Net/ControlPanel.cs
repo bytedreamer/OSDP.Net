@@ -167,6 +167,14 @@ namespace OSDP.Net
                             Model.ReplyData.LocalStatus.CreateLocalStatus(reply)));
                     break;
                 }
+                case ReplyType.InputStatusReport:
+                {
+                    var handler = InputStatusReportReplyReceived;
+                    handler?.Invoke(this,
+                        new InputStatusReportReplyEventArgs(reply.Address,
+                            Model.ReplyData.InputStatus.CreateInputStatus(reply)));
+                    break;
+                }
                 case ReplyType.FormattedReaderData:
                     Logger.Debug(
                         $"Formatted Reader Data {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
@@ -185,6 +193,8 @@ namespace OSDP.Net
         public event EventHandler<NakReplyEventArgs> NakReplyReceived;
 
         public event EventHandler<LocalStatusReportReplyEventArgs> LocalStatusReportReplyReceived;
+
+        public event EventHandler<InputStatusReportReplyEventArgs> InputStatusReportReplyReceived;
 
         public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
 
@@ -210,6 +220,18 @@ namespace OSDP.Net
 
             public byte Address { get; }
             public LocalStatus LocalStatus { get; }
+        }
+
+        public class InputStatusReportReplyEventArgs
+        {
+            public InputStatusReportReplyEventArgs(byte address, InputStatus inputStatus)
+            {
+                Address = address;
+                InputStatus = inputStatus;
+            }
+
+            public byte Address { get; }
+            public InputStatus InputStatus { get; }
         }
 
         public class RawCardDataReplyEventArgs
