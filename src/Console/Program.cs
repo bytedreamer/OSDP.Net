@@ -216,12 +216,21 @@ namespace Console
                     DisplayMessage($"!!! Received NAK reply for address {args.Address} !!!",
                         args.Nak.ToString()));
             };
+            ControlPanel.LocalStatusReportReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Local status updated for address {args.Address}",
+                    args.LocalStatus.ToString());
+            };
             ControlPanel.RawCardDataReplyReceived += (sender, args) =>
             {
-                Application.MainLoop.Invoke(() =>
-                    DisplayMessage($"Received raw card data reply for address {args.Address}",
-                        args.RawCardData.ToString()));
+                DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
+                    args.RawCardData.ToString());
             };
+        }
+
+        private static void DisplayReceivedReply(string title, string message)
+        {
+            Application.MainLoop.Invoke(() =>DisplayMessage(title, message));
         }
 
         public static void AddLogMessage(string message)

@@ -153,6 +153,14 @@ namespace OSDP.Net
                     handler?.Invoke(this, new NakReplyEventArgs(reply.Address, Nak.CreateNak(reply)));
                     break;
                 }
+                case ReplyType.LocalStatusReport:
+                {
+                    var handler = LocalStatusReportReplyReceived;
+                    handler?.Invoke(this,
+                        new LocalStatusReportReplyEventArgs(reply.Address,
+                            Model.ReplyData.LocalStatus.CreateLocalStatus(reply)));
+                    break;
+                }
                 case ReplyType.FormattedReaderData:
                     Logger.Debug(
                         $"Formatted Reader Data {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
@@ -170,6 +178,8 @@ namespace OSDP.Net
 
         public event EventHandler<NakReplyEventArgs> NakReplyReceived;
 
+        public event EventHandler<LocalStatusReportReplyEventArgs> LocalStatusReportReplyReceived;
+
         public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
 
         public class NakReplyEventArgs
@@ -180,8 +190,20 @@ namespace OSDP.Net
                 Nak = nak;
             }
 
-            public byte Address { get; set; }
-            public Nak Nak { get; set; }
+            public byte Address { get; }
+            public Nak Nak { get; }
+        }
+
+        public class LocalStatusReportReplyEventArgs
+        {
+            public LocalStatusReportReplyEventArgs(byte address, LocalStatus localStatus)
+            {
+                Address = address;
+                LocalStatus = localStatus;
+            }
+
+            public byte Address { get; }
+            public LocalStatus LocalStatus { get; }
         }
 
         public class RawCardDataReplyEventArgs
@@ -192,8 +214,8 @@ namespace OSDP.Net
                 RawCardData = rawCardData;
             }
 
-            public byte Address { get; set; }
-            public RawCardData RawCardData { get; set; }
+            public byte Address { get; }
+            public RawCardData RawCardData { get; }
         }
 
         private class ReplyEventArgs : EventArgs
