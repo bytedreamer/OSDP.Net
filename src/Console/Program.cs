@@ -82,6 +82,8 @@ namespace Console
                         () => SendCommand("Device capabilities", _connectionId, ControlPanel.DeviceCapabilities)),
                     new MenuItem("_ID Report", "", 
                         () => SendCommand("ID report", _connectionId, ControlPanel.IdReport)),
+                    new MenuItem("Input Status", "", 
+                        () => SendCommand("Input status", _connectionId, ControlPanel.InputStatus)),
                     new MenuItem("_Local Status", "", 
                         () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus))
                 }),

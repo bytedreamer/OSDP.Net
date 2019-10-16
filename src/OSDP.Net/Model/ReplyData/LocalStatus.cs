@@ -11,7 +11,7 @@ namespace OSDP.Net.Model.ReplyData
         {
         }
 
-        public bool Tamper { get;private set;  }
+        public bool Tamper { get; private set;  }
         public bool PowerFailure { get; private set; }
 
         internal static LocalStatus CreateLocalStatus(Reply reply)
