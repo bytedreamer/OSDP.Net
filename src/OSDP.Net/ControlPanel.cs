@@ -54,6 +54,16 @@ namespace OSDP.Net
             return newBus.Id;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="connectionId"></param>
+        /// <param name="command"></param>
+        public async Task SendCustomCommand(Guid connectionId, Command command)
+        {
+            await SendCommand(connectionId, command);
+        }
+
         public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
         {
             return DeviceIdentification.CreateDeviceIdentification(await SendCommand(connectionId,

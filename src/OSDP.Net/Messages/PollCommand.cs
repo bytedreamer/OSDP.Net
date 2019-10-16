@@ -24,5 +24,10 @@ namespace OSDP.Net.Messages
         {
             return new byte[] { };
         }
+
+        protected override void CustomCommandUpdate(List<byte> commandBuffer)
+        {
+            
+        }
     }
 }

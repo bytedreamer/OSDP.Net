@@ -55,7 +55,7 @@ namespace OSDP.Net
 
             if (!_commands.TryDequeue(out var command))
             {
-                command = new PollCommand(Address);
+                return new PollCommand(Address);
             }
 
             return command;
@@ -66,9 +66,9 @@ namespace OSDP.Net
             _commands.Enqueue(command);
         }
 
-        public void ValidReplyHasBeenReceived()
+        public void ValidReplyHasBeenReceived(byte sequence)
         {
-            MessageControl.IncrementSequence();
+            MessageControl.IncrementSequence(sequence);
             _lastValidReply = DateTime.UtcNow;
         }
 

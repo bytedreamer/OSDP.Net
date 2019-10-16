@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using OSDP.Net.Connections;
 using OSDP.Net.Logging;
 using OSDP.Net.Messages;
+using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net
 {
@@ -131,6 +132,11 @@ namespace OSDP.Net
                 TimeSpan timeDifference = TimeSpan.FromMilliseconds(100) - (DateTime.UtcNow - lastMessageSentTime);
                 await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
 
+                if (!_configuredDevices.Any())
+                {
+                    lastMessageSentTime = DateTime.UtcNow;
+                }
+
                 foreach (var device in _configuredDevices.ToArray())
                 {
                     var data = new List<byte> {DriverByte};
@@ -165,7 +171,7 @@ namespace OSDP.Net
 
                     var reply = Reply.Parse(replyBuffer, Id, command, device);
 
-                    if (!reply.IsValidReply(device.MessageControl.Sequence)) continue;
+                    if (!reply.IsValidReply) continue;
 
                     if (reply.IsSecureMessage)
                     {
@@ -177,12 +183,14 @@ namespace OSDP.Net
                         }
                     }
 
-                    if (reply.Type != ReplyType.Busy || reply.Type != ReplyType.Nak)
+                    if (reply.Type != ReplyType.Busy)
                     {
-                        device.ValidReplyHasBeenReceived();
+                        device.ValidReplyHasBeenReceived(reply.Sequence);
                     }
 
-                    if (reply.Type == ReplyType.Nak && (reply.ExtractReplyData.First() == 0x05 || reply.ExtractReplyData.First() == 0x06))
+                    if (reply.Type == ReplyType.Nak &&
+                        (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
+                         reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))
                     {
                         device.ResetSecurity();
                     }
@@ -196,6 +204,7 @@ namespace OSDP.Net
                             device.ValidateSecureChannelEstablishment(reply);
                             break;
                     }
+
                     _replies.Add(reply);
 
                     Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,

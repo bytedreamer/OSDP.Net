@@ -16,13 +16,15 @@ namespace OSDP.Net.Messages
         public byte ControlByte =>
             (byte) (Sequence & 0x03 | (UseCrc ? 0x04 : 0) | (HasSecurityControlBlock ? 0x08 : 0));
 
-        public void IncrementSequence()
+        public void IncrementSequence(byte sequence)
         {
-            Sequence++;
-            if (Sequence > 3)
+            sequence++;
+            if (sequence > 3)
             {
-                Sequence = 1;
+                sequence = 1;
             }
+
+            Sequence = sequence;
         }
     }
 }

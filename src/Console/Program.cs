@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Console.Commands;
 using Console.Configuration;
 using log4net;
 using log4net.Config;
 using OSDP.Net;
 using OSDP.Net.Connections;
+using OSDP.Net.Messages;
 using Terminal.Gui;
 
 namespace Console
@@ -80,7 +83,13 @@ namespace Console
                     new MenuItem("_ID Report", "", 
                         () => SendCommand("ID report", _connectionId, ControlPanel.IdReport)),
                     new MenuItem("_Local Status", "", 
-                        () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus)),
+                        () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus))
+                }),
+                new MenuBarItem("_Invalid Commands", new[]
+                {
+                    new MenuItem("_Bad CRC/Checksum", "", 
+                        () => SendCustomCommand("Bad CRC/Checksum", _connectionId, ControlPanel.SendCustomCommand,
+                            address => new InvalidCrcPollCommand(address)))
                 })
             });
 
@@ -356,20 +365,74 @@ namespace Console
             void SendCommandButtonClicked()
             {
                 var selectedDevice = orderedDevices[deviceRadioGroup.Selected];
-                Application.MainLoop.Invoke(async () =>
+                byte address = selectedDevice.Address;
+                Application.RequestStop();
+
+                Task.Run(async () =>
                 {
                     try
                     {
-                        DisplayMessage($"{title} for address {selectedDevice.Address}",
-                            (await sendCommandFunction(connectionId, selectedDevice.Address)).ToString());
+                        var result = await sendCommandFunction(connectionId, address);
+                        Application.MainLoop.Invoke(() =>
+                        {
+                            DisplayMessage($"{title} for address {address}", result.ToString());
+                        });
                     }
                     catch (Exception exception)
                     {
-                        MessageBox.ErrorQuery(40, 10, $"Error on address {selectedDevice.Address}", exception.Message, "OK");
+                        Application.MainLoop.Invoke(() =>
+                        {
+                            MessageBox.ErrorQuery(40, 10, $"Error on address {address}", exception.Message,
+                                "OK");
+                        });
                     }
                 });
+            }
 
+            Application.Run(new Dialog(title, 60, 13,
+                new Button("Send") {Clicked = SendCommandButtonClicked
+                },
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                scrollView
+            });
+        }
+
+        private static void SendCustomCommand(string title, Guid connectionId, Func<Guid, Command, Task> sendCommandFunction, Func<byte, Command> createCommand)
+        {
+            var orderedDevices = _settings.Devices.OrderBy(device => device.Address).ToArray();
+            var scrollView = new ScrollView(new Rect(6, 1, 40, 6))
+            {
+                ContentSize = new Size(50, orderedDevices.Length * 2),
+                ShowVerticalScrollIndicator = orderedDevices.Length > 6,
+                ShowHorizontalScrollIndicator = false
+            };
+
+            var deviceRadioGroup = new RadioGroup(0, 0,
+                orderedDevices.Select(device => $"{device.Address} : {device.Name}").ToArray());
+            scrollView.Add(deviceRadioGroup);
+
+            void SendCommandButtonClicked()
+            {
+                var selectedDevice = orderedDevices[deviceRadioGroup.Selected];
+                byte address = selectedDevice.Address;
                 Application.RequestStop();
+                
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await sendCommandFunction(connectionId, createCommand(address));
+                    }
+                    catch (Exception exception)
+                    {
+                        Application.MainLoop.Invoke(() =>
+                        {
+                            MessageBox.ErrorQuery(40, 10, $"Error on address {address}", exception.Message,
+                                "OK");
+                        });
+                    }
+                });
             }
 
             Application.Run(new Dialog(title, 60, 13,

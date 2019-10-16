@@ -29,5 +29,10 @@ namespace OSDP.Net.Messages
         {
             return _serverCryptogram;
         }
+
+        protected override void CustomCommandUpdate(List<byte> commandBuffer)
+        {
+            
+        }
     }
 }

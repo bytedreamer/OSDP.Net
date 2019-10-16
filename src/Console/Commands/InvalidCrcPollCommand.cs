@@ -1,15 +1,17 @@
 using System.Collections.Generic;
+using System.Linq;
+using OSDP.Net.Messages;
 
-namespace OSDP.Net.Messages
+namespace Console.Commands
 {
-    public class LocalStatusReportCommand : Command
+    public class InvalidCrcPollCommand : Command
     {
-        public LocalStatusReportCommand(byte address)
+        public InvalidCrcPollCommand(byte address)
         {
             Address = address;
         }
 
-        protected override byte CommandCode => 0x64;
+        protected override byte CommandCode => 0x60;
 
         protected override IEnumerable<byte> SecurityControlBlock()
         {
@@ -22,7 +24,7 @@ namespace OSDP.Net.Messages
 
         protected override void CustomCommandUpdate(List<byte> commandBuffer)
         {
-            
+            commandBuffer[^1] = (byte)(commandBuffer[^1] + 1);
         }
 
         protected override IEnumerable<byte> Data()

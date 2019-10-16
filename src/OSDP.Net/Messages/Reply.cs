@@ -55,7 +55,7 @@ namespace OSDP.Net.Messages
         protected IEnumerable<byte> SecureBlockData { get; }
         private IEnumerable<byte> Mac { get; }
         private bool IsDataCorrect { get; }
-        private byte Sequence { get; }
+        public byte Sequence { get; }
         private bool IsCorrectAddress => _issuingCommand.Address == Address;
 
         private static IEnumerable<byte> SecureSessionMessages => new[]
@@ -73,6 +73,8 @@ namespace OSDP.Net.Messages
 
         protected abstract byte ReplyCode { get; }
 
+        public bool IsValidReply => IsCorrectAddress && IsDataCorrect;
+
         public static Reply Parse(IReadOnlyList<byte> data, Guid connectionId, Command issuingCommand, Device device)
         {
             var reply = new UnknownReply(data, connectionId, issuingCommand, device);
@@ -80,7 +82,6 @@ namespace OSDP.Net.Messages
             return reply;
         }
 
-        public bool IsValidReply(byte sequence) => IsCorrectAddress && IsDataCorrect && sequence == Sequence;
         public bool SecureCryptogramHasBeenAccepted() => Convert.ToBoolean(SecureBlockData.First());
         public bool MatchIssuingCommand(Command command) => command.Equals(_issuingCommand);
         public bool IsValidMac(IEnumerable<byte> mac) => mac.Take(MacSize).SequenceEqual(Mac);

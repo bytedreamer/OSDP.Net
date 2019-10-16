@@ -11,6 +11,8 @@ namespace OSDP.Net.Messages
 
         protected abstract IEnumerable<byte> SecurityControlBlock();
 
+        protected abstract void CustomCommandUpdate(List<byte> commandBuffer);
+
         internal byte[] BuildCommand(Device device)
         {
             var commandBuffer = new List<byte>
@@ -60,6 +62,8 @@ namespace OSDP.Net.Messages
             {
                 AddChecksum(commandBuffer);
             }
+
+            CustomCommandUpdate(commandBuffer);
             
             return commandBuffer.ToArray();
         }
