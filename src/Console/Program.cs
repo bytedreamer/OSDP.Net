@@ -237,6 +237,11 @@ namespace Console
                 DisplayReceivedReply($"Output status updated for address {args.Address}",
                     args.OutputStatus.ToString());
             };
+            ControlPanel.ReaderStatusReportReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Reader tamper status updated for address {args.Address}",
+                    args.ReaderStatus.ToString());
+            };
             ControlPanel.RawCardDataReplyReceived += (sender, args) =>
             {
                 DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
