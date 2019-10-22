@@ -230,6 +230,11 @@ namespace Console
                 DisplayReceivedReply($"Input status updated for address {args.Address}",
                     args.InputStatus.ToString());
             };
+            ControlPanel.OutputStatusReportReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Output status updated for address {args.Address}",
+                    args.OutputStatus.ToString());
+            };
             ControlPanel.RawCardDataReplyReceived += (sender, args) =>
             {
                 DisplayReceivedReply($"Received raw card data reply for address {args.Address}",

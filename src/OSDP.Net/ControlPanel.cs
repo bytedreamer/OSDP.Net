@@ -181,6 +181,14 @@ namespace OSDP.Net
                             Model.ReplyData.InputStatus.CreateInputStatus(reply)));
                     break;
                 }
+                case ReplyType.OutputStatusReport:
+                {
+                    var handler = OutputStatusReportReplyReceived;
+                    handler?.Invoke(this,
+                        new OutputStatusReportReplyEventArgs(reply.Address,
+                            Model.ReplyData.OutputStatus.CreateOutputStatus(reply)));
+                    break;
+                }
                 case ReplyType.FormattedReaderData:
                     Logger.Debug(
                         $"Formatted Reader Data {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
@@ -201,6 +209,8 @@ namespace OSDP.Net
         public event EventHandler<LocalStatusReportReplyEventArgs> LocalStatusReportReplyReceived;
 
         public event EventHandler<InputStatusReportReplyEventArgs> InputStatusReportReplyReceived;
+
+        public event EventHandler<OutputStatusReportReplyEventArgs> OutputStatusReportReplyReceived;
 
         public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
 
@@ -238,6 +248,18 @@ namespace OSDP.Net
 
             public byte Address { get; }
             public InputStatus InputStatus { get; }
+        }
+
+        public class OutputStatusReportReplyEventArgs
+        {
+            public OutputStatusReportReplyEventArgs(byte address, OutputStatus outputStatus)
+            {
+                Address = address;
+                OutputStatus = outputStatus;
+            }
+
+            public byte Address { get; }
+            public OutputStatus OutputStatus { get; }
         }
 
         public class RawCardDataReplyEventArgs

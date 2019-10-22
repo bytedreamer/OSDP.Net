@@ -8,7 +8,7 @@ namespace OSDP.Net.Messages
         PdCapabilitiesReport = 0x46,
         LocalStatusReport = 0x48,
         InputStatusReport = 0x49,
-        OutputReaderReport = 0x4A,
+        OutputStatusReport = 0x4A,
         ReaderStatusReport = 0x4B,
         RawReaderData = 0x50,
         FormattedReaderData = 0x51,
