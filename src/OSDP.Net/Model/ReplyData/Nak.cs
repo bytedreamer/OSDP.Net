@@ -5,7 +5,7 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
-    public class Nak : ReplyData
+    public class Nak
     {
         private Nak()
         {
@@ -14,7 +14,7 @@ namespace OSDP.Net.Model.ReplyData
         public ErrorCode ErrorCode { get; private set; }
         public byte[] ExtraData { get; private set;  }
 
-        internal static Nak CreateNak(Reply reply)
+        internal static Nak ParseData(Reply reply)
         {
             var data = reply.ExtractReplyData.ToArray();
             if (data.Length < 1)
@@ -34,7 +34,7 @@ namespace OSDP.Net.Model.ReplyData
         public override string ToString()
         {
             var build = new StringBuilder();
-            build.AppendLine($"Error: {SplitCamelCase(ErrorCode.ToString())}");
+            build.AppendLine($"Error: {Message.SplitCamelCase(ErrorCode.ToString())}");
             build.AppendLine($" Data: {BitConverter.ToString(ExtraData)}");
             return build.ToString();
         }

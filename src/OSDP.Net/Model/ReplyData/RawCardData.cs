@@ -6,7 +6,7 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
-    public class RawCardData : ReplyData
+    public class RawCardData
     {
         private RawCardData()
         {
@@ -17,7 +17,7 @@ namespace OSDP.Net.Model.ReplyData
         public ushort BitCount { get; private set; }
         public BitArray Data { get; private set; }
 
-        internal static RawCardData CreateRawCardData(Reply reply)
+        internal static RawCardData ParseData(Reply reply)
         {
             var data = reply.ExtractReplyData.ToArray();
             if (data.Length < 4)
@@ -45,7 +45,7 @@ namespace OSDP.Net.Model.ReplyData
         {
             var build = new StringBuilder();
             build.AppendLine($"Reader Number: {ReaderNumber}");
-            build.AppendLine($"  Format Code: {SplitCamelCase(FormatCode.ToString())}");
+            build.AppendLine($"  Format Code: {Message.SplitCamelCase(FormatCode.ToString())}");
             build.AppendLine($"    Bit Count: {BitCount}");
             build.AppendLine($"         Data: {FormatData(Data)}");
             return build.ToString();

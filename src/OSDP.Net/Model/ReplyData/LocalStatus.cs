@@ -5,7 +5,7 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
-    public class LocalStatus : ReplyData
+    public class LocalStatus
     {
         private LocalStatus()
         {
@@ -14,7 +14,7 @@ namespace OSDP.Net.Model.ReplyData
         public bool Tamper { get; private set;  }
         public bool PowerFailure { get; private set; }
 
-        internal static LocalStatus CreateLocalStatus(Reply reply)
+        internal static LocalStatus ParseData(Reply reply)
         {
             var data = reply.ExtractReplyData.ToArray();
             if (data.Length < 2)

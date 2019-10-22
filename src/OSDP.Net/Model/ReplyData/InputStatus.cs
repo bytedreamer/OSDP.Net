@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
-    public class InputStatus : ReplyData
+    public class InputStatus
     {
         private InputStatus()
         {
@@ -14,7 +13,7 @@ namespace OSDP.Net.Model.ReplyData
 
         public bool[] InputStatuses { get; private set; }
 
-        internal static InputStatus CreateInputStatus(Reply reply)
+        internal static InputStatus ParseData(Reply reply)
         {
             var data = reply.ExtractReplyData.ToArray();
 

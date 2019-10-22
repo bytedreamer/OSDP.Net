@@ -5,7 +5,7 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
-    public class DeviceIdentification : ReplyData
+    public class DeviceIdentification
     {
         private DeviceIdentification()
         {
@@ -19,7 +19,7 @@ namespace OSDP.Net.Model.ReplyData
         public byte FirmwareMinor { get; private set; }
         public byte FirmwareBuild { get; private set; }
 
-        internal static DeviceIdentification CreateDeviceIdentification(Reply reply)
+        internal static DeviceIdentification ParseData(Reply reply)
         {
             var data = reply.ExtractReplyData.ToArray();
             if (data.Length != 12)
@@ -32,7 +32,7 @@ namespace OSDP.Net.Model.ReplyData
                 VendorCode = data.Take(3).ToArray(),
                 ModelNumber = data[3],
                 Version = data[4],
-                SerialNumber = ConvertBytesToInt(data.Skip(5).Take(4).ToArray()),
+                SerialNumber = Message.ConvertBytesToInt(data.Skip(5).Take(4).ToArray()),
                 FirmwareMajor = data[9],
                 FirmwareMinor = data[10],
                 FirmwareBuild = data[11]
@@ -47,7 +47,7 @@ namespace OSDP.Net.Model.ReplyData
             build.AppendLine($"     Vendor Code: {BitConverter.ToString(VendorCode)}");
             build.AppendLine($"    Model Number: {ModelNumber}");
             build.AppendLine($"         Version: {Version}");
-            build.AppendLine($"   Serial Number: {BitConverter.ToString(ConvertIntToBytes(SerialNumber).ToArray())}");
+            build.AppendLine($"   Serial Number: {BitConverter.ToString(Message.ConvertIntToBytes(SerialNumber).ToArray())}");
             build.AppendLine($"Firmware Version: {FirmwareMajor}.{FirmwareMinor}.{FirmwareBuild}");
 
             return build.ToString();

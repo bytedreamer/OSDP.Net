@@ -1,11 +1,10 @@
-using System;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
-    public class ReaderStatus : ReplyData
+    public class ReaderStatus
     {
         public enum ReaderTamperStatus
         {
@@ -20,7 +19,7 @@ namespace OSDP.Net.Model.ReplyData
 
         public ReaderTamperStatus[] ReaderStatuses { get; private set; }
 
-        internal static ReaderStatus CreateReaderStatus(Reply reply)
+        internal static ReaderStatus ParseData(Reply reply)
         {
             var data = reply.ExtractReplyData.ToArray();
 
@@ -33,7 +32,7 @@ namespace OSDP.Net.Model.ReplyData
             var build = new StringBuilder();
             foreach (ReaderTamperStatus readerStatuses in ReaderStatuses)
             {
-                build.AppendLine($"Reader Number {readerNumber++:00}: {SplitCamelCase(readerStatuses.ToString())}");
+                build.AppendLine($"Reader Number {readerNumber++:00}: {Message.SplitCamelCase(readerStatuses.ToString())}");
             }
 
             return build.ToString();

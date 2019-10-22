@@ -66,37 +66,37 @@ namespace OSDP.Net
 
         public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
         {
-            return DeviceIdentification.CreateDeviceIdentification(await SendCommand(connectionId,
+            return DeviceIdentification.ParseData(await SendCommand(connectionId,
                 new IdReportCommand(address)));
         }
 
         public async Task<DeviceCapabilities> DeviceCapabilities(Guid connectionId, byte address)
         {
-            return Model.ReplyData.DeviceCapabilities.CreateCapabilities(await SendCommand(connectionId,
+            return Model.ReplyData.DeviceCapabilities.ParseData(await SendCommand(connectionId,
                 new DeviceCapabilitiesCommand(address)));
         }
 
         public async Task<LocalStatus> LocalStatus(Guid connectionId, byte address)
         {
-            return Model.ReplyData.LocalStatus.CreateLocalStatus(await SendCommand(connectionId,
+            return Model.ReplyData.LocalStatus.ParseData(await SendCommand(connectionId,
                 new LocalStatusReportCommand(address)));
         }
 
         public async Task<InputStatus> InputStatus(Guid connectionId, byte address)
         {
-            return Model.ReplyData.InputStatus.CreateInputStatus(await SendCommand(connectionId,
+            return Model.ReplyData.InputStatus.ParseData(await SendCommand(connectionId,
                 new InputStatusReportCommand(address)));
         }
 
         public async Task<OutputStatus> OutputStatus(Guid connectionId, byte address)
         {
-            return Model.ReplyData.OutputStatus.CreateOutputStatus(await SendCommand(connectionId,
+            return Model.ReplyData.OutputStatus.ParseData(await SendCommand(connectionId,
                 new OutputStatusReportCommand(address)));
         }
 
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
         {
-            return Model.ReplyData.ReaderStatus.CreateReaderStatus(await SendCommand(connectionId,
+            return Model.ReplyData.ReaderStatus.ParseData(await SendCommand(connectionId,
                 new ReaderStatusReportCommand(address)));
         }
 
@@ -168,7 +168,7 @@ namespace OSDP.Net
                 case ReplyType.Nak:
                 {
                     var handler = NakReplyReceived;
-                    handler?.Invoke(this, new NakReplyEventArgs(reply.Address, Nak.CreateNak(reply)));
+                    handler?.Invoke(this, new NakReplyEventArgs(reply.Address, Nak.ParseData(reply)));
                     break;
                 }
                 case ReplyType.LocalStatusReport:
@@ -176,7 +176,7 @@ namespace OSDP.Net
                     var handler = LocalStatusReportReplyReceived;
                     handler?.Invoke(this,
                         new LocalStatusReportReplyEventArgs(reply.Address,
-                            Model.ReplyData.LocalStatus.CreateLocalStatus(reply)));
+                            Model.ReplyData.LocalStatus.ParseData(reply)));
                     break;
                 }
                 case ReplyType.InputStatusReport:
@@ -184,7 +184,7 @@ namespace OSDP.Net
                     var handler = InputStatusReportReplyReceived;
                     handler?.Invoke(this,
                         new InputStatusReportReplyEventArgs(reply.Address,
-                            Model.ReplyData.InputStatus.CreateInputStatus(reply)));
+                            Model.ReplyData.InputStatus.ParseData(reply)));
                     break;
                 }
                 case ReplyType.OutputStatusReport:
@@ -192,7 +192,7 @@ namespace OSDP.Net
                     var handler = OutputStatusReportReplyReceived;
                     handler?.Invoke(this,
                         new OutputStatusReportReplyEventArgs(reply.Address,
-                            Model.ReplyData.OutputStatus.CreateOutputStatus(reply)));
+                            Model.ReplyData.OutputStatus.ParseData(reply)));
                     break;
                 }
                 case ReplyType.ReaderStatusReport:
@@ -200,7 +200,7 @@ namespace OSDP.Net
                     var handler = ReaderStatusReportReplyReceived;
                     handler?.Invoke(this,
                         new ReaderStatusReportReplyEventArgs(reply.Address,
-                            Model.ReplyData.ReaderStatus.CreateReaderStatus(reply)));
+                            Model.ReplyData.ReaderStatus.ParseData(reply)));
                     break;
                 }
                 case ReplyType.FormattedReaderData:
@@ -210,7 +210,7 @@ namespace OSDP.Net
                 case ReplyType.RawReaderData:
                 {
                     var handler = RawCardDataReplyReceived;
-                    handler?.Invoke(this, new RawCardDataReplyEventArgs(reply.Address, RawCardData.CreateRawCardData(reply)));
+                    handler?.Invoke(this, new RawCardDataReplyEventArgs(reply.Address, RawCardData.ParseData(reply)));
                     break;
                 }
             }

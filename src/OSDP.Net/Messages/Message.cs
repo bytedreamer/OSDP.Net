@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace OSDP.Net.Messages
 {
@@ -97,6 +98,38 @@ namespace OSDP.Net.Messages
         internal IEnumerable<byte> EncryptedData(Device device)
         {
             return Data().Any() ? device.EncryptData(Data()) : Data();
+        }
+
+        internal static int ConvertBytesToInt(byte[] bytes)
+        {
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(bytes);
+
+            return BitConverter.ToInt32(bytes, 0);
+        }
+
+        internal static IEnumerable<byte> ConvertIntToBytes(int value)
+        {
+            var byteArray = BitConverter.GetBytes(value);
+            if (!BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(byteArray);
+            }
+
+            return byteArray;
+        }
+
+        internal static string SplitCamelCase( string str )
+        {
+            return Regex.Replace( 
+                Regex.Replace( 
+                    str, 
+                    @"(\P{Ll})(\P{Ll}\p{Ll})", 
+                    "$1 $2" 
+                ), 
+                @"(\p{Ll})(\P{Ll})", 
+                "$1 $2" 
+            );
         }
     }
 }

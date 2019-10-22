@@ -6,11 +6,15 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
-    public class DeviceCapabilities : ReplyData
+    public class DeviceCapabilities
     {
-        public Capability[] Capabilities { get; private set; }
+        private DeviceCapabilities()
+        {
+        }
 
-        internal static DeviceCapabilities CreateCapabilities(Reply reply)
+        public DeviceCapability[] Capabilities { get; private set; }
+
+        internal static DeviceCapabilities ParseData(Reply reply)
         {
             var data = reply.ExtractReplyData.ToArray();
             if (data.Length % 3 != 0)
@@ -18,10 +22,10 @@ namespace OSDP.Net.Model.ReplyData
                 throw new Exception("Invalid size for the data");
             }
 
-            var capabilities = new List<Capability>();
+            var capabilities = new List<DeviceCapability>();
             for (int index = 0; index < data.Length; index += 3)
             {
-                capabilities.Add(Capability.CreateCapabilities(data.Skip(index).Take(3).ToArray()));
+                capabilities.Add(DeviceCapability.ParseData(data.Skip(index).Take(3).ToArray()));
             }
 
             var deviceCapabilities = new DeviceCapabilities
@@ -37,7 +41,7 @@ namespace OSDP.Net.Model.ReplyData
             var build = new StringBuilder();
             foreach (var capability in Capabilities)
             {
-                build.AppendLine($"  Function: {SplitCamelCase(capability.Function.ToString())}");
+                build.AppendLine($"  Function: {Message.SplitCamelCase(capability.Function.ToString())}");
 
                 if (capability.Function == CapabilityFunction.ReceiveBufferSize ||
                     capability.Function == CapabilityFunction.LargestCombinedMessageSize)
@@ -56,16 +60,20 @@ namespace OSDP.Net.Model.ReplyData
             return build.ToString();
         }
     }
-
-    public class Capability
+    
+    public class DeviceCapability
     {
+        private DeviceCapability()
+        {
+        }
+
         public CapabilityFunction Function { get; private set; }
         public byte Compliance { get; private set; }
         public byte NumberOf { get; private set; }
 
-        internal static Capability CreateCapabilities(byte[] data)
+        internal static DeviceCapability ParseData(byte[] data)
         {
-            return new Capability
+            return new DeviceCapability
             {
                 Function = data[0] <= 14 ? (CapabilityFunction) data[0] : CapabilityFunction.Unknown,
                 Compliance = data[1],
