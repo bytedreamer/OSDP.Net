@@ -86,6 +86,8 @@ namespace Console
                         () => SendCommand("Input status", _connectionId, ControlPanel.InputStatus)),
                     new MenuItem("_Local Status", "", 
                         () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus)),
+                    new MenuItem("_Reader Status", "", 
+                        () => SendCommand("Reader status", _connectionId, ControlPanel.ReaderStatus)),
                     new MenuItem("Output Status", "", 
                         () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus))
                 }),
