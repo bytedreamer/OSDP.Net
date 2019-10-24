@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
@@ -12,7 +13,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         public ErrorCode ErrorCode { get; private set; }
-        public byte[] ExtraData { get; private set;  }
+        public IEnumerable<byte> ExtraData { get; private set;  }
 
         internal static Nak ParseData(Reply reply)
         {
@@ -25,7 +26,7 @@ namespace OSDP.Net.Model.ReplyData
             var nak = new Nak
             {
                 ErrorCode = (ErrorCode)data[0],
-                ExtraData = data.Skip(1).Take(data.Length - 1).ToArray()
+                ExtraData = data.Skip(1).Take(data.Length - 1)
             };
 
             return nak;
@@ -35,7 +36,7 @@ namespace OSDP.Net.Model.ReplyData
         {
             var build = new StringBuilder();
             build.AppendLine($"Error: {Message.SplitCamelCase(ErrorCode.ToString())}");
-            build.AppendLine($" Data: {BitConverter.ToString(ExtraData)}");
+            build.AppendLine($" Data: {BitConverter.ToString(ExtraData.ToArray())}");
             return build.ToString();
         }
     }

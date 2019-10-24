@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
@@ -17,20 +18,19 @@ namespace OSDP.Net.Model.ReplyData
         {
         }
 
-        public ReaderTamperStatus[] ReaderStatuses { get; private set; }
+        public IEnumerable<ReaderTamperStatus> ReaderStatuses { get; private set; }
 
         internal static ReaderStatus ParseData(Reply reply)
         {
-            var data = reply.ExtractReplyData.ToArray();
-
-            return new ReaderStatus {ReaderStatuses = data.Select(status => (ReaderTamperStatus) status).ToArray()};
+            return new ReaderStatus
+                {ReaderStatuses = reply.ExtractReplyData.Select(status => (ReaderTamperStatus) status)};
         }
 
         public override string ToString()
         {
-            byte readerNumber = 1;
+            byte readerNumber = 0;
             var build = new StringBuilder();
-            foreach (ReaderTamperStatus readerStatuses in ReaderStatuses)
+            foreach (var readerStatuses in ReaderStatuses)
             {
                 build.AppendLine($"Reader Number {readerNumber++:00}: {Message.SplitCamelCase(readerStatuses.ToString())}");
             }

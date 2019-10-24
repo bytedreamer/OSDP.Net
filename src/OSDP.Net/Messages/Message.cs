@@ -37,7 +37,7 @@ namespace OSDP.Net.Messages
 
         protected abstract IEnumerable<byte> Data();
 
-        protected static IEnumerable<byte> ConvertShortToBytes(ushort value)
+        internal static IEnumerable<byte> ConvertShortToBytes(ushort value)
         {
             var byteArray = BitConverter.GetBytes(value);
             if (!BitConverter.IsLittleEndian)
@@ -48,7 +48,7 @@ namespace OSDP.Net.Messages
             return byteArray;
         }
 
-        public static ushort ConvertBytesToShort(IEnumerable<byte> data)
+        internal static ushort ConvertBytesToShort(IEnumerable<byte> data)
         {
             var byteArray = data.ToArray();
             if (!BitConverter.IsLittleEndian)

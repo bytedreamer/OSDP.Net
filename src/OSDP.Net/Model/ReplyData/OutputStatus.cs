@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
@@ -11,18 +12,16 @@ namespace OSDP.Net.Model.ReplyData
         {
         }
 
-        public bool[] OutputStatuses { get; private set; }
+        public IEnumerable<bool> OutputStatuses { get; private set; }
 
         internal static OutputStatus ParseData(Reply reply)
         {
-            var data = reply.ExtractReplyData.ToArray();
-
-            return new OutputStatus {OutputStatuses = data.Select(Convert.ToBoolean).ToArray()};
+            return new OutputStatus {OutputStatuses = reply.ExtractReplyData.Select(Convert.ToBoolean)};
         }
 
         public override string ToString()
         {
-            byte outputNumber = 1;
+            byte outputNumber = 0;
             var build = new StringBuilder();
             foreach (bool outputStatus in OutputStatuses)
             {

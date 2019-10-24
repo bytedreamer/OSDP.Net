@@ -12,6 +12,7 @@ using log4net.Config;
 using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
+using OSDP.Net.Model.CommandData;
 using Terminal.Gui;
 
 namespace Console
@@ -85,10 +86,16 @@ namespace Console
                         () => SendCommand("Input status", _connectionId, ControlPanel.InputStatus)),
                     new MenuItem("_Local Status", "", 
                         () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus)),
-                    new MenuItem("_Reader Status", "", 
-                        () => SendCommand("Reader status", _connectionId, ControlPanel.ReaderStatus)),
+                    new MenuItem("Output Control", "",
+                         () => SendCommand("Output Control was Successful", _connectionId, new OutputControls(new[]
+                         {
+                             new OutputControl(0, OutputControlCode.TemporaryStateOnResumePermanentState, 100)
+                         }), ControlPanel.OutputControl)),
                     new MenuItem("Output Status", "", 
-                        () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus))
+                        () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus)),
+                    new MenuItem("_Reader Status", "", 
+                        () => SendCommand("Reader status", _connectionId, ControlPanel.ReaderStatus))
+
                 }),
                 new MenuBarItem("_Invalid Commands", new[]
                 {
@@ -379,17 +386,7 @@ namespace Console
 
         private static void SendCommand<T>(string title, Guid connectionId, Func<Guid, byte, Task<T>> sendCommandFunction)
         {
-            var orderedDevices = _settings.Devices.OrderBy(device => device.Address).ToArray();
-            var scrollView = new ScrollView(new Rect(6, 1, 40, 6))
-            {
-                ContentSize = new Size(50, orderedDevices.Length * 2),
-                ShowVerticalScrollIndicator = orderedDevices.Length > 6,
-                ShowHorizontalScrollIndicator = false
-            };
-
-            var deviceRadioGroup = new RadioGroup(0, 0,
-                orderedDevices.Select(device => $"{device.Address} : {device.Name}").ToArray());
-            scrollView.Add(deviceRadioGroup);
+            var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
             void SendCommandButtonClicked()
             {
@@ -423,23 +420,53 @@ namespace Console
                 },
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
-                scrollView
+                deviceSelectionView
+            });
+        }
+
+        private static void SendCommand<T, TU>(string title, Guid connectionId, TU commandData, Func<Guid, byte, TU, Task<T>> sendCommandFunction)
+        {
+            var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
+
+            void SendCommandButtonClicked()
+            {
+                var selectedDevice = orderedDevices[deviceRadioGroup.Selected];
+                byte address = selectedDevice.Address;
+                Application.RequestStop();
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        var result = await sendCommandFunction(connectionId, address, commandData);
+                        Application.MainLoop.Invoke(() =>
+                        {
+                            DisplayMessage($"{title} for address {address}", result.ToString());
+                        });
+                    }
+                    catch (Exception exception)
+                    {
+                        Application.MainLoop.Invoke(() =>
+                        {
+                            MessageBox.ErrorQuery(40, 10, $"Error on address {address}", exception.Message,
+                                "OK");
+                        });
+                    }
+                });
+            }
+
+            Application.Run(new Dialog(title, 60, 13,
+                new Button("Send") {Clicked = SendCommandButtonClicked
+                },
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                deviceSelectionView
             });
         }
 
         private static void SendCustomCommand(string title, Guid connectionId, Func<Guid, Command, Task> sendCommandFunction, Func<byte, Command> createCommand)
         {
-            var orderedDevices = _settings.Devices.OrderBy(device => device.Address).ToArray();
-            var scrollView = new ScrollView(new Rect(6, 1, 40, 6))
-            {
-                ContentSize = new Size(50, orderedDevices.Length * 2),
-                ShowVerticalScrollIndicator = orderedDevices.Length > 6,
-                ShowHorizontalScrollIndicator = false
-            };
-
-            var deviceRadioGroup = new RadioGroup(0, 0,
-                orderedDevices.Select(device => $"{device.Address} : {device.Name}").ToArray());
-            scrollView.Add(deviceRadioGroup);
+            var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
             void SendCommandButtonClicked()
             {
@@ -469,8 +496,24 @@ namespace Console
                 },
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
-                scrollView
+                deviceSelectionView
             });
+        }
+
+        private static ScrollView CreateDeviceSelectionView(out DeviceSetting[] orderedDevices, out RadioGroup deviceRadioGroup)
+        {
+            orderedDevices = _settings.Devices.OrderBy(device => device.Address).ToArray();
+            var scrollView = new ScrollView(new Rect(6, 1, 40, 6))
+            {
+                ContentSize = new Size(50, orderedDevices.Length * 2),
+                ShowVerticalScrollIndicator = orderedDevices.Length > 6,
+                ShowHorizontalScrollIndicator = false
+            };
+
+            deviceRadioGroup = new RadioGroup(0, 0,
+                orderedDevices.Select(device => $"{device.Address} : {device.Name}").ToArray());
+            scrollView.Add(deviceRadioGroup);
+            return scrollView;
         }
 
         private static void DisplayMessage(string title, string message)

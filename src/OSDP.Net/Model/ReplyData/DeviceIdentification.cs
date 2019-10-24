@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
@@ -11,7 +12,7 @@ namespace OSDP.Net.Model.ReplyData
         {
         }
 
-        public byte[] VendorCode { get; private set; }
+        public IEnumerable<byte> VendorCode { get; private set; }
         public byte ModelNumber { get;private set;  }
         public byte Version { get; private set; }
         public int SerialNumber { get; private set; }
@@ -29,7 +30,7 @@ namespace OSDP.Net.Model.ReplyData
 
             var deviceIdentification = new DeviceIdentification
             {
-                VendorCode = data.Take(3).ToArray(),
+                VendorCode = data.Take(3),
                 ModelNumber = data[3],
                 Version = data[4],
                 SerialNumber = Message.ConvertBytesToInt(data.Skip(5).Take(4).ToArray()),
@@ -44,7 +45,7 @@ namespace OSDP.Net.Model.ReplyData
         public override string ToString()
         {
             var build = new StringBuilder();
-            build.AppendLine($"     Vendor Code: {BitConverter.ToString(VendorCode)}");
+            build.AppendLine($"     Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
             build.AppendLine($"    Model Number: {ModelNumber}");
             build.AppendLine($"         Version: {Version}");
             build.AppendLine($"   Serial Number: {BitConverter.ToString(Message.ConvertIntToBytes(SerialNumber).ToArray())}");

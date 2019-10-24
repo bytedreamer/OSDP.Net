@@ -148,7 +148,7 @@ namespace OSDP.Net.Messages
 
         private IEnumerable<byte> DecryptData(Device device)
         {
-            return device.DecryptData(ExtractReplyData).ToArray();
+            return device.DecryptData(ExtractReplyData);
         }
     }
 }

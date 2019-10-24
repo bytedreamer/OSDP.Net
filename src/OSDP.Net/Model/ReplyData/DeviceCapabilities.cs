@@ -12,7 +12,7 @@ namespace OSDP.Net.Model.ReplyData
         {
         }
 
-        public DeviceCapability[] Capabilities { get; private set; }
+        public IEnumerable<DeviceCapability> Capabilities { get; private set; }
 
         internal static DeviceCapabilities ParseData(Reply reply)
         {
@@ -30,7 +30,7 @@ namespace OSDP.Net.Model.ReplyData
 
             var deviceCapabilities = new DeviceCapabilities
             {
-                Capabilities = capabilities.ToArray()
+                Capabilities = capabilities
             };
 
             return deviceCapabilities;

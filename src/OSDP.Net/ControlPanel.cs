@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using OSDP.Net.Connections;
 using OSDP.Net.Logging;
 using OSDP.Net.Messages;
+using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net
@@ -98,6 +99,14 @@ namespace OSDP.Net
         {
             return Model.ReplyData.ReaderStatus.ParseData(await SendCommand(connectionId,
                 new ReaderStatusReportCommand(address)));
+        }
+
+        public async Task<bool> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
+        {
+            var reply = await SendCommand(connectionId,
+                new OutputControlCommand(address, outputControls));
+            
+            return reply.Type == ReplyType.Ack || reply.Type == ReplyType.OutputStatusReport;
         }
 
         public bool IsOnline(Guid connectionId, byte address)
