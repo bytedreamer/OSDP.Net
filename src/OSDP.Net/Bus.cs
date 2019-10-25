@@ -126,7 +126,14 @@ namespace OSDP.Net
             {
                 if (!_connection.IsOpen)
                 {
-                    _connection.Open();
+                    try
+                    {
+                        _connection.Open();
+                    }
+                    catch (Exception exception)
+                    {
+                        Logger.Error($"Error while opening connection", exception);
+                    }
                 }
 
                 TimeSpan timeDifference = TimeSpan.FromMilliseconds(100) - (DateTime.UtcNow - lastMessageSentTime);
@@ -159,17 +166,18 @@ namespace OSDP.Net
 
                     lastMessageSentTime = DateTime.UtcNow;
 
-                    await _connection.WriteAsync(data.ToArray());
+                    Reply reply;
 
-                    var replyBuffer = new Collection<byte>();
-
-                    if (!await WaitForStartOfMessage(replyBuffer)) continue;
-
-                    if (!await WaitForMessageLength(replyBuffer)) continue;
-
-                    if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer))) continue;
-
-                    var reply = Reply.Parse(replyBuffer, Id, command, device);
+                    try
+                    {
+                        reply = await SendCommandAndReceiveReply(data, command, device);
+                    }
+                    catch (Exception exception)
+                    {
+                        Logger.Error($"Error while sending command {command} and receiving reply", exception);
+                        _connection.Close();
+                        continue;
+                    }
 
                     if (!reply.IsValidReply) continue;
 
@@ -207,12 +215,36 @@ namespace OSDP.Net
 
                     _replies.Add(reply);
 
-                    Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
-                        command.Address);
-
                     await Task.Delay(IdleLineDelay);
                 }
             }
+        }
+
+        private async Task<Reply> SendCommandAndReceiveReply(List<byte> data, Command command, Device device)
+        {
+            await _connection.WriteAsync(data.ToArray());
+
+            var replyBuffer = new Collection<byte>();
+
+            if (!await WaitForStartOfMessage(replyBuffer))
+            {
+                throw new Exception("Timeout waiting for reply message");
+            }
+
+            if (!await WaitForMessageLength(replyBuffer))             
+            {
+                throw new Exception("Timeout waiting for reply message length");
+            }
+
+            if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer)))
+            {
+                throw new Exception("Timeout waiting for rest of reply message");
+            }
+
+            Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
+                command.Address);
+
+            return Reply.Parse(replyBuffer, Id, command, device);
         }
 
         private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
