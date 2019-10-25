@@ -165,8 +165,14 @@ namespace OSDP.Net
                         continue;
                     }
 
-                    if (!ProcessReply(reply, device))
+                    try
                     {
+                        ProcessReply(reply, device);
+                    }
+                    catch (Exception exception)
+                    {
+                        Logger.Error($"Error while processing reply {reply}", exception);
+                        _connection.Close();
                         continue;
                     }
 
@@ -175,9 +181,12 @@ namespace OSDP.Net
             }
         }
 
-        private bool ProcessReply(Reply reply, Device device)
+        private void ProcessReply(Reply reply, Device device)
         {
-            if (!reply.IsValidReply) return true;
+            if (!reply.IsValidReply)
+            {
+                return;
+            }
 
             if (reply.IsSecureMessage)
             {
@@ -185,7 +194,7 @@ namespace OSDP.Net
                 if (!reply.IsValidMac(mac))
                 {
                     device.ResetSecurity();
-                    return false;
+                    return;
                 }
             }
 
@@ -212,7 +221,6 @@ namespace OSDP.Net
             }
 
             _replies.Add(reply);
-            return true;
         }
 
         private async Task<Reply> SendCommandAndReceiveReply(List<byte> data, Command command, Device device)
