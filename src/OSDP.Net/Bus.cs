@@ -142,28 +142,14 @@ namespace OSDP.Net
                 if (!_configuredDevices.Any())
                 {
                     lastMessageSentTime = DateTime.UtcNow;
+                    continue;
                 }
 
                 foreach (var device in _configuredDevices.ToArray())
                 {
                     var data = new List<byte> {DriverByte};
                     var command = device.GetNextCommandData();
-
-                    byte[] commandData;
-                    try
-                    {
-                        commandData = command.BuildCommand(device);
-                    }
-                    catch (Exception exception)
-                    {
-                        Logger.Error($"Error while building command {command}", exception);
-                        continue;
-                    }
-
-                    data.AddRange(commandData);
-
-                    Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
-
+                    
                     lastMessageSentTime = DateTime.UtcNow;
 
                     Reply reply;
@@ -179,49 +165,73 @@ namespace OSDP.Net
                         continue;
                     }
 
-                    if (!reply.IsValidReply) continue;
-
-                    if (reply.IsSecureMessage)
+                    if (!ProcessReply(reply, device))
                     {
-                        var mac = device.GenerateMac(reply.MessageForMacGeneration, false);
-                        if (!reply.IsValidMac(mac))
-                        {
-                            device.ResetSecurity();
-                            continue;
-                        }
+                        continue;
                     }
-
-                    if (reply.Type != ReplyType.Busy)
-                    {
-                        device.ValidReplyHasBeenReceived(reply.Sequence);
-                    }
-
-                    if (reply.Type == ReplyType.Nak &&
-                        (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
-                         reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))
-                    {
-                        device.ResetSecurity();
-                    }
-
-                    switch (reply.Type)
-                    {
-                        case ReplyType.CrypticData:
-                            device.InitializeSecureChannel(reply);
-                            break;
-                        case ReplyType.InitialRMac:
-                            device.ValidateSecureChannelEstablishment(reply);
-                            break;
-                    }
-
-                    _replies.Add(reply);
 
                     await Task.Delay(IdleLineDelay);
                 }
             }
         }
 
+        private bool ProcessReply(Reply reply, Device device)
+        {
+            if (!reply.IsValidReply) return true;
+
+            if (reply.IsSecureMessage)
+            {
+                var mac = device.GenerateMac(reply.MessageForMacGeneration, false);
+                if (!reply.IsValidMac(mac))
+                {
+                    device.ResetSecurity();
+                    return false;
+                }
+            }
+
+            if (reply.Type != ReplyType.Busy)
+            {
+                device.ValidReplyHasBeenReceived(reply.Sequence);
+            }
+
+            if (reply.Type == ReplyType.Nak &&
+                (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
+                 reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))
+            {
+                device.ResetSecurity();
+            }
+
+            switch (reply.Type)
+            {
+                case ReplyType.CrypticData:
+                    device.InitializeSecureChannel(reply);
+                    break;
+                case ReplyType.InitialRMac:
+                    device.ValidateSecureChannelEstablishment(reply);
+                    break;
+            }
+
+            _replies.Add(reply);
+            return true;
+        }
+
         private async Task<Reply> SendCommandAndReceiveReply(List<byte> data, Command command, Device device)
         {
+            byte[] commandData;
+            try
+            {
+                commandData = command.BuildCommand(device);
+            }
+            catch (Exception exception)
+            {
+                Logger.Error($"Error while building command {command}", exception);
+                throw;
+            }
+
+            data.AddRange(commandData);
+
+            Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
+            
             await _connection.WriteAsync(data.ToArray());
 
             var replyBuffer = new Collection<byte>();
