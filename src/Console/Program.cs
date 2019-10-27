@@ -382,12 +382,12 @@ namespace Console
 
         private static void SendOutputControlCommand()
         {
-            var outputAddress = new TextField(20, 1, 20, "0");
+            var outputAddressTextField = new TextField(20, 1, 20, "0");
             var activateOutputCheckBox = new CheckBox(15, 3, "Activate Output", false);
 
             void StartConnectionButtonClicked()
             {
-                if (!int.TryParse(outputAddress.Text.ToString(), out var portNumber))
+                if (!byte.TryParse(outputAddressTextField.Text.ToString(), out var outputAddress))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid output address entered!", "OK");
@@ -396,10 +396,9 @@ namespace Console
 
                 SendCommand("Output Control was Successful", _connectionId, new OutputControls(new[]
                 {
-                    new OutputControl(byte.Parse(outputAddress.Text.ToString()),
-                        activateOutputCheckBox.Checked
-                            ? OutputControlCode.PermanentStateOnAbortTimedOperation
-                            : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
+                    new OutputControl(outputAddress, activateOutputCheckBox.Checked
+                        ? OutputControlCode.PermanentStateOnAbortTimedOperation
+                        : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
                 }), ControlPanel.OutputControl);
 
                 Application.RequestStop();
@@ -410,7 +409,7 @@ namespace Console
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
                 new Label(1, 1, "Output Address:"),
-                outputAddress,
+                outputAddressTextField,
                 activateOutputCheckBox
             });
         }
