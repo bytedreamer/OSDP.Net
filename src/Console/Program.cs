@@ -86,11 +86,7 @@ namespace Console
                         () => SendCommand("Input status", _connectionId, ControlPanel.InputStatus)),
                     new MenuItem("_Local Status", "", 
                         () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus)),
-                    new MenuItem("Output Control", "",
-                         () => SendCommand("Output Control was Successful", _connectionId, new OutputControls(new[]
-                         {
-                             new OutputControl(0, OutputControlCode.TemporaryStateOnResumePermanentState, 100)
-                         }), ControlPanel.OutputControl)),
+                    new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "", 
                         () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus)),
                     new MenuItem("_Reader Status", "", 
@@ -381,6 +377,41 @@ namespace Console
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
                 scrollView
+            });
+        }
+
+        private static void SendOutputControlCommand()
+        {
+            var outputAddress = new TextField(20, 1, 20, "0");
+            var activateOutputCheckBox = new CheckBox(15, 3, "Activate Output", false);
+
+            void StartConnectionButtonClicked()
+            {
+                if (!int.TryParse(outputAddress.Text.ToString(), out var portNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid output address entered!", "OK");
+                    return;
+                }
+
+                SendCommand("Output Control was Successful", _connectionId, new OutputControls(new[]
+                {
+                    new OutputControl(byte.Parse(outputAddress.Text.ToString()),
+                        activateOutputCheckBox.Checked
+                            ? OutputControlCode.PermanentStateOnAbortTimedOperation
+                            : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
+                }), ControlPanel.OutputControl);
+
+                Application.RequestStop();
+            }
+
+            Application.Run(new Dialog("Send Output Control Output Command", 60, 10,
+                new Button("Send") {Clicked = StartConnectionButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                new Label(1, 1, "Output Address:"),
+                outputAddress,
+                activateOutputCheckBox
             });
         }
 
