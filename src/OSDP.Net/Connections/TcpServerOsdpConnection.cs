@@ -1,3 +1,4 @@
+using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,8 +31,7 @@ namespace OSDP.Net.Connections
         public void Open()
         {
             _listener.Start();
-            Task.Factory.StartNew(async () => { _tcpClient = await _listener.AcceptTcpClientAsync(); },
-                TaskCreationOptions.LongRunning);
+            _tcpClient = _listener.AcceptTcpClient();
         }
 
         public void Close()
@@ -39,7 +39,6 @@ namespace OSDP.Net.Connections
             var tcpClient = _tcpClient;
             _tcpClient = null;
             tcpClient?.Close();
-            _listener.Stop();
         }
 
         public async Task WriteAsync(byte[] buffer)
