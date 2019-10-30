@@ -8,6 +8,8 @@ namespace Console.Configuration
 
         public TcpServerConnectionSettings TcpServerConnectionSettings { get; set; } = new TcpServerConnectionSettings();
 
+        public TcpClientConnectionSettings TcpClientConnectionSettings { get; set; } = new TcpClientConnectionSettings();
+
         public List<DeviceSetting> Devices { get; set; } = new List<DeviceSetting>();
     }
 }

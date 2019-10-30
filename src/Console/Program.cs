@@ -62,9 +62,10 @@ namespace Console
             {
                 new MenuBarItem("_System", new []
                 {
-                    new MenuItem("Start _Serial Connection", "", StartSerialConnection),
-                    new MenuItem("Start _TCP Server Connection", "", StartTcpServerConnection),
-                    new MenuItem("Sto_p Connections", "", ControlPanel.Shutdown),
+                    new MenuItem("Start Serial Connection", "", StartSerialConnection),
+                    new MenuItem("Start TCP Server Connection", "", StartTcpServerConnection),
+                    new MenuItem("Start TCP Client Connection", "", StartTcpClientConnection),
+                    new MenuItem("Stop Connections", "", ControlPanel.Shutdown),
                     new MenuItem("Show _Log", string.Empty, ShowLog),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
@@ -162,7 +163,7 @@ namespace Console
         private static void StartTcpServerConnection()
         {
             var portNumberTextField = new TextField(15, 1, 35, _settings.TcpServerConnectionSettings.PortNumber.ToString());
-            var baudRateTextField = new TextField(15, 3, 35, _settings.SerialConnectionSettings.BaudRate.ToString());
+            var baudRateTextField = new TextField(15, 3, 35, _settings.TcpServerConnectionSettings.BaudRate.ToString());
 
             void StartConnectionButtonClicked()
             {
@@ -172,7 +173,7 @@ namespace Console
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid port number entered!", "OK");
                     return;
                 }
-                _settings.TcpServerConnectionSettings.BaudRate = portNumber;
+                _settings.TcpServerConnectionSettings.PortNumber = portNumber;
                 
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
@@ -195,6 +196,56 @@ namespace Console
                 new Label(1, 1, "Port Number:"),
                 portNumberTextField,
                 new Label(1, 3, "Baud Rate:"),
+                baudRateTextField
+            });
+        }
+
+        private static void StartTcpClientConnection()
+        {
+            var hostTextField = new TextField(15, 1, 35, _settings.TcpClientConnectionSettings.Host);
+            var portNumberTextField =
+                new TextField(15, 3, 35, _settings.TcpClientConnectionSettings.PortNumber.ToString());
+            var baudRateTextField = new TextField(15, 5, 35, _settings.TcpClientConnectionSettings.BaudRate.ToString());
+
+            void StartConnectionButtonClicked()
+            {
+                _settings.TcpClientConnectionSettings.Host = hostTextField.Text.ToString();
+
+                if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid port number entered!", "OK");
+                    return;
+                }
+
+                _settings.TcpClientConnectionSettings.PortNumber = portNumber;
+
+                if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid baud rate entered!", "OK");
+                    return;
+                }
+
+                _settings.TcpClientConnectionSettings.BaudRate = baudRate;
+                
+                StartConnection(new TcpClientOsdpConnection(
+                    _settings.TcpClientConnectionSettings.Host,
+                    _settings.TcpClientConnectionSettings.PortNumber,
+                    _settings.TcpClientConnectionSettings.BaudRate));
+
+                Application.RequestStop();
+            }
+
+            Application.Run(new Dialog("Start TCP Client Connection", 60, 13,
+                new Button("Start") {Clicked = StartConnectionButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                new Label(1, 1, "Host Name:"),
+                hostTextField,
+                new Label(1, 3, "Port Number:"),
+                portNumberTextField,
+                new Label(1, 5, "Baud Rate:"),
                 baudRateTextField
             });
         }
