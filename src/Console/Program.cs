@@ -93,6 +93,11 @@ namespace Console
                     new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "", 
                         () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus)),
+                    new MenuItem("Reader LED Control", "", () => ControlPanel.ReaderLedControl(_connectionId, 1, new ReaderLedControls(new []
+                    {
+                        new ReaderLedControl(0, 0, TemporaryReaderControlCode.SetTemporaryAndStartTimer, 10, 10, LedColor.Red, LedColor.Green, 100, 
+                            PermanentReaderControlCode.Nop, 0, 0, LedColor.Black, LedColor.Black), 
+                    }))), 
                     new MenuItem("_Reader Status", "", 
                         () => SendCommand("Reader status", _connectionId, ControlPanel.ReaderStatus))
 

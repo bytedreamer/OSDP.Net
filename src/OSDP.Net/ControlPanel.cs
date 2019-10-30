@@ -109,6 +109,14 @@ namespace OSDP.Net
             return reply.Type == ReplyType.Ack || reply.Type == ReplyType.OutputStatusReport;
         }
 
+        public async Task<bool> ReaderLedControl(Guid connectionId, byte address, ReaderLedControls readerLedControls)
+        {
+            var reply = await SendCommand(connectionId,
+                new ReaderLedControlCommand(address, readerLedControls));
+            
+            return reply.Type == ReplyType.Ack;
+        }
+
         public bool IsOnline(Guid connectionId, byte address)
         {
             return _buses.First(bus => bus.Id == connectionId).IsOnline(address);
