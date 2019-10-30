@@ -62,10 +62,6 @@ namespace Console
             {
                 new MenuBarItem("_System", new []
                 {
-                    new MenuItem("Start Serial Connection", "", StartSerialConnection),
-                    new MenuItem("Start TCP Server Connection", "", StartTcpServerConnection),
-                    new MenuItem("Start TCP Client Connection", "", StartTcpClientConnection),
-                    new MenuItem("Stop Connections", "", ControlPanel.Shutdown),
                     new MenuItem("Show _Log", string.Empty, ShowLog),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
@@ -75,6 +71,13 @@ namespace Console
                             Application.RequestStop();
                         }
                     })
+                }),
+                new MenuBarItem("Co_nnections", new []
+                {
+                    new MenuItem("Start Serial Connection", "", StartSerialConnection),
+                    new MenuItem("Start TCP Server Connection", "", StartTcpServerConnection),
+                    new MenuItem("Start TCP Client Connection", "", StartTcpClientConnection),
+                    new MenuItem("Stop Connections", "", ControlPanel.Shutdown),
                 }),
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
