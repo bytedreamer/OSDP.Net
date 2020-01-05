@@ -24,6 +24,7 @@ namespace OSDP.Net
         private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
         private readonly object _configuredDevicesLock = new object();
         private readonly IOsdpConnection _connection;
+        private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(100);
 
         private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
         private readonly BlockingCollection<Reply> _replies;
@@ -136,7 +137,7 @@ namespace OSDP.Net
                     }
                 }
 
-                TimeSpan timeDifference = TimeSpan.FromMilliseconds(100) - (DateTime.UtcNow - lastMessageSentTime);
+                TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
                 await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
 
                 if (!_configuredDevices.Any())
@@ -158,10 +159,16 @@ namespace OSDP.Net
                     {
                         reply = await SendCommandAndReceiveReply(data, command, device);
                     }
+                    catch (InvalidOperationException exception)
+                    {
+                        Logger.Error($"Port is closed, reconnecting...", exception);
+                        _connection.Close();
+                        await Task.Delay(TimeSpan.FromSeconds(1));
+                        break;
+                    }
                     catch (Exception exception)
                     {
-                        Logger.Error($"Error while sending command {command} and receiving reply", exception);
-                        _connection.Close();
+                        Logger.Error($"Error while sending command {command} to address {command.Address}", exception);
                         continue;
                     }
 
@@ -171,8 +178,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        Logger.Error($"Error while processing reply {reply}", exception);
-                        _connection.Close();
+                        Logger.Error($"Error while processing reply {reply} from address {reply.Address}", exception);
                         continue;
                     }
 
@@ -238,7 +244,7 @@ namespace OSDP.Net
 
             data.AddRange(commandData);
 
-            Logger.Debug($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
+            Logger.Trace($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
             
             await _connection.WriteAsync(data.ToArray());
 
@@ -259,7 +265,7 @@ namespace OSDP.Net
                 throw new Exception("Timeout waiting for rest of reply message");
             }
 
-            Logger.Debug($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
+            Logger.Trace($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
                 command.Address);
 
             return Reply.Parse(replyBuffer, Id, command, device);

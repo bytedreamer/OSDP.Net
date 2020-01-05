@@ -7,7 +7,10 @@ namespace Console
     {
         protected override void Append(LoggingEvent loggingEvent)
         {
-            Program.AddLogMessage(RenderLoggingEvent(loggingEvent));
+            if (loggingEvent.Level > Level.Debug)
+            {
+                Program.AddLogMessage(RenderLoggingEvent(loggingEvent));
+            }
         }
     }
 }

@@ -34,6 +34,7 @@ namespace Console
 
         private static Guid _connectionId;
         private static Window _window;
+        private static ScrollView _scrollView;
         private static MenuBar _menuBar;
         private static ControlPanel.NakReplyEventArgs _lastNak;
 
@@ -109,6 +110,25 @@ namespace Console
                             address => new InvalidCrcPollCommand(address)))
                 })
             });
+            
+            Application.MainLoop.AddTimeout(TimeSpan.FromSeconds(5), loop =>
+            {
+                if (!_window.HasFocus)
+                {
+                    return true;
+                }
+                
+                _window.RemoveAll();
+                lock (MessageLock)
+                {
+                    int index = 0;
+                    foreach (var message in Messages.Reverse().ToArray())
+                    {
+                        _window.Add(new Label(0, index++, message));
+                    }
+                }
+                return true;
+            });
 
             Application.Top.Add(_menuBar, _window);
 
@@ -120,18 +140,16 @@ namespace Console
         private static void ShowLog()
         {
             _window.RemoveAll();
-            var scrollView = new ScrollView(new Rect(1, 0, _window.Frame.Width - 1, _window.Frame.Height - 1))
+
+
+            _scrollView = new ScrollView(new Rect(1, 0, _window.Frame.Width - 1, _window.Frame.Height - 1))
             {
                 ContentSize = new Size(100, 100),
                 ShowVerticalScrollIndicator = true,
                 ShowHorizontalScrollIndicator = true
             };
-            lock (MessageLock)
-            {
-                scrollView.Add(new Label(0, 0, string.Join("", Messages.Reverse().ToArray())));
-            }
-
-            _window.Add(scrollView);
+            _window.Add(_scrollView);
+            _scrollView.Add( new Label(0,0,"test"));
         }
 
         private static void StartSerialConnection()
@@ -317,14 +335,39 @@ namespace Console
 
         public static void AddLogMessage(string message)
         {
-            lock (MessageLock)
+            Application.MainLoop.Invoke(() =>
             {
-                Messages.Enqueue(message);
-                while (Messages.Count > 100)
+                lock (MessageLock)
                 {
-                    Messages.Dequeue();
+                    Messages.Enqueue(message);
+                    while (Messages.Count > 25)
+                    {
+                        Messages.Dequeue();
+                    }
+
+                    if (!_window.HasFocus)
+                    {
+                        return;
+                    }
+
+                    _window.RemoveAll();
+                    int index = 0;
+                    foreach (string outputMessage in Messages.Reverse())
+                    {
+                        _window.Add(new Label(0, index++, outputMessage.Substring(0, outputMessage.Length-1).PadRight(500)));
+                    }
                 }
-            }
+            });
+
+
+//            lock (MessageLock)
+//            {
+//                Messages.Enqueue(message);
+//                while (Messages.Count > 100)
+//                {
+//                    Messages.Dequeue();
+//                }
+//            }
         }
 
         private static Settings GetConnectionSettings()

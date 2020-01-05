@@ -29,7 +29,7 @@ namespace OSDP.Net
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    Logger.Info($"Received a reply {reply}");
+                    Logger.Debug($"Received a reply {reply}");
                     
                     OnReplyReceived(reply);
                 }
