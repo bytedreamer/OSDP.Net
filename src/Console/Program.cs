@@ -61,9 +61,8 @@ namespace Console
 
             _menuBar = new MenuBar(new[]
             {
-                new MenuBarItem("_System", new []
+                new MenuBarItem("_System", new[]
                 {
-                    new MenuItem("Show _Log", string.Empty, ShowLog),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
@@ -73,7 +72,7 @@ namespace Console
                         }
                     })
                 }),
-                new MenuBarItem("Co_nnections", new []
+                new MenuBarItem("Co_nnections", new[]
                 {
                     new MenuItem("Start Serial Connection", "", StartSerialConnection),
                     new MenuItem("Start TCP Server Connection", "", StartTcpServerConnection),
@@ -83,73 +82,50 @@ namespace Console
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
                 {
-                    new MenuItem("_Device Capabilities", "", 
+                    new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, ControlPanel.DeviceCapabilities)),
-                    new MenuItem("_ID Report", "", 
+                    new MenuItem("_ID Report", "",
                         () => SendCommand("ID report", _connectionId, ControlPanel.IdReport)),
-                    new MenuItem("Input Status", "", 
+                    new MenuItem("Input Status", "",
                         () => SendCommand("Input status", _connectionId, ControlPanel.InputStatus)),
-                    new MenuItem("_Local Status", "", 
+                    new MenuItem("_Local Status", "",
                         () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus)),
                     new MenuItem("Output Control", "", SendOutputControlCommand),
-                    new MenuItem("Output Status", "", 
+                    new MenuItem("Output Status", "",
                         () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus)),
-                    new MenuItem("Reader LED Control", "", () => ControlPanel.ReaderLedControl(_connectionId, 1, new ReaderLedControls(new []
-                    {
-                        new ReaderLedControl(0, 0, TemporaryReaderControlCode.SetTemporaryAndStartTimer, 10, 10, LedColor.Red, LedColor.Green, 100, 
-                            PermanentReaderControlCode.Nop, 0, 0, LedColor.Black, LedColor.Black), 
-                    }))), 
-                    new MenuItem("_Reader Status", "", 
+                    new MenuItem("Reader LED Control", "", () => ControlPanel.ReaderLedControl(_connectionId, 1,
+                        new ReaderLedControls(new[]
+                        {
+                            new ReaderLedControl(0, 0, TemporaryReaderControlCode.SetTemporaryAndStartTimer, 10, 10,
+                                LedColor.Red, LedColor.Green, 100,
+                                PermanentReaderControlCode.Nop, 0, 0, LedColor.Black, LedColor.Black),
+                        }))),
+                    new MenuItem("_Reader Status", "",
                         () => SendCommand("Reader status", _connectionId, ControlPanel.ReaderStatus))
 
                 }),
                 new MenuBarItem("_Invalid Commands", new[]
                 {
-                    new MenuItem("_Bad CRC/Checksum", "", 
+                    new MenuItem("_Bad CRC/Checksum", "",
                         () => SendCustomCommand("Bad CRC/Checksum", _connectionId, ControlPanel.SendCustomCommand,
                             address => new InvalidCrcPollCommand(address)))
                 })
             });
-            
-            Application.MainLoop.AddTimeout(TimeSpan.FromSeconds(5), loop =>
-            {
-                if (!_window.HasFocus)
-                {
-                    return true;
-                }
-                
-                _window.RemoveAll();
-                lock (MessageLock)
-                {
-                    int index = 0;
-                    foreach (var message in Messages.Reverse().ToArray())
-                    {
-                        _window.Add(new Label(0, index++, message));
-                    }
-                }
-                return true;
-            });
 
             Application.Top.Add(_menuBar, _window);
 
-            Application.Run();
 
-            ControlPanel.Shutdown();
-        }
-
-        private static void ShowLog()
-        {
-            _window.RemoveAll();
-
-
-            _scrollView = new ScrollView(new Rect(1, 0, _window.Frame.Width - 1, _window.Frame.Height - 1))
+            _scrollView = new ScrollView(new Rect(0, 0, 0, 0))
             {
-                ContentSize = new Size(100, 100),
+                ContentSize = new Size(500, 100),
                 ShowVerticalScrollIndicator = true,
                 ShowHorizontalScrollIndicator = true
             };
             _window.Add(_scrollView);
-            _scrollView.Add( new Label(0,0,"test"));
+
+            Application.Run();
+
+            ControlPanel.Shutdown();
         }
 
         private static void StartSerialConnection()
@@ -340,34 +316,27 @@ namespace Console
                 lock (MessageLock)
                 {
                     Messages.Enqueue(message);
-                    while (Messages.Count > 25)
+                    while (Messages.Count > 100)
                     {
                         Messages.Dequeue();
                     }
 
-                    if (!_window.HasFocus)
+                    while (!_window.HasFocus)
                     {
                         return;
                     }
 
-                    _window.RemoveAll();
+                    _scrollView.Frame = new Rect(1, 0, _window.Frame.Width - 3, _window.Frame.Height - 2);
+                    _scrollView.RemoveAll();
+                    
                     int index = 0;
                     foreach (string outputMessage in Messages.Reverse())
                     {
-                        _window.Add(new Label(0, index++, outputMessage.Substring(0, outputMessage.Length-1).PadRight(500)));
+                        _scrollView.Add(new Label(0, index++,
+                            outputMessage.Substring(0, outputMessage.Length - 1).PadRight(500)));
                     }
                 }
             });
-
-
-//            lock (MessageLock)
-//            {
-//                Messages.Enqueue(message);
-//                while (Messages.Count > 100)
-//                {
-//                    Messages.Dequeue();
-//                }
-//            }
         }
 
         private static Settings GetConnectionSettings()
