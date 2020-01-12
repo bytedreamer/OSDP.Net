@@ -47,7 +47,7 @@ namespace OSDP.Net.Connections
             var tcpClient = _tcpClient;
             if (tcpClient != null)
             {
-                await tcpClient.GetStream().WriteAsync(buffer, 0, buffer.Length);
+                await tcpClient.GetStream().WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
             }
         }
 
@@ -56,7 +56,7 @@ namespace OSDP.Net.Connections
             var tcpClient = _tcpClient;
             if (tcpClient != null)
             {
-                return await tcpClient.GetStream().ReadAsync(buffer, 0, buffer.Length, token);
+                return await tcpClient.GetStream().ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
             }
 
             return 0;

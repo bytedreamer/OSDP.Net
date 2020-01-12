@@ -31,12 +31,12 @@ namespace OSDP.Net.Connections
 
         public async Task WriteAsync(byte[] buffer)
         {
-            await _serialPort.BaseStream.WriteAsync(buffer, 0, buffer.Length);
+            await _serialPort.BaseStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
         }
 
         public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
-            return await _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length, token);
+            return await _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
         }
     }
 }

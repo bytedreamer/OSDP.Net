@@ -49,7 +49,7 @@ namespace OSDP.Net
 
             Task.Factory.StartNew(async () =>
             {
-                await newBus.StartPollingAsync();
+                await newBus.StartPollingAsync().ConfigureAwait(false);
             }, TaskCreationOptions.LongRunning);
 
             return newBus.Id;
@@ -62,49 +62,49 @@ namespace OSDP.Net
         /// <param name="command"></param>
         public async Task SendCustomCommand(Guid connectionId, Command command)
         {
-            await SendCommand(connectionId, command);
+            await SendCommand(connectionId, command).ConfigureAwait(false);
         }
 
         public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
         {
             return DeviceIdentification.ParseData(await SendCommand(connectionId,
-                new IdReportCommand(address)));
+                new IdReportCommand(address)).ConfigureAwait(false));
         }
 
         public async Task<DeviceCapabilities> DeviceCapabilities(Guid connectionId, byte address)
         {
             return Model.ReplyData.DeviceCapabilities.ParseData(await SendCommand(connectionId,
-                new DeviceCapabilitiesCommand(address)));
+                new DeviceCapabilitiesCommand(address)).ConfigureAwait(false));
         }
 
         public async Task<LocalStatus> LocalStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.LocalStatus.ParseData(await SendCommand(connectionId,
-                new LocalStatusReportCommand(address)));
+                new LocalStatusReportCommand(address)).ConfigureAwait(false));
         }
 
         public async Task<InputStatus> InputStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.InputStatus.ParseData(await SendCommand(connectionId,
-                new InputStatusReportCommand(address)));
+                new InputStatusReportCommand(address)).ConfigureAwait(false));
         }
 
         public async Task<OutputStatus> OutputStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.OutputStatus.ParseData(await SendCommand(connectionId,
-                new OutputStatusReportCommand(address)));
+                new OutputStatusReportCommand(address)).ConfigureAwait(false));
         }
 
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.ReaderStatus.ParseData(await SendCommand(connectionId,
-                new ReaderStatusReportCommand(address)));
+                new ReaderStatusReportCommand(address)).ConfigureAwait(false));
         }
 
         public async Task<bool> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
         {
             var reply = await SendCommand(connectionId,
-                new OutputControlCommand(address, outputControls));
+                new OutputControlCommand(address, outputControls)).ConfigureAwait(false);
             
             return reply.Type == ReplyType.Ack || reply.Type == ReplyType.OutputStatusReport;
         }
@@ -112,7 +112,7 @@ namespace OSDP.Net
         public async Task<bool> ReaderLedControl(Guid connectionId, byte address, ReaderLedControls readerLedControls)
         {
             var reply = await SendCommand(connectionId,
-                new ReaderLedControlCommand(address, readerLedControls));
+                new ReaderLedControlCommand(address, readerLedControls)).ConfigureAwait(false);
             
             return reply.Type == ReplyType.Ack;
         }
@@ -137,7 +137,7 @@ namespace OSDP.Net
             
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.SendCommand(command);
 
-            if (source.Task == await Task.WhenAny(source.Task, Task.Delay(_replyResponseTimeout)))
+            if (source.Task == await Task.WhenAny(source.Task, Task.Delay(_replyResponseTimeout)).ConfigureAwait(false))
             {
                 return await source.Task;
             }

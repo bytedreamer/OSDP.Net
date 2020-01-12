@@ -138,7 +138,7 @@ namespace OSDP.Net
                 }
 
                 TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
-                await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
+                await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero).ConfigureAwait(false);
 
                 if (!_configuredDevices.Any())
                 {
@@ -157,13 +157,13 @@ namespace OSDP.Net
 
                     try
                     {
-                        reply = await SendCommandAndReceiveReply(data, command, device);
+                        reply = await SendCommandAndReceiveReply(data, command, device).ConfigureAwait(false);
                     }
                     catch (InvalidOperationException exception)
                     {
                         Logger.Error($"Port is closed, reconnecting...", exception);
                         _connection.Close();
-                        await Task.Delay(TimeSpan.FromSeconds(1));
+                        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                         break;
                     }
                     catch (Exception exception)
@@ -182,7 +182,7 @@ namespace OSDP.Net
                         continue;
                     }
 
-                    await Task.Delay(IdleLineDelay);
+                    await Task.Delay(IdleLineDelay).ConfigureAwait(false);
                 }
             }
         }
@@ -246,21 +246,21 @@ namespace OSDP.Net
 
             Logger.Trace($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
             
-            await _connection.WriteAsync(data.ToArray());
+            await _connection.WriteAsync(data.ToArray()).ConfigureAwait(false);
 
             var replyBuffer = new Collection<byte>();
 
-            if (!await WaitForStartOfMessage(replyBuffer))
+            if (!await WaitForStartOfMessage(replyBuffer).ConfigureAwait(false))
             {
                 throw new Exception("Timeout waiting for reply message");
             }
 
-            if (!await WaitForMessageLength(replyBuffer))             
+            if (!await WaitForMessageLength(replyBuffer).ConfigureAwait(false))             
             {
                 throw new Exception("Timeout waiting for reply message length");
             }
 
-            if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer)))
+            if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer)).ConfigureAwait(false))
             {
                 throw new Exception("Timeout waiting for rest of reply message");
             }
@@ -281,7 +281,7 @@ namespace OSDP.Net
             while (replyBuffer.Count < replyLength)
             {
                 byte[] readBuffer = new byte[byte.MaxValue];
-                int bytesRead = await TimeOutReadAsync(readBuffer);
+                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
@@ -303,7 +303,7 @@ namespace OSDP.Net
             while (replyBuffer.Count < 4)
             {
                 byte[] readBuffer = new byte[4];
-                int bytesRead = await TimeOutReadAsync(readBuffer);
+                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
@@ -325,7 +325,7 @@ namespace OSDP.Net
             while (true)
             {
                 byte[] readBuffer = new byte[1];
-                int bytesRead = await TimeOutReadAsync(readBuffer);
+                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
                 if (bytesRead == 0)
                 {
                     return false;
@@ -349,7 +349,7 @@ namespace OSDP.Net
             {
                 try
                 {
-                    return await _connection.ReadAsync(buffer, cancellationTokenSource.Token);
+                    return await _connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
                 }
                 catch (TaskCanceledException)
                 {
