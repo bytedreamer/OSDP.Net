@@ -8,4 +8,4 @@ The project is in early development and not ready for production usage. The shor
 
 There is a package of the test console application for all the major platforms available for download. It has all the required assemblies included to run as a self containsed executable. The latest version of the package can be found at [https://www.z-bitco.com/downloads/OSDPTestConsole.zip](https://www.z-bitco.com/downloads/OSDPTestConsole.zip)
 
-NOTE: Determine the COM port identifier of the 485 bus connected to the computer. This will need to be entered when starting the connection. Be sure to save configuration if needed before exiting.
+NOTE: Determine the COM port identifier of the 485 bus connected to the computer. This will need to be entered when starting the connection. Be sure to save configuration before exiting.
