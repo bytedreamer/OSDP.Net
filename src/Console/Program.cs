@@ -14,6 +14,7 @@ using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using Terminal.Gui;
+using Attribute = System.Attribute;
 
 namespace Console
 {
@@ -273,9 +274,7 @@ namespace Console
                     return;
                 }
 
-                Application.MainLoop.Invoke(() =>
-                    DisplayMessage($"!!! Received NAK reply for address {args.Address} !!!",
-                        args.Nak.ToString()));
+                AddLogMessage($"!!! Received NAK reply for address {args.Address} !!!{Environment.NewLine}{args.Nak}");
             };
             ControlPanel.LocalStatusReportReplyReceived += (sender, args) =>
             {
@@ -306,7 +305,7 @@ namespace Console
 
         private static void DisplayReceivedReply(string title, string message)
         {
-            Application.MainLoop.Invoke(() =>DisplayMessage(title, message));
+            AddLogMessage($"{title}{Environment.NewLine}{message}");
         }
 
         public static void AddLogMessage(string message)
@@ -328,12 +327,26 @@ namespace Console
 
                     _scrollView.Frame = new Rect(1, 0, _window.Frame.Width - 3, _window.Frame.Height - 2);
                     _scrollView.RemoveAll();
-                    
+
                     int index = 0;
                     foreach (string outputMessage in Messages.Reverse())
                     {
-                        _scrollView.Add(new Label(0, index++,
-                            outputMessage.Substring(0, outputMessage.Length - 1).PadRight(500)));
+                        var label = new Label(0, index,
+                            outputMessage.Substring(0, outputMessage.Length - 1));
+
+                        index += outputMessage.Length - outputMessage.Replace(Environment.NewLine, string.Empty).Length;
+
+                        if (outputMessage.Contains("| WARN |") || outputMessage.Contains("NAK"))
+                        {
+                            label.TextColor = Terminal.Gui.Attribute.Make(Color.Black, Color.BrightYellow);
+                        }
+
+                        if (outputMessage.Contains("| ERROR |"))
+                        {
+                            label.TextColor = Terminal.Gui.Attribute.Make(Color.White, Color.BrightRed);
+                        }
+
+                        _scrollView.Add(label);
                     }
                 }
             });
@@ -500,10 +513,7 @@ namespace Console
                     try
                     {
                         var result = await sendCommandFunction(connectionId, address);
-                        Application.MainLoop.Invoke(() =>
-                        {
-                            DisplayMessage($"{title} for address {address}", result.ToString());
-                        });
+                        AddLogMessage($"{title} for address {address}{Environment.NewLine}{result}");
                     }
                     catch (Exception exception)
                     {
@@ -540,10 +550,7 @@ namespace Console
                     try
                     {
                         var result = await sendCommandFunction(connectionId, address, commandData);
-                        Application.MainLoop.Invoke(() =>
-                        {
-                            DisplayMessage($"{title} for address {address}", result.ToString());
-                        });
+                        AddLogMessage($"{title} for address {address}{Environment.NewLine}{result}");
                     }
                     catch (Exception exception)
                     {
@@ -615,26 +622,6 @@ namespace Console
                 orderedDevices.Select(device => $"{device.Address} : {device.Name}").ToArray());
             scrollView.Add(deviceRadioGroup);
             return scrollView;
-        }
-
-        private static void DisplayMessage(string title, string message)
-        {
-            var resultStringLines = message.Split(Environment.NewLine);
-
-            var resultsView = new ScrollView(new Rect(5, 1, 50, 6))
-            {
-                ContentSize = new Size(resultStringLines.OrderByDescending(line => line.Length).First().Length,
-                    resultStringLines.Length),
-                ShowVerticalScrollIndicator = true,
-                ShowHorizontalScrollIndicator = true
-            };
-            resultsView.Add(new Label(message));
-
-            Application.Run(new Dialog(title, 60, 13,
-                new Button("OK") {Clicked = Application.RequestStop})
-            {
-                resultsView
-            });
         }
     }
 }

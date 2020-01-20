@@ -5,6 +5,14 @@
         <TargetFramework>netcoreapp3.0</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <WarningsAsErrors />
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <WarningsAsErrors />
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\OSDP.Net\OSDP.Net.csproj" />
     </ItemGroup>
