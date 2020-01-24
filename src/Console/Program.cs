@@ -14,7 +14,6 @@ using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using Terminal.Gui;
-using Attribute = System.Attribute;
 
 namespace Console
 {
