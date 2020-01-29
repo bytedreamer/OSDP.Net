@@ -117,6 +117,14 @@ namespace OSDP.Net
             return reply.Type == ReplyType.Ack;
         }
 
+        public async Task<bool> BuzzerControl(Guid connectionId, byte address, BuzzerControl buzzerControl)
+        {
+            var reply = await SendCommand(connectionId,
+                new BuzzerControlCommand(address, buzzerControl)).ConfigureAwait(false);
+            
+            return reply.Type == ReplyType.Ack;
+        }
+
         public bool IsOnline(Guid connectionId, byte address)
         {
             return _buses.First(bus => bus.Id == connectionId).IsOnline(address);
