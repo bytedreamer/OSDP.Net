@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibLog" Version="5.0.6" />
-    <PackageReference Include="System.IO.Ports" Version="4.6.0" />
+    <PackageReference Include="LibLog" Version="5.0.8" />
+    <PackageReference Include="System.IO.Ports" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
