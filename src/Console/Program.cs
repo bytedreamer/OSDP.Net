@@ -82,6 +82,8 @@ namespace Console
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
                 {
+                    new MenuItem("Reader Buzzer Control", "", () => ControlPanel.BuzzerControl(_connectionId, 0,
+                        new BuzzerControl(0, ToneCode.Default, 10, 10, 4))),
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, ControlPanel.DeviceCapabilities)),
                     new MenuItem("_ID Report", "",
@@ -93,12 +95,12 @@ namespace Console
                     new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "",
                         () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus)),
-                    new MenuItem("Reader LED Control", "", () => ControlPanel.ReaderLedControl(_connectionId, 1,
+                    new MenuItem("Reader LED Control", "", () => ControlPanel.ReaderLedControl(_connectionId, 0,
                         new ReaderLedControls(new[]
                         {
                             new ReaderLedControl(0, 0, TemporaryReaderControlCode.SetTemporaryAndStartTimer, 10, 10,
                                 LedColor.Red, LedColor.Green, 100,
-                                PermanentReaderControlCode.Nop, 0, 0, LedColor.Black, LedColor.Black),
+                                PermanentReaderControlCode.Nop, 0, 0, LedColor.Red, LedColor.Black),
                         }))),
                     new MenuItem("_Reader Status", "",
                         () => SendCommand("Reader status", _connectionId, ControlPanel.ReaderStatus))
