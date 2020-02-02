@@ -117,10 +117,18 @@ namespace OSDP.Net
             return reply.Type == ReplyType.Ack;
         }
 
-        public async Task<bool> BuzzerControl(Guid connectionId, byte address, BuzzerControl buzzerControl)
+        public async Task<bool> ReaderBuzzerControl(Guid connectionId, byte address, ReaderBuzzerControl readerBuzzerControl)
         {
             var reply = await SendCommand(connectionId,
-                new BuzzerControlCommand(address, buzzerControl)).ConfigureAwait(false);
+                new ReaderBuzzerControlCommand(address, readerBuzzerControl)).ConfigureAwait(false);
+            
+            return reply.Type == ReplyType.Ack;
+        }
+
+        public async Task<bool> ReaderTextOutput(Guid connectionId, byte address, ReaderTextOutput readerTextOutput)
+        {
+            var reply = await SendCommand(connectionId,
+                new ReaderTextOutputCommand(address, readerTextOutput)).ConfigureAwait(false);
             
             return reply.Type == ReplyType.Ack;
         }

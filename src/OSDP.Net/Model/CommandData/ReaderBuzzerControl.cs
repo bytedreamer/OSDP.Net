@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace OSDP.Net.Model.CommandData
 {
-    public class BuzzerControl
+    public class ReaderBuzzerControl
     {
-        public BuzzerControl(byte readerNumber, ToneCode toneCode, byte onTime, byte offTime, byte count)
+        public ReaderBuzzerControl(byte readerNumber, ToneCode toneCode, byte onTime, byte offTime, byte count)
         {
             ReaderNumber = readerNumber;
             ToneCode = toneCode;

@@ -82,8 +82,8 @@ namespace Console
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
                 {
-                    new MenuItem("Reader Buzzer Control", "", () => ControlPanel.BuzzerControl(_connectionId, 0,
-                        new BuzzerControl(0, ToneCode.Default, 10, 10, 4))),
+                    new MenuItem("Reader Buzzer Control", "", () => ControlPanel.ReaderBuzzerControl(_connectionId, 0,
+                        new ReaderBuzzerControl(0, ToneCode.Default, 10, 10, 4))),
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, ControlPanel.DeviceCapabilities)),
                     new MenuItem("_ID Report", "",

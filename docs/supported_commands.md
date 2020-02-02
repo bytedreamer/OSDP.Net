@@ -14,11 +14,11 @@
 | osdp_OUT      | 0x68 | YES |
 | osdp_LED      | 0x69 | YES |
 | osdp_BUZ      | 0x6A | YES |
-| osdp_TEXT     | 0x6B | NO |
+| osdp_TEXT     | 0x6B | YES |
 | osdp_RMODE    | 0x6C | REMOVED |
-| osdp_TDSET    | 0x6D | NO | 
+| osdp_TDSET    | 0x6D | REMOVED | 
 | osdp_COMSET   | 0x6E | NO | 
-| osdp_DATA     | 0x6F | NO |
+| osdp_DATA     | 0x6F | REMOVED |
 | osdp_XMIT     | 0x70 | REMOVED |
 | osdp_PROMPT   | 0x71 | NO |
 | osdp_SPE      | 0x72 | REMOVED |

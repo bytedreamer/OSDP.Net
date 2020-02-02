@@ -3,13 +3,13 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class BuzzerControlCommand : Command
+    public class ReaderBuzzerControlCommand : Command
     {
-        private readonly BuzzerControl _buzzerControl;
+        private readonly ReaderBuzzerControl _readerBuzzerControl;
 
-        public BuzzerControlCommand(byte address, BuzzerControl buzzerControl)
+        public ReaderBuzzerControlCommand(byte address, ReaderBuzzerControl readerBuzzerControl)
         {
-            _buzzerControl = buzzerControl;
+            _readerBuzzerControl = readerBuzzerControl;
             Address = address;
         }
 
@@ -26,7 +26,7 @@ namespace OSDP.Net.Messages
 
         protected override IEnumerable<byte> Data()
         {
-            return _buzzerControl.BuildData();
+            return _readerBuzzerControl.BuildData();
         }
 
         protected override void CustomCommandUpdate(List<byte> commandBuffer)
