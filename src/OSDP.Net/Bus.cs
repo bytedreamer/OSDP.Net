@@ -94,12 +94,11 @@ namespace OSDP.Net
         public void RemoveDevice(byte address)
         {
             var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
-            if (foundDevice != null)
+            if (foundDevice == null) return;
+            
+            lock (_configuredDevicesLock)
             {
-                lock (_configuredDevicesLock)
-                {
-                    _configuredDevices.Remove(foundDevice);
-                }
+                _configuredDevices.Remove(foundDevice);
             }
         }
 
@@ -133,7 +132,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        Logger.Error($"Error while opening connection", exception);
+                        Logger.Error("Error while opening connection", exception);
                     }
                 }
 
@@ -161,7 +160,7 @@ namespace OSDP.Net
                     }
                     catch (InvalidOperationException exception)
                     {
-                        Logger.Error($"Port is closed, reconnecting...", exception);
+                        Logger.Error("Port is closed, reconnecting...", exception);
                         _connection.Close();
                         await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                         break;
