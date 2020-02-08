@@ -306,7 +306,7 @@ namespace Console
 
         private static void DisplayReceivedReply(string title, string message)
         {
-            AddLogMessage($"{title}{Environment.NewLine}{message}");
+            AddLogMessage($"{title}{Environment.NewLine}{message}{Environment.NewLine}{new string('*', 30)}");
         }
 
         public static void AddLogMessage(string message)
@@ -514,7 +514,7 @@ namespace Console
                     try
                     {
                         var result = await sendCommandFunction(connectionId, address);
-                        AddLogMessage($"{title} for address {address}{Environment.NewLine}{result}");
+                        AddLogMessage($"{title} for address {address}{Environment.NewLine}{result}{Environment.NewLine}{new string('*', 30)}");
                     }
                     catch (Exception exception)
                     {
@@ -551,7 +551,7 @@ namespace Console
                     try
                     {
                         var result = await sendCommandFunction(connectionId, address, commandData);
-                        AddLogMessage($"{title} for address {address}{Environment.NewLine}{result}");
+                        AddLogMessage($"{title} for address {address}{Environment.NewLine}{result}{Environment.NewLine}{new string('*', 30)}");
                     }
                     catch (Exception exception)
                     {
