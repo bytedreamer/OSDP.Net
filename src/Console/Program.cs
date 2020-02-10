@@ -265,6 +265,13 @@ namespace Console
                 ControlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel);
             }
 
+            ControlPanel.ConnectionStatusChanged += (sender, args) =>
+            {
+                DisplayReceivedReply($"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
+                                     $"at address {args.Address} is now {(args.IsConnected ? "connected" : "disconnected")}",
+                    string.Empty);
+            };
+            
             ControlPanel.NakReplyReceived += (sender, args) =>
             {
                 var lastNak = _lastNak;

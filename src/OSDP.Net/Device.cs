@@ -26,7 +26,7 @@ namespace OSDP.Net
 
         public bool IsSecurityEstablished => MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
 
-        public bool IsOnline => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow;
+        public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow;
 
         /// <inheritdoc />
         public int CompareTo(Device other)

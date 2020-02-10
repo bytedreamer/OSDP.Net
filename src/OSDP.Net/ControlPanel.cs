@@ -45,6 +45,8 @@ namespace OSDP.Net
         {
             var newBus = new Bus(connection, _replies);
             
+            newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
+            
             _buses.Add(newBus);
 
             Task.Factory.StartNew(async () =>
@@ -53,6 +55,11 @@ namespace OSDP.Net
             }, TaskCreationOptions.LongRunning);
 
             return newBus.Id;
+        }
+
+        private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
+        {
+            if (sender is Bus bus) OnConnectionStatusChanged(bus.Id, eventArgs.Address, eventArgs.IsConnected);
         }
 
         /// <summary>
@@ -168,6 +175,8 @@ namespace OSDP.Net
         {
             foreach (var bus in _buses)
             {
+                bus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
+                
                 bus.Close();
             }
         }
@@ -187,6 +196,12 @@ namespace OSDP.Net
         public void RemoveDevice(Guid connectionId, byte address)
         {
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.RemoveDevice(address);
+        }
+
+        internal void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected)
+        {
+            var handler = ConnectionStatusChanged;
+            handler?.Invoke(this, new ConnectionStatusEventArgs(connectionId, address, isConnected));
         }
 
         internal virtual void OnReplyReceived(Reply reply)
@@ -251,6 +266,8 @@ namespace OSDP.Net
 
         private event EventHandler<ReplyEventArgs> ReplyReceived;
 
+        public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
+
         public event EventHandler<NakReplyEventArgs> NakReplyReceived;
 
         public event EventHandler<LocalStatusReportReplyEventArgs> LocalStatusReportReplyReceived;
@@ -273,6 +290,20 @@ namespace OSDP.Net
 
             public byte Address { get; }
             public Nak Nak { get; }
+        }
+
+        public class ConnectionStatusEventArgs
+        {
+            public ConnectionStatusEventArgs(Guid connectionId, byte address, bool isConnected)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                IsConnected = isConnected;
+            }
+
+            public Guid ConnectionId { get; }
+            public byte Address { get; }
+            public bool IsConnected { get; }
         }
 
         public class LocalStatusReportReplyEventArgs

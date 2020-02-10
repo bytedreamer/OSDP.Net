@@ -24,6 +24,7 @@ namespace OSDP.Net
         private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
         private readonly object _configuredDevicesLock = new object();
         private readonly IOsdpConnection _connection;
+        private readonly Dictionary<byte, bool> _lastConnectionStatus = new Dictionary<byte, bool>();
         private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(100);
 
         private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
@@ -111,7 +112,7 @@ namespace OSDP.Net
         {
             var foundDevice = _configuredDevices.First(device => device.Address == address);
             
-            return  foundDevice.IsOnline;
+            return  foundDevice.IsConnected;
         }
 
         /// <summary>
@@ -153,6 +154,15 @@ namespace OSDP.Net
                     lastMessageSentTime = DateTime.UtcNow;
 
                     Reply reply;
+                    
+                    try
+                    {
+                        UpdateConnectionStatus(device);
+                    }
+                    catch (Exception exception)
+                    {
+                        Logger.Error("Error while notifying connection status for address {command.Address}", exception);
+                    }
 
                     try
                     {
@@ -184,6 +194,21 @@ namespace OSDP.Net
                     await Task.Delay(IdleLineDelay).ConfigureAwait(false);
                 }
             }
+        }
+
+        public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
+
+        private void UpdateConnectionStatus(Device device)
+        {
+            bool isConnected = device.IsConnected;
+
+            if (_lastConnectionStatus.ContainsKey(device.Address) &&
+                _lastConnectionStatus[device.Address] == isConnected) return;
+            
+            var handler = ConnectionStatusChanged;
+            handler?.Invoke(this, new ConnectionStatusEventArgs(device.Address, isConnected));
+                
+            _lastConnectionStatus[device.Address] = isConnected;
         }
 
         private void ProcessReply(Reply reply, Device device)
@@ -355,6 +380,18 @@ namespace OSDP.Net
                     return 0;
                 }
             }
+        }
+
+        public class ConnectionStatusEventArgs
+        {
+            public ConnectionStatusEventArgs(byte address, bool isConnected)
+            {
+                Address = address;
+                IsConnected = isConnected;
+            }
+
+            public byte Address { get; }
+            public bool IsConnected { get; }
         }
     }
 }
