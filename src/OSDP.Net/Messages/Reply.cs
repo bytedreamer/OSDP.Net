@@ -11,7 +11,6 @@ namespace OSDP.Net.Messages
         private const ushort ReplyTypeIndex = 5;
         private const ushort MacSize = 4;
 
-        private readonly Guid _connectionId;
         private readonly Command _issuingCommand;
 
         protected Reply()
@@ -47,7 +46,7 @@ namespace OSDP.Net.Messages
                 : CalculateChecksum(data.Take(data.Count - 1).ToArray()) == data.Last();
             MessageForMacGeneration = data.Take(messageLength).ToArray();
 
-            _connectionId = connectionId;
+            ConnectionId = connectionId;
             _issuingCommand = issuingCommand;
         }
 
@@ -74,6 +73,8 @@ namespace OSDP.Net.Messages
         protected abstract byte ReplyCode { get; }
 
         public bool IsValidReply => IsCorrectAddress && IsDataCorrect;
+
+        public Guid ConnectionId { get; }
 
         public static Reply Parse(IReadOnlyList<byte> data, Guid connectionId, Command issuingCommand, Device device)
         {
@@ -143,7 +144,7 @@ namespace OSDP.Net.Messages
 
         public override string ToString()
         {
-            return $"Connection ID: {_connectionId} Address: {Address} Type: {Type}";
+            return $"Connection ID: {ConnectionId} Address: {Address} Type: {Type}";
         }
 
         private IEnumerable<byte> DecryptData(Device device)

@@ -25,7 +25,7 @@ namespace OSDP.Net
         private readonly object _configuredDevicesLock = new object();
         private readonly IOsdpConnection _connection;
         private readonly Dictionary<byte, bool> _lastConnectionStatus = new Dictionary<byte, bool>();
-        private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(100);
+        private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
 
         private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
         private readonly BlockingCollection<Reply> _replies;
@@ -170,7 +170,7 @@ namespace OSDP.Net
                     }
                     catch (InvalidOperationException exception)
                     {
-                        Logger.Error("Port is closed, reconnecting...", exception);
+                        Logger.Warn("Port is closed, reconnecting...", exception);
                         _connection.Close();
                         await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                         break;
@@ -232,7 +232,11 @@ namespace OSDP.Net
             {
                 device.ValidReplyHasBeenReceived(reply.Sequence);
             }
-
+            else
+            {
+                return;
+            }
+            
             if (reply.Type == ReplyType.Nak &&
                 (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))

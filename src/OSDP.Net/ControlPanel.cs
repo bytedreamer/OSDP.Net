@@ -216,14 +216,15 @@ namespace OSDP.Net
                 case ReplyType.Nak:
                 {
                     var handler = NakReplyReceived;
-                    handler?.Invoke(this, new NakReplyEventArgs(reply.Address, Nak.ParseData(reply)));
+                    handler?.Invoke(this,
+                        new NakReplyEventArgs(reply.ConnectionId, reply.Address, Nak.ParseData(reply)));
                     break;
                 }
                 case ReplyType.LocalStatusReport:
                 {
                     var handler = LocalStatusReportReplyReceived;
                     handler?.Invoke(this,
-                        new LocalStatusReportReplyEventArgs(reply.Address,
+                        new LocalStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
                             Model.ReplyData.LocalStatus.ParseData(reply)));
                     break;
                 }
@@ -231,7 +232,7 @@ namespace OSDP.Net
                 {
                     var handler = InputStatusReportReplyReceived;
                     handler?.Invoke(this,
-                        new InputStatusReportReplyEventArgs(reply.Address,
+                        new InputStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
                             Model.ReplyData.InputStatus.ParseData(reply)));
                     break;
                 }
@@ -239,7 +240,7 @@ namespace OSDP.Net
                 {
                     var handler = OutputStatusReportReplyReceived;
                     handler?.Invoke(this,
-                        new OutputStatusReportReplyEventArgs(reply.Address,
+                        new OutputStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
                             Model.ReplyData.OutputStatus.ParseData(reply)));
                     break;
                 }
@@ -247,18 +248,16 @@ namespace OSDP.Net
                 {
                     var handler = ReaderStatusReportReplyReceived;
                     handler?.Invoke(this,
-                        new ReaderStatusReportReplyEventArgs(reply.Address,
+                        new ReaderStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
                             Model.ReplyData.ReaderStatus.ParseData(reply)));
                     break;
                 }
-                case ReplyType.FormattedReaderData:
-                    Logger.Debug(
-                        $"Formatted Reader Data {BitConverter.ToString(reply.ExtractReplyData.ToArray())}");
-                    break;
+
                 case ReplyType.RawReaderData:
                 {
                     var handler = RawCardDataReplyReceived;
-                    handler?.Invoke(this, new RawCardDataReplyEventArgs(reply.Address, RawCardData.ParseData(reply)));
+                    handler?.Invoke(this,
+                        new RawCardDataReplyEventArgs(reply.ConnectionId, reply.Address, RawCardData.ParseData(reply)));
                     break;
                 }
             }
@@ -282,12 +281,14 @@ namespace OSDP.Net
 
         public class NakReplyEventArgs
         {
-            public NakReplyEventArgs(byte address, Nak nak)
+            public NakReplyEventArgs(Guid connectionId, byte address, Nak nak)
             {
+                ConnectionId = connectionId;
                 Address = address;
                 Nak = nak;
             }
 
+            public Guid ConnectionId { get; }
             public byte Address { get; }
             public Nak Nak { get; }
         }
@@ -308,60 +309,70 @@ namespace OSDP.Net
 
         public class LocalStatusReportReplyEventArgs
         {
-            public LocalStatusReportReplyEventArgs(byte address, LocalStatus localStatus)
+            public LocalStatusReportReplyEventArgs(Guid connectionId, byte address, LocalStatus localStatus)
             {
+                ConnectionId = connectionId;
                 Address = address;
                 LocalStatus = localStatus;
             }
 
+            public Guid ConnectionId { get; }
             public byte Address { get; }
             public LocalStatus LocalStatus { get; }
         }
 
         public class InputStatusReportReplyEventArgs
         {
-            public InputStatusReportReplyEventArgs(byte address, InputStatus inputStatus)
+            public InputStatusReportReplyEventArgs(Guid connectionId, byte address, InputStatus inputStatus)
             {
+                ConnectionId = connectionId;
                 Address = address;
                 InputStatus = inputStatus;
             }
 
+            public Guid ConnectionId { get; }
             public byte Address { get; }
             public InputStatus InputStatus { get; }
         }
 
         public class OutputStatusReportReplyEventArgs
         {
-            public OutputStatusReportReplyEventArgs(byte address, OutputStatus outputStatus)
+            public OutputStatusReportReplyEventArgs(Guid connectionId, byte address, OutputStatus outputStatus)
             {
+                ConnectionId = connectionId;
                 Address = address;
                 OutputStatus = outputStatus;
             }
 
+            public Guid ConnectionId { get; }
             public byte Address { get; }
             public OutputStatus OutputStatus { get; }
         }
 
         public class ReaderStatusReportReplyEventArgs
         {
-            public ReaderStatusReportReplyEventArgs(byte address, ReaderStatus readerStatus)
+            public ReaderStatusReportReplyEventArgs(Guid connectionId, byte address, ReaderStatus readerStatus)
             {
+                ConnectionId = connectionId;
                 Address = address;
                 ReaderStatus = readerStatus;
             }
 
+            public Guid ConnectionId { get; }
             public byte Address { get; }
             public ReaderStatus ReaderStatus { get; }
         }
 
         public class RawCardDataReplyEventArgs
         {
-            public RawCardDataReplyEventArgs(byte address, RawCardData rawCardData)
+            public RawCardDataReplyEventArgs(Guid connectionId, byte address, RawCardData rawCardData)
             {
+                ConnectionId = connectionId;
                 Address = address;
                 RawCardData = rawCardData;
             }
 
+            public Guid ConnectionId { get; }
             public byte Address { get; }
             public RawCardData RawCardData { get; }
         }
