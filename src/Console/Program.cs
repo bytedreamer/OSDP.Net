@@ -481,14 +481,14 @@ namespace Console
 
             void StartConnectionButtonClicked()
             {
-                if (!byte.TryParse(addressTextField.Text.ToString(), out var address))
+                if (!byte.TryParse(addressTextField.Text.ToString(), out var updatedAddress))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid updated address entered!", "OK");
                     return;
                 }
 
-                if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
+                if (!int.TryParse(baudRateTextField.Text.ToString(), out var updatedBaudRate))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid updated baud rate entered!", "OK");
@@ -496,7 +496,16 @@ namespace Console
                 }
 
                 SendCommand("Communication Configuration", _connectionId,
-                    new CommunicationConfiguration(address, baudRate), ControlPanel.CommunicationConfiguration);
+                    new CommunicationConfiguration(updatedAddress, updatedBaudRate),
+                    ControlPanel.CommunicationConfiguration,
+                    (address, configuration) =>
+                    {
+                        ControlPanel.RemoveDevice(_connectionId, address);
+                        
+                        var updatedDevice = _settings.Devices.First(device => device.Address == address);
+                        updatedDevice.Address = configuration.Address;
+                        ControlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc, updatedDevice.UseSecureChannel);
+                    });
 
                 Application.RequestStop();
             }
@@ -531,7 +540,7 @@ namespace Console
                     new OutputControl(outputAddress, activateOutputCheckBox.Checked
                         ? OutputControlCode.PermanentStateOnAbortTimedOperation
                         : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
-                }), ControlPanel.OutputControl);
+                }), ControlPanel.OutputControl, (address, result) => { });
 
                 Application.RequestStop();
             }
@@ -583,7 +592,8 @@ namespace Console
             });
         }
 
-        private static void SendCommand<T, TU>(string title, Guid connectionId, TU commandData, Func<Guid, byte, TU, Task<T>> sendCommandFunction)
+        private static void SendCommand<T, TU>(string title, Guid connectionId, TU commandData,
+            Func<Guid, byte, TU, Task<T>> sendCommandFunction, Action<byte, T> handleResult)
         {
             var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
@@ -598,7 +608,9 @@ namespace Console
                     try
                     {
                         var result = await sendCommandFunction(connectionId, address, commandData);
-                        AddLogMessage($"{title} for address {address}{Environment.NewLine}{result}{Environment.NewLine}{new string('*', 30)}");
+                        AddLogMessage(
+                            $"{title} for address {address}{Environment.NewLine}{result}{Environment.NewLine}{new string('*', 30)}");
+                        handleResult(address, result);
                     }
                     catch (Exception exception)
                     {
@@ -612,7 +624,9 @@ namespace Console
             }
 
             Application.Run(new Dialog(title, 60, 13,
-                new Button("Send") {Clicked = SendCommandButtonClicked
+                new Button("Send")
+                {
+                    Clicked = SendCommandButtonClicked
                 },
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
