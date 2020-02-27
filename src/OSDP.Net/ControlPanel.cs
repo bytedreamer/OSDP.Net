@@ -7,6 +7,7 @@ using OSDP.Net.Logging;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 
 namespace OSDP.Net
 {
@@ -138,6 +139,13 @@ namespace OSDP.Net
                 new ReaderTextOutputCommand(address, readerTextOutput)).ConfigureAwait(false);
             
             return reply.Type == ReplyType.Ack;
+        }
+
+        public async Task<Model.ReplyData.CommunicationConfiguration> CommunicationConfiguration(Guid connectionId,
+            byte address, CommunicationConfiguration communicationConfiguration)
+        {
+            return Model.ReplyData.CommunicationConfiguration.ParseData(await SendCommand(connectionId,
+                new CommunicationSetCommand(address, communicationConfiguration)).ConfigureAwait(false));
         }
 
         public bool IsOnline(Guid connectionId, byte address)

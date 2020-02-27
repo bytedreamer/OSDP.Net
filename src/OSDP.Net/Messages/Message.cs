@@ -102,8 +102,10 @@ namespace OSDP.Net.Messages
 
         internal static int ConvertBytesToInt(byte[] bytes)
         {
-            if (BitConverter.IsLittleEndian)
+            if (!BitConverter.IsLittleEndian)
+            {
                 Array.Reverse(bytes);
+            }
 
             return BitConverter.ToInt32(bytes, 0);
         }

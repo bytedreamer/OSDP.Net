@@ -17,7 +17,7 @@
 | osdp_TEXT     | 0x6B | YES |
 | osdp_RMODE    | 0x6C | REMOVED |
 | osdp_TDSET    | 0x6D | REMOVED | 
-| osdp_COMSET   | 0x6E | NO | 
+| osdp_COMSET   | 0x6E | YES | 
 | osdp_DATA     | 0x6F | REMOVED |
 | osdp_XMIT     | 0x70 | REMOVED |
 | osdp_PROMPT   | 0x71 | NO |
@@ -47,7 +47,7 @@
 | osdp_FMT      | 0x51 | NO  |
 | osdp_PRES     | 0x52 | REMOVED |
 | osdp_KEYPPAD  | 0x53 | NO  |
-| osdp_COM      | 0x54 | NO  |
+| osdp_COM      | 0x54 | YES |
 | osdp_SCREP    | 0x55 | REMOVED |
 | osdp_SPER     | 0x56 | REMOVED |
 | osdp_BIOREADR | 0x57 | NO  |

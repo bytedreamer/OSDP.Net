@@ -82,8 +82,7 @@ namespace Console
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
                 {
-                    new MenuItem("Reader Buzzer Control", "", () => ControlPanel.ReaderBuzzerControl(_connectionId, 0,
-                        new ReaderBuzzerControl(0, ToneCode.Default, 10, 10, 4))),
+                    new MenuItem("Communication Configuration", "", SendCommunicationConfiguration), 
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, ControlPanel.DeviceCapabilities)),
                     new MenuItem("_ID Report", "",
@@ -95,6 +94,8 @@ namespace Console
                     new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "",
                         () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus)),
+                    new MenuItem("Reader Buzzer Control", "", () => ControlPanel.ReaderBuzzerControl(_connectionId, 0,
+                        new ReaderBuzzerControl(0, ToneCode.Default, 10, 10, 4))),
                     new MenuItem("Reader LED Control", "", () => ControlPanel.ReaderLedControl(_connectionId, 0,
                         new ReaderLedControls(new[]
                         {
@@ -472,12 +473,51 @@ namespace Console
             });
         }
 
+        private static void SendCommunicationConfiguration()
+        {
+            var addressTextField = new TextField(20, 1, 20,
+                ((_settings.Devices.OrderBy(device => device.Address).LastOrDefault()?.Address ?? 0) + 1).ToString());
+            var baudRateTextField = new TextField(20, 3, 20, _settings.SerialConnectionSettings.BaudRate.ToString());
+
+            void StartConnectionButtonClicked()
+            {
+                if (!byte.TryParse(addressTextField.Text.ToString(), out var address))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid updated address entered!", "OK");
+                    return;
+                }
+
+                if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid updated baud rate entered!", "OK");
+                    return;
+                }
+
+                SendCommand("Communication Configuration", _connectionId,
+                    new CommunicationConfiguration(address, baudRate), ControlPanel.CommunicationConfiguration);
+
+                Application.RequestStop();
+            }
+
+            Application.Run(new Dialog("Send Communication Configuration Command", 60, 10,
+                new Button("Send") {Clicked = StartConnectionButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                new Label(1, 1, "Updated Address:"),
+                addressTextField,
+                new Label(1, 3, "Updated Baud Rate:"),
+                baudRateTextField
+            });
+        }
+
         private static void SendOutputControlCommand()
         {
             var outputAddressTextField = new TextField(20, 1, 20, "0");
             var activateOutputCheckBox = new CheckBox(15, 3, "Activate Output", false);
 
-            void StartConnectionButtonClicked()
+            void StartOutputControlButtonClicked()
             {
                 if (!byte.TryParse(outputAddressTextField.Text.ToString(), out var outputAddress))
                 {
@@ -486,7 +526,7 @@ namespace Console
                     return;
                 }
 
-                SendCommand("Output Control was Successful", _connectionId, new OutputControls(new[]
+                SendCommand("Output Control Command", _connectionId, new OutputControls(new[]
                 {
                     new OutputControl(outputAddress, activateOutputCheckBox.Checked
                         ? OutputControlCode.PermanentStateOnAbortTimedOperation
@@ -497,7 +537,7 @@ namespace Console
             }
 
             Application.Run(new Dialog("Send Output Control Output Command", 60, 10,
-                new Button("Send") {Clicked = StartConnectionButtonClicked},
+                new Button("Send") {Clicked = StartOutputControlButtonClicked},
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
                 new Label(1, 1, "Output Address:"),
