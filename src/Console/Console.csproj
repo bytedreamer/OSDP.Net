@@ -20,7 +20,6 @@
     <ItemGroup>
       <PackageReference Include="log4net" Version="2.0.8" />
       <PackageReference Include="Microsoft.NETCore.Platforms" Version="3.1.0" />
-      <PackageReference Include="runtime.osx-x64.Microsoft.NETCore.DotNetAppHost" Version="3.1.1" />
       <PackageReference Include="Terminal.Gui" Version="0.24.0" />
     </ItemGroup>
 

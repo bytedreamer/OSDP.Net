@@ -27,8 +27,6 @@ namespace Console
             new MenuBarItem("_Devices", new[]
             {
                 new MenuItem("_Add", string.Empty, AddDevice),
-                // new MenuItem("_List", "", AddDevice),
-                // new MenuItem("_Send Command", "", AddDevice),
                 new MenuItem("_Remove", string.Empty, RemoveDevice)
             });
 
