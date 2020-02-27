@@ -125,10 +125,59 @@ namespace Console
                 ShowHorizontalScrollIndicator = true
             };
             _window.Add(_scrollView);
+            
+            RegisterEvents();
 
             Application.Run();
 
             ControlPanel.Shutdown();
+        }
+
+        private static void RegisterEvents()
+        {
+            ControlPanel.ConnectionStatusChanged += (sender, args) =>
+            {
+                DisplayReceivedReply($"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
+                                     $"at address {args.Address} is now {(args.IsConnected ? "connected" : "disconnected")}",
+                    string.Empty);
+            };
+            ControlPanel.NakReplyReceived += (sender, args) =>
+            {
+                var lastNak = _lastNak;
+                _lastNak = args;
+                if (lastNak != null && lastNak.Address == args.Address &&
+                    lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
+                {
+                    return;
+                }
+
+                AddLogMessage($"!!! Received NAK reply for address {args.Address} !!!{Environment.NewLine}{args.Nak}");
+            };
+            ControlPanel.LocalStatusReportReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Local status updated for address {args.Address}",
+                    args.LocalStatus.ToString());
+            };
+            ControlPanel.InputStatusReportReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Input status updated for address {args.Address}",
+                    args.InputStatus.ToString());
+            };
+            ControlPanel.OutputStatusReportReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Output status updated for address {args.Address}",
+                    args.OutputStatus.ToString());
+            };
+            ControlPanel.ReaderStatusReportReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Reader tamper status updated for address {args.Address}",
+                    args.ReaderStatus.ToString());
+            };
+            ControlPanel.RawCardDataReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
+                    args.RawCardData.ToString());
+            };
         }
 
         private static void StartSerialConnection()
@@ -265,51 +314,6 @@ namespace Console
             {
                 ControlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel);
             }
-
-            ControlPanel.ConnectionStatusChanged += (sender, args) =>
-            {
-                DisplayReceivedReply($"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
-                                     $"at address {args.Address} is now {(args.IsConnected ? "connected" : "disconnected")}",
-                    string.Empty);
-            };
-            
-            ControlPanel.NakReplyReceived += (sender, args) =>
-            {
-                var lastNak = _lastNak;
-                _lastNak = args;
-                if (lastNak != null && lastNak.Address == args.Address &&
-                    lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
-                {
-                    return;
-                }
-
-                AddLogMessage($"!!! Received NAK reply for address {args.Address} !!!{Environment.NewLine}{args.Nak}");
-            };
-            ControlPanel.LocalStatusReportReplyReceived += (sender, args) =>
-            {
-                DisplayReceivedReply($"Local status updated for address {args.Address}",
-                    args.LocalStatus.ToString());
-            };
-            ControlPanel.InputStatusReportReplyReceived += (sender, args) =>
-            {
-                DisplayReceivedReply($"Input status updated for address {args.Address}",
-                    args.InputStatus.ToString());
-            };
-            ControlPanel.OutputStatusReportReplyReceived += (sender, args) =>
-            {
-                DisplayReceivedReply($"Output status updated for address {args.Address}",
-                    args.OutputStatus.ToString());
-            };
-            ControlPanel.ReaderStatusReportReplyReceived += (sender, args) =>
-            {
-                DisplayReceivedReply($"Reader tamper status updated for address {args.Address}",
-                    args.ReaderStatus.ToString());
-            };
-            ControlPanel.RawCardDataReplyReceived += (sender, args) =>
-            {
-                DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
-                    args.RawCardData.ToString());
-            };
         }
 
         private static void DisplayReceivedReply(string title, string message)

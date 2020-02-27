@@ -183,7 +183,7 @@ namespace OSDP.Net
         {
             foreach (var bus in _buses)
             {
-                bus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
+                bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
                 
                 bus.Close();
             }
