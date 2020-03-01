@@ -7,9 +7,6 @@ namespace OSDP.Net
 {
     internal class SecureChannel
     {
-        private readonly byte[] _defaultSecureChannelKey =
-            {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F};
-
         private readonly byte[] _serverRandomNumber = new byte[8];
         private byte[] _cmac = new byte[16];
         private byte[] _enc = new byte[16];
@@ -30,7 +27,7 @@ namespace OSDP.Net
 
         public IEnumerable<byte> ServerRandomNumber() => _serverRandomNumber;
 
-        public void Initialize(byte[] cUID, byte[] clientRandomNumber, byte[] clientCryptogram)
+        public void Initialize(byte[] cUID, byte[] clientRandomNumber, byte[] clientCryptogram, byte[] secureChannelKey)
         {
             using (var keyAlgorithm = CreateKeyAlgorithm())
             {
@@ -39,7 +36,7 @@ namespace OSDP.Net
                     {
                         0x01, 0x82, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
                         _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
-                    }, new byte[8], _defaultSecureChannelKey);
+                    }, new byte[8], secureChannelKey);
 
                 if (!clientCryptogram.SequenceEqual(GenerateKey(keyAlgorithm, 
                     _serverRandomNumber, clientRandomNumber, _enc)))
@@ -52,13 +49,13 @@ namespace OSDP.Net
                     {
                         0x01, 0x01, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
                         _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
-                    }, new byte[8], _defaultSecureChannelKey);
+                    }, new byte[8], secureChannelKey);
                 _smac2 = GenerateKey(keyAlgorithm,
                     new byte[]
                     {
                         0x01, 0x02, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
                         _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
-                    }, new byte[8], _defaultSecureChannelKey);
+                    }, new byte[8], secureChannelKey);
                 
                 ServerCryptogram = GenerateKey(keyAlgorithm, clientRandomNumber, _serverRandomNumber, _enc);
                 IsInitialized = true;

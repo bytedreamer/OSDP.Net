@@ -11,7 +11,9 @@ namespace OSDP.Net
         private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
         private readonly SecureChannel _secureChannel = new SecureChannel();
         private readonly bool _useSecureChannel;
+
         private DateTime _lastValidReply = DateTime.MinValue;
+
 
         public Device(byte address, bool useCrc, bool useSecureChannel)
         {
@@ -19,6 +21,9 @@ namespace OSDP.Net
             Address = address;
             MessageControl = new Control(0, useCrc, useSecureChannel);
         }
+
+        private byte[] SecureChannelKey { get; set; } =
+            {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F};
 
         public byte Address { get; }
 
@@ -34,6 +39,21 @@ namespace OSDP.Net
             if (ReferenceEquals(this, other)) return 0;
             if (ReferenceEquals(null, other)) return 1;
             return Address.CompareTo(other.Address);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="secureChannelKey"></param>
+        /// <exception cref="ArgumentOutOfRangeException">The length of the key must be 16 bytes</exception>
+        public void UpdateSecureChannelKey(byte[] secureChannelKey)
+        {
+            if (secureChannelKey.Length != 16)
+            {
+                throw new ArgumentOutOfRangeException(nameof(secureChannelKey), "The length of the key must be 16 bytes");
+            }
+
+            SecureChannelKey = secureChannelKey;
         }
 
         public Command GetNextCommandData()
@@ -78,7 +98,7 @@ namespace OSDP.Net
             
             _secureChannel.Initialize(replyData.Take(8).ToArray(),
                 replyData.Skip(8).Take(8).ToArray(),
-                replyData.Skip(16).Take(16).ToArray());
+                replyData.Skip(16).Take(16).ToArray(), SecureChannelKey);
         }
 
         public bool ValidateSecureChannelEstablishment(Reply reply)

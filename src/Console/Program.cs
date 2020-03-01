@@ -307,10 +307,11 @@ namespace Console
             ControlPanel.Shutdown();
 
             _connectionId = ControlPanel.StartConnection(osdpConnection);
-            
+
             foreach (var device in _settings.Devices)
             {
-                ControlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel);
+                ControlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel,
+                    device.SecureChannelKey);
             }
         }
 
@@ -429,6 +430,7 @@ namespace Console
                     UseSecureChannel = useSecureChannelCheckBox.Checked,
                     UseCrc = useCrcCheckBox.Checked
                 });
+                
                 Application.RequestStop();
             }
 
@@ -503,10 +505,11 @@ namespace Console
                     (address, configuration) =>
                     {
                         ControlPanel.RemoveDevice(_connectionId, address);
-                        
+
                         var updatedDevice = _settings.Devices.First(device => device.Address == address);
                         updatedDevice.Address = configuration.Address;
-                        ControlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc, updatedDevice.UseSecureChannel);
+                        ControlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
+                            updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
                     });
 
                 Application.RequestStop();

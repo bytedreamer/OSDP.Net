@@ -74,6 +74,7 @@ namespace OSDP.Net.Tests
         public int NumberOfTimesCalledOpen { get; private set; }
 
         public int BaudRate => 9600;
+
         public bool IsOpen => true;
 
         public void Open()

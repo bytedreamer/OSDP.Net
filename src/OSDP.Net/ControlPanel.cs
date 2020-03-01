@@ -196,11 +196,23 @@ namespace OSDP.Net
         /// <param name="address">Address assigned to the device</param>
         /// <param name="useCrc">Use CRC for error checking</param>
         /// <param name="useSecureChannel">Require the device to communicate with a secure channel</param>
-        public void AddDevice(Guid connectionId, byte address, bool useCrc, bool useSecureChannel)
+        /// <param name="secureChannelKey">Set the secure channel key, default is used if not specified</param>
+        public void AddDevice(Guid connectionId, byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
         {
-            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.AddDevice(address, useCrc, useSecureChannel);
+            var foundBus = _buses.FirstOrDefault(bus => bus.Id == connectionId);
+            if (foundBus == null)
+            {
+                throw new ArgumentException( "Connection could not be found", nameof(connectionId));
+            }
+            
+            foundBus.AddDevice(address, useCrc, useSecureChannel, secureChannelKey);
         }
 
+        /// <summary>
+        /// Remove a PD from the control panel.
+        /// </summary>
+        /// <param name="connectionId"></param>
+        /// <param name="address"></param>
         public void RemoveDevice(Guid connectionId, byte address)
         {
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.RemoveDevice(address);

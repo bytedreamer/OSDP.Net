@@ -73,18 +73,24 @@ namespace OSDP.Net
         /// <param name="address">Address of the device</param>
         /// <param name="useCrc">Use CRC for error checking</param>
         /// <param name="useSecureChannel">Use a secure channel to communicate</param>
-        public void AddDevice(byte address, bool useCrc, bool useSecureChannel)
+        /// <param name="secureChannelKey">Set the secure channel key, default is used if not specified</param>
+        public void AddDevice(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
         {
-            var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
-
             lock (_configuredDevicesLock)
             {
+                var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
+                
                 if (foundDevice != null)
                 {
                     _configuredDevices.Remove(foundDevice);
                 }
 
-                _configuredDevices.Add(new Device(address, useCrc, useSecureChannel));
+                var addedDevice = new Device(address, useCrc, useSecureChannel);
+                if (secureChannelKey != null)
+                {
+                    addedDevice.UpdateSecureChannelKey(secureChannelKey);
+                }
+                _configuredDevices.Add(addedDevice);
             }
         }
 
@@ -94,11 +100,11 @@ namespace OSDP.Net
         /// <param name="address">Address of the device</param>
         public void RemoveDevice(byte address)
         {
-            var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
-            if (foundDevice == null) return;
-            
             lock (_configuredDevicesLock)
             {
+                var foundDevice = _configuredDevices.FirstOrDefault(device => device.Address == address);
+                if (foundDevice == null) return;
+                
                 _configuredDevices.Remove(foundDevice);
             }
         }
