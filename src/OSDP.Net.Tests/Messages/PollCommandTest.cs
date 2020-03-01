@@ -21,6 +21,8 @@ namespace OSDP.Net.Tests.Messages
         {
             get
             {
+                yield return new TestCaseData((byte) 0x0, true, true).Returns(
+                    "53-00-0A-00-0C-02-15-60-58-D5");
                 yield return new TestCaseData((byte) 0x0, true, false).Returns(
                     "53-00-08-00-04-60-EB-AA");
                 yield return new TestCaseData((byte) 0x0, false, false).Returns(
