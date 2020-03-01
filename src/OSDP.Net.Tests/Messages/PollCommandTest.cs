@@ -9,7 +9,7 @@ namespace OSDP.Net.Tests.Messages
     public class PollCommandTest
     {
         [TestCaseSource(typeof(PollCommandDataClass), nameof(PollCommandDataClass.TestCases))]
-        public string PollCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
+        public string BuildCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
             return BitConverter.ToString(new PollCommand(address).BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
