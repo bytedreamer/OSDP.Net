@@ -53,7 +53,7 @@ steps:
   inputs:
     command: 'pack'
     nobuild: true
-    projects: '$(projectName)/$(projectName).csproj'
+    projects: 'src/OSDP.Net/OSDP.Net.csproj'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'NugetVersion'
 
