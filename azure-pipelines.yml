@@ -17,9 +17,9 @@ variables:
   major: 1
   minor: 0
   patch: 0
-  preview: -beta$[counter(variables['patch'], 1)]
+  preview: $[counter(variables['patch'], 1)]
   AssemblyVersion: $(major).$(minor).$(patch)
-  NugetVersion: $(major).$(minor).$(patch)$(preview)
+  NugetVersion: $(major).$(minor).$(patch)-beta$(preview)
 
 steps:
 - task: UseDotNet@2
@@ -49,6 +49,7 @@ steps:
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: 'dotnet pack'
   inputs:
     command: 'pack'
@@ -58,6 +59,7 @@ steps:
     versionEnvVar: 'NugetVersion'
 
 - task: DotNetCoreCLI@2
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
     command: 'publish'
     publishWebProjects: false
@@ -66,5 +68,6 @@ steps:
     zipAfterPublish: true
 
 - task: PublishPipelineArtifact@1
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
     targetPath: '$(Build.ArtifactStagingDirectory)'
