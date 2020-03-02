@@ -4,6 +4,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
+- master
 - develop
 
 pool:
@@ -13,6 +14,12 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  major: 1
+  minor: 0
+  patch: 0
+  preview: -beta$[counter(variables['patch'], 1)]
+  AssemblyVersion: $(major).$(minor).$(patch)
+  NugetVersion: $(major).$(minor).$(patch)$(preview)
 
 steps:
 - task: UseDotNet@2
@@ -25,17 +32,30 @@ steps:
   displayName: 'Install NuGet'
 
 - task: DotNetCoreCLI@2
+  displayName: 'dotnet build'
   inputs:
     command: 'build'
     projects: '**/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
-    versioningScheme: 'off'
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: 'AssemblyVersion'
 
 - task: DotNetCoreCLI@2
+  displayName: 'dotnet test'
   inputs:
     command: 'test'
+    nobuild: true
     projects: '**/*Tests/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet pack'
+  inputs:
+    command: 'pack'
+    nobuild: true
+    projects: '$(projectName)/$(projectName).csproj'
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: 'NugetVersion'
 
 - task: DotNetCoreCLI@2
   inputs:
