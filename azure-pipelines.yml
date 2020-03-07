@@ -65,8 +65,9 @@ steps:
     command: 'publish'
     publishWebProjects: false
     nobuild: true
+    zipAfterPublish: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r osx-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)'
+    arguments: '-r osx-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/osx-x64'
 
 - task: DotNetCoreCLI@2
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
@@ -75,8 +76,9 @@ steps:
     command: 'publish'
     publishWebProjects: false
     nobuild: true
+    zipAfterPublish: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r win-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)'
+    arguments: '-r win-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/win-x64'
 
 - task: PublishPipelineArtifact@1
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
