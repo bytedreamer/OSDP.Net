@@ -60,12 +60,13 @@ steps:
 
 - task: DotNetCoreCLI@2
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  displayName: 'dotnet publish for osx-x64'
   inputs:
     command: 'publish'
+    nobuild: true
     publishWebProjects: false
     projects: 'src/Console/Console.csproj'
-    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: true
+    arguments: '-r osx-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)'
 
 - task: PublishPipelineArtifact@1
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
