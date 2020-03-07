@@ -93,7 +93,7 @@ steps:
     zipAfterPublish: false
     modifyOutputPath: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r linux-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/win-x64'
+    arguments: '-r linux-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-x64'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 
@@ -106,9 +106,17 @@ steps:
     zipAfterPublish: false
     modifyOutputPath: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r linux-arm --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/win-x64'
+    arguments: '-r linux-arm --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/TestConsole'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/TestConsoles.zip'
+    replaceExistingArchive: true
 
 - task: PublishPipelineArtifact@1
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
