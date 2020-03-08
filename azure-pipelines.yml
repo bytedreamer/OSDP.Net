@@ -11,15 +11,15 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/*.sln'
+  solution: '**/*.sln'#
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   major: 1
   minor: 0
   patch: 0
-  preview: $[counter(variables['patch'], 1)]
+  #preview: $[counter(variables['patch'], 1)]
   AssemblyVersion: $(major).$(minor).$(patch)
-  NugetVersion: $(major).$(minor).$(patch)-beta$(preview)
+  NugetVersion: $(major).$(minor).$(patch)-beta1
 
 steps:
 - task: UseDotNet@2
@@ -111,6 +111,7 @@ steps:
     versionEnvVar: 'AssemblyVersion'
 
 - task: ArchiveFiles@2
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
     rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/TestConsole'
     includeRootFolder: false
