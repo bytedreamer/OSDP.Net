@@ -30,7 +30,7 @@ namespace Console
                 new MenuItem("_Remove", string.Empty, RemoveDevice)
             });
 
-        private static Guid _connectionId;
+        private static Guid _connectionId = Guid.Empty;
         private static Window _window;
         private static ScrollView _scrollView;
         private static MenuBar _menuBar;
@@ -392,6 +392,12 @@ namespace Console
 
         private static void AddDevice()
         {
+            if (_connectionId == Guid.Empty)
+            {
+                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before adding devices.", "OK");
+                return;
+            }
+            
             var nameTextField = new TextField(15, 1, 35, string.Empty);
             var addressTextField = new TextField(15, 3, 35, string.Empty);
             var useCrcCheckBox = new CheckBox(1, 5, "Use CRC", true);
@@ -449,6 +455,12 @@ namespace Console
 
         private static void RemoveDevice()
         {
+            if (_connectionId == Guid.Empty)
+            {
+                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before removing devices.", "OK");
+                return;
+            }
+            
             var orderedDevices = _settings.Devices.OrderBy(device => device.Address).ToArray();
             var scrollView = new ScrollView(new Rect(6, 1, 40, 6))
             {
@@ -562,6 +574,12 @@ namespace Console
 
         private static void SendCommand<T>(string title, Guid connectionId, Func<Guid, byte, Task<T>> sendCommandFunction)
         {
+            if (_connectionId == Guid.Empty)
+            {
+                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
+                return;
+            }
+            
             var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
             void SendCommandButtonClicked()
@@ -600,6 +618,12 @@ namespace Console
         private static void SendCommand<T, TU>(string title, Guid connectionId, TU commandData,
             Func<Guid, byte, TU, Task<T>> sendCommandFunction, Action<byte, T> handleResult)
         {
+            if (_connectionId == Guid.Empty)
+            {
+                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
+                return;
+            }
+            
             var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
             void SendCommandButtonClicked()
@@ -641,6 +665,12 @@ namespace Console
 
         private static void SendCustomCommand(string title, Guid connectionId, Func<Guid, Command, Task> sendCommandFunction, Func<byte, Command> createCommand)
         {
+            if (_connectionId == Guid.Empty)
+            {
+                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
+                return;
+            }
+            
             var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
             void SendCommandButtonClicked()
