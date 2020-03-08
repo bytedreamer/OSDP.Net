@@ -116,7 +116,7 @@ steps:
     rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/TestConsole'
     includeRootFolder: false
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/TestConsoles.zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/OSDPTestConsole.zip'
     replaceExistingArchive: true
 
 - task: PublishPipelineArtifact@1
