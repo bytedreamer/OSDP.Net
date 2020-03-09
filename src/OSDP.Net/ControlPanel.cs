@@ -2,8 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
-using OSDP.Net.Logging;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
@@ -16,21 +16,23 @@ namespace OSDP.Net
     /// </summary>
     public class ControlPanel
     {
-        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
         private readonly ConcurrentBag<Bus> _buses = new ConcurrentBag<Bus>();
+        private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(5);
 
         /// <summary>
         /// Default constructor
         /// </summary>
-        public ControlPanel()
+        public ControlPanel(ILogger<ControlPanel> logger = null)
         {
+            _logger = logger;
+            
             Task.Factory.StartNew(() =>
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    Logger.Debug($"Received a reply {reply}");
+                    _logger?.LogDebug($"Received a reply {reply}");
                     
                     OnReplyReceived(reply);
                 }
@@ -44,7 +46,7 @@ namespace OSDP.Net
         /// <returns>The id of the connection</returns>
         public Guid StartConnection(IOsdpConnection connection)
         {
-            var newBus = new Bus(connection, _replies);
+            var newBus = new Bus(connection, _replies, _logger);
             
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
             
