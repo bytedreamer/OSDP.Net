@@ -9,6 +9,8 @@ using Console.Commands;
 using Console.Configuration;
 using log4net;
 using log4net.Config;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
@@ -19,7 +21,7 @@ namespace Console
 {
     internal static class Program
     {
-        private static readonly ControlPanel ControlPanel = new ControlPanel();
+        private static ControlPanel ControlPanel;
         private static readonly Queue<string> Messages = new Queue<string>();
         private static readonly object MessageLock = new object();
 
@@ -43,6 +45,11 @@ namespace Console
             XmlConfigurator.Configure(
                 LogManager.GetRepository(Assembly.GetAssembly(typeof(LogManager))),
                 new FileInfo("log4net.config"));
+            
+            var factory = new LoggerFactory();
+            factory.AddLog4Net();
+            
+            ControlPanel = new ControlPanel(factory.CreateLogger<ControlPanel>());
 
             _settings = GetConnectionSettings();
 

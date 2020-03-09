@@ -14,7 +14,6 @@ namespace OSDP.Net
 
         private DateTime _lastValidReply = DateTime.MinValue;
 
-
         public Device(byte address, bool useCrc, bool useSecureChannel)
         {
             _useSecureChannel = useSecureChannel;

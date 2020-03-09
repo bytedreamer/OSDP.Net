@@ -5,8 +5,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
-using OSDP.Net.Logging;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.ReplyData;
 
@@ -18,13 +18,12 @@ namespace OSDP.Net
     internal class Bus
     {
         private const byte DriverByte = 0xFF;
-
-        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
-
         private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
         private readonly object _configuredDevicesLock = new object();
         private readonly IOsdpConnection _connection;
         private readonly Dictionary<byte, bool> _lastConnectionStatus = new Dictionary<byte, bool>();
+
+        private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
 
         private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
@@ -32,11 +31,12 @@ namespace OSDP.Net
 
         private bool _isShuttingDown;
 
-        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies)
+        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
-            
+            _logger = logger;
+
             Id = Guid.NewGuid();
         }
 
@@ -139,7 +139,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        Logger.Error("Error while opening connection", exception);
+                        _logger?.LogError("Error while opening connection", exception);
                     }
                 }
 
@@ -167,7 +167,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        Logger.Error("Error while notifying connection status for address {command.Address}", exception);
+                        _logger?.LogError("Error while notifying connection status for address {command.Address}", exception);
                     }
 
                     try
@@ -176,14 +176,14 @@ namespace OSDP.Net
                     }
                     catch (InvalidOperationException exception)
                     {
-                        Logger.Warn("Port is closed, reconnecting...", exception);
+                        _logger?.LogWarning("Port is closed, reconnecting...", exception);
                         _connection.Close();
                         await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                         break;
                     }
                     catch (Exception exception)
                     {
-                        Logger.Error($"Error while sending command {command} to address {command.Address}", exception);
+                        _logger?.LogError($"Error while sending command {command} to address {command.Address}", exception);
                         continue;
                     }
 
@@ -193,7 +193,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        Logger.Error($"Error while processing reply {reply} from address {reply.Address}", exception);
+                        _logger?.LogError($"Error while processing reply {reply} from address {reply.Address}", exception);
                         continue;
                     }
 
@@ -272,13 +272,13 @@ namespace OSDP.Net
             }
             catch (Exception exception)
             {
-                Logger.Error($"Error while building command {command}", exception);
+                _logger?.LogError($"Error while building command {command}", exception);
                 throw;
             }
 
             data.AddRange(commandData);
 
-            Logger.Trace($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
+            _logger?.LogTrace($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
             
             await _connection.WriteAsync(data.ToArray()).ConfigureAwait(false);
 
@@ -299,7 +299,7 @@ namespace OSDP.Net
                 throw new Exception("Timeout waiting for rest of reply message");
             }
 
-            Logger.Trace($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
+            _logger?.LogTrace($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
                 command.Address);
 
             return Reply.Parse(replyBuffer, Id, command, device);
