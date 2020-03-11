@@ -385,7 +385,7 @@ namespace OSDP.Net
                 {
                     return await _connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
                 }
-                catch (TaskCanceledException)
+                catch (OperationCanceledException)
                 {
                     return 0;
                 }
