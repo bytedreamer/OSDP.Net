@@ -15,7 +15,7 @@ namespace OSDP.Net.Tests.Messages
             return BitConverter.ToString(idReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
 
-        private class IdReportCommandDataClass
+        public class IdReportCommandDataClass
         {
             public static IEnumerable TestCases
             {

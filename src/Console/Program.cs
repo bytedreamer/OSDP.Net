@@ -10,7 +10,6 @@ using Console.Configuration;
 using log4net;
 using log4net.Config;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;

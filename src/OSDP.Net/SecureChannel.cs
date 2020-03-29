@@ -27,7 +27,7 @@ namespace OSDP.Net
 
         public IEnumerable<byte> ServerRandomNumber() => _serverRandomNumber;
 
-        public void Initialize(byte[] cUID, byte[] clientRandomNumber, byte[] clientCryptogram, byte[] secureChannelKey)
+        public void Initialize(byte[] clientRandomNumber, byte[] clientCryptogram, byte[] secureChannelKey)
         {
             using (var keyAlgorithm = CreateKeyAlgorithm())
             {

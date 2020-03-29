@@ -22,7 +22,7 @@ namespace OSDP.Net.Tests.Messages
                 outputControlCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
 
-        private class OutputControlCommandTestClass
+        public class OutputControlCommandTestClass
         {
             public static IEnumerable TestCases
             {
