@@ -20,7 +20,7 @@ namespace Console
 {
     internal static class Program
     {
-        private static ControlPanel ControlPanel;
+        private static ControlPanel _controlPanel;
         private static readonly Queue<string> Messages = new Queue<string>();
         private static readonly object MessageLock = new object();
 
@@ -48,7 +48,7 @@ namespace Console
             var factory = new LoggerFactory();
             factory.AddLog4Net();
             
-            ControlPanel = new ControlPanel(factory.CreateLogger<ControlPanel>());
+            _controlPanel = new ControlPanel(factory.CreateLogger<ControlPanel>());
 
             _settings = GetConnectionSettings();
 
@@ -81,26 +81,26 @@ namespace Console
                     new MenuItem("Start Serial Connection", "", StartSerialConnection),
                     new MenuItem("Start TCP Server Connection", "", StartTcpServerConnection),
                     new MenuItem("Start TCP Client Connection", "", StartTcpClientConnection),
-                    new MenuItem("Stop Connections", "", ControlPanel.Shutdown),
+                    new MenuItem("Stop Connections", "", _controlPanel.Shutdown),
                 }),
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
                 {
                     new MenuItem("Communication Configuration", "", SendCommunicationConfiguration), 
                     new MenuItem("_Device Capabilities", "",
-                        () => SendCommand("Device capabilities", _connectionId, ControlPanel.DeviceCapabilities)),
+                        () => SendCommand("Device capabilities", _connectionId, _controlPanel.DeviceCapabilities)),
                     new MenuItem("_ID Report", "",
-                        () => SendCommand("ID report", _connectionId, ControlPanel.IdReport)),
+                        () => SendCommand("ID report", _connectionId, _controlPanel.IdReport)),
                     new MenuItem("Input Status", "",
-                        () => SendCommand("Input status", _connectionId, ControlPanel.InputStatus)),
+                        () => SendCommand("Input status", _connectionId, _controlPanel.InputStatus)),
                     new MenuItem("_Local Status", "",
-                        () => SendCommand("Local status", _connectionId, ControlPanel.LocalStatus)),
+                        () => SendCommand("Local status", _connectionId, _controlPanel.LocalStatus)),
                     new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "",
-                        () => SendCommand("Output status", _connectionId, ControlPanel.OutputStatus)),
-                    new MenuItem("Reader Buzzer Control", "", () => ControlPanel.ReaderBuzzerControl(_connectionId, 0,
+                        () => SendCommand("Output status", _connectionId, _controlPanel.OutputStatus)),
+                    new MenuItem("Reader Buzzer Control", "", () => _controlPanel.ReaderBuzzerControl(_connectionId, 0,
                         new ReaderBuzzerControl(0, ToneCode.Default, 10, 10, 4))),
-                    new MenuItem("Reader LED Control", "", () => ControlPanel.ReaderLedControl(_connectionId, 0,
+                    new MenuItem("Reader LED Control", "", () => _controlPanel.ReaderLedControl(_connectionId, 0,
                         new ReaderLedControls(new[]
                         {
                             new ReaderLedControl(0, 0, TemporaryReaderControlCode.SetTemporaryAndStartTimer, 10, 10,
@@ -108,13 +108,13 @@ namespace Console
                                 PermanentReaderControlCode.Nop, 0, 0, LedColor.Red, LedColor.Black),
                         }))),
                     new MenuItem("_Reader Status", "",
-                        () => SendCommand("Reader status", _connectionId, ControlPanel.ReaderStatus))
+                        () => SendCommand("Reader status", _connectionId, _controlPanel.ReaderStatus))
 
                 }),
                 new MenuBarItem("_Invalid Commands", new[]
                 {
                     new MenuItem("_Bad CRC/Checksum", "",
-                        () => SendCustomCommand("Bad CRC/Checksum", _connectionId, ControlPanel.SendCustomCommand,
+                        () => SendCustomCommand("Bad CRC/Checksum", _connectionId, _controlPanel.SendCustomCommand,
                             address => new InvalidCrcPollCommand(address)))
                 })
             });
@@ -134,18 +134,18 @@ namespace Console
 
             Application.Run();
 
-            ControlPanel.Shutdown();
+            _controlPanel.Shutdown();
         }
 
         private static void RegisterEvents()
         {
-            ControlPanel.ConnectionStatusChanged += (sender, args) =>
+            _controlPanel.ConnectionStatusChanged += (sender, args) =>
             {
                 DisplayReceivedReply($"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
                                      $"at address {args.Address} is now {(args.IsConnected ? "connected" : "disconnected")}",
                     string.Empty);
             };
-            ControlPanel.NakReplyReceived += (sender, args) =>
+            _controlPanel.NakReplyReceived += (sender, args) =>
             {
                 var lastNak = _lastNak;
                 _lastNak = args;
@@ -157,27 +157,27 @@ namespace Console
 
                 AddLogMessage($"!!! Received NAK reply for address {args.Address} !!!{Environment.NewLine}{args.Nak}");
             };
-            ControlPanel.LocalStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.LocalStatusReportReplyReceived += (sender, args) =>
             {
                 DisplayReceivedReply($"Local status updated for address {args.Address}",
                     args.LocalStatus.ToString());
             };
-            ControlPanel.InputStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.InputStatusReportReplyReceived += (sender, args) =>
             {
                 DisplayReceivedReply($"Input status updated for address {args.Address}",
                     args.InputStatus.ToString());
             };
-            ControlPanel.OutputStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.OutputStatusReportReplyReceived += (sender, args) =>
             {
                 DisplayReceivedReply($"Output status updated for address {args.Address}",
                     args.OutputStatus.ToString());
             };
-            ControlPanel.ReaderStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.ReaderStatusReportReplyReceived += (sender, args) =>
             {
                 DisplayReceivedReply($"Reader tamper status updated for address {args.Address}",
                     args.ReaderStatus.ToString());
             };
-            ControlPanel.RawCardDataReplyReceived += (sender, args) =>
+            _controlPanel.RawCardDataReplyReceived += (sender, args) =>
             {
                 DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
                     args.RawCardData.ToString());
@@ -310,13 +310,13 @@ namespace Console
 
         private static void StartConnection(IOsdpConnection osdpConnection)
         {
-            ControlPanel.Shutdown();
+            _controlPanel.Shutdown();
 
-            _connectionId = ControlPanel.StartConnection(osdpConnection);
+            _connectionId = _controlPanel.StartConnection(osdpConnection);
 
             foreach (var device in _settings.Devices)
             {
-                ControlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel,
+                _controlPanel.AddDevice(_connectionId, device.Address, device.UseCrc, device.UseSecureChannel,
                     device.SecureChannelKey);
             }
         }
@@ -427,7 +427,7 @@ namespace Console
                     }
                 }
 
-                ControlPanel.AddDevice(_connectionId, address, useCrcCheckBox.Checked,
+                _controlPanel.AddDevice(_connectionId, address, useCrcCheckBox.Checked,
                     useSecureChannelCheckBox.Checked);
 
                 var foundDevice = _settings.Devices.FirstOrDefault(device => device.Address == address);
@@ -482,7 +482,7 @@ namespace Console
             void RemoveDeviceButtonClicked()
             {
                 var removedDevice = orderedDevices[deviceRadioGroup.Selected];
-                ControlPanel.RemoveDevice(_connectionId, removedDevice.Address);
+                _controlPanel.RemoveDevice(_connectionId, removedDevice.Address);
                 _settings.Devices.Remove(removedDevice);
                 Application.RequestStop();
             }
@@ -519,14 +519,14 @@ namespace Console
 
                 SendCommand("Communication Configuration", _connectionId,
                     new CommunicationConfiguration(updatedAddress, updatedBaudRate),
-                    ControlPanel.CommunicationConfiguration,
+                    _controlPanel.CommunicationConfiguration,
                     (address, configuration) =>
                     {
-                        ControlPanel.RemoveDevice(_connectionId, address);
+                        _controlPanel.RemoveDevice(_connectionId, address);
 
                         var updatedDevice = _settings.Devices.First(device => device.Address == address);
                         updatedDevice.Address = configuration.Address;
-                        ControlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
+                        _controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
                             updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
                     });
 
@@ -563,7 +563,7 @@ namespace Console
                     new OutputControl(outputAddress, activateOutputCheckBox.Checked
                         ? OutputControlCode.PermanentStateOnAbortTimedOperation
                         : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
-                }), ControlPanel.OutputControl, (address, result) => { });
+                }), _controlPanel.OutputControl, (address, result) => { });
 
                 Application.RequestStop();
             }

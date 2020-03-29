@@ -4,10 +4,6 @@ namespace OSDP.Net.Messages
 {
     internal class AckReply : Reply
     {
-        public AckReply()
-        {
-        }
-
         protected override byte ReplyCode => 0x40;
 
         protected override IEnumerable<byte> SecurityControlBlock()
