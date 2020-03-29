@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.0</TargetFramework>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -21,7 +21,7 @@
       <PackageReference Include="apache.log4net.Extensions.Logging" Version="2.0.0.12" />
       <PackageReference Include="log4net" Version="2.0.8" />
       <PackageReference Include="Microsoft.NETCore.Platforms" Version="3.1.0" />
-      <PackageReference Include="Terminal.Gui" Version="0.65.0" />
+      <PackageReference Include="Terminal.Gui" Version="0.70.0" />
     </ItemGroup>
 
     <ItemGroup>

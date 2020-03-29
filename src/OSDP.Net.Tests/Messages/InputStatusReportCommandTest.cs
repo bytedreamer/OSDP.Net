@@ -16,7 +16,7 @@ namespace OSDP.Net.Tests.Messages
                 inputStatusReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
 
-        private class InputStatusReportCommandTestClass
+        public class InputStatusReportCommandTestClass
         {
             public static IEnumerable TestCases
             {

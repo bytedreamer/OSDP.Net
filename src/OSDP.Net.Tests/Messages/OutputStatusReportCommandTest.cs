@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using OSDP.Net.Messages;
-using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Tests.Messages
 {
@@ -17,7 +16,7 @@ namespace OSDP.Net.Tests.Messages
                 outputStatusReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
 
-        private class OutputStatusReportCommandTestClass
+        public class OutputStatusReportCommandTestClass
         {
             public static IEnumerable TestCases
             {

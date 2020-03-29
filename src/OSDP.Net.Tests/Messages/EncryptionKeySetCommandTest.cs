@@ -21,7 +21,7 @@ namespace OSDP.Net.Tests.Messages
             return BitConverter.ToString(encryptionKeySetCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
 
-        private class EncryptionKeySetCommandTestClass
+        public class EncryptionKeySetCommandTestClass
         {
             public static IEnumerable TestCases
             {

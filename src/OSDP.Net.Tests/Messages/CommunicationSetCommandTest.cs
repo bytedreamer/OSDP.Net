@@ -17,7 +17,7 @@ namespace OSDP.Net.Tests.Messages
             return BitConverter.ToString(communicationSetCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
         }
 
-        private class CommunicationSetCommandTestClass
+        public class CommunicationSetCommandTestClass
         {
             public static IEnumerable TestCases
             {

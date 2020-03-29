@@ -19,7 +19,7 @@ variables:
   patch: 0
   #preview: $[counter(variables['patch'], 1)]
   AssemblyVersion: $(major).$(minor).$(patch)
-  NugetVersion: $(major).$(minor).$(patch)-beta3
+  NugetVersion: $(major).$(minor).$(patch)-beta4
 
 steps:
 - task: UseDotNet@2
@@ -52,6 +52,7 @@ steps:
   inputs:
     solutionOrProjectPath: 'src/OSDP.Net.sln'
     failBuildLevelSelector: 'Warning'
+    additionalArguments: '--no-swea'
 
 - task: DotNetCoreCLI@2
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))

@@ -95,8 +95,7 @@ namespace OSDP.Net
         {
             var replyData = reply.ExtractReplyData.ToArray();
             
-            _secureChannel.Initialize(replyData.Take(8).ToArray(),
-                replyData.Skip(8).Take(8).ToArray(),
+            _secureChannel.Initialize(replyData.Skip(8).Take(8).ToArray(),
                 replyData.Skip(16).Take(16).ToArray(), SecureChannelKey);
         }
 
