@@ -21,7 +21,7 @@ namespace OSDP.Net
             MessageControl = new Control(0, useCrc, useSecureChannel);
         }
 
-        private byte[] SecureChannelKey { get; set; } =
+        internal byte[] SecureChannelKey { get; set; } =
             {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F};
 
         public byte Address { get; }
@@ -114,11 +114,6 @@ namespace OSDP.Net
         public IEnumerable<byte> GenerateMac(byte[] message, bool isCommand)
         {
             return _secureChannel.GenerateMac(message, isCommand);
-        }
-
-        public void ResetSecurity()
-        {
-            _secureChannel.Reset();
         }
 
         public IEnumerable<byte> EncryptData(IEnumerable<byte> data)

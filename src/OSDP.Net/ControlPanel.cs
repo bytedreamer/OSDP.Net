@@ -207,7 +207,7 @@ namespace OSDP.Net
                 throw new ArgumentException( "Connection could not be found", nameof(connectionId));
             }
             
-            foundBus.AddDevice(address, useCrc, useSecureChannel, secureChannelKey);
+            foundBus.AddDevice(address, useCrc, useSecureChannel, useSecureChannel ? secureChannelKey : null);
         }
 
         /// <summary>

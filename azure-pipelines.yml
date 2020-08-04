@@ -17,9 +17,8 @@ variables:
   major: 1
   minor: 0
   patch: 0
-  #preview: $[counter(variables['patch'], 1)]
   AssemblyVersion: $(major).$(minor).$(patch)
-  NugetVersion: $(major).$(minor).$(patch)-beta4
+  NugetVersion: $(major).$(minor).$(patch)
 
 steps:
 - task: UseDotNet@2
