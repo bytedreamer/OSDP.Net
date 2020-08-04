@@ -16,7 +16,9 @@ namespace OSDP.Net
 
         public SecureChannel()
         {
-            Reset();
+            new Random().NextBytes(_serverRandomNumber);
+            IsInitialized = false;
+            IsEstablished = false;
         }
 
         public byte[] ServerCryptogram { get; private set; }
@@ -197,13 +199,6 @@ namespace OSDP.Net
                     return encryptor.TransformFinalBlock(paddedData.ToArray(), 0, paddedData.Count);
                 }
             }
-        }
-
-        public void Reset()
-        {
-            new Random().NextBytes(_serverRandomNumber);
-            IsInitialized = false;
-            IsEstablished = false;
         }
 
         private static Aes CreateKeyAlgorithm()

@@ -229,7 +229,7 @@ namespace OSDP.Net
                 var mac = device.GenerateMac(reply.MessageForMacGeneration, false);
                 if (!reply.IsValidMac(mac))
                 {
-                    device.ResetSecurity();
+                    ResetSecurity(device);
                     return;
                 }
             }
@@ -247,7 +247,7 @@ namespace OSDP.Net
                 (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))
             {
-                device.ResetSecurity();
+                if (reply.Sequence > 0) ResetSecurity(device);
             }
 
             switch (reply.Type)
@@ -261,6 +261,12 @@ namespace OSDP.Net
             }
 
             _replies.Add(reply);
+        }
+
+        private void ResetSecurity(Device device)
+        {
+            RemoveDevice(device.Address);
+            AddDevice(device.Address, device.MessageControl.UseCrc, true, device.SecureChannelKey);
         }
 
         private async Task<Reply> SendCommandAndReceiveReply(List<byte> data, Command command, Device device)
