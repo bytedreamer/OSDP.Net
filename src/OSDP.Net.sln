@@ -9,6 +9,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "Console\Console.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSDP.Net.Tests", "OSDP.Net.Tests\OSDP.Net.Tests.csproj", "{0018DA90-BBB2-491D-A6C3-086F21D7C29A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Settings", "Settings", "{5CE38FA4-377F-4C0D-A680-9CEA9A7CDBEE}"
+ProjectSection(SolutionItems) = preProject
+	..\azure-pipelines.yml = ..\azure-pipelines.yml
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

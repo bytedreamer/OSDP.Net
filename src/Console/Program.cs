@@ -98,15 +98,8 @@ namespace Console
                     new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "",
                         () => SendCommand("Output status", _connectionId, _controlPanel.OutputStatus)),
-                    new MenuItem("Reader Buzzer Control", "", () => _controlPanel.ReaderBuzzerControl(_connectionId, 0,
-                        new ReaderBuzzerControl(0, ToneCode.Default, 10, 10, 4))),
-                    new MenuItem("Reader LED Control", "", () => _controlPanel.ReaderLedControl(_connectionId, 0,
-                        new ReaderLedControls(new[]
-                        {
-                            new ReaderLedControl(0, 0, TemporaryReaderControlCode.SetTemporaryAndStartTimer, 10, 10,
-                                LedColor.Red, LedColor.Green, 100,
-                                PermanentReaderControlCode.Nop, 0, 0, LedColor.Red, LedColor.Black),
-                        }))),
+                    new MenuItem("Reader Buzzer Control", "", SendReaderBuzzerControlCommand),
+                    new MenuItem("Reader LED Control", "", SendReaderLedControlCommand),
                     new MenuItem("_Reader Status", "",
                         () => SendCommand("Reader status", _connectionId, _controlPanel.ReaderStatus))
 
@@ -551,7 +544,7 @@ namespace Console
 
             void StartOutputControlButtonClicked()
             {
-                if (!byte.TryParse(outputAddressTextField.Text.ToString(), out var outputAddress))
+                if (!byte.TryParse(outputAddressTextField.Text.ToString(), out var outputNumber))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid output address entered!", "OK");
@@ -560,7 +553,7 @@ namespace Console
 
                 SendCommand("Output Control Command", _connectionId, new OutputControls(new[]
                 {
-                    new OutputControl(outputAddress, activateOutputCheckBox.Checked
+                    new OutputControl(outputNumber, activateOutputCheckBox.Checked
                         ? OutputControlCode.PermanentStateOnAbortTimedOperation
                         : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
                 }), _controlPanel.OutputControl, (address, result) => { });
@@ -568,13 +561,96 @@ namespace Console
                 Application.RequestStop();
             }
 
-            Application.Run(new Dialog("Send Output Control Output Command", 60, 10,
+            Application.Run(new Dialog("Send Output Control Command", 60, 10,
                 new Button("Send") {Clicked = StartOutputControlButtonClicked},
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
-                new Label(1, 1, "Output Address:"),
+                new Label(1, 1, "Output Number:"),
                 outputAddressTextField,
                 activateOutputCheckBox
+            });
+        }
+
+        private static void SendReaderLedControlCommand()
+        {
+            var readerAddressTextField = new TextField(20, 1, 20, "0");
+            var colorTextField = new TextField(20, 3, 20, "Red");
+
+            void StartReaderLedControlButtonClicked()
+            {
+                if (!byte.TryParse(readerAddressTextField.Text.ToString(), out var readerNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    return;
+                }
+
+                if (!Enum.TryParse(colorTextField.Text.ToString(), out LedColor color))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid LED color entered!", "OK");
+                    return;
+                }
+
+                SendCommand("LED Control Command", _connectionId, new ReaderLedControls(new[]
+                {
+                    new ReaderLedControl(readerNumber, 0,
+                        TemporaryReaderControlCode.CancelAnyTemporaryAndDisplayPermanent, 0, 0,
+                        LedColor.Red, LedColor.Green, 0,
+                        PermanentReaderControlCode.SetPermanentState, 0, 0, color, color)
+                }), _controlPanel.ReaderLedControl, (address, result) => { });
+
+                Application.RequestStop();
+
+            }
+
+            Application.Run(new Dialog("Send LED Control Command", 60, 10,
+                new Button("Send") {Clicked = StartReaderLedControlButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                new Label(1, 1, "Reader Number:"),
+                readerAddressTextField,
+                new Label(1, 3, "Color:"),
+                colorTextField
+            });
+        }
+
+        private static void SendReaderBuzzerControlCommand()
+        {
+            var readerAddressTextField = new TextField(20, 1, 20, "0");
+            var repeatTimesTextField = new TextField(20, 3, 20, "1");
+
+            void StartReaderBuzzerControlButtonClicked()
+            {
+                if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    return;
+                }
+
+                if (!byte.TryParse(repeatTimesTextField.Text.ToString(), out byte repeatNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid repeat number entered!", "OK");
+                    return;
+                }
+
+                SendCommand("LED Control Command", _connectionId,
+                    new ReaderBuzzerControl(readerNumber, ToneCode.Default, 2, 2, repeatNumber),
+                    _controlPanel.ReaderBuzzerControl, (address, result) => { });
+
+                Application.RequestStop();
+            }
+
+            Application.Run(new Dialog("Send Reader Buzzer Control Command", 60, 10,
+                new Button("Send") {Clicked = StartReaderBuzzerControlButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                new Label(1, 1, "Reader Number:"),
+                readerAddressTextField,
+                new Label(1, 3, "Repeat Times:"),
+                repeatTimesTextField
             });
         }
 
