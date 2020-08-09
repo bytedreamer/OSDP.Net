@@ -100,6 +100,7 @@ namespace Console
                         () => SendCommand("Output status", _connectionId, _controlPanel.OutputStatus)),
                     new MenuItem("Reader Buzzer Control", "", SendReaderBuzzerControlCommand),
                     new MenuItem("Reader LED Control", "", SendReaderLedControlCommand),
+                    new MenuItem("Reader Text Output", "", SendReaderTextOutputCommand),
                     new MenuItem("_Reader Status", "",
                         () => SendCommand("Reader status", _connectionId, _controlPanel.ReaderStatus))
 
@@ -592,7 +593,7 @@ namespace Console
                     return;
                 }
 
-                SendCommand("LED Control Command", _connectionId, new ReaderLedControls(new[]
+                SendCommand("Reader LED Control Command", _connectionId, new ReaderLedControls(new[]
                 {
                     new ReaderLedControl(readerNumber, 0,
                         TemporaryReaderControlCode.CancelAnyTemporaryAndDisplayPermanent, 0, 0,
@@ -604,7 +605,7 @@ namespace Console
 
             }
 
-            Application.Run(new Dialog("Send LED Control Command", 60, 10,
+            Application.Run(new Dialog("Send Reader LED Control Command", 60, 10,
                 new Button("Send") {Clicked = StartReaderLedControlButtonClicked},
                 new Button("Cancel") {Clicked = Application.RequestStop})
             {
@@ -636,7 +637,7 @@ namespace Console
                     return;
                 }
 
-                SendCommand("LED Control Command", _connectionId,
+                SendCommand("Reader Buzzer Control Command", _connectionId,
                     new ReaderBuzzerControl(readerNumber, ToneCode.Default, 2, 2, repeatNumber),
                     _controlPanel.ReaderBuzzerControl, (address, result) => { });
 
@@ -651,6 +652,39 @@ namespace Console
                 readerAddressTextField,
                 new Label(1, 3, "Repeat Times:"),
                 repeatTimesTextField
+            });
+        }
+
+        private static void SendReaderTextOutputCommand()
+        {
+            var readerAddressTextField = new TextField(20, 1, 20, "0");
+            var textOutputTextField = new TextField(20, 3, 20, "Some Text");
+
+            void StartReaderTextOutputButtonClicked()
+            {
+                if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    return;
+                }
+
+                SendCommand("Reader Text Output Command", _connectionId,
+                    new ReaderTextOutput(readerNumber, TextCommand.PermanentTextNoWrap, 0, 1, 1,
+                        textOutputTextField.Text.ToString()),
+                    _controlPanel.ReaderTextOutput, (address, result) => { });
+
+                Application.RequestStop();
+            }
+
+            Application.Run(new Dialog("Reader Text Output Command", 60, 10,
+                new Button("Send") {Clicked = StartReaderTextOutputButtonClicked},
+                new Button("Cancel") {Clicked = Application.RequestStop})
+            {
+                new Label(1, 1, "Reader Number:"),
+                readerAddressTextField,
+                new Label(1, 3, "Text Output:"),
+                textOutputTextField
             });
         }
 
