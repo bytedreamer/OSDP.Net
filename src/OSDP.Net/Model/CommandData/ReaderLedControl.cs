@@ -105,7 +105,7 @@ namespace OSDP.Net.Model.CommandData
     public enum PermanentReaderControlCode
     {
         Nop = 0x00,
-        SetPermanentState = 0x02
+        SetPermanentState = 0x01
     }
 
     public enum LedColor
