@@ -7,6 +7,7 @@
     <Description>OSDP.Net is a .NET framework implementation of the Open Supervised Device Protocol(OSDP).</Description>
     <PackageLicenseUrl>https://raw.githubusercontent.com/bytedreamer/OSDP.Net/develop/LICENSE.txt</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/bytedreamer/OSDP.Net</RepositoryUrl>
+    <PackageIconUrl>&lt;img src="https://img.icons8.com/dusk/64/000000/network.png</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
