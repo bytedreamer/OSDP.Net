@@ -30,7 +30,8 @@ namespace OSDP.Net
 
         public bool IsSecurityEstablished => MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
 
-        public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow;
+        public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow &&
+                                   (!MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
 
         /// <inheritdoc />
         public int CompareTo(Device other)
@@ -49,7 +50,8 @@ namespace OSDP.Net
         {
             if (secureChannelKey.Length != 16)
             {
-                throw new ArgumentOutOfRangeException(nameof(secureChannelKey), "The length of the key must be 16 bytes");
+                throw new ArgumentOutOfRangeException(nameof(secureChannelKey),
+                    "The length of the key must be 16 bytes");
             }
 
             SecureChannelKey = secureChannelKey;
@@ -61,7 +63,7 @@ namespace OSDP.Net
             {
                 return new PollCommand(Address);
             }
-            
+
             if (_useSecureChannel && !_secureChannel.IsInitialized)
             {
                 return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray());
@@ -94,7 +96,7 @@ namespace OSDP.Net
         public void InitializeSecureChannel(Reply reply)
         {
             var replyData = reply.ExtractReplyData.ToArray();
-            
+
             _secureChannel.Initialize(replyData.Skip(8).Take(8).ToArray(),
                 replyData.Skip(16).Take(16).ToArray(), SecureChannelKey);
         }
@@ -105,7 +107,7 @@ namespace OSDP.Net
             {
                 return false;
             }
-            
+
             _secureChannel.Establish(reply.ExtractReplyData.ToArray());
 
             return true;
