@@ -220,7 +220,7 @@ namespace OSDP.Net
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.RemoveDevice(address);
         }
 
-        internal void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected)
+        private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected)
         {
             var handler = ConnectionStatusChanged;
             handler?.Invoke(this, new ConnectionStatusEventArgs(connectionId, address, isConnected));
