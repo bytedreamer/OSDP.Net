@@ -47,11 +47,11 @@ steps:
     projects: '**/*Tests/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
-- task: ResharperCli@2
-  inputs:
-    solutionOrProjectPath: 'src/OSDP.Net.sln'
-    failBuildLevelSelector: 'Warning'
-    additionalArguments: '--no-swea --DotNetCoreSdk=3.1.401'
+- #task: ResharperCli@2
+  #inputs:
+    #solutionOrProjectPath: 'src/OSDP.Net.sln'
+    #failBuildLevelSelector: 'Warning'
+    #additionalArguments: '--no-swea'
 
 - task: DotNetCoreCLI@2
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
