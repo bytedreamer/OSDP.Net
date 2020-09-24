@@ -320,7 +320,7 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < replyLength)
             {
-                byte[] readBuffer = new byte[byte.MaxValue];
+                byte[] readBuffer = new byte[replyLength - replyBuffer.Count];
                 int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
