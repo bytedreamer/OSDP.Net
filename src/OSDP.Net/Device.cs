@@ -59,10 +59,7 @@ namespace OSDP.Net
 
         public Command GetNextCommandData()
         {
-            if (MessageControl.Sequence == 0)
-            {
-                return new PollCommand(Address);
-            }
+
 
             if (_useSecureChannel && !_secureChannel.IsInitialized)
             {
@@ -74,8 +71,15 @@ namespace OSDP.Net
                 return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram);
             }
 
+            if (MessageControl.Sequence == 0) 
+            {
+                Console.WriteLine("polling");
+                return new PollCommand(Address);
+            }
+
             if (!_commands.TryDequeue(out var command))
             {
+                Console.WriteLine("polling");
                 return new PollCommand(Address);
             }
 
