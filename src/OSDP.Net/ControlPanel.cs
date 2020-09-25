@@ -110,6 +110,11 @@ namespace OSDP.Net
             return Model.ReplyData.ReaderStatus.ParseData(await SendCommand(connectionId,
                 new ReaderStatusReportCommand(address)).ConfigureAwait(false));
         }
+        public async Task<ManufacturerSpecificReplyData> ManufacturerSpecificCommand(Guid connectionId, byte address, ManufacturerSpecificCommandData manufacturerSpecificData)
+        {
+            return Model.ReplyData.ManufacturerSpecificReplyData.ParseData(await SendCommand(connectionId,
+                new ManufacturerSpecificCommand(address, manufacturerSpecificData)).ConfigureAwait(false));
+        }
 
         public async Task<bool> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
         {
@@ -149,6 +154,7 @@ namespace OSDP.Net
             return Model.ReplyData.CommunicationConfiguration.ParseData(await SendCommand(connectionId,
                 new CommunicationSetCommand(address, communicationConfiguration)).ConfigureAwait(false));
         }
+
 
         public bool IsOnline(Guid connectionId, byte address)
         {
