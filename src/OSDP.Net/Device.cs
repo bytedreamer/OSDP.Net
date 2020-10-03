@@ -59,7 +59,6 @@ namespace OSDP.Net
 
         public Command GetNextCommandData()
         {
-
             if (_useSecureChannel && !_secureChannel.IsInitialized)
             {
                 return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray());
