@@ -59,14 +59,14 @@ namespace OSDP.Net
 
         public Command GetNextCommandData()
         {
-            if (MessageControl.Sequence == 0)
-            {
-                return new PollCommand(Address);
-            }
-
             if (_useSecureChannel && !_secureChannel.IsInitialized)
             {
                 return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray());
+            }
+
+            if (MessageControl.Sequence == 0)
+            {
+                return new PollCommand(Address);
             }
 
             if (_useSecureChannel && !_secureChannel.IsEstablished)
