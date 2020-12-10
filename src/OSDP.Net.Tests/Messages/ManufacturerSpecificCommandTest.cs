@@ -10,9 +10,9 @@ namespace OSDP.Net.Tests.Messages
     public class ManufacturerSpecificCommandTest
     {
         [TestCaseSource(typeof(ManufacturerSpecificCommandTestDataClass), nameof(ManufacturerSpecificCommandTestDataClass.TestCases))]
-        public string BuildCommand_TestCases(byte address, bool useCrc, bool useSecureChannel, ManufacturerSpecificCommandData manufacturerSpecificCommandData)
+        public string BuildCommand_TestCases(byte address, bool useCrc, bool useSecureChannel, ManufacturerSpecific manufacturerSpecific)
         {
-            var manufacturerSpecificCommand = new ManufacturerSpecificCommand(address, manufacturerSpecificCommandData);
+            var manufacturerSpecificCommand = new ManufacturerSpecificCommand(address, manufacturerSpecific);
             return BitConverter.ToString(manufacturerSpecificCommand.BuildCommand(new Device(address, useCrc, useSecureChannel)));
         }
 
@@ -22,7 +22,7 @@ namespace OSDP.Net.Tests.Messages
             {
                 get
                 {
-                    var mfgData = new ManufacturerSpecificCommandData(new byte[] { 0x01, 0x02, 0x03 }, new byte[] { 0x0A, 0x0B, 0x0C });
+                    var mfgData = new ManufacturerSpecific(new byte[] { 0x01, 0x02, 0x03 }, new byte[] { 0x0A, 0x0B, 0x0C });
 
                     yield return new TestCaseData((byte) 0x0, true, true, mfgData).Returns(
                         "53-00-10-00-0C-02-17-80-01-02-03-0A-0B-0C-B5-0D");

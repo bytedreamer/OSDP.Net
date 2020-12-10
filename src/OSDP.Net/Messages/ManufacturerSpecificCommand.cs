@@ -1,14 +1,13 @@
 ﻿using OSDP.Net.Model.CommandData;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OSDP.Net.Messages
 {
     public class ManufacturerSpecificCommand : Command
     {
-        private ManufacturerSpecificCommandData _manufacturerData;
-        public ManufacturerSpecificCommand(byte address, ManufacturerSpecificCommandData manufacturerData)
+        private readonly ManufacturerSpecific _manufacturerData;
+
+        public ManufacturerSpecificCommand(byte address, ManufacturerSpecific manufacturerData)
         {
             Address = address;
             _manufacturerData = manufacturerData;
@@ -24,7 +23,7 @@ namespace OSDP.Net.Messages
                 0x17
             };
         }
-        
+
         protected override IEnumerable<byte> Data()
         {
             return _manufacturerData.BuildData();

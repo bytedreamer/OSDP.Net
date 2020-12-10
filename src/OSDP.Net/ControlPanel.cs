@@ -111,7 +111,7 @@ namespace OSDP.Net
                 new ReaderStatusReportCommand(address)).ConfigureAwait(false));
         }
 
-        public async Task<bool> ManufacturerSpecificCommand(Guid connectionId, byte address, ManufacturerSpecificCommandData manufacturerSpecificData)
+        public async Task<bool> ManufacturerSpecificCommand(Guid connectionId, byte address, ManufacturerSpecific manufacturerSpecificData)
         {
             var reply = await SendCommand(connectionId,
                 new ManufacturerSpecificCommand(address, manufacturerSpecificData)).ConfigureAwait(false);

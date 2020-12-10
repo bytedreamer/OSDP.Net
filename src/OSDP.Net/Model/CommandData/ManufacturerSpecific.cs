@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace OSDP.Net.Model.CommandData
 {
-    public class ManufacturerSpecificCommandData 
+    public class ManufacturerSpecific 
     {
-        public ManufacturerSpecificCommandData(byte[] vendorCode, byte[] data)
+        public ManufacturerSpecific(byte[] vendorCode, byte[] data)
         {
             VendorCode = vendorCode ?? throw new ArgumentNullException(nameof(vendorCode));
             if (VendorCode.Length != 3) throw new ArgumentOutOfRangeException(nameof(vendorCode));

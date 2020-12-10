@@ -673,7 +673,7 @@ namespace Console
                 }
 
                 SendCommand("Manufacturer Specific Command", _connectionId,
-                    new ManufacturerSpecificCommandData(vendorCode.ToArray(), data.ToArray()),
+                    new ManufacturerSpecific(vendorCode.ToArray(), data.ToArray()),
                     _controlPanel.ManufacturerSpecificCommand, (b, b1) => { });
 
                 Application.RequestStop();
