@@ -13,6 +13,7 @@ namespace OSDP.Net.Model.CommandData
         }
 
         public byte Address { get; }
+
         public int BaudRate { get; }
 
         public IEnumerable<byte> BuildData()

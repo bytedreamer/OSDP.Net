@@ -96,6 +96,7 @@ namespace Console
                         () => SendCommand("Input status", _connectionId, _controlPanel.InputStatus)),
                     new MenuItem("_Local Status", "",
                         () => SendCommand("Local status", _connectionId, _controlPanel.LocalStatus)),
+                    new MenuItem("Manufacturer Specific", "", SendManufacturerSpecificCommand),
                     new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "",
                         () => SendCommand("Output status", _connectionId, _controlPanel.OutputStatus)),
@@ -621,7 +622,6 @@ namespace Console
                 }), _controlPanel.ReaderLedControl, (address, result) => { });
 
                 Application.RequestStop();
-
             }
 
             var sendButton = new Button("Send");
@@ -634,6 +634,61 @@ namespace Console
                 readerAddressTextField,
                 new Label(1, 3, "Color:"),
                 colorTextField
+            });
+        }
+
+        private static void SendManufacturerSpecificCommand()
+        {
+            var vendorCodeTextField = new TextField(20, 1, 20, string.Empty);
+            var dataTextField = new TextField(20, 3, 20, string.Empty);
+
+            void SendOutputControlButtonClicked()
+            {
+                byte[] vendorCode;
+                try
+                {
+                    vendorCode = Convert.FromBase64String(vendorCodeTextField.Text.ToString() ?? string.Empty);
+                }
+                catch
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid vendor code entered!", "OK");
+                    return;
+                }
+
+                if (vendorCode.Length != 3)
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Vendor code needs to be 3 bytes!", "OK");
+                    return;
+                }
+
+                byte[] data;
+                try
+                {
+                    data = Convert.FromBase64String(dataTextField.Text.ToString() ?? string.Empty);
+                }
+                catch
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid data entered!", "OK");
+                    return;
+                }
+
+                SendCommand("Manufacturer Specific Command", _connectionId,
+                    new ManufacturerSpecificCommandData(vendorCode.ToArray(), data.ToArray()),
+                    _controlPanel.ManufacturerSpecificCommand, (b, b1) => { });
+
+                Application.RequestStop();
+            }
+
+            var sendButton = new Button("Send");
+            sendButton.Clicked += SendOutputControlButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += Application.RequestStop;
+            Application.Run(new Dialog("Send Manufacturer Specific Command (Enter Base64)", 60, 10, sendButton, cancelButton)
+            {
+                new Label(1, 1, "Vendor Code:"),
+                vendorCodeTextField,
+                new Label(1, 3, "Data:"),
+                dataTextField
             });
         }
 
