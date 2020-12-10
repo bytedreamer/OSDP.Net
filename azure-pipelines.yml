@@ -27,9 +27,6 @@ steps:
     packageType: 'sdk'
     version: '3.x'
 
-- task: NuGetToolInstaller@0
-  displayName: 'Install NuGet'
-
 - task: DotNetCoreCLI@2
   displayName: 'dotnet build'
   inputs:
