@@ -15,9 +15,9 @@ namespace OSDP.Net.Model.CommandData
 
         public byte ReaderNumber { get; }
         public ToneCode ToneCode { get; }
-        public byte OnTime { get; private set; }
-        public byte OffTime { get; private set; }
-        public byte Count { get; private set; }
+        public byte OnTime { get; }
+        public byte OffTime { get; }
+        public byte Count { get;  }
 
         public IEnumerable<byte> BuildData()
         {

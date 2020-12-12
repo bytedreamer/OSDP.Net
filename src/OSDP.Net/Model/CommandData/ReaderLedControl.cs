@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
@@ -73,7 +72,7 @@ namespace OSDP.Net.Model.CommandData
 
         public IEnumerable<byte> BuildData()
         {
-            var temporaryTimerBytes = Message.ConvertShortToBytes(TemporaryTimer).ToArray();
+            var temporaryTimerBytes = Message.ConvertShortToBytes(TemporaryTimer);
             
             return new[]
             {

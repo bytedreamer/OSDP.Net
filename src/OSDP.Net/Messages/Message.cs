@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,7 +10,7 @@ namespace OSDP.Net.Messages
     {
         public const byte StartOfMessage = 0x53;
 
-        private static readonly ushort[] CrcTable =
+        private static ReadOnlySpan<ushort> CrcTable => new ushort[]
         {
             0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7, 0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C,
             0xD1AD, 0xE1CE, 0xF1EF, 0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6, 0x9339, 0x8318,
@@ -35,9 +36,9 @@ namespace OSDP.Net.Messages
 
         public byte Address { get; protected set; }
 
-        protected abstract IEnumerable<byte> Data();
+        protected abstract ReadOnlySpan<byte> Data();
 
-        internal static IEnumerable<byte> ConvertShortToBytes(ushort value)
+        internal static byte[] ConvertShortToBytes(ushort value)
         {
             var byteArray = BitConverter.GetBytes(value);
             if (!BitConverter.IsLittleEndian)
@@ -48,21 +49,17 @@ namespace OSDP.Net.Messages
             return byteArray;
         }
 
-        internal static ushort ConvertBytesToShort(IEnumerable<byte> data)
+        internal static ushort ConvertBytesToShort(ReadOnlySpan<byte> data)
         {
-            var byteArray = data.ToArray();
-            if (!BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(byteArray);
-            }
-            
-            return BitConverter.ToUInt16(byteArray, 0);
+            return BitConverter.IsLittleEndian
+                ? BinaryPrimitives.ReadUInt16LittleEndian(data)
+                : BinaryPrimitives.ReadUInt16BigEndian(data);
         }
 
-        protected static ushort CalculateCrc(IEnumerable<byte> data)
+        protected static ushort CalculateCrc(ReadOnlySpan<byte> packet)
         {
             ushort crc = 0x1D0F;
-            foreach (var t in data)
+            foreach (var t in packet)
             {
                 crc = (ushort)((crc << 8) ^ CrcTable[((crc >> 8) ^ t) & 0xFF]);
             }
@@ -75,19 +72,19 @@ namespace OSDP.Net.Messages
             return (byte) (0x100 - packet.Aggregate(0, (source, element) => source + element) & 0xff);
         }
 
-        protected static void AddPacketLength(IList<byte> packet, ushort additionalLength = 0)
+        protected static void AddPacketLength(Span<byte> packet, ushort additionalLength = 0)
         {
-            var packetLength = ConvertShortToBytes((ushort)(packet.Count + additionalLength)).ToArray();
+            var packetLength = ConvertShortToBytes((ushort)(packet.Length + additionalLength)).ToArray();
             packet[2] = packetLength[0];
             packet[3] = packetLength[1];
         }
 
-        protected static void AddCrc(IList<byte> packet)
+        protected static void AddCrc(Span<byte> packet)
         {
-            ushort crc = CalculateCrc(packet.Take(packet.Count - 2).ToArray());
+            ushort crc = CalculateCrc(packet.Slice(0, packet.Length - 2));
             var crcBytes = ConvertShortToBytes(crc).ToArray();
-            packet[packet.Count - 2] = crcBytes[0];
-            packet[packet.Count - 1] = crcBytes[1];
+            packet[packet.Length - 2] = crcBytes[0];
+            packet[packet.Length - 1] = crcBytes[1];
         }
 
         protected static void AddChecksum(IList<byte> packet)
@@ -95,9 +92,9 @@ namespace OSDP.Net.Messages
             packet[packet.Count - 1] = CalculateChecksum(packet.Take(packet.Count - 1).ToArray());
         }
 
-        internal IEnumerable<byte> EncryptedData(Device device)
+        internal ReadOnlySpan<byte> EncryptedData(Device device)
         {
-            return Data().Any() ? device.EncryptData(Data()) : Data();
+            return !Data().IsEmpty ? device.EncryptData(Data()) : Data();
         }
 
         internal static int ConvertBytesToInt(byte[] bytes)

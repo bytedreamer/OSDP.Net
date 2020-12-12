@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace OSDP.Net.Messages
@@ -15,9 +16,9 @@ namespace OSDP.Net.Messages
             };
         }
 
-        protected override IEnumerable<byte> Data()
+        protected override ReadOnlySpan<byte> Data()
         {
-            return new byte[] { };
+            return ReadOnlySpan<byte>.Empty;
         }
     }
 }

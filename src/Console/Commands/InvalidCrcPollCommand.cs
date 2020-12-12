@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using OSDP.Net.Messages;
 
 namespace Console.Commands
@@ -12,7 +12,7 @@ namespace Console.Commands
 
         protected override byte CommandCode => 0x60;
 
-        protected override IEnumerable<byte> SecurityControlBlock()
+        protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
             return new byte[]
             {
@@ -21,14 +21,14 @@ namespace Console.Commands
             };
         }
 
-        protected override void CustomCommandUpdate(List<byte> commandBuffer)
+        protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
             commandBuffer[^1] = (byte)(commandBuffer[^1] + 1);
         }
 
-        protected override IEnumerable<byte> Data()
+        protected override ReadOnlySpan<byte> Data()
         {
-            return new byte[] { };
+            return ReadOnlySpan<byte>.Empty;
         }
     }
 }

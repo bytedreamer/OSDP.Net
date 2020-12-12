@@ -111,6 +111,14 @@ namespace OSDP.Net
                 new ReaderStatusReportCommand(address)).ConfigureAwait(false));
         }
 
+        public async Task<bool> ManufacturerSpecificCommand(Guid connectionId, byte address, ManufacturerSpecific manufacturerSpecificData)
+        {
+            var reply = await SendCommand(connectionId,
+                new ManufacturerSpecificCommand(address, manufacturerSpecificData)).ConfigureAwait(false);
+            
+            return reply.Type == ReplyType.Ack || reply.Type == ReplyType.ManufactureSpecific;
+        }
+
         public async Task<bool> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
         {
             var reply = await SendCommand(connectionId,
@@ -282,6 +290,15 @@ namespace OSDP.Net
                         new RawCardDataReplyEventArgs(reply.ConnectionId, reply.Address, RawCardData.ParseData(reply)));
                     break;
                 }
+
+                case ReplyType.ManufactureSpecific:
+                {
+                    var handler = ManufacturerSpecificReplyReceived;
+                    handler?.Invoke(this,
+                        new ManufacturerSpecificReplyEventArgs(reply.ConnectionId, reply.Address,
+                            ManufacturerSpecificData.ParseData(reply)));
+                    break;
+                }
             }
         }
 
@@ -300,6 +317,8 @@ namespace OSDP.Net
         public event EventHandler<ReaderStatusReportReplyEventArgs> ReaderStatusReportReplyReceived;
 
         public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
+
+        public event EventHandler<ManufacturerSpecificReplyEventArgs> ManufacturerSpecificReplyReceived;
 
         public class NakReplyEventArgs
         {
@@ -397,6 +416,22 @@ namespace OSDP.Net
             public Guid ConnectionId { get; }
             public byte Address { get; }
             public RawCardData RawCardData { get; }
+        }
+
+        public class ManufacturerSpecificReplyEventArgs
+        {
+            public ManufacturerSpecificReplyEventArgs(Guid connectionId, byte address, ManufacturerSpecificData manufacturerSpecificData)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                ManufacturerSpecificData = manufacturerSpecificData;
+            }
+
+            public Guid ConnectionId { get; }
+
+            public byte Address { get; }
+
+            public ManufacturerSpecificData ManufacturerSpecificData { get; }
         }
 
         private class ReplyEventArgs : EventArgs

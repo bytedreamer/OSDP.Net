@@ -154,7 +154,6 @@ namespace OSDP.Net
 
                 foreach (var device in _configuredDevices.ToArray())
                 {
-                    var data = new List<byte> {DriverByte};
                     var command = device.GetNextCommandData();
                     
                     lastMessageSentTime = DateTime.UtcNow;
@@ -172,7 +171,7 @@ namespace OSDP.Net
 
                     try
                     {
-                        reply = await SendCommandAndReceiveReply(data, command, device).ConfigureAwait(false);
+                        reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
                     }
                     catch (InvalidOperationException exception)
                     {
@@ -226,7 +225,7 @@ namespace OSDP.Net
 
             if (reply.IsSecureMessage)
             {
-                var mac = device.GenerateMac(reply.MessageForMacGeneration, false);
+                var mac = device.GenerateMac(reply.MessageForMacGeneration.ToArray(), false);
                 if (!reply.IsValidMac(mac))
                 {
                     ResetSecurity(device);
@@ -269,7 +268,7 @@ namespace OSDP.Net
             AddDevice(device.Address, device.MessageControl.UseCrc, true, device.SecureChannelKey);
         }
 
-        private async Task<Reply> SendCommandAndReceiveReply(List<byte> data, Command command, Device device)
+        private async Task<Reply> SendCommandAndReceiveReply(Command command, Device device)
         {
             byte[] commandData;
             try
@@ -282,11 +281,12 @@ namespace OSDP.Net
                 throw;
             }
 
-            data.AddRange(commandData);
+            // _logger?.LogTrace($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
 
-            _logger?.LogTrace($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
-            
-            await _connection.WriteAsync(data.ToArray()).ConfigureAwait(false);
+            var buffer = new byte[commandData.Length + 1];
+            buffer[0] = DriverByte;
+            Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
+            await _connection.WriteAsync(buffer).ConfigureAwait(false);
 
             var replyBuffer = new Collection<byte>();
 
@@ -305,10 +305,10 @@ namespace OSDP.Net
                 throw new Exception("Timeout waiting for rest of reply message");
             }
 
-            _logger?.LogTrace($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
-                command.Address);
+            // _logger?.LogTrace($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
+            //     command.Address);
 
-            return Reply.Parse(replyBuffer, Id, command, device);
+            return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }
 
         private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
