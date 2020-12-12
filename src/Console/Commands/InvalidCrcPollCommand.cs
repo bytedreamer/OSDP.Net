@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using OSDP.Net.Messages;
 
 namespace Console.Commands
