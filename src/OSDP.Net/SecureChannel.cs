@@ -70,68 +70,67 @@ namespace OSDP.Net
             IsEstablished = true;
         }
 
-        public byte[] GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
+        public ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
         {
             const byte cryptoLength = 16;
             const byte paddingStart = 0x80;
 
-            var mac = new byte[cryptoLength];
+            Span<byte> mac = stackalloc byte[cryptoLength];
             int currentLocation = 0;
 
-            using (var messageAuthenticationCodeAlgorithm = Aes.Create())
+            using var messageAuthenticationCodeAlgorithm = Aes.Create();
+            
+            if (messageAuthenticationCodeAlgorithm == null)
             {
-                if (messageAuthenticationCodeAlgorithm == null)
-                {
-                    throw new Exception("Unable to create key algorithm");
-                }
-
-                messageAuthenticationCodeAlgorithm.Mode = CipherMode.CBC;
-                messageAuthenticationCodeAlgorithm.KeySize = 128;
-                messageAuthenticationCodeAlgorithm.BlockSize = 128;
-                messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
-                messageAuthenticationCodeAlgorithm.IV = isCommand ? _rmac : _cmac;
-                messageAuthenticationCodeAlgorithm.Key = _smac1;
-
-                int messageLength = message.Length;
-                while (currentLocation < messageLength)
-                {
-                    // Get first 16
-                    var inputBuffer = new byte[cryptoLength];
-                    message.Slice(currentLocation,
-                            currentLocation + cryptoLength < messageLength
-                                ? cryptoLength
-                                : messageLength - currentLocation)
-                        .CopyTo(inputBuffer);
-
-                    currentLocation += cryptoLength;
-                    if (currentLocation > messageLength)
-                    {
-                        messageAuthenticationCodeAlgorithm.Key = _smac2;
-                        if (messageLength % cryptoLength != 0)
-                        {
-                            inputBuffer[messageLength % cryptoLength] = paddingStart;
-                        }
-                    }
-
-                    using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
-                    {
-                        mac = encryptor.TransformFinalBlock(inputBuffer.ToArray(), 0, inputBuffer.Length);
-                    }
-
-                    messageAuthenticationCodeAlgorithm.IV = mac;
-                }
-
-                if (isCommand)
-                {
-                    _cmac = mac;
-                }
-                else
-                {
-                    _rmac = mac;
-                }
-
-                return mac;
+                throw new Exception("Unable to create key algorithm");
             }
+
+            messageAuthenticationCodeAlgorithm.Mode = CipherMode.CBC;
+            messageAuthenticationCodeAlgorithm.KeySize = 128;
+            messageAuthenticationCodeAlgorithm.BlockSize = 128;
+            messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
+            messageAuthenticationCodeAlgorithm.IV = isCommand ? _rmac : _cmac;
+            messageAuthenticationCodeAlgorithm.Key = _smac1;
+
+            int messageLength = message.Length;
+            while (currentLocation < messageLength)
+            {
+                // Get first 16
+                var inputBuffer = new byte[cryptoLength];
+                message.Slice(currentLocation,
+                        currentLocation + cryptoLength < messageLength
+                            ? cryptoLength
+                            : messageLength - currentLocation)
+                    .CopyTo(inputBuffer);
+
+                currentLocation += cryptoLength;
+                if (currentLocation > messageLength)
+                {
+                    messageAuthenticationCodeAlgorithm.Key = _smac2;
+                    if (messageLength % cryptoLength != 0)
+                    {
+                        inputBuffer[messageLength % cryptoLength] = paddingStart;
+                    }
+                }
+
+                using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
+                {
+                    mac = encryptor.TransformFinalBlock(inputBuffer.ToArray(), 0, inputBuffer.Length);
+                }
+
+                messageAuthenticationCodeAlgorithm.IV = mac.ToArray();
+            }
+
+            if (isCommand)
+            {
+                _cmac = mac.ToArray();
+            }
+            else
+            {
+                _rmac = mac.ToArray();
+            }
+
+            return mac.ToArray();
         }
 
         public IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)

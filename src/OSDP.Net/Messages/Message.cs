@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,7 +10,7 @@ namespace OSDP.Net.Messages
     {
         public const byte StartOfMessage = 0x53;
 
-        private static readonly ushort[] CrcTable =
+        private static ReadOnlySpan<ushort> CrcTable => new ushort[]
         {
             0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7, 0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C,
             0xD1AD, 0xE1CE, 0xF1EF, 0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6, 0x9339, 0x8318,
@@ -48,15 +49,11 @@ namespace OSDP.Net.Messages
             return byteArray;
         }
 
-        internal static ushort ConvertBytesToShort(IEnumerable<byte> data)
+        internal static ushort ConvertBytesToShort(ReadOnlySpan<byte> data)
         {
-            var byteArray = data.ToArray();
-            if (!BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(byteArray);
-            }
-            
-            return BitConverter.ToUInt16(byteArray, 0);
+            return BitConverter.IsLittleEndian
+                ? BinaryPrimitives.ReadUInt16LittleEndian(data)
+                : BinaryPrimitives.ReadUInt16BigEndian(data);
         }
 
         protected static ushort CalculateCrc(ReadOnlySpan<byte> packet)

@@ -42,7 +42,7 @@ namespace OSDP.Net.Messages
 
             IsDataCorrect = isUsingCrc
                 ? CalculateCrc(data.Slice(0, data.Length - 2)) ==
-                  ConvertBytesToShort(data.Slice(data.Length - 2, 2).ToArray())
+                  ConvertBytesToShort(data.Slice(data.Length - 2, 2))
                 : CalculateChecksum(data.Slice(data.Length - 1, 1).ToArray()) == data[data.Length - 1];
             MessageForMacGeneration = data.Slice(0, messageLength).ToArray();
 
@@ -85,7 +85,7 @@ namespace OSDP.Net.Messages
 
         public bool SecureCryptogramHasBeenAccepted() => Convert.ToBoolean(SecureBlockData.First());
         public bool MatchIssuingCommand(Command command) => command.Equals(_issuingCommand);
-        public bool IsValidMac(IEnumerable<byte> mac) => mac.Take(MacSize).SequenceEqual(Mac);
+        public bool IsValidMac(ReadOnlySpan<byte> mac) => mac.Slice(0, MacSize).SequenceEqual(Mac.ToArray());
 
         internal byte[] BuildReply(byte address, Control control)
         {

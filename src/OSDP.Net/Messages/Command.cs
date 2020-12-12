@@ -1,6 +1,5 @@
 using System;
 using System.Buffers;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("OSDP.Net.Tests")]
@@ -21,15 +20,33 @@ namespace OSDP.Net.Messages
             byte[] command;
             if (device.IsSecurityEstablished)
             {
-                var combined = header.Concat(EncryptedData(device).ToArray()).ToArray();
+                var combined = EncryptData(header, device);
 
                 // include mac and crc in length before generating mac
-                ushort totalLength = (ushort) (4 + (device.MessageControl.UseCrc ? 2 : 1));
-                AddPacketLength(combined, totalLength);
+                ushort macAndChecksumLength = (ushort) (4 + (device.MessageControl.UseCrc ? 2 : 1));
                 
-                command = new byte[combined.Length + totalLength];
-                var combinedWithMac = combined.Concat(device.GenerateMac(combined, true).Take(4)).ToArray();
-                Buffer.BlockCopy(combinedWithMac, 0, command, 0, combinedWithMac.Length);
+                AddPacketLength(combined, macAndChecksumLength);
+
+                var mac = device.GenerateMac(combined, true).Slice(0, 4);
+
+                int commandLength = combined.Length + macAndChecksumLength;
+                var pool = MemoryPool<byte>.Shared;
+                var buffer = pool.Rent(commandLength);
+                try
+                {
+                    var cursor = buffer.Memory.Span;
+
+                    combined.CopyTo(cursor);
+                    cursor = cursor.Slice(combined.Length);
+
+                    mac.CopyTo(cursor);
+
+                    command = buffer.Memory.Slice(0, commandLength).ToArray();
+                }
+                finally
+                {
+                    pool.Dispose();
+                }
             }
             else
             {
@@ -71,38 +88,62 @@ namespace OSDP.Net.Messages
             return command;
         }
 
-        private byte[] BuildHeader(Device device)
+        private Span<byte> BuildHeader(Device device)
         {
             const int startOfMessageLength = 5;
 
             var securityControlBlock = device.MessageControl.HasSecurityControlBlock
                 ? SecurityControlBlock()
                 : ReadOnlySpan<byte>.Empty;
-            
+
+            int totalLength = startOfMessageLength + securityControlBlock.Length + 1;
+            var pool = MemoryPool<byte>.Shared;
+            var buffer = pool.Rent(totalLength);
+
+            try
             {
-                int totalLength = startOfMessageLength + securityControlBlock.Length + 1;
-                var pool = MemoryPool<byte>.Shared;
-                var buffer = pool.Rent(totalLength);
+                var cursor = buffer.Memory.Span;
+                
+                cursor[0] = StartOfMessage;
+                cursor[1] = Address;
+                cursor[4] = device.MessageControl.ControlByte;
+                cursor = cursor.Slice(startOfMessageLength);
 
-                try
-                {
-                    var cursor = buffer.Memory.Span;
-                    cursor[0] = StartOfMessage;
-                    cursor[1] = Address;
-                    cursor[4] = device.MessageControl.ControlByte;
-                    cursor = cursor.Slice(startOfMessageLength);
+                securityControlBlock.CopyTo(cursor);
+                cursor = cursor.Slice(securityControlBlock.Length);
 
-                    securityControlBlock.CopyTo(cursor);
-                    cursor = cursor.Slice(securityControlBlock.Length);
+                cursor[0] = CommandCode;
 
-                    cursor[0] = CommandCode;
+                return buffer.Memory.Slice(0, totalLength).ToArray();
+            }
+            finally
+            {
+                pool.Dispose();
+            }
+        }
 
-                    return buffer.Memory.Slice(0, totalLength).ToArray();
-                }
-                finally
-                {
-                    pool.Dispose();
-                }
+        private Span<byte> EncryptData(ReadOnlySpan<byte> header, Device device)
+        {
+            var encryptedData = EncryptedData(device);
+            
+            int totalLength = header.Length + encryptedData.Length ;
+            var pool = MemoryPool<byte>.Shared;
+            var buffer = pool.Rent(totalLength);
+
+            try
+            {
+                var cursor = buffer.Memory.Span;
+                
+                header.CopyTo(cursor);
+                cursor = cursor.Slice(header.Length);
+
+                encryptedData.CopyTo(cursor);
+
+                return buffer.Memory.Slice(0, totalLength).ToArray();
+            }
+            finally
+            {
+                pool.Dispose();
             }
         }
     }
