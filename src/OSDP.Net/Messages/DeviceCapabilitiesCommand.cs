@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 
 namespace OSDP.Net.Messages
 {
@@ -11,7 +11,7 @@ namespace OSDP.Net.Messages
 
         protected override byte CommandCode => 0x62;
 
-        protected override IEnumerable<byte> SecurityControlBlock()
+        protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
             return new byte[]
             {
@@ -20,12 +20,12 @@ namespace OSDP.Net.Messages
             };
         }
 
-        protected override IEnumerable<byte> Data()
+        protected override ReadOnlySpan<byte> Data()
         {
             return new byte[] { 0x00 };
         }
 
-        protected override void CustomCommandUpdate(List<byte> commandBuffer)
+        protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
             
         }

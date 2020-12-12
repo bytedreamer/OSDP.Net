@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+using System;
+using System.Buffers;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -9,63 +10,100 @@ namespace OSDP.Net.Messages
     {
         protected abstract byte CommandCode { get; }
 
-        protected abstract IEnumerable<byte> SecurityControlBlock();
+        protected abstract ReadOnlySpan<byte> SecurityControlBlock();
 
-        protected abstract void CustomCommandUpdate(List<byte> commandBuffer);
+        protected abstract void CustomCommandUpdate(Span<byte> commandBuffer);
 
         internal byte[] BuildCommand(Device device)
         {
-            var commandBuffer = new List<byte>
-            {
-                StartOfMessage,
-                Address,
-                0x0,
-                0x0,
-                device.MessageControl.ControlByte
-            };
+            var header = BuildHeader(device);
 
-            if ( device.MessageControl.HasSecurityControlBlock)
-            {
-                commandBuffer.AddRange(SecurityControlBlock());
-            }
-
-            commandBuffer.Add(CommandCode);
-
+            byte[] command;
             if (device.IsSecurityEstablished)
             {
-                commandBuffer.AddRange(EncryptedData(device));
-                
+                var combined = header.Concat(EncryptedData(device).ToArray()).ToArray();
+
                 // include mac and crc in length before generating mac
-                AddPacketLength(commandBuffer, (ushort) (4 + (device.MessageControl.UseCrc ? 2 : 1)));
-
-                commandBuffer.AddRange(device.GenerateMac(commandBuffer.ToArray(), true).Take(4));
+                ushort totalLength = (ushort) (4 + (device.MessageControl.UseCrc ? 2 : 1));
+                AddPacketLength(combined, totalLength);
+                
+                command = new byte[combined.Length + totalLength];
+                var combinedWithMac = combined.Concat(device.GenerateMac(combined, true).Take(4)).ToArray();
+                Buffer.BlockCopy(combinedWithMac, 0, command, 0, combinedWithMac.Length);
             }
             else
             {
-                commandBuffer.AddRange(Data());
+                var data = Data();
+                int totalLength = header.Length + data.Length + (device.MessageControl.UseCrc ? 2 : 1);
+                var pool = MemoryPool<byte>.Shared;
+                var buffer = pool.Rent(totalLength);
+
+                try
+                {
+                    var cursor = buffer.Memory.Span;
+
+                    header.CopyTo(cursor);
+                    cursor = cursor.Slice(header.Length);
+
+                    data.CopyTo(cursor);
+
+                    command = buffer.Memory.Slice(0, totalLength).ToArray();
+                }
+                finally
+                {
+                    pool.Dispose();
+                }
             }
 
-            commandBuffer.Add(0x0);
+            AddPacketLength(command);
             
             if (device.MessageControl.UseCrc)
             {
-                commandBuffer.Add(0x0);
-            }
-
-            AddPacketLength(commandBuffer);
-
-            if (device.MessageControl.UseCrc)
-            {
-                AddCrc(commandBuffer);
+                AddCrc(command);
             }
             else
             {
-                AddChecksum(commandBuffer);
+                AddChecksum(command);
             }
 
-            CustomCommandUpdate(commandBuffer);
+            CustomCommandUpdate(command);
+
+            return command;
+        }
+
+        private byte[] BuildHeader(Device device)
+        {
+            const int startOfMessageLength = 5;
+
+            var securityControlBlock = device.MessageControl.HasSecurityControlBlock
+                ? SecurityControlBlock()
+                : ReadOnlySpan<byte>.Empty;
             
-            return commandBuffer.ToArray();
+            {
+                int totalLength = startOfMessageLength + securityControlBlock.Length + 1;
+                var pool = MemoryPool<byte>.Shared;
+                var buffer = pool.Rent(totalLength);
+
+                try
+                {
+                    var cursor = buffer.Memory.Span;
+                    cursor[0] = StartOfMessage;
+                    cursor[1] = Address;
+                    cursor[4] = device.MessageControl.ControlByte;
+                    cursor = cursor.Slice(startOfMessageLength);
+
+                    securityControlBlock.CopyTo(cursor);
+                    cursor = cursor.Slice(securityControlBlock.Length);
+
+                    cursor[0] = CommandCode;
+
+                    return buffer.Memory.Slice(0, totalLength).ToArray();
+                }
+                finally
+                {
+                    pool.Dispose();
+                }
+            }
         }
     }
 }

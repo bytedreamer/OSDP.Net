@@ -1,5 +1,6 @@
-﻿using OSDP.Net.Model.CommandData;
-using System.Collections.Generic;
+﻿using System;
+using OSDP.Net.Model.CommandData;
+using System.Linq;
 
 namespace OSDP.Net.Messages
 {
@@ -15,7 +16,7 @@ namespace OSDP.Net.Messages
 
         protected override byte CommandCode => 0x80;
 
-        protected override IEnumerable<byte> SecurityControlBlock()
+        protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
             return new byte[]
             {
@@ -24,12 +25,12 @@ namespace OSDP.Net.Messages
             };
         }
 
-        protected override IEnumerable<byte> Data()
+        protected override ReadOnlySpan<byte> Data()
         {
-            return _manufacturerData.BuildData();
+            return _manufacturerData.BuildData().ToArray();
         }
 
-        protected override void CustomCommandUpdate(List<byte> commandBuffer)
+        protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
 
         }

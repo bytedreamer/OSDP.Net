@@ -35,9 +35,9 @@ namespace OSDP.Net.Messages
 
         public byte Address { get; protected set; }
 
-        protected abstract IEnumerable<byte> Data();
+        protected abstract ReadOnlySpan<byte> Data();
 
-        internal static IEnumerable<byte> ConvertShortToBytes(ushort value)
+        internal static byte[] ConvertShortToBytes(ushort value)
         {
             var byteArray = BitConverter.GetBytes(value);
             if (!BitConverter.IsLittleEndian)
@@ -59,10 +59,10 @@ namespace OSDP.Net.Messages
             return BitConverter.ToUInt16(byteArray, 0);
         }
 
-        protected static ushort CalculateCrc(IEnumerable<byte> data)
+        protected static ushort CalculateCrc(ReadOnlySpan<byte> packet)
         {
             ushort crc = 0x1D0F;
-            foreach (var t in data)
+            foreach (var t in packet)
             {
                 crc = (ushort)((crc << 8) ^ CrcTable[((crc >> 8) ^ t) & 0xFF]);
             }
@@ -75,19 +75,19 @@ namespace OSDP.Net.Messages
             return (byte) (0x100 - packet.Aggregate(0, (source, element) => source + element) & 0xff);
         }
 
-        protected static void AddPacketLength(IList<byte> packet, ushort additionalLength = 0)
+        protected static void AddPacketLength(Span<byte> packet, ushort additionalLength = 0)
         {
-            var packetLength = ConvertShortToBytes((ushort)(packet.Count + additionalLength)).ToArray();
+            var packetLength = ConvertShortToBytes((ushort)(packet.Length + additionalLength)).ToArray();
             packet[2] = packetLength[0];
             packet[3] = packetLength[1];
         }
 
-        protected static void AddCrc(IList<byte> packet)
+        protected static void AddCrc(Span<byte> packet)
         {
-            ushort crc = CalculateCrc(packet.Take(packet.Count - 2).ToArray());
+            ushort crc = CalculateCrc(packet.Slice(0, packet.Length - 2));
             var crcBytes = ConvertShortToBytes(crc).ToArray();
-            packet[packet.Count - 2] = crcBytes[0];
-            packet[packet.Count - 1] = crcBytes[1];
+            packet[packet.Length - 2] = crcBytes[0];
+            packet[packet.Length - 1] = crcBytes[1];
         }
 
         protected static void AddChecksum(IList<byte> packet)
@@ -95,9 +95,9 @@ namespace OSDP.Net.Messages
             packet[packet.Count - 1] = CalculateChecksum(packet.Take(packet.Count - 1).ToArray());
         }
 
-        internal IEnumerable<byte> EncryptedData(Device device)
+        internal ReadOnlySpan<byte> EncryptedData(Device device)
         {
-            return Data().Any() ? device.EncryptData(Data()) : Data();
+            return !Data().IsEmpty ? device.EncryptData(Data()) : Data();
         }
 
         internal static int ConvertBytesToInt(byte[] bytes)

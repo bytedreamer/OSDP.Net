@@ -70,11 +70,11 @@ namespace OSDP.Net
             IsEstablished = true;
         }
 
-        public byte[] GenerateMac(byte[] message, bool isCommand)
+        public byte[] GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
         {
             const byte cryptoLength = 16;
             const byte paddingStart = 0x80;
-            
+
             var mac = new byte[cryptoLength];
             int currentLocation = 0;
 
@@ -92,25 +92,30 @@ namespace OSDP.Net
                 messageAuthenticationCodeAlgorithm.IV = isCommand ? _rmac : _cmac;
                 messageAuthenticationCodeAlgorithm.Key = _smac1;
 
-                while (currentLocation < message.Length)
+                int messageLength = message.Length;
+                while (currentLocation < messageLength)
                 {
                     // Get first 16
                     var inputBuffer = new byte[cryptoLength];
-                    message.Skip(currentLocation).Take(cryptoLength).ToArray().CopyTo(inputBuffer, 0);
+                    message.Slice(currentLocation,
+                            currentLocation + cryptoLength < messageLength
+                                ? cryptoLength
+                                : messageLength - currentLocation)
+                        .CopyTo(inputBuffer);
 
                     currentLocation += cryptoLength;
-                    if (currentLocation > message.Length)
+                    if (currentLocation > messageLength)
                     {
                         messageAuthenticationCodeAlgorithm.Key = _smac2;
-                        if (message.Length % cryptoLength != 0)
+                        if (messageLength % cryptoLength != 0)
                         {
-                            inputBuffer[message.Length % cryptoLength] = paddingStart;
+                            inputBuffer[messageLength % cryptoLength] = paddingStart;
                         }
                     }
 
                     using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
                     {
-                        mac = encryptor.TransformFinalBlock(inputBuffer, 0, inputBuffer.Length);
+                        mac = encryptor.TransformFinalBlock(inputBuffer.ToArray(), 0, inputBuffer.Length);
                     }
 
                     messageAuthenticationCodeAlgorithm.IV = mac;
@@ -129,7 +134,7 @@ namespace OSDP.Net
             }
         }
 
-        public IEnumerable<byte> DecryptData(IEnumerable<byte> data)
+        public IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)
         {
             const byte paddingStart = 0x80;
             
@@ -151,8 +156,7 @@ namespace OSDP.Net
                 
                 using (var encryptor = messageAuthenticationCodeAlgorithm.CreateDecryptor())
                 {
-                    var enumerable = data as byte[] ?? data.ToArray();
-                    decryptedData.AddRange(encryptor.TransformFinalBlock(enumerable, 0, enumerable.Length));
+                    decryptedData.AddRange(encryptor.TransformFinalBlock(data.ToArray(), 0, data.Length));
                 }
                 
                 while (decryptedData.Any() && decryptedData.Last() != paddingStart)
@@ -169,7 +173,7 @@ namespace OSDP.Net
             } 
         }
 
-        public IEnumerable<byte> EncryptData(IEnumerable<byte> data)
+        public ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> data)
         {
             const byte cryptoLength = 16;
             const byte paddingStart = 0x80;
@@ -188,17 +192,29 @@ namespace OSDP.Net
                 messageAuthenticationCodeAlgorithm.IV = _rmac.Select(b => (byte) ~b).ToArray();
                 messageAuthenticationCodeAlgorithm.Key = _enc;
 
-                var paddedData = new List<byte>(data) {paddingStart};
-                while (paddedData.Count % cryptoLength != 0)
-                {
-                    paddedData.Add(0x00);
-                }
-                
+                var paddedData = PadTheData(data, cryptoLength, paddingStart);
+
                 using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
                 {
-                    return encryptor.TransformFinalBlock(paddedData.ToArray(), 0, paddedData.Count);
+                    return encryptor.TransformFinalBlock(paddedData, 0, paddedData.Length);
                 }
             }
+        }
+
+        private static byte[] PadTheData(ReadOnlySpan<byte> data, byte cryptoLength, byte paddingStart)
+        {
+            int dataLength = data.Length + 1;
+            int paddingLength = dataLength + (cryptoLength - (dataLength % cryptoLength)) % cryptoLength;
+            
+            Span<byte> buffer = stackalloc byte[paddingLength];
+            var cursor = buffer.Slice(0);
+
+            data.CopyTo(cursor);
+            cursor = cursor.Slice(data.Length);
+            
+            cursor[data.Length] = paddingStart;
+            
+            return buffer.ToArray();
         }
 
         private static Aes CreateKeyAlgorithm()

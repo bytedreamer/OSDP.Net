@@ -73,7 +73,7 @@ namespace OSDP.Net.Model.CommandData
 
         public IEnumerable<byte> BuildData()
         {
-            var temporaryTimerBytes = Message.ConvertShortToBytes(TemporaryTimer).ToArray();
+            var temporaryTimerBytes = Message.ConvertShortToBytes(TemporaryTimer);
             
             return new[]
             {

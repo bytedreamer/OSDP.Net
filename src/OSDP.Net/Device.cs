@@ -113,17 +113,17 @@ namespace OSDP.Net
             return true;
         }
 
-        public IEnumerable<byte> GenerateMac(byte[] message, bool isCommand)
+        public IEnumerable<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
         {
             return _secureChannel.GenerateMac(message, isCommand);
         }
 
-        public IEnumerable<byte> EncryptData(IEnumerable<byte> data)
+        public ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> data)
         {
             return _secureChannel.EncryptData(data);
         }
 
-        public IEnumerable<byte> DecryptData(IEnumerable<byte> data)
+        public IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)
         {
             return _secureChannel.DecryptData(data);
         }
