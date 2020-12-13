@@ -17,6 +17,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{B304A16C-CA32-4692-9AED-D8886CC9184C}"
 ProjectSection(SolutionItems) = preProject
 	..\README.md = ..\README.md
+	..\docs\supported_commands.md = ..\docs\supported_commands.md
 EndProjectSection
 EndProject
 Global
