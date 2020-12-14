@@ -98,6 +98,8 @@ namespace OSDP.Net.Model.ReplyData
         LargestCombinedMessageSize = 11,
         SmartCardSupport = 12,
         Readers = 13,
-        Biometrics = 14
+        Biometrics = 14,
+        SecurePINEntry = 15,
+        OSDPVersion = 16
     }
 }
