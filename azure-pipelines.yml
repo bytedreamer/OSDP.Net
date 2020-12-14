@@ -16,7 +16,7 @@ variables:
   buildConfiguration: 'Release'
   major: 1
   minor: 0
-  patch: 5
+  patch: 6
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
