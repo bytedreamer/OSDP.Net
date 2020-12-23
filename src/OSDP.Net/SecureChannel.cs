@@ -203,7 +203,7 @@ namespace OSDP.Net
         private static byte[] PadTheData(ReadOnlySpan<byte> data, byte cryptoLength, byte paddingStart)
         {
             int dataLength = data.Length + 1;
-            int paddingLength = dataLength + (cryptoLength - (dataLength % cryptoLength)) % cryptoLength;
+            int paddingLength = dataLength + (cryptoLength - dataLength % cryptoLength) % cryptoLength;
             
             Span<byte> buffer = stackalloc byte[paddingLength];
             var cursor = buffer.Slice(0);
@@ -211,7 +211,7 @@ namespace OSDP.Net
             data.CopyTo(cursor);
             cursor = cursor.Slice(data.Length);
             
-            cursor[data.Length] = paddingStart;
+            cursor[0] = paddingStart;
             
             return buffer.ToArray();
         }
