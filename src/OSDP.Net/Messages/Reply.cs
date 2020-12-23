@@ -27,10 +27,12 @@ namespace OSDP.Net.Messages
             byte secureBlockSize = (byte) (isSecureControlBlockPresent ? data[5] : 0);
             SecurityBlockType = (byte) (isSecureControlBlockPresent ? data[6] : 0);
             int messageLength = data.Length - (isUsingCrc ? 6 : 5);
-            SecureBlockData = data.Slice(ReplyMessageHeaderSize + 2, secureBlockSize - 2).ToArray();
-            Mac = data.Slice(messageLength, MacSize).ToArray();
-            Type = (ReplyType) data[ReplyTypeIndex + secureBlockSize];
-
+            if (isSecureControlBlockPresent)
+            {
+                SecureBlockData = data.Slice(ReplyMessageHeaderSize + 2, secureBlockSize - 2).ToArray();
+                Mac = data.Slice(messageLength, MacSize).ToArray();
+                Type = (ReplyType) data[ReplyTypeIndex + secureBlockSize];
+            }
 
             ExtractReplyData = data.Slice(ReplyMessageHeaderSize + secureBlockSize, data.Length -
                 ReplyMessageHeaderSize - secureBlockSize - replyMessageFooterSize -
