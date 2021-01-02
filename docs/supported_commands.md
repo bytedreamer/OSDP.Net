@@ -31,6 +31,7 @@
 | osdp_ABORT    | 0x7A | NO |
 | osdp_MAXREPLY | 0x7B | NO |
 | osdp_MFG      | 0x80 | YES |
+| osdp_XWR      | 0XA1 | YES |
 
 ## Replies ##
 | Name | Value | Support |
@@ -56,4 +57,4 @@
 | osdp_RMAC_I   | 0x78 | YES |
 | osdp_BUSY     | 0x79 | NO  |
 | osdp_MFGREP   | 0x90 | YES  |
-| osdp_XRD      | 0xB1 | NO  |
+| osdp_XRD      | 0xB1 | YES  |

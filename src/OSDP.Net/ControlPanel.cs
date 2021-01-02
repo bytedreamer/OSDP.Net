@@ -8,6 +8,7 @@ using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
+using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
 namespace OSDP.Net
 {
@@ -87,6 +88,20 @@ namespace OSDP.Net
                 new DeviceCapabilitiesCommand(address)).ConfigureAwait(false));
         }
 
+        public async Task<ReturnReplyData<ExtendedRead>> ExtendedWriteData(Guid connectionId, byte address,
+            ExtendedWrite extendedWrite)
+        {
+            var reply = await SendCommand(connectionId,
+                new ExtendedWriteDataCommand(address, extendedWrite)).ConfigureAwait(false);
+
+            return new ReturnReplyData<ExtendedRead>
+            {
+                Ack = reply.Type == ReplyType.Ack,
+                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply) : null,
+                ReplyData = reply.Type == ReplyType.ExtendedRead ? ExtendedRead.ParseData(reply) : null
+            };
+        }
+
         public async Task<LocalStatus> LocalStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.LocalStatus.ParseData(await SendCommand(connectionId,
@@ -111,11 +126,12 @@ namespace OSDP.Net
                 new ReaderStatusReportCommand(address)).ConfigureAwait(false));
         }
 
-        public async Task<bool> ManufacturerSpecificCommand(Guid connectionId, byte address, ManufacturerSpecific manufacturerSpecificData)
+        public async Task<bool> ManufacturerSpecificCommand(Guid connectionId, byte address,
+            OSDP.Net.Model.CommandData.ManufacturerSpecific manufacturerSpecific)
         {
             var reply = await SendCommand(connectionId,
-                new ManufacturerSpecificCommand(address, manufacturerSpecificData)).ConfigureAwait(false);
-            
+                new ManufacturerSpecificCommand(address, manufacturerSpecific)).ConfigureAwait(false);
+
             return reply.Type == ReplyType.Ack || reply.Type == ReplyType.ManufactureSpecific;
         }
 
@@ -197,6 +213,11 @@ namespace OSDP.Net
                 
                 bus.Close();
             }
+        }
+
+        public void ResetDevice(Guid connectionId, int address)
+        {
+            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.ResetDevice(address);
         }
 
         /// <summary>
@@ -296,7 +317,16 @@ namespace OSDP.Net
                     var handler = ManufacturerSpecificReplyReceived;
                     handler?.Invoke(this,
                         new ManufacturerSpecificReplyEventArgs(reply.ConnectionId, reply.Address,
-                            ManufacturerSpecificData.ParseData(reply)));
+                            ManufacturerSpecific.ParseData(reply)));
+                    break;
+                }
+                
+                case ReplyType.ExtendedRead:
+                {
+                    var handler = ExtendedReadReplyReceived;
+                    handler?.Invoke(this,
+                        new ExtendedReadReplyEventArgs(reply.ConnectionId, reply.Address,
+                            ExtendedRead.ParseData(reply)));
                     break;
                 }
             }
@@ -319,6 +349,8 @@ namespace OSDP.Net
         public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
 
         public event EventHandler<ManufacturerSpecificReplyEventArgs> ManufacturerSpecificReplyReceived;
+
+        public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
 
         public class NakReplyEventArgs
         {
@@ -420,18 +452,34 @@ namespace OSDP.Net
 
         public class ManufacturerSpecificReplyEventArgs
         {
-            public ManufacturerSpecificReplyEventArgs(Guid connectionId, byte address, ManufacturerSpecificData manufacturerSpecificData)
+            public ManufacturerSpecificReplyEventArgs(Guid connectionId, byte address, ManufacturerSpecific manufacturerSpecific)
             {
                 ConnectionId = connectionId;
                 Address = address;
-                ManufacturerSpecificData = manufacturerSpecificData;
+                ManufacturerSpecific = manufacturerSpecific;
             }
 
             public Guid ConnectionId { get; }
 
             public byte Address { get; }
 
-            public ManufacturerSpecificData ManufacturerSpecificData { get; }
+            public ManufacturerSpecific ManufacturerSpecific { get; }
+        }
+
+        public class ExtendedReadReplyEventArgs
+        {
+            public ExtendedReadReplyEventArgs(Guid connectionId, byte address, ExtendedRead extendedRead)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                ExtendedRead = extendedRead;
+            }
+
+            public Guid ConnectionId { get; }
+
+            public byte Address { get; }
+
+            public ExtendedRead ExtendedRead { get; }
         }
 
         private class ReplyEventArgs : EventArgs

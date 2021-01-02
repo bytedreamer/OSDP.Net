@@ -10,13 +10,12 @@ namespace OSDP.Net
     {
         private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
         private readonly SecureChannel _secureChannel = new SecureChannel();
-        private readonly bool _useSecureChannel;
 
         private DateTime _lastValidReply = DateTime.MinValue;
 
         public Device(byte address, bool useCrc, bool useSecureChannel)
         {
-            _useSecureChannel = useSecureChannel;
+            UseSecureChannel = useSecureChannel;
             Address = address;
             MessageControl = new Control(0, useCrc, useSecureChannel);
         }
@@ -27,6 +26,8 @@ namespace OSDP.Net
         public byte Address { get; }
 
         public Control MessageControl { get; }
+
+        public bool UseSecureChannel { get; }
 
         public bool IsSecurityEstablished => MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
 
@@ -59,7 +60,7 @@ namespace OSDP.Net
 
         public Command GetNextCommandData()
         {
-            if (_useSecureChannel && !_secureChannel.IsInitialized)
+            if (UseSecureChannel && !_secureChannel.IsInitialized)
             {
                 return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray());
             }
@@ -69,7 +70,7 @@ namespace OSDP.Net
                 return new PollCommand(Address);
             }
 
-            if (_useSecureChannel && !_secureChannel.IsEstablished)
+            if (UseSecureChannel && !_secureChannel.IsEstablished)
             {
                 return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram);
             }

@@ -185,7 +185,7 @@ namespace OSDP.Net
                         // Make sure the security is reset properly if reader goes offline
                         if (device.IsSecurityEstablished && !IsOnline(command.Address))
                         {
-                            ResetSecurity(device);
+                            ResetDevice(device);
                         }
 
                         continue;
@@ -239,7 +239,7 @@ namespace OSDP.Net
                 var mac = device.GenerateMac(reply.MessageForMacGeneration.ToArray(), false);
                 if (!reply.IsValidMac(mac))
                 {
-                    ResetSecurity(device);
+                    ResetDevice(device);
                     return;
                 }
             }
@@ -257,7 +257,7 @@ namespace OSDP.Net
                 (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))
             {
-                if (reply.Sequence > 0) ResetSecurity(device);
+                if (reply.Sequence > 0) ResetDevice(device);
             }
 
             switch (reply.Type)
@@ -273,10 +273,17 @@ namespace OSDP.Net
             _replies.Add(reply);
         }
 
-        private void ResetSecurity(Device device)
+        public void ResetDevice(int address)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+            
+            ResetDevice(foundDevice);
+        }
+
+        private void ResetDevice(Device device)
         {
             RemoveDevice(device.Address);
-            AddDevice(device.Address, device.MessageControl.UseCrc, true, device.SecureChannelKey);
+            AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
         private async Task<Reply> SendCommandAndReceiveReply(Command command, Device device)

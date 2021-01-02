@@ -6,9 +6,9 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
-    public class ManufacturerSpecificData
+    public class ManufacturerSpecific
     {
-        private ManufacturerSpecificData()
+        private ManufacturerSpecific()
         {
         }
 
@@ -16,7 +16,7 @@ namespace OSDP.Net.Model.ReplyData
 
         public IEnumerable<byte> Data { get; private set; }
 
-        internal static ManufacturerSpecificData ParseData(Reply reply)
+        internal static ManufacturerSpecific ParseData(Reply reply)
         {
             var data = reply.ExtractReplyData.ToArray();
             if (data.Length < 3)
@@ -24,7 +24,7 @@ namespace OSDP.Net.Model.ReplyData
                 throw new Exception("Invalid size for the data");
             }
 
-            var manufacturerSpecificReply = new ManufacturerSpecificData
+            var manufacturerSpecificReply = new ManufacturerSpecific
             {
                 VendorCode = data.Take(3),
                 Data = data.Length > 3 ? data.Skip(3).ToArray() : null
