@@ -4,29 +4,38 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using Microsoft.Extensions.Configuration;
 using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Model.CommandData;
 
 namespace SmartCardSample
 {
-    class Program
+    internal class Program
     {
-        private const string PortName = "/dev/tty.usbserial-AB0JI236";
-        private const int BaudRate = 9600;
-        private const byte DeviceAddress = 0;
-        private const byte ReaderNumber = 0;
-
         private static bool _readyForSmartCardRead = true;
         private static Guid _connectionId;
 
-        static async Task Main()
+        private static async Task Main()
         {
+            var builder = new ConfigurationBuilder()
+                .AddJsonFile($"appsettings.json", true, true);
+            var config = builder.Build();
+            var osdpSection = config.GetSection("OSDP");
+            string portName = osdpSection["PortName"];
+            int baudRate = int.Parse(osdpSection["BaudRate"]);
+            byte deviceAddress = byte.Parse(osdpSection["DeviceAddress"]);
+            byte readerNumber = byte.Parse(osdpSection["ReaderNumber"]);
+            
             var panel = new ControlPanel();
             panel.ConnectionStatusChanged += (sender, eventArgs) =>
             {
                 Console.WriteLine($"Device is {(eventArgs.IsConnected ? "Online" : "Offline")}");
 
+            };
+            panel.NakReplyReceived += (sender, args) =>
+            {
+                Console.WriteLine($"Received NAK {args.Nak}");
             };
             panel.ExtendedReadReplyReceived += (sender, eventArgs) =>
             {
@@ -43,22 +52,22 @@ namespace SmartCardSample
                         {
                             _readyForSmartCardRead = false;
 
-                            var response = await panel.ExtendedWriteData(_connectionId, DeviceAddress,
-                                ExtendedWrite.ModeOneSmartCardScan(ReaderNumber));
+                            var response = await panel.ExtendedWriteData(_connectionId, deviceAddress,
+                                ExtendedWrite.ModeOneSmartCardScan(readerNumber));
                             if (eventArgs.ExtendedRead.Mode == 1 && response.ReplyData?.PReply == 1)
                             {
                                 Console.WriteLine("Card Present");
                                 while (true)
                                 {
-                                    Console.WriteLine("Enter APDU data:");
+                                    Console.WriteLine("Enter APDU data, leave blank to terminate:");
                                     var data = Console.ReadLine()?.Trim();
                                     if (string.IsNullOrWhiteSpace(data))
                                     {
                                         break;
                                     }
 
-                                    response = await panel.ExtendedWriteData(_connectionId, DeviceAddress,
-                                        ExtendedWrite.ModeOnePassAPDUCommand(ReaderNumber, StringToByteArray(data)));
+                                    response = await panel.ExtendedWriteData(_connectionId, deviceAddress,
+                                        ExtendedWrite.ModeOnePassAPDUCommand(readerNumber, StringToByteArray(data)));
                                     if (response.ReplyData == null)
                                     {
                                         break;
@@ -80,8 +89,8 @@ namespace SmartCardSample
                         try
                         {
                             Console.WriteLine("Disconnecting from SmartCard");
-                            await panel.ExtendedWriteData(_connectionId, DeviceAddress,
-                                ExtendedWrite.ModeOneTerminateSmartCardConnection(ReaderNumber));
+                            await panel.ExtendedWriteData(_connectionId, deviceAddress,
+                                ExtendedWrite.ModeOneTerminateSmartCardConnection(readerNumber));
                         }
                         catch (Exception e)
                         {
@@ -99,7 +108,7 @@ namespace SmartCardSample
                 Console.WriteLine($"Raw card read {FormatData(eventArgs.RawCardData.Data)}");
             }; 
             
-            _connectionId = panel.StartConnection(new SerialPortOsdpConnection(PortName, BaudRate));
+            _connectionId = panel.StartConnection(new SerialPortOsdpConnection(portName, baudRate));
             panel.AddDevice(_connectionId, 0, true, true);
 
             Timer timer = new Timer(5000);
@@ -110,10 +119,10 @@ namespace SmartCardSample
                     timer.Stop();
                     try
                     {
-                        if (_readyForSmartCardRead)
+                        if (_readyForSmartCardRead && panel.IsOnline(_connectionId, deviceAddress))
                         {
                             Console.WriteLine("Checking SmartCard settings");
-                            var response = await panel.ExtendedWriteData(_connectionId, DeviceAddress, ExtendedWrite.ReadModeSetting());
+                            var response = await panel.ExtendedWriteData(_connectionId, deviceAddress, ExtendedWrite.ReadModeSetting());
                             if (response.ReplyData == null)
                             {
                                 panel.ResetDevice(_connectionId, 0);
