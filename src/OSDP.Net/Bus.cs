@@ -239,6 +239,8 @@ namespace OSDP.Net
                 var mac = device.GenerateMac(reply.MessageForMacGeneration.ToArray(), false);
                 if (!reply.IsValidMac(mac))
                 {
+                    // Appears that some legacy readers need a few seconds before attempting to reset
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
                     ResetDevice(device);
                     return;
                 }
