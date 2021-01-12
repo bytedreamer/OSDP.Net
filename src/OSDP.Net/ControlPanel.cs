@@ -120,6 +120,12 @@ namespace OSDP.Net
                 new OutputStatusReportCommand(address)).ConfigureAwait(false));
         }
 
+        public async Task<PIVData> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData)
+        {
+            return PIVData.ParseData(await SendCommand(connectionId,
+                new GetPIVDataCommand(address, getPIVData)).ConfigureAwait(false));
+        }
+
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.ReaderStatus.ParseData(await SendCommand(connectionId,

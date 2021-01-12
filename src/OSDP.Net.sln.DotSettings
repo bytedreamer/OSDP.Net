@@ -2,5 +2,6 @@
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=LED/@EntryIndexedValue">LED</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=OSDP/@EntryIndexedValue">OSDP</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=PIN/@EntryIndexedValue">PIN</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=PIV/@EntryIndexedValue">PIV</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=OSDP/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Wiegand/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>

@@ -1,0 +1,43 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace OSDP.Net.Model.CommandData
+{
+    public class GetPIVData
+    {
+        public GetPIVData(ObjectId objectId, byte elementId, byte dataOffset)
+        {
+            ObjectId = objectId;
+            ElementId = elementId;
+            DataOffset = dataOffset;
+        }
+
+        public ObjectId ObjectId { get; }
+
+        public byte ElementId { get; }
+
+        public byte DataOffset { get; }
+
+        public IEnumerable<byte> BuildData()
+        {
+            switch (ObjectId)
+            {
+                case ObjectId.CardholderUniqueIdentifier:
+                    return new byte[] { 0x5F, 0xC1, 0x02, ElementId, DataOffset };
+                case ObjectId.CertificateForPIVAuthentication:
+                    return new byte[] { 0x5F, 0xC1, 0x05, ElementId, DataOffset };
+                case ObjectId.CertificateForCardAuthentication:
+                    return new byte[] { 0xDF, 0xC1, 0x01, ElementId, DataOffset };
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+    }
+
+    public enum ObjectId
+    {
+        CardholderUniqueIdentifier,
+        CertificateForPIVAuthentication,
+        CertificateForCardAuthentication
+    }
+}
