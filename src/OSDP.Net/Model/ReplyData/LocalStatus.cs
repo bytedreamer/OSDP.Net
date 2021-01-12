@@ -14,18 +14,18 @@ namespace OSDP.Net.Model.ReplyData
         public bool Tamper { get; private set;  }
         public bool PowerFailure { get; private set; }
 
-        internal static LocalStatus ParseData(Reply reply)
+        internal static LocalStatus ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length < 2)
+            var dataArray = data.ToArray();
+            if (dataArray.Length < 2)
             {
                 throw new Exception("Invalid size for the data");
             }
 
             var localStatus = new LocalStatus
             {
-                Tamper = Convert.ToBoolean(data[0]),
-                PowerFailure = Convert.ToBoolean(data[1])
+                Tamper = Convert.ToBoolean(dataArray[0]),
+                PowerFailure = Convert.ToBoolean(dataArray[1])
             };
 
             return localStatus;

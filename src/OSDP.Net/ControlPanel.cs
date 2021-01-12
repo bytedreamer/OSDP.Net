@@ -78,14 +78,14 @@ namespace OSDP.Net
 
         public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
         {
-            return DeviceIdentification.ParseData(await SendCommand(connectionId,
-                new IdReportCommand(address)).ConfigureAwait(false));
+            return DeviceIdentification.ParseData((await SendCommand(connectionId,
+                new IdReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
         public async Task<DeviceCapabilities> DeviceCapabilities(Guid connectionId, byte address)
         {
-            return Model.ReplyData.DeviceCapabilities.ParseData(await SendCommand(connectionId,
-                new DeviceCapabilitiesCommand(address)).ConfigureAwait(false));
+            return Model.ReplyData.DeviceCapabilities.ParseData((await SendCommand(connectionId,
+                new DeviceCapabilitiesCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
         public async Task<ReturnReplyData<ExtendedRead>> ExtendedWriteData(Guid connectionId, byte address,
@@ -97,39 +97,39 @@ namespace OSDP.Net
             return new ReturnReplyData<ExtendedRead>
             {
                 Ack = reply.Type == ReplyType.Ack,
-                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply) : null,
-                ReplyData = reply.Type == ReplyType.ExtendedRead ? ExtendedRead.ParseData(reply) : null
+                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null,
+                ReplyData = reply.Type == ReplyType.ExtendedRead ? ExtendedRead.ParseData(reply.ExtractReplyData) : null
             };
         }
 
         public async Task<LocalStatus> LocalStatus(Guid connectionId, byte address)
         {
-            return Model.ReplyData.LocalStatus.ParseData(await SendCommand(connectionId,
-                new LocalStatusReportCommand(address)).ConfigureAwait(false));
+            return Model.ReplyData.LocalStatus.ParseData((await SendCommand(connectionId,
+                new LocalStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
         public async Task<InputStatus> InputStatus(Guid connectionId, byte address)
         {
-            return Model.ReplyData.InputStatus.ParseData(await SendCommand(connectionId,
-                new InputStatusReportCommand(address)).ConfigureAwait(false));
+            return Model.ReplyData.InputStatus.ParseData((await SendCommand(connectionId,
+                new InputStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
         public async Task<OutputStatus> OutputStatus(Guid connectionId, byte address)
         {
-            return Model.ReplyData.OutputStatus.ParseData(await SendCommand(connectionId,
-                new OutputStatusReportCommand(address)).ConfigureAwait(false));
+            return Model.ReplyData.OutputStatus.ParseData((await SendCommand(connectionId,
+                new OutputStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
         public async Task<PIVData> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData)
         {
-            return PIVData.ParseData(await SendCommand(connectionId,
-                new GetPIVDataCommand(address, getPIVData)).ConfigureAwait(false));
+            return PIVData.ParseData((await SendCommand(connectionId,
+                new GetPIVDataCommand(address, getPIVData)).ConfigureAwait(false)).ExtractReplyData);
         }
 
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
         {
-            return Model.ReplyData.ReaderStatus.ParseData(await SendCommand(connectionId,
-                new ReaderStatusReportCommand(address)).ConfigureAwait(false));
+            return Model.ReplyData.ReaderStatus.ParseData((await SendCommand(connectionId,
+                new ReaderStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
         public async Task<bool> ManufacturerSpecificCommand(Guid connectionId, byte address,
@@ -176,8 +176,9 @@ namespace OSDP.Net
         public async Task<Model.ReplyData.CommunicationConfiguration> CommunicationConfiguration(Guid connectionId,
             byte address, CommunicationConfiguration communicationConfiguration)
         {
-            return Model.ReplyData.CommunicationConfiguration.ParseData(await SendCommand(connectionId,
-                new CommunicationSetCommand(address, communicationConfiguration)).ConfigureAwait(false));
+            return Model.ReplyData.CommunicationConfiguration.ParseData((await SendCommand(connectionId,
+                    new CommunicationSetCommand(address, communicationConfiguration)).ConfigureAwait(false))
+                .ExtractReplyData);
         }
 
         public bool IsOnline(Guid connectionId, byte address)
@@ -274,7 +275,8 @@ namespace OSDP.Net
                 {
                     var handler = NakReplyReceived;
                     handler?.Invoke(this,
-                        new NakReplyEventArgs(reply.ConnectionId, reply.Address, Nak.ParseData(reply)));
+                        new NakReplyEventArgs(reply.ConnectionId, reply.Address,
+                            Nak.ParseData(reply.ExtractReplyData)));
                     break;
                 }
                 case ReplyType.LocalStatusReport:
@@ -282,7 +284,7 @@ namespace OSDP.Net
                     var handler = LocalStatusReportReplyReceived;
                     handler?.Invoke(this,
                         new LocalStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Model.ReplyData.LocalStatus.ParseData(reply)));
+                            Model.ReplyData.LocalStatus.ParseData(reply.ExtractReplyData)));
                     break;
                 }
                 case ReplyType.InputStatusReport:
@@ -290,7 +292,7 @@ namespace OSDP.Net
                     var handler = InputStatusReportReplyReceived;
                     handler?.Invoke(this,
                         new InputStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Model.ReplyData.InputStatus.ParseData(reply)));
+                            Model.ReplyData.InputStatus.ParseData(reply.ExtractReplyData)));
                     break;
                 }
                 case ReplyType.OutputStatusReport:
@@ -298,7 +300,7 @@ namespace OSDP.Net
                     var handler = OutputStatusReportReplyReceived;
                     handler?.Invoke(this,
                         new OutputStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Model.ReplyData.OutputStatus.ParseData(reply)));
+                            Model.ReplyData.OutputStatus.ParseData(reply.ExtractReplyData)));
                     break;
                 }
                 case ReplyType.ReaderStatusReport:
@@ -306,7 +308,7 @@ namespace OSDP.Net
                     var handler = ReaderStatusReportReplyReceived;
                     handler?.Invoke(this,
                         new ReaderStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Model.ReplyData.ReaderStatus.ParseData(reply)));
+                            Model.ReplyData.ReaderStatus.ParseData(reply.ExtractReplyData)));
                     break;
                 }
 
@@ -314,7 +316,8 @@ namespace OSDP.Net
                 {
                     var handler = RawCardDataReplyReceived;
                     handler?.Invoke(this,
-                        new RawCardDataReplyEventArgs(reply.ConnectionId, reply.Address, RawCardData.ParseData(reply)));
+                        new RawCardDataReplyEventArgs(reply.ConnectionId, reply.Address,
+                            RawCardData.ParseData(reply.ExtractReplyData)));
                     break;
                 }
 
@@ -323,7 +326,7 @@ namespace OSDP.Net
                     var handler = ManufacturerSpecificReplyReceived;
                     handler?.Invoke(this,
                         new ManufacturerSpecificReplyEventArgs(reply.ConnectionId, reply.Address,
-                            ManufacturerSpecific.ParseData(reply)));
+                            ManufacturerSpecific.ParseData(reply.ExtractReplyData)));
                     break;
                 }
                 
@@ -332,7 +335,7 @@ namespace OSDP.Net
                     var handler = ExtendedReadReplyReceived;
                     handler?.Invoke(this,
                         new ExtendedReadReplyEventArgs(reply.ConnectionId, reply.Address,
-                            ExtendedRead.ParseData(reply)));
+                            ExtendedRead.ParseData(reply.ExtractReplyData)));
                     break;
                 }
             }

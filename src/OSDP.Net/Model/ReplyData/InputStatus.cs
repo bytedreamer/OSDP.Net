@@ -14,9 +14,9 @@ namespace OSDP.Net.Model.ReplyData
 
         public IEnumerable<bool> InputStatuses { get; private set; }
 
-        internal static InputStatus ParseData(Reply reply)
+        internal static InputStatus ParseData(ReadOnlySpan<byte> data)
         {
-            return new InputStatus {InputStatuses = reply.ExtractReplyData.Select(Convert.ToBoolean)};
+            return new InputStatus {InputStatuses = data.ToArray().Select(Convert.ToBoolean)};
         }
 
         public override string ToString()

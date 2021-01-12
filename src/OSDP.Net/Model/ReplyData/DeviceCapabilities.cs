@@ -14,18 +14,18 @@ namespace OSDP.Net.Model.ReplyData
 
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
 
-        internal static DeviceCapabilities ParseData(Reply reply)
+        internal static DeviceCapabilities ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length % 3 != 0)
+            var dataArray = data.ToArray();
+            if (dataArray.Length % 3 != 0)
             {
                 throw new Exception("Invalid size for the data");
             }
 
             var capabilities = new List<DeviceCapability>();
-            for (int index = 0; index < data.Length; index += 3)
+            for (int index = 0; index < dataArray.Length; index += 3)
             {
-                capabilities.Add(DeviceCapability.ParseData(data.Skip(index).Take(3).ToArray()));
+                capabilities.Add(DeviceCapability.ParseData(dataArray.Skip(index).Take(3).ToArray()));
             }
 
             var deviceCapabilities = new DeviceCapabilities

@@ -20,9 +20,8 @@ namespace OSDP.Net.Model.ReplyData
 
         public IEnumerable<byte> Data { get; private set; }
 
-        internal static PIVData ParseData(Reply reply)
+        internal static PIVData ParseData(ReadOnlySpan<byte> data)
         {
-            ReadOnlySpan<byte> data = reply.ExtractReplyData.ToArray();
             if (data.Length < 6)
             {
                 throw new Exception("Invalid size for the data");

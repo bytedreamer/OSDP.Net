@@ -16,18 +16,18 @@ namespace OSDP.Net.Model.ReplyData
 
         public IEnumerable<byte> Data { get; private set; }
 
-        internal static ManufacturerSpecific ParseData(Reply reply)
+        internal static ManufacturerSpecific ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length < 3)
+            var dataArray = data.ToArray();
+            if (dataArray.Length < 3)
             {
                 throw new Exception("Invalid size for the data");
             }
 
             var manufacturerSpecificReply = new ManufacturerSpecific
             {
-                VendorCode = data.Take(3),
-                Data = data.Length > 3 ? data.Skip(3).ToArray() : null
+                VendorCode = dataArray.Take(3),
+                Data = dataArray.Length > 3 ? dataArray.Skip(3).ToArray() : null
             };
 
             return manufacturerSpecificReply;

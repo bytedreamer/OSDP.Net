@@ -17,23 +17,23 @@ namespace OSDP.Net.Model.ReplyData
         public ushort BitCount { get; private set; }
         public BitArray Data { get; private set; }
 
-        internal static RawCardData ParseData(Reply reply)
+        internal static RawCardData ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length < 4)
+            var dataArray = data.ToArray();
+            if (dataArray.Length < 4)
             {
                 throw new Exception("Invalid size for the data");
             }
 
-            ushort bitCount = Message.ConvertBytesToShort(new[] {data[2], data[3]});
-            var cardData = new BitArray(data.Skip(4).Take(data.Length - 4).Reverse().ToArray());
+            ushort bitCount = Message.ConvertBytesToShort(new[] {dataArray[2], dataArray[3]});
+            var cardData = new BitArray(dataArray.Skip(4).Take(dataArray.Length - 4).Reverse().ToArray());
             Reverse(cardData);
             cardData.Length = bitCount;
 
             var rawCardData = new RawCardData
             {
-                ReaderNumber = data[0],
-                FormatCode = (FormatCode)data[1],
+                ReaderNumber = dataArray[0],
+                FormatCode = (FormatCode)dataArray[1],
                 BitCount = bitCount,
                 Data = cardData
             };

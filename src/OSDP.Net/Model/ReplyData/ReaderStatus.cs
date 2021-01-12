@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,10 +21,10 @@ namespace OSDP.Net.Model.ReplyData
 
         public IEnumerable<ReaderTamperStatus> ReaderStatuses { get; private set; }
 
-        internal static ReaderStatus ParseData(Reply reply)
+        internal static ReaderStatus ParseData(ReadOnlySpan<byte> data)
         {
             return new ReaderStatus
-                {ReaderStatuses = reply.ExtractReplyData.Select(status => (ReaderTamperStatus) status)};
+                {ReaderStatuses = data.ToArray().Select(status => (ReaderTamperStatus) status)};
         }
 
         public override string ToString()

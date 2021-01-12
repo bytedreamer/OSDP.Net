@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using OSDP.Net.Messages;
 
@@ -13,10 +14,10 @@ namespace OSDP.Net.Model.ReplyData
         public byte PReply { get; private set; }
         public byte[] PData { get; private set; }
 
-        internal static ExtendedRead ParseData(Reply reply)
+        internal static ExtendedRead ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length < 2)
+            var dataArray = data.ToArray();
+            if (dataArray.Length < 2)
             {
                 // return;
                 // throw new Exception("Invalid size for the data");
@@ -24,9 +25,9 @@ namespace OSDP.Net.Model.ReplyData
 
             var extendedRead = new ExtendedRead
             {
-                Mode = data[0],
-                PReply = data.Length > 1 ? data[1] : (byte)0,
-                PData = data.Length > 2 ? data.Skip(2).ToArray() : new byte[]{}
+                Mode = dataArray[0],
+                PReply = dataArray.Length > 1 ? dataArray[1] : (byte)0,
+                PData = dataArray.Length > 2 ? dataArray.Skip(2).ToArray() : new byte[]{}
             };
 
             return extendedRead;

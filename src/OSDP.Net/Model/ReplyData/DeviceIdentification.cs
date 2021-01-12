@@ -20,23 +20,23 @@ namespace OSDP.Net.Model.ReplyData
         public byte FirmwareMinor { get; private set; }
         public byte FirmwareBuild { get; private set; }
 
-        internal static DeviceIdentification ParseData(Reply reply)
+        internal static DeviceIdentification ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length != 12)
+            var dataArray = data.ToArray();
+            if (dataArray.Length != 12)
             {
                 throw new Exception("Invalid size for the data");
             }
 
             var deviceIdentification = new DeviceIdentification
             {
-                VendorCode = data.Take(3),
-                ModelNumber = data[3],
-                Version = data[4],
-                SerialNumber = Message.ConvertBytesToInt(data.Skip(5).Take(4).ToArray()),
-                FirmwareMajor = data[9],
-                FirmwareMinor = data[10],
-                FirmwareBuild = data[11]
+                VendorCode = dataArray.Take(3),
+                ModelNumber = dataArray[3],
+                Version = dataArray[4],
+                SerialNumber = Message.ConvertBytesToInt(dataArray.Skip(5).Take(4).ToArray()),
+                FirmwareMajor = dataArray[9],
+                FirmwareMinor = dataArray[10],
+                FirmwareBuild = dataArray[11]
             };
 
             return deviceIdentification;

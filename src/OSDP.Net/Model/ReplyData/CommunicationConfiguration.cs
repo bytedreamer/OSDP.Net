@@ -14,18 +14,18 @@ namespace OSDP.Net.Model.ReplyData
         public byte Address { get; private set; }
         public int BaudRate { get; private set; }
 
-        internal static CommunicationConfiguration ParseData(Reply reply)
+        internal static CommunicationConfiguration ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length != 5)
+            var dataArray = data.ToArray();
+            if (dataArray.Length != 5)
             {
                 throw new Exception("Invalid size for the data");
             }
 
             return new CommunicationConfiguration
             {
-                Address = data[0],
-                BaudRate = Message.ConvertBytesToInt(data.Skip(1).ToArray())
+                Address = dataArray[0],
+                BaudRate = Message.ConvertBytesToInt(dataArray.Skip(1).ToArray())
             };
         }
 
