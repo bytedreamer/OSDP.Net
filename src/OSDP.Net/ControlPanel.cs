@@ -67,7 +67,7 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// 
+        /// Send a custom command for testing
         /// </summary>
         /// <param name="connectionId"></param>
         /// <param name="command"></param>

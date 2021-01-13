@@ -1,7 +1,5 @@
 using System;
-using System.Linq;
 using System.Text;
-using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
