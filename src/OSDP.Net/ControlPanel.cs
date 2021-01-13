@@ -338,6 +338,15 @@ namespace OSDP.Net
                             ExtendedRead.ParseData(reply.ExtractReplyData)));
                     break;
                 }
+                
+                case ReplyType.PIVData:
+                {
+                    var handler = PIVDataReplyReceived;
+                    handler?.Invoke(this,
+                        new PIVDataReplyEventArgs(reply.ConnectionId, reply.Address,
+                            PIVData.ParseData(reply.ExtractReplyData)));   
+                    break;
+                }
             }
         }
 
@@ -361,7 +370,9 @@ namespace OSDP.Net
 
         public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
 
-        public class NakReplyEventArgs
+        public event EventHandler<PIVDataReplyEventArgs> PIVDataReplyReceived;
+
+        public class NakReplyEventArgs : EventArgs
         {
             public NakReplyEventArgs(Guid connectionId, byte address, Nak nak)
             {
@@ -375,7 +386,7 @@ namespace OSDP.Net
             public Nak Nak { get; }
         }
 
-        public class ConnectionStatusEventArgs
+        public class ConnectionStatusEventArgs : EventArgs
         {
             public ConnectionStatusEventArgs(Guid connectionId, byte address, bool isConnected)
             {
@@ -389,7 +400,7 @@ namespace OSDP.Net
             public bool IsConnected { get; }
         }
 
-        public class LocalStatusReportReplyEventArgs
+        public class LocalStatusReportReplyEventArgs : EventArgs
         {
             public LocalStatusReportReplyEventArgs(Guid connectionId, byte address, LocalStatus localStatus)
             {
@@ -403,7 +414,7 @@ namespace OSDP.Net
             public LocalStatus LocalStatus { get; }
         }
 
-        public class InputStatusReportReplyEventArgs
+        public class InputStatusReportReplyEventArgs : EventArgs
         {
             public InputStatusReportReplyEventArgs(Guid connectionId, byte address, InputStatus inputStatus)
             {
@@ -417,7 +428,7 @@ namespace OSDP.Net
             public InputStatus InputStatus { get; }
         }
 
-        public class OutputStatusReportReplyEventArgs
+        public class OutputStatusReportReplyEventArgs : EventArgs
         {
             public OutputStatusReportReplyEventArgs(Guid connectionId, byte address, OutputStatus outputStatus)
             {
@@ -431,7 +442,7 @@ namespace OSDP.Net
             public OutputStatus OutputStatus { get; }
         }
 
-        public class ReaderStatusReportReplyEventArgs
+        public class ReaderStatusReportReplyEventArgs : EventArgs
         {
             public ReaderStatusReportReplyEventArgs(Guid connectionId, byte address, ReaderStatus readerStatus)
             {
@@ -445,7 +456,7 @@ namespace OSDP.Net
             public ReaderStatus ReaderStatus { get; }
         }
 
-        public class RawCardDataReplyEventArgs
+        public class RawCardDataReplyEventArgs : EventArgs
         {
             public RawCardDataReplyEventArgs(Guid connectionId, byte address, RawCardData rawCardData)
             {
@@ -459,7 +470,7 @@ namespace OSDP.Net
             public RawCardData RawCardData { get; }
         }
 
-        public class ManufacturerSpecificReplyEventArgs
+        public class ManufacturerSpecificReplyEventArgs : EventArgs
         {
             public ManufacturerSpecificReplyEventArgs(Guid connectionId, byte address, ManufacturerSpecific manufacturerSpecific)
             {
@@ -475,7 +486,7 @@ namespace OSDP.Net
             public ManufacturerSpecific ManufacturerSpecific { get; }
         }
 
-        public class ExtendedReadReplyEventArgs
+        public class ExtendedReadReplyEventArgs : EventArgs
         {
             public ExtendedReadReplyEventArgs(Guid connectionId, byte address, ExtendedRead extendedRead)
             {
@@ -489,6 +500,22 @@ namespace OSDP.Net
             public byte Address { get; }
 
             public ExtendedRead ExtendedRead { get; }
+        }
+
+        public class PIVDataReplyEventArgs : EventArgs
+        {
+            public PIVDataReplyEventArgs(Guid connectionId, byte address, PIVData pivData)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                PIVData = pivData;
+            }
+
+            public Guid ConnectionId { get; }
+
+            public byte Address { get; }
+
+            public PIVData PIVData { get; }
         }
 
         private class ReplyEventArgs : EventArgs
