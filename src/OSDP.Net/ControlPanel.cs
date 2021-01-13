@@ -120,10 +120,10 @@ namespace OSDP.Net
                 new OutputStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
-        public async Task<PIVData> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData)
+        public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData)
         {
             return PIVData.ParseData((await SendCommand(connectionId,
-                new GetPIVDataCommand(address, getPIVData)).ConfigureAwait(false)).ExtractReplyData);
+                new GetPIVDataCommand(address, getPIVData)).ConfigureAwait(false)).ExtractReplyData).Data.ToArray();
         }
 
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
@@ -344,7 +344,7 @@ namespace OSDP.Net
                     var handler = PIVDataReplyReceived;
                     handler?.Invoke(this,
                         new PIVDataReplyEventArgs(reply.ConnectionId, reply.Address,
-                            PIVData.ParseData(reply.ExtractReplyData)));   
+                            PIVData.ParseData(reply.ExtractReplyData).Data.ToArray()));   
                     break;
                 }
             }
@@ -504,7 +504,7 @@ namespace OSDP.Net
 
         public class PIVDataReplyEventArgs : EventArgs
         {
-            public PIVDataReplyEventArgs(Guid connectionId, byte address, PIVData pivData)
+            public PIVDataReplyEventArgs(Guid connectionId, byte address, byte[] pivData)
             {
                 ConnectionId = connectionId;
                 Address = address;
@@ -515,7 +515,7 @@ namespace OSDP.Net
 
             public byte Address { get; }
 
-            public PIVData PIVData { get; }
+            public byte[] PIVData { get; }
         }
 
         private class ReplyEventArgs : EventArgs
