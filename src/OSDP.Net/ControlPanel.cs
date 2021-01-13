@@ -132,21 +132,31 @@ namespace OSDP.Net
                 new ReaderStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
-        public async Task<bool> ManufacturerSpecificCommand(Guid connectionId, byte address,
+        public async Task<ReturnReplyData<ManufacturerSpecific>> ManufacturerSpecificCommand(Guid connectionId, byte address,
             OSDP.Net.Model.CommandData.ManufacturerSpecific manufacturerSpecific)
         {
             var reply = await SendCommand(connectionId,
                 new ManufacturerSpecificCommand(address, manufacturerSpecific)).ConfigureAwait(false);
 
-            return reply.Type == ReplyType.Ack || reply.Type == ReplyType.ManufactureSpecific;
+            return new ReturnReplyData<ManufacturerSpecific>
+            {
+                Ack = reply.Type == ReplyType.Ack,
+                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null,
+                ReplyData = reply.Type == ReplyType.ManufactureSpecific ? ManufacturerSpecific.ParseData(reply.ExtractReplyData) : null
+            };
         }
 
-        public async Task<bool> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
+        public async Task<ReturnReplyData<OutputStatus>> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
         {
             var reply = await SendCommand(connectionId,
                 new OutputControlCommand(address, outputControls)).ConfigureAwait(false);
             
-            return reply.Type == ReplyType.Ack || reply.Type == ReplyType.OutputStatusReport;
+            return new ReturnReplyData<OutputStatus>
+            {
+                Ack = reply.Type == ReplyType.Ack,
+                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null,
+                ReplyData = reply.Type == ReplyType.OutputStatusReport ? Model.ReplyData.OutputStatus.ParseData(reply.ExtractReplyData) : null
+            };
         }
 
         public async Task<bool> ReaderLedControl(Guid connectionId, byte address, ReaderLedControls readerLedControls)

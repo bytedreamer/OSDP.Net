@@ -14,5 +14,19 @@ namespace OSDP.Net.Model.ReplyData
 
         // Contains expected reply data type if returned
         public T ReplyData { get; internal set; }
+
+        public override string ToString()
+        {
+            if (Ack)
+            {
+                return "Ack";
+            }
+            else if (Nak != null)
+            {
+                return Nak.ToString();
+            }
+            
+            return ReplyData?.ToString();
+        }
     }
 }
