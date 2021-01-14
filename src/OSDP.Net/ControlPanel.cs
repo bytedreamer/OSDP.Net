@@ -132,41 +132,50 @@ namespace OSDP.Net
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns>PIV data response</returns>
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
-            DateTime endTime = DateTime.UtcNow + timeout;
             if (!await _pivDataLock.WaitAsync(timeout, cancellationToken))
             {
                 throw new TimeoutException("Timeout waiting for another PIV data request to complete.");
             }
-
-            bool complete = false;
+            
             try
             {
-                byte[] data = { };
-                PIVDataReplyReceived += (sender, args) =>
-                {
-                    // TODO Need to add multipart message processing
-                    data = args.PIVData;
-                    complete = true;
-                };
-                await SendCommand(connectionId,
-                    new GetPIVDataCommand(address, getPIVData)).ConfigureAwait(false);
-
-                while (DateTime.UtcNow <= endTime)
-                {
-                    if (complete)
-                    {
-                        return data;
-                    }
-                }
-
-                throw new TimeoutException("Timeout waiting to receive PIV data.");
+                return await WaitForPIVData(connectionId, address, getPIVData, timeout, cancellationToken);
             }
             finally
             {
                 _pivDataLock.Release();
             }
+        }
+
+        private async Task<byte[]> WaitForPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            bool complete = false;
+            DateTime endTime = DateTime.UtcNow + timeout;
+            byte[] data = { };
+            PIVDataReplyReceived += (sender, args) =>
+            {
+                // TODO Need to add multipart message processing
+                data = args.PIVData;
+                complete = true;
+            };
+            await SendCommand(connectionId,
+                new GetPIVDataCommand(address, getPIVData), cancellationToken).ConfigureAwait(false);
+
+            while (DateTime.UtcNow <= endTime)
+            {
+                if (complete)
+                {
+                    return data;
+                }
+
+                // Delay for default poll interval
+                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+            }
+
+            throw new TimeoutException("Timeout waiting to receive PIV data.");
         }
 
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
@@ -245,7 +254,8 @@ namespace OSDP.Net
             return _buses.First(bus => bus.Id == connectionId).IsOnline(address);
         }
 
-        internal async Task<Reply> SendCommand(Guid connectionId, Command command)
+        internal async Task<Reply> SendCommand(Guid connectionId, Command command,
+            CancellationToken cancellationToken = default)
         {
             var source = new TaskCompletionSource<Reply>();
 
@@ -257,10 +267,11 @@ namespace OSDP.Net
             }
 
             ReplyReceived += EventHandler;
-            
+
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.SendCommand(command);
 
-            if (source.Task == await Task.WhenAny(source.Task, Task.Delay(_replyResponseTimeout)).ConfigureAwait(false))
+            if (source.Task == await Task.WhenAny(source.Task, Task.Delay(_replyResponseTimeout, cancellationToken))
+                .ConfigureAwait(false))
             {
                 return await source.Task;
             }
