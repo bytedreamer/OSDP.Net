@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
@@ -19,6 +20,7 @@ namespace OSDP.Net
     {
         private readonly ConcurrentBag<Bus> _buses = new ConcurrentBag<Bus>();
         private readonly ILogger<ControlPanel> _logger;
+        private readonly SemaphoreSlim _pivDataLock = new SemaphoreSlim(1, 1);
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(5);
 
@@ -120,10 +122,51 @@ namespace OSDP.Net
                 new OutputStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
-        public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData)
+        /// <summary>
+        /// Request to get PIV data from device
+        /// </summary>
+        /// <param name="connectionId">The connection identifier</param>
+        /// <param name="address">The device address</param>
+        /// <param name="getPIVData">Describe the PIV data to retrieve</param>
+        /// <param name="timeout">A TimeSpan that represents the number of milliseconds to wait, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
+        /// <returns>PIV data response</returns>
+        public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
+            CancellationToken cancellationToken)
         {
-            return PIVData.ParseData((await SendCommand(connectionId,
-                new GetPIVDataCommand(address, getPIVData)).ConfigureAwait(false)).ExtractReplyData).Data.ToArray();
+            DateTime endTime = DateTime.UtcNow + timeout;
+            if (!await _pivDataLock.WaitAsync(timeout, cancellationToken))
+            {
+                throw new TimeoutException("Timeout waiting for another PIV data request to complete.");
+            }
+
+            bool complete = false;
+            try
+            {
+                byte[] data = { };
+                PIVDataReplyReceived += (sender, args) =>
+                {
+                    // TODO Need to add multipart message processing
+                    data = args.PIVData;
+                    complete = true;
+                };
+                await SendCommand(connectionId,
+                    new GetPIVDataCommand(address, getPIVData)).ConfigureAwait(false);
+
+                while (DateTime.UtcNow <= endTime)
+                {
+                    if (complete)
+                    {
+                        return data;
+                    }
+                }
+
+                throw new TimeoutException("Timeout waiting to receive PIV data.");
+            }
+            finally
+            {
+                _pivDataLock.Release();
+            }
         }
 
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)

@@ -25,7 +25,7 @@ namespace OSDP.Net.Model.ReplyData
             if (data.Length < 6)
             {
                 // throw new Exception("Invalid size for the data");
-                return new PIVData();
+                return new PIVData {Data = new byte[] { }};
             }
 
             var pivData = new PIVData
