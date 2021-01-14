@@ -123,10 +123,10 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Request to get PIV data from device
+        /// Request to get PIV data from PD
         /// </summary>
-        /// <param name="connectionId">The connection identifier</param>
-        /// <param name="address">The device address</param>
+        /// <param name="connectionId">Identify the connection for communicating to the device</param>
+        /// <param name="address">Address assigned to the device</param>
         /// <param name="getPIVData">Describe the PIV data to retrieve</param>
         /// <param name="timeout">A TimeSpan that represents the number of milliseconds to wait, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
@@ -234,6 +234,12 @@ namespace OSDP.Net
                 .ExtractReplyData);
         }
 
+        /// <summary>
+        /// Is the PD online
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device</param>
+        /// <param name="address">Address assigned to the device</param>
+        /// <returns>Returns true if the PD is online</returns>
         public bool IsOnline(Guid connectionId, byte address)
         {
             return _buses.First(bus => bus.Id == connectionId).IsOnline(address);
@@ -265,6 +271,9 @@ namespace OSDP.Net
             }
         }
 
+        /// <summary>
+        /// Shutdown the control panel and stop all communication to PDs
+        /// </summary>
         public void Shutdown()
         {
             foreach (var bus in _buses)
@@ -275,19 +284,24 @@ namespace OSDP.Net
             }
         }
 
+        /// <summary>
+        /// Reset communication sequence with the PD specified
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device</param>
+        /// <param name="address">Address assigned to the device</param>
         public void ResetDevice(Guid connectionId, int address)
         {
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.ResetDevice(address);
         }
 
         /// <summary>
-        /// Add a PD to the control panel. It will replace existing PD that is configured at the same address.
+        /// Add a PD to the control panel. It will replace an existing PD that is configured at the same address.
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device</param>
         /// <param name="address">Address assigned to the device</param>
         /// <param name="useCrc">Use CRC for error checking</param>
         /// <param name="useSecureChannel">Require the device to communicate with a secure channel</param>
-        /// <param name="secureChannelKey">Set the secure channel key, default is used if not specified</param>
+        /// <param name="secureChannelKey">Set the secure channel key, default installation key is used if not specified</param>
         public void AddDevice(Guid connectionId, byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
         {
             var foundBus = _buses.FirstOrDefault(bus => bus.Id == connectionId);
@@ -302,8 +316,8 @@ namespace OSDP.Net
         /// <summary>
         /// Remove a PD from the control panel.
         /// </summary>
-        /// <param name="connectionId"></param>
-        /// <param name="address"></param>
+        /// <param name="connectionId">Identify the connection for communicating to the device</param>
+        /// <param name="address">Address assigned to the device</param>
         public void RemoveDevice(Guid connectionId, byte address)
         {
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.RemoveDevice(address);
