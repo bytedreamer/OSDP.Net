@@ -27,7 +27,7 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _getPivData.BuildData().ToArray();
+            return _getPivData.BuildData();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)

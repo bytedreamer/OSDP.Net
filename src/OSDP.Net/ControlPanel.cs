@@ -20,7 +20,7 @@ namespace OSDP.Net
     {
         private readonly ConcurrentBag<Bus> _buses = new ConcurrentBag<Bus>();
         private readonly ILogger<ControlPanel> _logger;
-        private readonly SemaphoreSlim _pivDataLock = new SemaphoreSlim(1, 1);
+        private readonly ConcurrentDictionary<int, SemaphoreSlim> _pivDataLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(5);
 
@@ -134,7 +134,9 @@ namespace OSDP.Net
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            if (!await _pivDataLock.WaitAsync(timeout, cancellationToken))
+            var pivDataLock = GetPIVDataLock(connectionId, address);
+            
+            if (!await pivDataLock.WaitAsync(timeout, cancellationToken))
             {
                 throw new TimeoutException("Timeout waiting for another PIV data request to complete.");
             }
@@ -145,8 +147,22 @@ namespace OSDP.Net
             }
             finally
             {
-                _pivDataLock.Release();
+                pivDataLock.Release();
             }
+        }
+
+        private SemaphoreSlim GetPIVDataLock(Guid connectionId, byte address)
+        {
+            int hash = new { connectionId, address }.GetHashCode();
+            
+            if (_pivDataLocks.TryGetValue(hash, out var pivDataLock))
+            {
+                return pivDataLock;
+            }
+
+            var newPIVDataLock = new SemaphoreSlim(1, 1);
+            _pivDataLocks[hash] = newPIVDataLock;
+            return newPIVDataLock;
         }
 
         private async Task<byte[]> WaitForPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
@@ -154,12 +170,17 @@ namespace OSDP.Net
         {
             bool complete = false;
             DateTime endTime = DateTime.UtcNow + timeout;
-            byte[] data = { };
+            byte[] data = null;
             PIVDataReplyReceived += (sender, args) =>
             {
-                // TODO Need to add multipart message processing
-                data = args.PIVData;
-                complete = true;
+                // Only process matching replies
+                if (args.ConnectionId != connectionId || args.Address != address) return;
+
+                var pivData = args.PIVData;
+                data ??= new byte[pivData.WholeMessageLength];
+
+                complete = Message.BuildMultiPartMessageData(pivData.WholeMessageLength, pivData.Offset,
+                    pivData.LengthOfFragment, pivData.Data, data);
             };
             await SendCommand(connectionId,
                 new GetPIVDataCommand(address, getPIVData), cancellationToken).ConfigureAwait(false);
@@ -293,6 +314,12 @@ namespace OSDP.Net
                 
                 bus.Close();
             }
+
+            foreach (var pivDataLock in _pivDataLocks.Values)
+            {
+                pivDataLock.Dispose();
+            }
+            _pivDataLocks.Clear();
         }
 
         /// <summary>
@@ -422,7 +449,7 @@ namespace OSDP.Net
                     var handler = PIVDataReplyReceived;
                     handler?.Invoke(this,
                         new PIVDataReplyEventArgs(reply.ConnectionId, reply.Address,
-                            PIVData.ParseData(reply.ExtractReplyData).Data.ToArray()));   
+                            PIVData.ParseData(reply.ExtractReplyData)));   
                     break;
                 }
             }
@@ -448,7 +475,7 @@ namespace OSDP.Net
 
         public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
 
-        public event EventHandler<PIVDataReplyEventArgs> PIVDataReplyReceived;
+        private event EventHandler<PIVDataReplyEventArgs> PIVDataReplyReceived;
 
         public class NakReplyEventArgs : EventArgs
         {
@@ -580,9 +607,9 @@ namespace OSDP.Net
             public ExtendedRead ExtendedRead { get; }
         }
 
-        public class PIVDataReplyEventArgs : EventArgs
+        private class PIVDataReplyEventArgs : EventArgs
         {
-            public PIVDataReplyEventArgs(Guid connectionId, byte address, byte[] pivData)
+            public PIVDataReplyEventArgs(Guid connectionId, byte address, PIVData pivData)
             {
                 ConnectionId = connectionId;
                 Address = address;
@@ -593,7 +620,7 @@ namespace OSDP.Net
 
             public byte Address { get; }
 
-            public byte[] PIVData { get; }
+            public PIVData PIVData { get; }
         }
 
         private class ReplyEventArgs : EventArgs

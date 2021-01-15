@@ -18,7 +18,7 @@ namespace OSDP.Net.Model.ReplyData
 
         public ushort LengthOfFragment { get; private set; }
 
-        public IEnumerable<byte> Data { get; private set; }
+        public byte[] Data { get; private set; }
 
         internal static PIVData ParseData(ReadOnlySpan<byte> data)
         {

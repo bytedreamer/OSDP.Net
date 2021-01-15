@@ -18,7 +18,7 @@ namespace OSDP.Net.Model.CommandData
 
         public byte DataOffset { get; }
 
-        public IEnumerable<byte> BuildData()
+        public ReadOnlySpan<byte> BuildData()
         {
             return ObjectId switch
             {

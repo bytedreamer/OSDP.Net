@@ -26,7 +26,7 @@ namespace OSDP.Net
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
 
-        private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
+        private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(4000);
         private readonly BlockingCollection<Reply> _replies;
 
         private bool _isShuttingDown;
@@ -301,7 +301,7 @@ namespace OSDP.Net
                 throw;
             }
 
-            // _logger?.LogTrace($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
+            // _logger?.LogInformation($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
 
             var buffer = new byte[commandData.Length + 1];
             buffer[0] = DriverByte;
@@ -325,8 +325,8 @@ namespace OSDP.Net
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
 
-            // _logger?.LogTrace($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
-            //     command.Address);
+            // _logger?.LogInformation($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
+            //      command.Address);
 
             return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }
@@ -340,7 +340,7 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < replyLength)
             {
-                byte[] readBuffer = new byte[replyLength - replyBuffer.Count];
+                byte[] readBuffer = new byte[_connection.BaudRate/60];
                 int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
