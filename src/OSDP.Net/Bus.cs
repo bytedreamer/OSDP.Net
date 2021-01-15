@@ -27,7 +27,7 @@ namespace OSDP.Net
         private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
         private readonly BlockingCollection<Reply> _replies;
 
-        private readonly TimeSpan _replyTimeout = TimeSpan.FromMilliseconds(200);
+        private readonly TimeSpan _replyTimeout = TimeSpan.FromSeconds(5);
 
         private bool _isShuttingDown;
 
@@ -341,7 +341,7 @@ namespace OSDP.Net
             while (replyBuffer.Count < replyLength)
             {
                 byte[] readBuffer = new byte[_connection.BaudRate/60];
-                int bytesRead = await TimeOutReadAsync(readBuffer, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+                int bytesRead = await TimeOutReadAsync(readBuffer, _replyTimeout).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
