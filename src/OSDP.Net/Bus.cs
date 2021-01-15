@@ -25,9 +25,9 @@ namespace OSDP.Net
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
-
-        private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(4000);
         private readonly BlockingCollection<Reply> _replies;
+
+        private readonly TimeSpan _replyTimeout = TimeSpan.FromMilliseconds(200);
 
         private bool _isShuttingDown;
 
@@ -341,7 +341,7 @@ namespace OSDP.Net
             while (replyBuffer.Count < replyLength)
             {
                 byte[] readBuffer = new byte[_connection.BaudRate/60];
-                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
+                int bytesRead = await TimeOutReadAsync(readBuffer, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
@@ -363,7 +363,7 @@ namespace OSDP.Net
             while (replyBuffer.Count < 4)
             {
                 byte[] readBuffer = new byte[4];
-                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
+                int bytesRead = await TimeOutReadAsync(readBuffer, _replyTimeout).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
@@ -385,7 +385,7 @@ namespace OSDP.Net
             while (true)
             {
                 byte[] readBuffer = new byte[1];
-                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
+                int bytesRead = await TimeOutReadAsync(readBuffer, _replyTimeout).ConfigureAwait(false);
                 if (bytesRead == 0)
                 {
                     return false;
@@ -403,18 +403,16 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<int> TimeOutReadAsync(byte[] buffer)
+        private async Task<int> TimeOutReadAsync(byte[] buffer, TimeSpan timeout)
         {
-            using (var cancellationTokenSource = new CancellationTokenSource(_readTimeout))
+            using var cancellationTokenSource = new CancellationTokenSource(timeout);
+            try
             {
-                try
-                {
-                    return await _connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    return 0;
-                }
+                return await _connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return 0;
             }
         }
 

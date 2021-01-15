@@ -171,7 +171,8 @@ namespace OSDP.Net
             bool complete = false;
             DateTime endTime = DateTime.UtcNow + timeout;
             byte[] data = null;
-            PIVDataReplyReceived += (sender, args) =>
+
+            void Handler(object sender, PIVDataReplyEventArgs args)
             {
                 // Only process matching replies
                 if (args.ConnectionId != connectionId || args.Address != address) return;
@@ -181,22 +182,32 @@ namespace OSDP.Net
 
                 complete = Message.BuildMultiPartMessageData(pivData.WholeMessageLength, pivData.Offset,
                     pivData.LengthOfFragment, pivData.Data, data);
-            };
-            await SendCommand(connectionId,
-                new GetPIVDataCommand(address, getPIVData), cancellationToken).ConfigureAwait(false);
-
-            while (DateTime.UtcNow <= endTime)
-            {
-                if (complete)
-                {
-                    return data;
-                }
-
-                // Delay for default poll interval
-                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
             }
 
-            throw new TimeoutException("Timeout waiting to receive PIV data.");
+            PIVDataReplyReceived += Handler;
+
+            try
+            {
+                await SendCommand(connectionId,
+                    new GetPIVDataCommand(address, getPIVData), cancellationToken).ConfigureAwait(false);
+
+                while (DateTime.UtcNow <= endTime)
+                {
+                    if (complete)
+                    {
+                        return data;
+                    }
+
+                    // Delay for default poll interval
+                    await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+                }
+
+                throw new TimeoutException("Timeout waiting to receive PIV data.");
+            }
+            finally
+            {
+                PIVDataReplyReceived -= Handler;
+            }
         }
 
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
