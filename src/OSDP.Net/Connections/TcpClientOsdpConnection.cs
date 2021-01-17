@@ -1,3 +1,4 @@
+using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,6 +29,8 @@ namespace OSDP.Net.Connections
                 return tcpClient != null && tcpClient.Connected;
             }
         }
+
+        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
         public void Open()
         {

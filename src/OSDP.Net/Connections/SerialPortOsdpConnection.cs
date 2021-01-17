@@ -19,6 +19,8 @@ namespace OSDP.Net.Connections
 
         public bool IsOpen => _serialPort.IsOpen;
 
+        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
         public void Open()
         {
             _serialPort.Open();

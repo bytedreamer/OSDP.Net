@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,6 +15,11 @@ namespace OSDP.Net.Connections
         /// Is the connection open and ready to communicate
         /// </summary>
         bool IsOpen { get; }
+
+        /// <summary>
+        /// Timeout value waiting for a reply
+        /// </summary>
+        TimeSpan ReplyTimeout { get; set; }
 
         /// <summary>
         /// Open the connection for communications
