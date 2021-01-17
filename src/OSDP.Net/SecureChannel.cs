@@ -16,7 +16,7 @@ namespace OSDP.Net
 
         public SecureChannel()
         {
-            new Random().NextBytes(_serverRandomNumber);
+            CreateNewRandomNumber();
             IsInitialized = false;
             IsEstablished = false;
         }
@@ -31,37 +31,35 @@ namespace OSDP.Net
 
         public void Initialize(byte[] clientRandomNumber, byte[] clientCryptogram, byte[] secureChannelKey)
         {
-            using (var keyAlgorithm = CreateKeyAlgorithm())
-            {
-                _enc = GenerateKey(keyAlgorithm,
-                    new byte[]
-                    {
-                        0x01, 0x82, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
-                        _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
-                    }, new byte[8], secureChannelKey);
-
-                if (!clientCryptogram.SequenceEqual(GenerateKey(keyAlgorithm, 
-                    _serverRandomNumber, clientRandomNumber, _enc)))
+            using var keyAlgorithm = CreateKeyAlgorithm();
+            _enc = GenerateKey(keyAlgorithm,
+                new byte[]
                 {
-                    throw new Exception("Invalid client cryptogram");
-                }
+                    0x01, 0x82, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
+                    _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
+                }, new byte[8], secureChannelKey);
 
-                _smac1 = GenerateKey(keyAlgorithm,
-                    new byte[]
-                    {
-                        0x01, 0x01, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
-                        _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
-                    }, new byte[8], secureChannelKey);
-                _smac2 = GenerateKey(keyAlgorithm,
-                    new byte[]
-                    {
-                        0x01, 0x02, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
-                        _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
-                    }, new byte[8], secureChannelKey);
-                
-                ServerCryptogram = GenerateKey(keyAlgorithm, clientRandomNumber, _serverRandomNumber, _enc);
-                IsInitialized = true;
+            if (!clientCryptogram.SequenceEqual(GenerateKey(keyAlgorithm, 
+                _serverRandomNumber, clientRandomNumber, _enc)))
+            {
+                throw new Exception("Invalid client cryptogram");
             }
+
+            _smac1 = GenerateKey(keyAlgorithm,
+                new byte[]
+                {
+                    0x01, 0x01, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
+                    _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
+                }, new byte[8], secureChannelKey);
+            _smac2 = GenerateKey(keyAlgorithm,
+                new byte[]
+                {
+                    0x01, 0x02, _serverRandomNumber[0], _serverRandomNumber[1], _serverRandomNumber[2],
+                    _serverRandomNumber[3], _serverRandomNumber[4], _serverRandomNumber[5]
+                }, new byte[8], secureChannelKey);
+                
+            ServerCryptogram = GenerateKey(keyAlgorithm, clientRandomNumber, _serverRandomNumber, _enc);
+            IsInitialized = true;
         }
 
         public void Establish(byte[] rmac)
@@ -136,68 +134,62 @@ namespace OSDP.Net
         public IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)
         {
             const byte paddingStart = 0x80;
-            
-            using (var messageAuthenticationCodeAlgorithm = Aes.Create())
+
+            using var messageAuthenticationCodeAlgorithm = Aes.Create();
+            if (messageAuthenticationCodeAlgorithm == null)
             {
-                if (messageAuthenticationCodeAlgorithm == null)
-                {
-                    throw new Exception("Unable to create key algorithm");
-                }
+                throw new Exception("Unable to create key algorithm");
+            }
 
-                messageAuthenticationCodeAlgorithm.Mode = CipherMode.CBC;
-                messageAuthenticationCodeAlgorithm.KeySize = 128;
-                messageAuthenticationCodeAlgorithm.BlockSize = 128;
-                messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
-                messageAuthenticationCodeAlgorithm.IV = _cmac.Select(b => (byte) ~b).ToArray();
-                messageAuthenticationCodeAlgorithm.Key = _enc;
+            messageAuthenticationCodeAlgorithm.Mode = CipherMode.CBC;
+            messageAuthenticationCodeAlgorithm.KeySize = 128;
+            messageAuthenticationCodeAlgorithm.BlockSize = 128;
+            messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
+            messageAuthenticationCodeAlgorithm.IV = _cmac.Select(b => (byte) ~b).ToArray();
+            messageAuthenticationCodeAlgorithm.Key = _enc;
 
-                List<byte> decryptedData = new List<byte>();
+            List<byte> decryptedData = new List<byte>();
                 
-                using (var encryptor = messageAuthenticationCodeAlgorithm.CreateDecryptor())
-                {
-                    decryptedData.AddRange(encryptor.TransformFinalBlock(data.ToArray(), 0, data.Length));
-                }
+            using (var encryptor = messageAuthenticationCodeAlgorithm.CreateDecryptor())
+            {
+                decryptedData.AddRange(encryptor.TransformFinalBlock(data.ToArray(), 0, data.Length));
+            }
                 
-                while (decryptedData.Any() && decryptedData.Last() != paddingStart)
-                {
-                    decryptedData.RemoveAt(decryptedData.Count - 1);
-                }
+            while (decryptedData.Any() && decryptedData.Last() != paddingStart)
+            {
+                decryptedData.RemoveAt(decryptedData.Count - 1);
+            }
                 
-                if (decryptedData.Any() && decryptedData.Last() == paddingStart)
-                {
-                    decryptedData.RemoveAt(decryptedData.Count - 1);
-                }
+            if (decryptedData.Any() && decryptedData.Last() == paddingStart)
+            {
+                decryptedData.RemoveAt(decryptedData.Count - 1);
+            }
 
-                return decryptedData;
-            } 
+            return decryptedData;
         }
 
         public ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> data)
         {
             const byte cryptoLength = 16;
             const byte paddingStart = 0x80;
-            
-            using (var messageAuthenticationCodeAlgorithm = Aes.Create())
+
+            using var messageAuthenticationCodeAlgorithm = Aes.Create();
+            if (messageAuthenticationCodeAlgorithm == null)
             {
-                if (messageAuthenticationCodeAlgorithm == null)
-                {
-                    throw new Exception("Unable to create key algorithm");
-                }
-
-                messageAuthenticationCodeAlgorithm.Mode = CipherMode.CBC;
-                messageAuthenticationCodeAlgorithm.KeySize = 128;
-                messageAuthenticationCodeAlgorithm.BlockSize = 128;
-                messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
-                messageAuthenticationCodeAlgorithm.IV = _rmac.Select(b => (byte) ~b).ToArray();
-                messageAuthenticationCodeAlgorithm.Key = _enc;
-
-                var paddedData = PadTheData(data, cryptoLength, paddingStart);
-
-                using (var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor())
-                {
-                    return encryptor.TransformFinalBlock(paddedData, 0, paddedData.Length);
-                }
+                throw new Exception("Unable to create key algorithm");
             }
+
+            messageAuthenticationCodeAlgorithm.Mode = CipherMode.CBC;
+            messageAuthenticationCodeAlgorithm.KeySize = 128;
+            messageAuthenticationCodeAlgorithm.BlockSize = 128;
+            messageAuthenticationCodeAlgorithm.Padding = PaddingMode.None;
+            messageAuthenticationCodeAlgorithm.IV = _rmac.Select(b => (byte) ~b).ToArray();
+            messageAuthenticationCodeAlgorithm.Key = _enc;
+
+            var paddedData = PadTheData(data, cryptoLength, paddingStart);
+
+            using var encryptor = messageAuthenticationCodeAlgorithm.CreateEncryptor();
+            return encryptor.TransformFinalBlock(paddedData, 0, paddedData.Length);
         }
 
         private static byte[] PadTheData(ReadOnlySpan<byte> data, byte cryptoLength, byte paddingStart)
@@ -238,10 +230,13 @@ namespace OSDP.Net
             second.CopyTo(buffer, 8);
             
             algorithm.Key = key;
-            using (var encryptor = algorithm.CreateEncryptor())
-            {
-                return encryptor.TransformFinalBlock(buffer, 0, buffer.Length);
-            }
+            using var encryptor = algorithm.CreateEncryptor();
+            return encryptor.TransformFinalBlock(buffer, 0, buffer.Length);
+        }
+
+        public void CreateNewRandomNumber()
+        {
+            new Random().NextBytes(_serverRandomNumber);
         }
     }
 }

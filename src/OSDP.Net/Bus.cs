@@ -187,6 +187,10 @@ namespace OSDP.Net
                         {
                             ResetDevice(device);
                         }
+                        else if (device.UseSecureChannel)
+                        {
+                            device.CreateNewRandomNumber();
+                        }
 
                         continue;
                     }

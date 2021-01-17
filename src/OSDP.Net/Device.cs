@@ -128,5 +128,10 @@ namespace OSDP.Net
         {
             return _secureChannel.DecryptData(data);
         }
+
+        public void CreateNewRandomNumber()
+        {
+            _secureChannel.CreateNewRandomNumber();
+        }
     }
 }
