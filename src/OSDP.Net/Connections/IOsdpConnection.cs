@@ -4,11 +4,12 @@ using System.Threading.Tasks;
 
 namespace OSDP.Net.Connections
 {
+    /// <summary>
+    /// Defines a connection for communicating with PDs
+    /// </summary>
     public interface IOsdpConnection
     {
-        /// <summary>
-        /// Speed of the connection
-        /// </summary>
+        /// <summary>Speed of the connection</summary>
         int BaudRate { get; }
 
         /// <summary>

@@ -5,8 +5,7 @@ using System.Threading.Tasks;
 
 namespace OSDP.Net.Connections
 {
-    /// <summary>Connect using a serial port.
-    /// Implements the <see cref="OSDP.Net.Connections.IOsdpConnection" /></summary>
+    /// <summary>Connect using a serial port.</summary>
     public class SerialPortOsdpConnection : IOsdpConnection
     {
         private readonly SerialPort _serialPort = new SerialPort();

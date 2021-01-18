@@ -19,7 +19,7 @@ A control panel can be created and started with a few lines. Be sure to register
 var panel = new ControlPanel();
 panel.ConnectionStatusChanged += (sender, eventArgs) =>
 {
-    // NOTE: Avoid blocking the processing events
+    // NOTE: Avoid blocking the thread so the control panel can continue polling
     Task.Run(async () =>
     {
         // Handle connection change event
@@ -36,7 +36,7 @@ panel.AddDevice(connectionId, address, useCrc, useSecureChannel);
 
 ## Test Console
 
-There is a package of the test console application for all the major platforms available for download. It has all the required assemblies included to run as a self containsed executable. The latest version of the package can be found at [https://www.z-bitco.com/downloads/OSDPTestConsole.zip](https://www.z-bitco.com/downloads/OSDPTestConsole.zip)
+There is compiled version of the test console application for all the major platforms available for download. It has all the required assemblies included to run as a self containsed executable. The latest version of the package can be found at [https://www.z-bitco.com/downloads/OSDPTestConsole.zip](https://www.z-bitco.com/downloads/OSDPTestConsole.zip)
 
 NOTE: First determine the COM port identifier of the 485 bus connected to the computer. This will need to be entered when starting the connection. Be sure to save configuration before exiting.
 

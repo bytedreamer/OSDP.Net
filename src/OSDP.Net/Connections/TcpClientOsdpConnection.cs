@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 namespace OSDP.Net.Connections
 {
     /// <summary>
-    /// Connects using TCP/IP connection to a server.
-    /// Implements the <see cref="OSDP.Net.Connections.IOsdpConnection" />
-    /// </summary>
+    /// Connects using TCP/IP connection to a server.</summary>
     public class TcpClientOsdpConnection : IOsdpConnection
     {
         private readonly int _portNumber;

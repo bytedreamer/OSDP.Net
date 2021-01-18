@@ -129,14 +129,14 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Request to get PIV data from PD
+        /// Request to get PIV data from PD.
         /// </summary>
-        /// <param name="connectionId">Identify the connection for communicating to the device</param>
-        /// <param name="address">Address assigned to the device</param>
-        /// <param name="getPIVData">Describe the PIV data to retrieve</param>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="getPIVData">Describe the PIV data to retrieve.</param>
         /// <param name="timeout">A TimeSpan that represents the number of milliseconds to wait, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
-        /// <returns>PIV data response</returns>
+        /// <returns>A response with the PIV data requested.</returns>
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {

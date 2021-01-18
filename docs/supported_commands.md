@@ -3,30 +3,32 @@
 ## Commands
 | Name | Value | Support | Description | Documentation |
 |:-----|:------|:-------:|:------------|:--------------|
-| osdp_POLL      | 0x60 | Yes | Poll | None |
-| osdp_ID        | 0x61 | Yes | ID Report Request | [IdReport](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.IdReport.htm) |
-| osdp_CAP       | 0x62 | Yes | PD Capabilities Request | [DeviceCapabilities](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.DeviceCapabilities.htm) |
-| osdp_LSTAT     | 0x64 | Yes | | |
-| osdp_ISTAT     | 0x65 | Yes | | |
-| osdp_OSTAT     | 0x66 | Yes | | |
-| osdp_RSTAT     | 0x67 | Yes | | |
-| osdp_OUT       | 0x68 | Yes | | |
-| osdp_LED       | 0x69 | Yes | | | 
-| osdp_BUZ       | 0x6A | Yes | | |
-| osdp_TEXT      | 0x6B | Yes | | |
-| osdp_COMSET    | 0x6E | Yes | | |
-| osdp_BIOREAD   | 0x73 | No  | | |
-| osdp_BIOMATCH  | 0x74 | No  | | |
-| osdp_KEYSET    | 0x75 | Yes | | |
-| osdp_CHLNG     | 0x76 | Yes | | |
-| osdp_SCRYPT    | 0x77 | Yes | | |
-| osdp_ACURXSIZE | 0x7B | No  | | |
-| osdp_FILETRANSFER | 0x7C | No | | |
-| osdp_MFG       | 0x80 | Yes | | |
-| osdp_XWR       | 0XA1 | Yes | | |
-| osdp_ABORT     | 0XA2 | No  | | |
-| osdp_PIVDATA   | 0XA3 | Yes | | |
-| osdp_GENAUTH   | 0XA4 | No  | | |
+| osdp_POLL         | 0x60 | Yes | Poll | None |
+| osdp_ID           | 0x61 | Yes | ID Report Request | [IdReport](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.IdReport.htm) |
+| osdp_CAP          | 0x62 | Yes | PD Capabilities Request | [DeviceCapabilities](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.DeviceCapabilities.htm) |
+| osdp_LSTAT        | 0x64 | Yes | | |
+| osdp_ISTAT        | 0x65 | Yes | | |
+| osdp_OSTAT        | 0x66 | Yes | | |
+| osdp_RSTAT        | 0x67 | Yes | | |
+| osdp_OUT          | 0x68 | Yes | | |
+| osdp_LED          | 0x69 | Yes | | | 
+| osdp_BUZ          | 0x6A | Yes | | |
+| osdp_TEXT         | 0x6B | Yes | | |
+| osdp_COMSET       | 0x6E | Yes | | |
+| osdp_BIOREAD      | 0x73 | No  | | |
+| osdp_BIOMATCH     | 0x74 | No  | | |
+| osdp_KEYSET       | 0x75 | Yes | | |
+| osdp_CHLNG        | 0x76 | Yes | | |
+| osdp_SCRYPT       | 0x77 | Yes | | |
+| osdp_ACURXSIZE    | 0x7B | No  | | |
+| osdp_FILETRANSFER | 0x7C | No  | | |
+| osdp_MFG          | 0x80 | Yes | | |
+| osdp_XWR          | 0XA1 | Yes | | |
+| osdp_ABORT        | 0XA2 | No  | | |
+| osdp_PIVDATA      | 0XA3 | Yes | Get PIV Data | [GetPIVData ](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.GetPIVData.htm) |
+| osdp_GENAUTH      | 0XA4 | No  | Request Authenticate | |
+| osdp_CRAUTH       | 0XA5 | No  | Request Crypto Response | |
+| osdp_KEEPACTIVE   | 0XA7 | No  | PD read activation | |
 
 ## Replies
 | Name | Value | Support |

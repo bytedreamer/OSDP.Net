@@ -5,10 +5,7 @@ using System.Threading.Tasks;
 
 namespace OSDP.Net.Connections
 {
-    /// <summary>
-    /// Listens for a TCP/IP connection from a server.
-    /// Implements the <see cref="OSDP.Net.Connections.IOsdpConnection" />
-    /// </summary>
+    /// <summary>Listens for a TCP/IP connection from a server.</summary>
     public class TcpServerOsdpConnection : IOsdpConnection
     {
         private readonly TcpListener _listener;
