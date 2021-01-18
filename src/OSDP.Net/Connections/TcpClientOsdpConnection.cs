@@ -5,12 +5,22 @@ using System.Threading.Tasks;
 
 namespace OSDP.Net.Connections
 {
+    /// <summary>
+    /// Connects using TCP/IP connection to a server.
+    /// Implements the <see cref="OSDP.Net.Connections.IOsdpConnection" />
+    /// </summary>
     public class TcpClientOsdpConnection : IOsdpConnection
     {
         private readonly int _portNumber;
         private readonly string _server;
         private TcpClient _tcpClient;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TcpClientOsdpConnection"/> class.
+        /// </summary>
+        /// <param name="server">The server name or IP address.</param>
+        /// <param name="portNumber">The port number.</param>
+        /// <param name="baudRate">The baud rate.</param>
         public TcpClientOsdpConnection(string server, int portNumber, int baudRate)
         {
             _tcpClient = new TcpClient();
@@ -19,8 +29,10 @@ namespace OSDP.Net.Connections
             BaudRate = baudRate;
         }
 
+        /// <inheritdoc />
         public int BaudRate { get; }
 
+        /// <inheritdoc />
         public bool IsOpen
         {
             get
@@ -30,14 +42,17 @@ namespace OSDP.Net.Connections
             }
         }
 
+        /// <inheritdoc />
         public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
+        /// <inheritdoc />
         public void Open()
         {
             _tcpClient = new TcpClient();
             _tcpClient.Connect(_server, _portNumber);
         }
 
+        /// <inheritdoc />
         public void Close()
         {
             var tcpClient = _tcpClient;
@@ -45,6 +60,7 @@ namespace OSDP.Net.Connections
             tcpClient?.Close();
         }
 
+        /// <inheritdoc />
         public async Task WriteAsync(byte[] buffer)
         {
             var tcpClient = _tcpClient;
@@ -54,6 +70,7 @@ namespace OSDP.Net.Connections
             }
         }
 
+        /// <inheritdoc />
         public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
             var tcpClient = _tcpClient;

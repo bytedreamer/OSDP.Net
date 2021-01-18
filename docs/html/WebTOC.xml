@@ -1,0 +1,651 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<HelpTOC>
+
+  <HelpTOCNode Id="f411862e-f72d-467c-8756-4617c3bffd94" Title="OSDP.Net Namespace" Url="html/N-OSDP.Net.htm">
+    <HelpTOCNode Id="cdcb9913-2d0f-44b8-81c6-77313a99b3cd" Title="ControlPanel Class" Url="html/T-OSDP.Net.ControlPanel.htm">
+      <HelpTOCNode Title="ControlPanel Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.htm" />
+      <HelpTOCNode Title="ControlPanel Constructor " Url="html/M-OSDP.Net.ControlPanel.-ctor.htm" />
+      <HelpTOCNode Id="ea23f15b-549f-40f8-bc56-2a34803ecd67" Title="ControlPanel Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.htm">
+        <HelpTOCNode Title="AddDevice Method " Url="html/M-OSDP.Net.ControlPanel.AddDevice.htm" />
+        <HelpTOCNode Title="CommunicationConfiguration Method " Url="html/M-OSDP.Net.ControlPanel.CommunicationConfiguration.htm" />
+        <HelpTOCNode Title="DeviceCapabilities Method " Url="html/M-OSDP.Net.ControlPanel.DeviceCapabilities.htm" />
+        <HelpTOCNode Title="ExtendedWriteData Method " Url="html/M-OSDP.Net.ControlPanel.ExtendedWriteData.htm" />
+        <HelpTOCNode Title="GetPIVData Method " Url="html/M-OSDP.Net.ControlPanel.GetPIVData.htm" />
+        <HelpTOCNode Title="IdReport Method " Url="html/M-OSDP.Net.ControlPanel.IdReport.htm" />
+        <HelpTOCNode Title="InputStatus Method " Url="html/M-OSDP.Net.ControlPanel.InputStatus.htm" />
+        <HelpTOCNode Title="IsOnline Method " Url="html/M-OSDP.Net.ControlPanel.IsOnline.htm" />
+        <HelpTOCNode Title="LocalStatus Method " Url="html/M-OSDP.Net.ControlPanel.LocalStatus.htm" />
+        <HelpTOCNode Title="ManufacturerSpecificCommand Method " Url="html/M-OSDP.Net.ControlPanel.ManufacturerSpecificCommand.htm" />
+        <HelpTOCNode Title="OutputControl Method " Url="html/M-OSDP.Net.ControlPanel.OutputControl.htm" />
+        <HelpTOCNode Title="OutputStatus Method " Url="html/M-OSDP.Net.ControlPanel.OutputStatus.htm" />
+        <HelpTOCNode Title="ReaderBuzzerControl Method " Url="html/M-OSDP.Net.ControlPanel.ReaderBuzzerControl.htm" />
+        <HelpTOCNode Title="ReaderLedControl Method " Url="html/M-OSDP.Net.ControlPanel.ReaderLedControl.htm" />
+        <HelpTOCNode Title="ReaderStatus Method " Url="html/M-OSDP.Net.ControlPanel.ReaderStatus.htm" />
+        <HelpTOCNode Title="ReaderTextOutput Method " Url="html/M-OSDP.Net.ControlPanel.ReaderTextOutput.htm" />
+        <HelpTOCNode Title="RemoveDevice Method " Url="html/M-OSDP.Net.ControlPanel.RemoveDevice.htm" />
+        <HelpTOCNode Title="ResetDevice Method " Url="html/M-OSDP.Net.ControlPanel.ResetDevice.htm" />
+        <HelpTOCNode Title="SendCustomCommand Method " Url="html/M-OSDP.Net.ControlPanel.SendCustomCommand.htm" />
+        <HelpTOCNode Title="Shutdown Method " Url="html/M-OSDP.Net.ControlPanel.Shutdown.htm" />
+        <HelpTOCNode Title="StartConnection Method " Url="html/M-OSDP.Net.ControlPanel.StartConnection.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="aff74fcf-7f1b-4f40-9fb5-519ed9571685" Title="ControlPanel Events" Url="html/Events.T-OSDP.Net.ControlPanel.htm">
+        <HelpTOCNode Title="ConnectionStatusChanged Event" Url="html/E-OSDP.Net.ControlPanel.ConnectionStatusChanged.htm" />
+        <HelpTOCNode Title="ExtendedReadReplyReceived Event" Url="html/E-OSDP.Net.ControlPanel.ExtendedReadReplyReceived.htm" />
+        <HelpTOCNode Title="InputStatusReportReplyReceived Event" Url="html/E-OSDP.Net.ControlPanel.InputStatusReportReplyReceived.htm" />
+        <HelpTOCNode Title="LocalStatusReportReplyReceived Event" Url="html/E-OSDP.Net.ControlPanel.LocalStatusReportReplyReceived.htm" />
+        <HelpTOCNode Title="ManufacturerSpecificReplyReceived Event" Url="html/E-OSDP.Net.ControlPanel.ManufacturerSpecificReplyReceived.htm" />
+        <HelpTOCNode Title="NakReplyReceived Event" Url="html/E-OSDP.Net.ControlPanel.NakReplyReceived.htm" />
+        <HelpTOCNode Title="OutputStatusReportReplyReceived Event" Url="html/E-OSDP.Net.ControlPanel.OutputStatusReportReplyReceived.htm" />
+        <HelpTOCNode Title="RawCardDataReplyReceived Event" Url="html/E-OSDP.Net.ControlPanel.RawCardDataReplyReceived.htm" />
+        <HelpTOCNode Title="ReaderStatusReportReplyReceived Event" Url="html/E-OSDP.Net.ControlPanel.ReaderStatusReportReplyReceived.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="63d47e78-a99e-4fc9-9a54-e7e7ab7f5da1" Title="ControlPanel.ConnectionStatusEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.ConnectionStatusEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.htm" />
+      <HelpTOCNode Title="ConnectionStatusEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.ConnectionStatusEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.htm" />
+      <HelpTOCNode Id="38f771be-0db2-468f-924c-b0cdadb7ffb5" Title="ControlPanel.ConnectionStatusEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="IsConnected Property " Url="html/P-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.IsConnected.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="5e5640ad-82b9-45f3-9f1b-90e52c19759a" Title="ControlPanel.ExtendedReadReplyEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.ExtendedReadReplyEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.htm" />
+      <HelpTOCNode Title="ExtendedReadReplyEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.ExtendedReadReplyEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.htm" />
+      <HelpTOCNode Id="0544c8e3-007d-4fb7-ac20-d8bcf602b0e1" Title="ControlPanel.ExtendedReadReplyEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="ExtendedRead Property " Url="html/P-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.ExtendedRead.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="9457b75b-6c45-4228-b3c3-21bc8969a4e1" Title="ControlPanel.InputStatusReportReplyEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.InputStatusReportReplyEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.htm" />
+      <HelpTOCNode Title="InputStatusReportReplyEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.InputStatusReportReplyEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.htm" />
+      <HelpTOCNode Id="84bbf9e4-db88-4d2c-b88d-fc58f744f196" Title="ControlPanel.InputStatusReportReplyEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="InputStatus Property " Url="html/P-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.InputStatus.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="5f5b9b3b-dc0b-4781-bf3b-b4c82c9de042" Title="ControlPanel.LocalStatusReportReplyEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.LocalStatusReportReplyEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.htm" />
+      <HelpTOCNode Title="LocalStatusReportReplyEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.LocalStatusReportReplyEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.htm" />
+      <HelpTOCNode Id="7b39bc73-d566-4c24-b22f-c0acb5f7c7f7" Title="ControlPanel.LocalStatusReportReplyEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="LocalStatus Property " Url="html/P-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.LocalStatus.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="852ddca9-f789-4e9c-b72a-757b9b608a6e" Title="ControlPanel.ManufacturerSpecificReplyEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.ManufacturerSpecificReplyEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.htm" />
+      <HelpTOCNode Title="ManufacturerSpecificReplyEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.ManufacturerSpecificReplyEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.htm" />
+      <HelpTOCNode Id="30ddeeb8-0ca6-444f-838a-b4f7ccb3a591" Title="ControlPanel.ManufacturerSpecificReplyEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="ManufacturerSpecific Property " Url="html/P-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.ManufacturerSpecific.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="c3cab904-ad35-48db-a8a9-65ed20b27daf" Title="ControlPanel.NakReplyEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.NakReplyEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.NakReplyEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.NakReplyEventArgs.htm" />
+      <HelpTOCNode Title="NakReplyEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.NakReplyEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.NakReplyEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.NakReplyEventArgs.htm" />
+      <HelpTOCNode Id="624779ff-9ed7-4bd0-b46b-fb675679fee7" Title="ControlPanel.NakReplyEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.NakReplyEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.NakReplyEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.NakReplyEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="Nak Property " Url="html/P-OSDP.Net.ControlPanel.NakReplyEventArgs.Nak.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="10a6406a-be3e-49e1-811e-7c84aac79644" Title="ControlPanel.OutputStatusReportReplyEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.OutputStatusReportReplyEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.htm" />
+      <HelpTOCNode Title="OutputStatusReportReplyEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.OutputStatusReportReplyEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.htm" />
+      <HelpTOCNode Id="8332697d-8e66-49e2-bcb0-8e7d18c75b09" Title="ControlPanel.OutputStatusReportReplyEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="OutputStatus Property " Url="html/P-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.OutputStatus.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="16d6d5c7-c8f7-4244-98f1-0c3d27330648" Title="ControlPanel.RawCardDataReplyEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.RawCardDataReplyEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.htm" />
+      <HelpTOCNode Title="RawCardDataReplyEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.RawCardDataReplyEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.htm" />
+      <HelpTOCNode Id="63c915f9-0773-4781-8a55-9dde0a2a64c1" Title="ControlPanel.RawCardDataReplyEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="RawCardData Property " Url="html/P-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.RawCardData.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="fef7ac42-ff50-4285-a3cd-1795599125ab" Title="ControlPanel.ReaderStatusReportReplyEventArgs Class" Url="html/T-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.htm">
+      <HelpTOCNode Title="ControlPanel.ReaderStatusReportReplyEventArgs Members" Url="html/AllMembers.T-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.htm" />
+      <HelpTOCNode Title="ReaderStatusReportReplyEventArgs Constructor " Url="html/M-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.-ctor.htm" />
+      <HelpTOCNode Title="ControlPanel.ReaderStatusReportReplyEventArgs Methods" Url="html/Methods.T-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.htm" />
+      <HelpTOCNode Id="8e7d528c-74a3-4d52-aa69-b41f960f0a0e" Title="ControlPanel.ReaderStatusReportReplyEventArgs Properties" Url="html/Properties.T-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.Address.htm" />
+        <HelpTOCNode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.ConnectionId.htm" />
+        <HelpTOCNode Title="ReaderStatus Property " Url="html/P-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.ReaderStatus.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+  </HelpTOCNode>
+  <HelpTOCNode Id="2f46286e-61aa-4539-bd05-22c1e6852928" Title="OSDP.Net.Connections Namespace" Url="html/N-OSDP.Net.Connections.htm">
+    <HelpTOCNode Id="8efef815-60a2-47e5-9fc0-8e8f49fc4c4d" Title="IOsdpConnection Interface" Url="html/T-OSDP.Net.Connections.IOsdpConnection.htm">
+      <HelpTOCNode Title="IOsdpConnection Members" Url="html/AllMembers.T-OSDP.Net.Connections.IOsdpConnection.htm" />
+      <HelpTOCNode Id="d208065e-7eba-4ab6-a5c8-86899f7a23a6" Title="IOsdpConnection Methods" Url="html/Methods.T-OSDP.Net.Connections.IOsdpConnection.htm">
+        <HelpTOCNode Title="Close Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.Close.htm" />
+        <HelpTOCNode Title="Open Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.Open.htm" />
+        <HelpTOCNode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.ReadAsync.htm" />
+        <HelpTOCNode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.WriteAsync.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="b423e520-2958-48cb-a933-a37fa64e9abe" Title="IOsdpConnection Properties" Url="html/Properties.T-OSDP.Net.Connections.IOsdpConnection.htm">
+        <HelpTOCNode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.IOsdpConnection.BaudRate.htm" />
+        <HelpTOCNode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.IOsdpConnection.IsOpen.htm" />
+        <HelpTOCNode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.IOsdpConnection.ReplyTimeout.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="6c421bbb-5575-45a0-b9fc-70158876d9f9" Title="SerialPortOsdpConnection Class" Url="html/T-OSDP.Net.Connections.SerialPortOsdpConnection.htm">
+      <HelpTOCNode Title="SerialPortOsdpConnection Members" Url="html/AllMembers.T-OSDP.Net.Connections.SerialPortOsdpConnection.htm" />
+      <HelpTOCNode Title="SerialPortOsdpConnection Constructor " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.-ctor.htm" />
+      <HelpTOCNode Id="249a324f-3648-4c4d-b60e-f6ca262a3eb6" Title="SerialPortOsdpConnection Methods" Url="html/Methods.T-OSDP.Net.Connections.SerialPortOsdpConnection.htm">
+        <HelpTOCNode Title="Close Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.Close.htm" />
+        <HelpTOCNode Title="Open Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.Open.htm" />
+        <HelpTOCNode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.ReadAsync.htm" />
+        <HelpTOCNode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.WriteAsync.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="ab2d5772-0015-400f-95e7-852e6860e7b8" Title="SerialPortOsdpConnection Properties" Url="html/Properties.T-OSDP.Net.Connections.SerialPortOsdpConnection.htm">
+        <HelpTOCNode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.BaudRate.htm" />
+        <HelpTOCNode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.IsOpen.htm" />
+        <HelpTOCNode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.ReplyTimeout.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="6c407697-278f-48ea-a678-6a8de65aa2a2" Title="TcpClientOsdpConnection Class" Url="html/T-OSDP.Net.Connections.TcpClientOsdpConnection.htm">
+      <HelpTOCNode Title="TcpClientOsdpConnection Members" Url="html/AllMembers.T-OSDP.Net.Connections.TcpClientOsdpConnection.htm" />
+      <HelpTOCNode Title="TcpClientOsdpConnection Constructor " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.-ctor.htm" />
+      <HelpTOCNode Id="ff3e600f-61d0-4968-9901-492042d0614a" Title="TcpClientOsdpConnection Methods" Url="html/Methods.T-OSDP.Net.Connections.TcpClientOsdpConnection.htm">
+        <HelpTOCNode Title="Close Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.Close.htm" />
+        <HelpTOCNode Title="Open Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.Open.htm" />
+        <HelpTOCNode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.ReadAsync.htm" />
+        <HelpTOCNode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.WriteAsync.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="f9f88684-082e-4183-9035-591b320e4f0b" Title="TcpClientOsdpConnection Properties" Url="html/Properties.T-OSDP.Net.Connections.TcpClientOsdpConnection.htm">
+        <HelpTOCNode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.TcpClientOsdpConnection.BaudRate.htm" />
+        <HelpTOCNode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.TcpClientOsdpConnection.IsOpen.htm" />
+        <HelpTOCNode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.TcpClientOsdpConnection.ReplyTimeout.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="5c849a9a-011e-4a4c-900e-206fc88611ec" Title="TcpServerOsdpConnection Class" Url="html/T-OSDP.Net.Connections.TcpServerOsdpConnection.htm">
+      <HelpTOCNode Title="TcpServerOsdpConnection Members" Url="html/AllMembers.T-OSDP.Net.Connections.TcpServerOsdpConnection.htm" />
+      <HelpTOCNode Title="TcpServerOsdpConnection Constructor " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.-ctor.htm" />
+      <HelpTOCNode Id="ea09dc80-ecef-4388-81a9-df28eac13681" Title="TcpServerOsdpConnection Methods" Url="html/Methods.T-OSDP.Net.Connections.TcpServerOsdpConnection.htm">
+        <HelpTOCNode Title="Close Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.Close.htm" />
+        <HelpTOCNode Title="Open Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.Open.htm" />
+        <HelpTOCNode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.ReadAsync.htm" />
+        <HelpTOCNode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.WriteAsync.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="ca14d12e-86a9-4bc2-ba14-0eb35d9a25af" Title="TcpServerOsdpConnection Properties" Url="html/Properties.T-OSDP.Net.Connections.TcpServerOsdpConnection.htm">
+        <HelpTOCNode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.TcpServerOsdpConnection.BaudRate.htm" />
+        <HelpTOCNode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.TcpServerOsdpConnection.IsOpen.htm" />
+        <HelpTOCNode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.TcpServerOsdpConnection.ReplyTimeout.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+  </HelpTOCNode>
+  <HelpTOCNode Id="bd093aa5-df95-475f-b46b-cd84b5bcae07" Title="OSDP.Net.Messages Namespace" Url="html/N-OSDP.Net.Messages.htm">
+    <HelpTOCNode Id="ef6ca507-3c4d-4c03-9d5b-084f394a48fe" Title="Command Class" Url="html/T-OSDP.Net.Messages.Command.htm">
+      <HelpTOCNode Title="Command Members" Url="html/AllMembers.T-OSDP.Net.Messages.Command.htm" />
+      <HelpTOCNode Title="Command Fields" Url="html/Fields.T-OSDP.Net.Messages.Command.htm" />
+      <HelpTOCNode Title="Command Methods" Url="html/Methods.T-OSDP.Net.Messages.Command.htm" />
+      <HelpTOCNode Title="Command Properties" Url="html/Properties.T-OSDP.Net.Messages.Command.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="62cc930f-1cb0-453f-a8ad-22ecfce7b4b3" Title="CommunicationSetCommand Class" Url="html/T-OSDP.Net.Messages.CommunicationSetCommand.htm">
+      <HelpTOCNode Title="CommunicationSetCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
+      <HelpTOCNode Title="CommunicationSetCommand Constructor " Url="html/M-OSDP.Net.Messages.CommunicationSetCommand.-ctor.htm" />
+      <HelpTOCNode Title="CommunicationSetCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
+      <HelpTOCNode Title="CommunicationSetCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
+      <HelpTOCNode Title="CommunicationSetCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="88fc53b1-10b9-4984-9e92-e07e44c87172" Title="Control Class" Url="html/T-OSDP.Net.Messages.Control.htm">
+      <HelpTOCNode Title="Control Members" Url="html/AllMembers.T-OSDP.Net.Messages.Control.htm" />
+      <HelpTOCNode Title="Control Constructor " Url="html/M-OSDP.Net.Messages.Control.-ctor.htm" />
+      <HelpTOCNode Id="83734c8b-5dad-47e6-aee2-ee84874b65aa" Title="Control Methods" Url="html/Methods.T-OSDP.Net.Messages.Control.htm">
+        <HelpTOCNode Title="IncrementSequence Method " Url="html/M-OSDP.Net.Messages.Control.IncrementSequence.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="afc13ac5-4ccd-411e-b300-b5ce7d8b0cfc" Title="Control Properties" Url="html/Properties.T-OSDP.Net.Messages.Control.htm">
+        <HelpTOCNode Title="ControlByte Property " Url="html/P-OSDP.Net.Messages.Control.ControlByte.htm" />
+        <HelpTOCNode Title="HasSecurityControlBlock Property " Url="html/P-OSDP.Net.Messages.Control.HasSecurityControlBlock.htm" />
+        <HelpTOCNode Title="Sequence Property " Url="html/P-OSDP.Net.Messages.Control.Sequence.htm" />
+        <HelpTOCNode Title="UseCrc Property " Url="html/P-OSDP.Net.Messages.Control.UseCrc.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="01aab19b-f816-44fb-aa22-6956770295b7" Title="DeviceCapabilitiesCommand Class" Url="html/T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm">
+      <HelpTOCNode Title="DeviceCapabilitiesCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
+      <HelpTOCNode Title="DeviceCapabilitiesCommand Constructor " Url="html/M-OSDP.Net.Messages.DeviceCapabilitiesCommand.-ctor.htm" />
+      <HelpTOCNode Title="DeviceCapabilitiesCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
+      <HelpTOCNode Title="DeviceCapabilitiesCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
+      <HelpTOCNode Title="DeviceCapabilitiesCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="b1756af2-010a-4255-ba96-515f618ee8c3" Title="EncryptionKeySetCommand Class" Url="html/T-OSDP.Net.Messages.EncryptionKeySetCommand.htm">
+      <HelpTOCNode Title="EncryptionKeySetCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
+      <HelpTOCNode Title="EncryptionKeySetCommand Constructor " Url="html/M-OSDP.Net.Messages.EncryptionKeySetCommand.-ctor.htm" />
+      <HelpTOCNode Title="EncryptionKeySetCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
+      <HelpTOCNode Title="EncryptionKeySetCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
+      <HelpTOCNode Title="EncryptionKeySetCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="3fb9afdc-6500-43c6-98d2-c4ea18035ab5" Title="ExtendedWriteDataCommand Class" Url="html/T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm">
+      <HelpTOCNode Title="ExtendedWriteDataCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
+      <HelpTOCNode Title="ExtendedWriteDataCommand Constructor " Url="html/M-OSDP.Net.Messages.ExtendedWriteDataCommand.-ctor.htm" />
+      <HelpTOCNode Title="ExtendedWriteDataCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
+      <HelpTOCNode Title="ExtendedWriteDataCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
+      <HelpTOCNode Title="ExtendedWriteDataCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="1379e1fd-2212-498e-a28a-bf4163ff3810" Title="GetPIVDataCommand Class" Url="html/T-OSDP.Net.Messages.GetPIVDataCommand.htm">
+      <HelpTOCNode Title="GetPIVDataCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
+      <HelpTOCNode Title="GetPIVDataCommand Constructor " Url="html/M-OSDP.Net.Messages.GetPIVDataCommand.-ctor.htm" />
+      <HelpTOCNode Title="GetPIVDataCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
+      <HelpTOCNode Title="GetPIVDataCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
+      <HelpTOCNode Title="GetPIVDataCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="112ff62e-5870-4a3c-a0fe-4b97419d5616" Title="IdReportCommand Class" Url="html/T-OSDP.Net.Messages.IdReportCommand.htm">
+      <HelpTOCNode Title="IdReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.IdReportCommand.htm" />
+      <HelpTOCNode Title="IdReportCommand Constructor " Url="html/M-OSDP.Net.Messages.IdReportCommand.-ctor.htm" />
+      <HelpTOCNode Title="IdReportCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.IdReportCommand.htm" />
+      <HelpTOCNode Title="IdReportCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.IdReportCommand.htm" />
+      <HelpTOCNode Title="IdReportCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.IdReportCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="841daa7e-9ac2-42c0-b4a4-37a96e696e89" Title="InputStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.InputStatusReportCommand.htm">
+      <HelpTOCNode Title="InputStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
+      <HelpTOCNode Title="InputStatusReportCommand Constructor " Url="html/M-OSDP.Net.Messages.InputStatusReportCommand.-ctor.htm" />
+      <HelpTOCNode Title="InputStatusReportCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
+      <HelpTOCNode Title="InputStatusReportCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
+      <HelpTOCNode Title="InputStatusReportCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="6c16d6be-c4f9-4eb0-ab42-51ddd0a6d50b" Title="LocalStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.LocalStatusReportCommand.htm">
+      <HelpTOCNode Title="LocalStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
+      <HelpTOCNode Title="LocalStatusReportCommand Constructor " Url="html/M-OSDP.Net.Messages.LocalStatusReportCommand.-ctor.htm" />
+      <HelpTOCNode Title="LocalStatusReportCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
+      <HelpTOCNode Title="LocalStatusReportCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
+      <HelpTOCNode Title="LocalStatusReportCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="104802fb-c61f-4ae6-bdcd-9c37d9907784" Title="ManufacturerSpecificCommand Class" Url="html/T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm">
+      <HelpTOCNode Title="ManufacturerSpecificCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
+      <HelpTOCNode Title="ManufacturerSpecificCommand Constructor " Url="html/M-OSDP.Net.Messages.ManufacturerSpecificCommand.-ctor.htm" />
+      <HelpTOCNode Title="ManufacturerSpecificCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
+      <HelpTOCNode Title="ManufacturerSpecificCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
+      <HelpTOCNode Title="ManufacturerSpecificCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="971a850c-a303-45f3-8642-4008ed64ccb6" Title="Message Class" Url="html/T-OSDP.Net.Messages.Message.htm">
+      <HelpTOCNode Title="Message Members" Url="html/AllMembers.T-OSDP.Net.Messages.Message.htm" />
+      <HelpTOCNode Id="82491b3d-a10c-42bb-8f4b-b0e4566a1325" Title="Message Fields" Url="html/Fields.T-OSDP.Net.Messages.Message.htm">
+        <HelpTOCNode Title="StartOfMessage Field" Url="html/F-OSDP.Net.Messages.Message.StartOfMessage.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Title="Message Methods" Url="html/Methods.T-OSDP.Net.Messages.Message.htm" />
+      <HelpTOCNode Id="8bb06bc8-36a2-4d8e-b76e-b22e19c7d4d7" Title="Message Properties" Url="html/Properties.T-OSDP.Net.Messages.Message.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.Messages.Message.Address.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="1514813f-9ac7-4c3b-b119-675cc1850057" Title="OutputControlCommand Class" Url="html/T-OSDP.Net.Messages.OutputControlCommand.htm">
+      <HelpTOCNode Title="OutputControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.OutputControlCommand.htm" />
+      <HelpTOCNode Title="OutputControlCommand Constructor " Url="html/M-OSDP.Net.Messages.OutputControlCommand.-ctor.htm" />
+      <HelpTOCNode Title="OutputControlCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.OutputControlCommand.htm" />
+      <HelpTOCNode Title="OutputControlCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.OutputControlCommand.htm" />
+      <HelpTOCNode Title="OutputControlCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.OutputControlCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="fefb26d3-b9d7-482b-8174-cab24547378e" Title="OutputStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.OutputStatusReportCommand.htm">
+      <HelpTOCNode Title="OutputStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
+      <HelpTOCNode Title="OutputStatusReportCommand Constructor " Url="html/M-OSDP.Net.Messages.OutputStatusReportCommand.-ctor.htm" />
+      <HelpTOCNode Title="OutputStatusReportCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
+      <HelpTOCNode Title="OutputStatusReportCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
+      <HelpTOCNode Title="OutputStatusReportCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="9b8cb96a-59e7-4324-b1c3-3abc1d413cf9" Title="ReaderBuzzerControlCommand Class" Url="html/T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm">
+      <HelpTOCNode Title="ReaderBuzzerControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
+      <HelpTOCNode Title="ReaderBuzzerControlCommand Constructor " Url="html/M-OSDP.Net.Messages.ReaderBuzzerControlCommand.-ctor.htm" />
+      <HelpTOCNode Title="ReaderBuzzerControlCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
+      <HelpTOCNode Title="ReaderBuzzerControlCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
+      <HelpTOCNode Title="ReaderBuzzerControlCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="312a82ab-5ff1-4b9e-b888-7f49dd58a431" Title="ReaderLedControlCommand Class" Url="html/T-OSDP.Net.Messages.ReaderLedControlCommand.htm">
+      <HelpTOCNode Title="ReaderLedControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
+      <HelpTOCNode Title="ReaderLedControlCommand Constructor " Url="html/M-OSDP.Net.Messages.ReaderLedControlCommand.-ctor.htm" />
+      <HelpTOCNode Title="ReaderLedControlCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
+      <HelpTOCNode Title="ReaderLedControlCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
+      <HelpTOCNode Title="ReaderLedControlCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="85c8534d-3ca0-4075-bed6-0c2b08c16cf0" Title="ReaderStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.ReaderStatusReportCommand.htm">
+      <HelpTOCNode Title="ReaderStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
+      <HelpTOCNode Title="ReaderStatusReportCommand Constructor " Url="html/M-OSDP.Net.Messages.ReaderStatusReportCommand.-ctor.htm" />
+      <HelpTOCNode Title="ReaderStatusReportCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
+      <HelpTOCNode Title="ReaderStatusReportCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
+      <HelpTOCNode Title="ReaderStatusReportCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="04b387a1-760c-472f-825e-a6b56a4a2469" Title="ReaderTextOutputCommand Class" Url="html/T-OSDP.Net.Messages.ReaderTextOutputCommand.htm">
+      <HelpTOCNode Title="ReaderTextOutputCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
+      <HelpTOCNode Title="ReaderTextOutputCommand Constructor " Url="html/M-OSDP.Net.Messages.ReaderTextOutputCommand.-ctor.htm" />
+      <HelpTOCNode Title="ReaderTextOutputCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
+      <HelpTOCNode Title="ReaderTextOutputCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
+      <HelpTOCNode Title="ReaderTextOutputCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Title="ReplyType Enumeration" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
+    <HelpTOCNode Title="SecurityBlockType Enumeration" Url="html/T-OSDP.Net.Messages.SecurityBlockType.htm" />
+    <HelpTOCNode Id="e5737fef-41eb-4dc1-905d-564a4360cd77" Title="SecurityInitializationRequestCommand Class" Url="html/T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm">
+      <HelpTOCNode Title="SecurityInitializationRequestCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
+      <HelpTOCNode Title="SecurityInitializationRequestCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
+      <HelpTOCNode Title="SecurityInitializationRequestCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
+      <HelpTOCNode Title="SecurityInitializationRequestCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
+    </HelpTOCNode>
+    <HelpTOCNode Id="93eb8165-a5f9-424d-ba43-b28b4f76e507" Title="ServerCryptogramCommand Class" Url="html/T-OSDP.Net.Messages.ServerCryptogramCommand.htm">
+      <HelpTOCNode Title="ServerCryptogramCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
+      <HelpTOCNode Title="ServerCryptogramCommand Fields" Url="html/Fields.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
+      <HelpTOCNode Title="ServerCryptogramCommand Methods" Url="html/Methods.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
+      <HelpTOCNode Title="ServerCryptogramCommand Properties" Url="html/Properties.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
+    </HelpTOCNode>
+  </HelpTOCNode>
+  <HelpTOCNode Id="0cfa5a10-488e-4f43-9254-9c1f5f85780e" Title="OSDP.Net.Model.CommandData Namespace" Url="html/N-OSDP.Net.Model.CommandData.htm">
+    <HelpTOCNode Id="32c7a4db-9ecb-47a5-bf29-c0a23094322f" Title="CommunicationConfiguration Class" Url="html/T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm">
+      <HelpTOCNode Title="CommunicationConfiguration Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm" />
+      <HelpTOCNode Title="CommunicationConfiguration Constructor " Url="html/M-OSDP.Net.Model.CommandData.CommunicationConfiguration.-ctor.htm" />
+      <HelpTOCNode Id="ac20fe64-ddf2-41cf-9ab1-3eb85c81f705" Title="CommunicationConfiguration Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.CommunicationConfiguration.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="78374773-36fb-4afa-9d76-d7385550110a" Title="CommunicationConfiguration Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.Model.CommandData.CommunicationConfiguration.Address.htm" />
+        <HelpTOCNode Title="BaudRate Property " Url="html/P-OSDP.Net.Model.CommandData.CommunicationConfiguration.BaudRate.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="05d5c9c8-086f-4a33-ba7a-82265e769bcc" Title="EncryptionKeyConfiguration Class" Url="html/T-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.htm">
+      <HelpTOCNode Title="EncryptionKeyConfiguration Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.htm" />
+      <HelpTOCNode Title="EncryptionKeyConfiguration Constructor " Url="html/M-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.-ctor.htm" />
+      <HelpTOCNode Id="dfbcb591-945f-4105-a05d-ced3c0b0bb7d" Title="EncryptionKeyConfiguration Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="ea460305-bbeb-413f-bc5b-df0e6b50be2e" Title="EncryptionKeyConfiguration Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.htm">
+        <HelpTOCNode Title="KeyData Property " Url="html/P-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.KeyData.htm" />
+        <HelpTOCNode Title="KeyType Property " Url="html/P-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.KeyType.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="18bd0f02-d3d0-46fe-9539-6f7fca7315d1" Title="ExtendedWrite Class" Url="html/T-OSDP.Net.Model.CommandData.ExtendedWrite.htm">
+      <HelpTOCNode Title="ExtendedWrite Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ExtendedWrite.htm" />
+      <HelpTOCNode Title="ExtendedWrite Constructor " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.-ctor.htm" />
+      <HelpTOCNode Id="68dfe5f0-9a11-49f8-9dac-4ba68af44f01" Title="ExtendedWrite Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.ExtendedWrite.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.BuildData.htm" />
+        <HelpTOCNode Title="ModeOneConfiguration Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.ModeOneConfiguration.htm" />
+        <HelpTOCNode Title="ModeOnePassAPDUCommand Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.ModeOnePassAPDUCommand.htm" />
+        <HelpTOCNode Title="ModeOneSmartCardScan Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.ModeOneSmartCardScan.htm" />
+        <HelpTOCNode Title="ModeOneTerminateSmartCardConnection Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.ModeOneTerminateSmartCardConnection.htm" />
+        <HelpTOCNode Title="ModeZeroConfiguration Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.ModeZeroConfiguration.htm" />
+        <HelpTOCNode Title="ReadModeSetting Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.ReadModeSetting.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="614d87ab-0606-48a8-bf3a-067369fc3092" Title="ExtendedWrite Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.ExtendedWrite.htm">
+        <HelpTOCNode Title="Mode Property " Url="html/P-OSDP.Net.Model.CommandData.ExtendedWrite.Mode.htm" />
+        <HelpTOCNode Title="PCommand Property " Url="html/P-OSDP.Net.Model.CommandData.ExtendedWrite.PCommand.htm" />
+        <HelpTOCNode Title="PData Property " Url="html/P-OSDP.Net.Model.CommandData.ExtendedWrite.PData.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="a66b51a8-4c49-472f-97dc-b56b5672ce85" Title="GetPIVData Class" Url="html/T-OSDP.Net.Model.CommandData.GetPIVData.htm">
+      <HelpTOCNode Title="GetPIVData Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.GetPIVData.htm" />
+      <HelpTOCNode Title="GetPIVData Constructor " Url="html/M-OSDP.Net.Model.CommandData.GetPIVData.-ctor.htm" />
+      <HelpTOCNode Id="26764c9d-d6f1-4587-b249-0ad64bbc2476" Title="GetPIVData Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.GetPIVData.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.GetPIVData.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="38b0694a-a42c-4490-9fce-4ea3523e2f22" Title="GetPIVData Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.GetPIVData.htm">
+        <HelpTOCNode Title="DataOffset Property " Url="html/P-OSDP.Net.Model.CommandData.GetPIVData.DataOffset.htm" />
+        <HelpTOCNode Title="ElementId Property " Url="html/P-OSDP.Net.Model.CommandData.GetPIVData.ElementId.htm" />
+        <HelpTOCNode Title="ObjectId Property " Url="html/P-OSDP.Net.Model.CommandData.GetPIVData.ObjectId.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Title="KeyType Enumeration" Url="html/T-OSDP.Net.Model.CommandData.KeyType.htm" />
+    <HelpTOCNode Title="LedColor Enumeration" Url="html/T-OSDP.Net.Model.CommandData.LedColor.htm" />
+    <HelpTOCNode Id="db6f8b3a-180c-44bf-a3c8-fba497e768ed" Title="ManufacturerSpecific Class" Url="html/T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm">
+      <HelpTOCNode Title="ManufacturerSpecific Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
+      <HelpTOCNode Title="ManufacturerSpecific Constructor " Url="html/M-OSDP.Net.Model.CommandData.ManufacturerSpecific.-ctor.htm" />
+      <HelpTOCNode Id="89de9601-2108-45fa-a0ac-8956ebfe7f5b" Title="ManufacturerSpecific Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ManufacturerSpecific.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="cf60a595-36c9-4af4-bb16-bd2a335fac84" Title="ManufacturerSpecific Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm">
+        <HelpTOCNode Title="Data Property " Url="html/P-OSDP.Net.Model.CommandData.ManufacturerSpecific.Data.htm" />
+        <HelpTOCNode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.CommandData.ManufacturerSpecific.VendorCode.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Title="ObjectId Enumeration" Url="html/T-OSDP.Net.Model.CommandData.ObjectId.htm" />
+    <HelpTOCNode Id="7f02d0f7-472b-42ac-be68-81618ea18a9a" Title="OutputControl Class" Url="html/T-OSDP.Net.Model.CommandData.OutputControl.htm">
+      <HelpTOCNode Title="OutputControl Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.OutputControl.htm" />
+      <HelpTOCNode Title="OutputControl Constructor " Url="html/M-OSDP.Net.Model.CommandData.OutputControl.-ctor.htm" />
+      <HelpTOCNode Id="4f8e69b2-63d6-464c-8573-061e2de2a450" Title="OutputControl Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.OutputControl.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.OutputControl.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="d5e3f738-b739-4861-9d1b-01d4695d6598" Title="OutputControl Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.OutputControl.htm">
+        <HelpTOCNode Title="OutputControlCode Property " Url="html/P-OSDP.Net.Model.CommandData.OutputControl.OutputControlCode.htm" />
+        <HelpTOCNode Title="OutputNumber Property " Url="html/P-OSDP.Net.Model.CommandData.OutputControl.OutputNumber.htm" />
+        <HelpTOCNode Title="Timer Property " Url="html/P-OSDP.Net.Model.CommandData.OutputControl.Timer.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Title="OutputControlCode Enumeration" Url="html/T-OSDP.Net.Model.CommandData.OutputControlCode.htm" />
+    <HelpTOCNode Id="9cdf46cf-a565-4c82-b054-a5c37e0c3ace" Title="OutputControls Class" Url="html/T-OSDP.Net.Model.CommandData.OutputControls.htm">
+      <HelpTOCNode Title="OutputControls Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.OutputControls.htm" />
+      <HelpTOCNode Title="OutputControls Constructor " Url="html/M-OSDP.Net.Model.CommandData.OutputControls.-ctor.htm" />
+      <HelpTOCNode Id="3575686b-5366-4d8e-ba3d-1105065fb24d" Title="OutputControls Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.OutputControls.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.OutputControls.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="875f8aa0-2693-43ea-b907-92763a43cf7f" Title="OutputControls Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.OutputControls.htm">
+        <HelpTOCNode Title="Controls Property " Url="html/P-OSDP.Net.Model.CommandData.OutputControls.Controls.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Title="PermanentReaderControlCode Enumeration" Url="html/T-OSDP.Net.Model.CommandData.PermanentReaderControlCode.htm" />
+    <HelpTOCNode Id="61ee82d9-bac8-4598-92aa-4ec3013d7583" Title="ReaderBuzzerControl Class" Url="html/T-OSDP.Net.Model.CommandData.ReaderBuzzerControl.htm">
+      <HelpTOCNode Title="ReaderBuzzerControl Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ReaderBuzzerControl.htm" />
+      <HelpTOCNode Title="ReaderBuzzerControl Constructor " Url="html/M-OSDP.Net.Model.CommandData.ReaderBuzzerControl.-ctor.htm" />
+      <HelpTOCNode Id="97b32b2a-7435-4186-acdd-af82639f7755" Title="ReaderBuzzerControl Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.ReaderBuzzerControl.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderBuzzerControl.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="6dbcab05-4ab5-49e9-9f38-029114d0410a" Title="ReaderBuzzerControl Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.ReaderBuzzerControl.htm">
+        <HelpTOCNode Title="Count Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.Count.htm" />
+        <HelpTOCNode Title="OffTime Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.OffTime.htm" />
+        <HelpTOCNode Title="OnTime Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.OnTime.htm" />
+        <HelpTOCNode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.ReaderNumber.htm" />
+        <HelpTOCNode Title="ToneCode Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.ToneCode.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="97e3d4f8-f83d-460b-a3e0-416eca99dc1a" Title="ReaderLedControl Class" Url="html/T-OSDP.Net.Model.CommandData.ReaderLedControl.htm">
+      <HelpTOCNode Title="ReaderLedControl Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ReaderLedControl.htm" />
+      <HelpTOCNode Title="ReaderLedControl Constructor " Url="html/M-OSDP.Net.Model.CommandData.ReaderLedControl.-ctor.htm" />
+      <HelpTOCNode Id="5eac1af8-4425-48d9-919a-bcf244cfb5f3" Title="ReaderLedControl Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.ReaderLedControl.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderLedControl.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="490a7b35-b9f7-4a19-bca2-90efc9a2d8ed" Title="ReaderLedControl Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.ReaderLedControl.htm">
+        <HelpTOCNode Title="LedNumber Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.LedNumber.htm" />
+        <HelpTOCNode Title="PermanentMode Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.PermanentMode.htm" />
+        <HelpTOCNode Title="PermanentOffColor Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.PermanentOffColor.htm" />
+        <HelpTOCNode Title="PermanentOffTime Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.PermanentOffTime.htm" />
+        <HelpTOCNode Title="PermanentOnColor Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.PermanentOnColor.htm" />
+        <HelpTOCNode Title="PermanentOnTime Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.PermanentOnTime.htm" />
+        <HelpTOCNode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.ReaderNumber.htm" />
+        <HelpTOCNode Title="TemporaryMode Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryMode.htm" />
+        <HelpTOCNode Title="TemporaryOffColor Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryOffColor.htm" />
+        <HelpTOCNode Title="TemporaryOffTime Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryOffTime.htm" />
+        <HelpTOCNode Title="TemporaryOnColor Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryOnColor.htm" />
+        <HelpTOCNode Title="TemporaryOnTime Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryOnTime.htm" />
+        <HelpTOCNode Title="TemporaryTimer Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryTimer.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="ca2da42c-a7d3-45bf-93eb-7650b36dcd6e" Title="ReaderLedControls Class" Url="html/T-OSDP.Net.Model.CommandData.ReaderLedControls.htm">
+      <HelpTOCNode Title="ReaderLedControls Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ReaderLedControls.htm" />
+      <HelpTOCNode Title="ReaderLedControls Constructor " Url="html/M-OSDP.Net.Model.CommandData.ReaderLedControls.-ctor.htm" />
+      <HelpTOCNode Id="73f548e9-4ac2-470f-bf88-999fa1f23f3a" Title="ReaderLedControls Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.ReaderLedControls.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderLedControls.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="b5ee7af0-b67b-4c79-a8d1-87820312f5c7" Title="ReaderLedControls Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.ReaderLedControls.htm">
+        <HelpTOCNode Title="Controls Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControls.Controls.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="55fa7c5b-f539-458a-879b-8a3499538c5c" Title="ReaderTextOutput Class" Url="html/T-OSDP.Net.Model.CommandData.ReaderTextOutput.htm">
+      <HelpTOCNode Title="ReaderTextOutput Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ReaderTextOutput.htm" />
+      <HelpTOCNode Title="ReaderTextOutput Constructor " Url="html/M-OSDP.Net.Model.CommandData.ReaderTextOutput.-ctor.htm" />
+      <HelpTOCNode Id="7acc4092-1d3d-4f58-9a05-08d902b28fb4" Title="ReaderTextOutput Methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.ReaderTextOutput.htm">
+        <HelpTOCNode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderTextOutput.BuildData.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="d22cd684-f5f1-4709-b5d0-9ef00e8ef88f" Title="ReaderTextOutput Properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.ReaderTextOutput.htm">
+        <HelpTOCNode Title="Column Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.Column.htm" />
+        <HelpTOCNode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.ReaderNumber.htm" />
+        <HelpTOCNode Title="Row Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.Row.htm" />
+        <HelpTOCNode Title="TemporaryTextTime Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.TemporaryTextTime.htm" />
+        <HelpTOCNode Title="Text Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.Text.htm" />
+        <HelpTOCNode Title="TextCommand Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.TextCommand.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Title="TemporaryReaderControlCode Enumeration" Url="html/T-OSDP.Net.Model.CommandData.TemporaryReaderControlCode.htm" />
+    <HelpTOCNode Title="TextCommand Enumeration" Url="html/T-OSDP.Net.Model.CommandData.TextCommand.htm" />
+    <HelpTOCNode Title="ToneCode Enumeration" Url="html/T-OSDP.Net.Model.CommandData.ToneCode.htm" />
+  </HelpTOCNode>
+  <HelpTOCNode Id="2cbd0f08-9064-48bb-82c2-c8a22ea18ad2" Title="OSDP.Net.Model.ReplyData Namespace" Url="html/N-OSDP.Net.Model.ReplyData.htm">
+    <HelpTOCNode Title="CapabilityFunction Enumeration" Url="html/T-OSDP.Net.Model.ReplyData.CapabilityFunction.htm" />
+    <HelpTOCNode Id="7fa6897b-1378-4653-bc12-6ceade14405f" Title="CommunicationConfiguration Class" Url="html/T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm">
+      <HelpTOCNode Title="CommunicationConfiguration Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm" />
+      <HelpTOCNode Id="47d9cee3-4a45-4718-8334-1268a38ec5e0" Title="CommunicationConfiguration Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.CommunicationConfiguration.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="8ffd00b4-43c4-482d-9058-d4ca47361b37" Title="CommunicationConfiguration Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm">
+        <HelpTOCNode Title="Address Property " Url="html/P-OSDP.Net.Model.ReplyData.CommunicationConfiguration.Address.htm" />
+        <HelpTOCNode Title="BaudRate Property " Url="html/P-OSDP.Net.Model.ReplyData.CommunicationConfiguration.BaudRate.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="a90630b2-da42-438f-8887-58d5267089b0" Title="DeviceCapabilities Class" Url="html/T-OSDP.Net.Model.ReplyData.DeviceCapabilities.htm">
+      <HelpTOCNode Title="DeviceCapabilities Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.DeviceCapabilities.htm" />
+      <HelpTOCNode Id="72c50d3b-c5b8-4404-917c-7e37fdefbaf0" Title="DeviceCapabilities Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.DeviceCapabilities.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.DeviceCapabilities.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="c4ac39f1-4493-4d93-ad16-9ad6bd5dadcb" Title="DeviceCapabilities Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.DeviceCapabilities.htm">
+        <HelpTOCNode Title="Capabilities Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceCapabilities.Capabilities.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="b951bfd2-7deb-4b56-b732-b5d29d2d464c" Title="DeviceCapability Class" Url="html/T-OSDP.Net.Model.ReplyData.DeviceCapability.htm">
+      <HelpTOCNode Title="DeviceCapability Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.DeviceCapability.htm" />
+      <HelpTOCNode Title="DeviceCapability Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.DeviceCapability.htm" />
+      <HelpTOCNode Id="078bb832-80ab-46e3-abd0-88de5727970f" Title="DeviceCapability Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.DeviceCapability.htm">
+        <HelpTOCNode Title="Compliance Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceCapability.Compliance.htm" />
+        <HelpTOCNode Title="Function Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceCapability.Function.htm" />
+        <HelpTOCNode Title="NumberOf Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceCapability.NumberOf.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="607c92c7-2354-426d-88a9-d594afcf6a99" Title="DeviceIdentification Class" Url="html/T-OSDP.Net.Model.ReplyData.DeviceIdentification.htm">
+      <HelpTOCNode Title="DeviceIdentification Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.DeviceIdentification.htm" />
+      <HelpTOCNode Id="f26d77fe-eeb4-4266-b647-4d10e009c58f" Title="DeviceIdentification Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.DeviceIdentification.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.DeviceIdentification.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="d911f6d6-c59b-4ce2-9c30-679177e77779" Title="DeviceIdentification Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.DeviceIdentification.htm">
+        <HelpTOCNode Title="FirmwareBuild Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.FirmwareBuild.htm" />
+        <HelpTOCNode Title="FirmwareMajor Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.FirmwareMajor.htm" />
+        <HelpTOCNode Title="FirmwareMinor Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.FirmwareMinor.htm" />
+        <HelpTOCNode Title="ModelNumber Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.ModelNumber.htm" />
+        <HelpTOCNode Title="SerialNumber Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.SerialNumber.htm" />
+        <HelpTOCNode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.VendorCode.htm" />
+        <HelpTOCNode Title="Version Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.Version.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Title="ErrorCode Enumeration" Url="html/T-OSDP.Net.Model.ReplyData.ErrorCode.htm" />
+    <HelpTOCNode Id="06aa4a04-d014-4142-b9ff-6fe281fa2812" Title="ExtendedRead Class" Url="html/T-OSDP.Net.Model.ReplyData.ExtendedRead.htm">
+      <HelpTOCNode Title="ExtendedRead Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.ExtendedRead.htm" />
+      <HelpTOCNode Title="ExtendedRead Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.ExtendedRead.htm" />
+      <HelpTOCNode Id="477055ff-b9a6-48ad-8d41-0dad8195a537" Title="ExtendedRead Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.ExtendedRead.htm">
+        <HelpTOCNode Title="Mode Property " Url="html/P-OSDP.Net.Model.ReplyData.ExtendedRead.Mode.htm" />
+        <HelpTOCNode Title="PData Property " Url="html/P-OSDP.Net.Model.ReplyData.ExtendedRead.PData.htm" />
+        <HelpTOCNode Title="PReply Property " Url="html/P-OSDP.Net.Model.ReplyData.ExtendedRead.PReply.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Title="FormatCode Enumeration" Url="html/T-OSDP.Net.Model.ReplyData.FormatCode.htm" />
+    <HelpTOCNode Id="7117ca21-e03f-4f66-9267-8c4747295cc5" Title="InputStatus Class" Url="html/T-OSDP.Net.Model.ReplyData.InputStatus.htm">
+      <HelpTOCNode Title="InputStatus Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.InputStatus.htm" />
+      <HelpTOCNode Id="1f2c3659-71d2-40a1-aa59-709c77e06e19" Title="InputStatus Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.InputStatus.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.InputStatus.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="1e7f9bf9-8651-474f-ab8d-48bb81448b59" Title="InputStatus Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.InputStatus.htm">
+        <HelpTOCNode Title="InputStatuses Property " Url="html/P-OSDP.Net.Model.ReplyData.InputStatus.InputStatuses.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="aba1a90e-82fc-45fa-ba5f-75b487d7458f" Title="LocalStatus Class" Url="html/T-OSDP.Net.Model.ReplyData.LocalStatus.htm">
+      <HelpTOCNode Title="LocalStatus Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.LocalStatus.htm" />
+      <HelpTOCNode Id="df9b835d-3b13-4c9f-b382-4851fff9cb4b" Title="LocalStatus Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.LocalStatus.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.LocalStatus.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="f8e815cd-e574-484c-82cb-5da89aee5c42" Title="LocalStatus Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.LocalStatus.htm">
+        <HelpTOCNode Title="PowerFailure Property " Url="html/P-OSDP.Net.Model.ReplyData.LocalStatus.PowerFailure.htm" />
+        <HelpTOCNode Title="Tamper Property " Url="html/P-OSDP.Net.Model.ReplyData.LocalStatus.Tamper.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="5b3cd931-cdfa-4ad0-94b2-cc37068c981d" Title="ManufacturerSpecific Class" Url="html/T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm">
+      <HelpTOCNode Title="ManufacturerSpecific Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm" />
+      <HelpTOCNode Id="6e68b6c9-f263-4b90-97f8-ae0a77ac2298" Title="ManufacturerSpecific Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.ManufacturerSpecific.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="f1f9709c-9654-4caf-a74f-033db6bb933b" Title="ManufacturerSpecific Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm">
+        <HelpTOCNode Title="Data Property " Url="html/P-OSDP.Net.Model.ReplyData.ManufacturerSpecific.Data.htm" />
+        <HelpTOCNode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.ReplyData.ManufacturerSpecific.VendorCode.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="8e3ff9b9-e19e-406d-999b-075010499a16" Title="Nak Class" Url="html/T-OSDP.Net.Model.ReplyData.Nak.htm">
+      <HelpTOCNode Title="Nak Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.Nak.htm" />
+      <HelpTOCNode Id="b190c38b-9adb-4563-ba91-179dc4cb6a43" Title="Nak Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.Nak.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.Nak.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="d2404bf3-d3d1-488a-bf70-e51a98f3fa6d" Title="Nak Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.Nak.htm">
+        <HelpTOCNode Title="ErrorCode Property " Url="html/P-OSDP.Net.Model.ReplyData.Nak.ErrorCode.htm" />
+        <HelpTOCNode Title="ExtraData Property " Url="html/P-OSDP.Net.Model.ReplyData.Nak.ExtraData.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="b8c6b39d-6947-4d59-9771-855ea4a546f2" Title="OutputStatus Class" Url="html/T-OSDP.Net.Model.ReplyData.OutputStatus.htm">
+      <HelpTOCNode Title="OutputStatus Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.OutputStatus.htm" />
+      <HelpTOCNode Id="3e2b299e-47e1-4a45-ba8b-cd0df6e028f1" Title="OutputStatus Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.OutputStatus.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.OutputStatus.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="a63150ab-55fe-4fc1-bd34-06e5527d9724" Title="OutputStatus Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.OutputStatus.htm">
+        <HelpTOCNode Title="OutputStatuses Property " Url="html/P-OSDP.Net.Model.ReplyData.OutputStatus.OutputStatuses.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="fcdbfb8b-635c-4855-b705-4f3f77bc2319" Title="PIVData Class" Url="html/T-OSDP.Net.Model.ReplyData.PIVData.htm">
+      <HelpTOCNode Title="PIVData Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.PIVData.htm" />
+      <HelpTOCNode Id="2663ea37-ceef-4d60-8722-56a10114d7e8" Title="PIVData Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.PIVData.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.PIVData.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="fac313af-04ce-4450-8c88-0793d73b6a7d" Title="PIVData Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.PIVData.htm">
+        <HelpTOCNode Title="Data Property " Url="html/P-OSDP.Net.Model.ReplyData.PIVData.Data.htm" />
+        <HelpTOCNode Title="LengthOfFragment Property " Url="html/P-OSDP.Net.Model.ReplyData.PIVData.LengthOfFragment.htm" />
+        <HelpTOCNode Title="Offset Property " Url="html/P-OSDP.Net.Model.ReplyData.PIVData.Offset.htm" />
+        <HelpTOCNode Title="WholeMessageLength Property " Url="html/P-OSDP.Net.Model.ReplyData.PIVData.WholeMessageLength.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="f14c9e72-f914-4c18-8e1c-c38b76d63948" Title="RawCardData Class" Url="html/T-OSDP.Net.Model.ReplyData.RawCardData.htm">
+      <HelpTOCNode Title="RawCardData Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.RawCardData.htm" />
+      <HelpTOCNode Id="f34ce921-516c-40c2-ac32-9e917261005f" Title="RawCardData Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.RawCardData.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.RawCardData.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="a1f04862-43de-439c-910b-54f38b90426a" Title="RawCardData Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.RawCardData.htm">
+        <HelpTOCNode Title="BitCount Property " Url="html/P-OSDP.Net.Model.ReplyData.RawCardData.BitCount.htm" />
+        <HelpTOCNode Title="Data Property " Url="html/P-OSDP.Net.Model.ReplyData.RawCardData.Data.htm" />
+        <HelpTOCNode Title="FormatCode Property " Url="html/P-OSDP.Net.Model.ReplyData.RawCardData.FormatCode.htm" />
+        <HelpTOCNode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.ReplyData.RawCardData.ReaderNumber.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Id="2d8f042e-9fa1-4d05-a588-c222fce1233b" Title="ReaderStatus Class" Url="html/T-OSDP.Net.Model.ReplyData.ReaderStatus.htm">
+      <HelpTOCNode Title="ReaderStatus Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.ReaderStatus.htm" />
+      <HelpTOCNode Id="71f72e36-9663-4b0e-bf48-e62e8802b826" Title="ReaderStatus Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.ReaderStatus.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.ReaderStatus.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="7fc6dbd1-3811-4b72-a006-91b5af012dc1" Title="ReaderStatus Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.ReaderStatus.htm">
+        <HelpTOCNode Title="ReaderStatuses Property " Url="html/P-OSDP.Net.Model.ReplyData.ReaderStatus.ReaderStatuses.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+    <HelpTOCNode Title="ReaderStatus.ReaderTamperStatus Enumeration" Url="html/T-OSDP.Net.Model.ReplyData.ReaderStatus.ReaderTamperStatus.htm" />
+    <HelpTOCNode Id="5d6404f7-0703-4433-bb19-ed2d56e2cfe0" Title="ReturnReplyData(T) Class" Url="html/T-OSDP.Net.Model.ReplyData.ReturnReplyData-1.htm">
+      <HelpTOCNode Title="ReturnReplyData(T) Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.ReturnReplyData-1.htm" />
+      <HelpTOCNode Id="a63d1800-d222-40e8-88a0-12871bf49c90" Title="ReturnReplyData(T) Methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.ReturnReplyData-1.htm">
+        <HelpTOCNode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.ReturnReplyData-1.ToString.htm" />
+      </HelpTOCNode>
+      <HelpTOCNode Id="3f1edb66-e86d-4dab-8625-f75aca8a8311" Title="ReturnReplyData(T) Properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.ReturnReplyData-1.htm">
+        <HelpTOCNode Title="Ack Property " Url="html/P-OSDP.Net.Model.ReplyData.ReturnReplyData-1.Ack.htm" />
+        <HelpTOCNode Title="Nak Property " Url="html/P-OSDP.Net.Model.ReplyData.ReturnReplyData-1.Nak.htm" />
+        <HelpTOCNode Title="ReplyData Property " Url="html/P-OSDP.Net.Model.ReplyData.ReturnReplyData-1.ReplyData.htm" />
+      </HelpTOCNode>
+    </HelpTOCNode>
+  </HelpTOCNode>
+</HelpTOC>

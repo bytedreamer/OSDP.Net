@@ -1,29 +1,29 @@
 # Supported Commands #
 
 ## Commands ##
-| Name | Value | Support |
-|:-----|:------|:-------:|
-| osdp_POLL      | 0x60 | YES |
-| osdp_ID        | 0x61 | YES |
-| osdp_CAP       | 0x62 | YES |
-| osdp_LSTAT     | 0x64 | YES |
-| osdp_ISTAT     | 0x65 | YES |
-| osdp_OSTAT     | 0x66 | YES |
-| osdp_RSTAT     | 0x67 | YES |
-| osdp_OUT       | 0x68 | YES |
-| osdp_LED       | 0x69 | YES |
-| osdp_BUZ       | 0x6A | YES |
-| osdp_TEXT      | 0x6B | YES |
-| osdp_COMSET    | 0x6E | YES | 
-| osdp_BIOREAD   | 0x73 | NO  |
-| osdp_BIOMATCH  | 0x74 | NO  |
-| osdp_KEYSET    | 0x75 | YES |
-| osdp_CHLNG     | 0x76 | YES |
-| osdp_SCRYPT    | 0x77 | YES |
-| osdp_ACURXSIZE | 0x7B | NO  |
-| osdp_MFG       | 0x80 | YES |
-| osdp_XWR       | 0XA1 | YES |
-| osdp_PIVDATA   | 0XA2 | YES |
+| Name | Value | Support | Description | Documentation |
+|:-----|:------|:-------:|:------------|:--------------|
+| osdp_POLL      | 0x60 | Yes | Poll | None |
+| osdp_ID        | 0x61 | Yes | ID Report Request | [IdReport](http://bytedreamer.github.io/OSDP.Net/html/M-OSDP.Net.ControlPanel.IdReport.htm){:target="_blank"} |
+| osdp_CAP       | 0x62 | Yes | | |
+| osdp_LSTAT     | 0x64 | Yes | | |
+| osdp_ISTAT     | 0x65 | Yes | | |
+| osdp_OSTAT     | 0x66 | Yes | | |
+| osdp_RSTAT     | 0x67 | Yes | | |
+| osdp_OUT       | 0x68 | Yes | | |
+| osdp_LED       | 0x69 | Yes | | | 
+| osdp_BUZ       | 0x6A | Yes | | |
+| osdp_TEXT      | 0x6B | Yes | | |
+| osdp_COMSET    | 0x6E | Yes | | |
+| osdp_BIOREAD   | 0x73 | No  | | |
+| osdp_BIOMATCH  | 0x74 | No  | | |
+| osdp_KEYSET    | 0x75 | Yes | | |
+| osdp_CHLNG     | 0x76 | Yes | | |
+| osdp_SCRYPT    | 0x77 | Yes | | |
+| osdp_ACURXSIZE | 0x7B | No  | | |
+| osdp_MFG       | 0x80 | Yes | | |
+| osdp_XWR       | 0XA1 | Yes | | |
+| osdp_PIVDATA   | 0XA2 | Yes | | |
 
 ## Replies ##
 | Name | Value | Support |

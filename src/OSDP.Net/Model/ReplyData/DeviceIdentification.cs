@@ -6,19 +6,42 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
+    /// <summary>
+    /// Device identification data
+    /// </summary>
     public class DeviceIdentification
     {
         private DeviceIdentification()
         {
         }
 
+        /// <summary>Gets the vendor code.</summary>
         public IEnumerable<byte> VendorCode { get; private set; }
+
+        /// <summary> Gets the model number. </summary>
         public byte ModelNumber { get;private set;  }
+
+        /// <summary> Gets the hardware version. </summary>
         public byte Version { get; private set; }
+
+        /// <summary>Gets the serial number.</summary>
         public int SerialNumber { get; private set; }
+
+        /// <summary>
+        /// Gets the firmware major version.
+        /// </summary>
         public byte FirmwareMajor { get; private set; }
+
+        /// <summary>
+        /// Gets the firmware minor version.
+        /// </summary>
         public byte FirmwareMinor { get; private set; }
+
+        /// <summary>
+        /// Gets the firmware build.
+        /// </summary>
         public byte FirmwareBuild { get; private set; }
+
 
         internal static DeviceIdentification ParseData(ReadOnlySpan<byte> data)
         {
@@ -42,6 +65,7 @@ namespace OSDP.Net.Model.ReplyData
             return deviceIdentification;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var build = new StringBuilder();

@@ -78,6 +78,10 @@ namespace OSDP.Net
             await SendCommand(connectionId, command).ConfigureAwait(false);
         }
 
+        /// <summary>Request to get an ID Report from the PD</summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device</param>
+        /// <param name="address">Address assigned to the device</param>
+        /// <returns>ID report reply data</returns>
         public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
         {
             return DeviceIdentification.ParseData((await SendCommand(connectionId,
