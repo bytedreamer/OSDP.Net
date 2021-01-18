@@ -13,9 +13,7 @@ using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
 namespace OSDP.Net
 {
-    /// <summary>
-    /// The OSDP control panel
-    /// </summary>
+    /// <summary>The OSDP control panel used to communicate to Peripheral Devices (PDs) as an Access Control Unit (ACU). If multiple connections are needed, add them to the control panel. Avoid creating multiple control panel objects.</summary>
     public class ControlPanel
     {
         private readonly ConcurrentBag<Bus> _buses = new ConcurrentBag<Bus>();
@@ -24,9 +22,9 @@ namespace OSDP.Net
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(5);
 
-        /// <summary>
-        /// Default constructor
-        /// </summary>
+
+        /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
+        /// <param name="logger">The logger definition used for logging.</param>
         public ControlPanel(ILogger<ControlPanel> logger = null)
         {
             _logger = logger;
@@ -43,10 +41,10 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Start polling on a connection
+        /// Start polling on the defined connection.
         /// </summary>
-        /// <param name="connection">Details of the connection</param>
-        /// <returns>The id of the connection</returns>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <returns>An identifier that represents the connection</returns>
         public Guid StartConnection(IOsdpConnection connection)
         {
             var newBus = new Bus(connection, _replies, _logger);
@@ -69,25 +67,29 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Send a custom command for testing
+        /// Send a custom command for testing.
         /// </summary>
-        /// <param name="connectionId"></param>
-        /// <param name="command"></param>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="command">The custom command to send.</param>
         public async Task SendCustomCommand(Guid connectionId, Command command)
         {
             await SendCommand(connectionId, command).ConfigureAwait(false);
         }
 
-        /// <summary>Request to get an ID Report from the PD</summary>
-        /// <param name="connectionId">Identify the connection for communicating to the device</param>
-        /// <param name="address">Address assigned to the device</param>
-        /// <returns>ID report reply data</returns>
+        /// <summary>Request to get an ID Report from the PD.</summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns>ID report reply data that was requested.</returns>
         public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
         {
             return DeviceIdentification.ParseData((await SendCommand(connectionId,
                 new IdReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
+        /// <summary>Request to get the capabilities of the PD.</summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns>Device capabilities reply data that was requested.</returns>
         public async Task<DeviceCapabilities> DeviceCapabilities(Guid connectionId, byte address)
         {
             return Model.ReplyData.DeviceCapabilities.ParseData((await SendCommand(connectionId,
@@ -319,7 +321,7 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Shutdown the control panel and stop all communication to PDs
+        /// Shutdown the control panel and stop all communication to PDs.
         /// </summary>
         public void Shutdown()
         {
@@ -338,23 +340,23 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Reset communication sequence with the PD specified
+        /// Reset communication sequence with the PD specified.
         /// </summary>
-        /// <param name="connectionId">Identify the connection for communicating to the device</param>
-        /// <param name="address">Address assigned to the device</param>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
         public void ResetDevice(Guid connectionId, int address)
         {
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.ResetDevice(address);
         }
 
         /// <summary>
-        /// Add a PD to the control panel. It will replace an existing PD that is configured at the same address.
+        /// Add a PD to the control panel. This will replace an existing PD that is configured at the same address.
         /// </summary>
-        /// <param name="connectionId">Identify the connection for communicating to the device</param>
-        /// <param name="address">Address assigned to the device</param>
-        /// <param name="useCrc">Use CRC for error checking</param>
-        /// <param name="useSecureChannel">Require the device to communicate with a secure channel</param>
-        /// <param name="secureChannelKey">Set the secure channel key, default installation key is used if not specified</param>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="useCrc">Use CRC for error checking.</param>
+        /// <param name="useSecureChannel">Require the device to communicate with a secure channel.</param>
+        /// <param name="secureChannelKey">Set the secure channel key, default installation key is used if not specified.</param>
         public void AddDevice(Guid connectionId, byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
         {
             var foundBus = _buses.FirstOrDefault(bus => bus.Id == connectionId);
@@ -369,8 +371,8 @@ namespace OSDP.Net
         /// <summary>
         /// Remove a PD from the control panel.
         /// </summary>
-        /// <param name="connectionId">Identify the connection for communicating to the device</param>
-        /// <param name="address">Address assigned to the device</param>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
         public void RemoveDevice(Guid connectionId, byte address)
         {
             _buses.FirstOrDefault(bus => bus.Id == connectionId)?.RemoveDevice(address);

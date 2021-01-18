@@ -27,7 +27,7 @@
       <MSHelp:Attr Name="Locale" Value="en-us" />
       <MSHelp:Attr Name="TopicType" Value="kbSyntax" />
       <MSHelp:Attr Name="TopicType" Value="apiref" />
-      <MSHelp:Attr Name="Abstract" Value="Add a PD to the control panel. It will replace an existing PD that is configured at the same address." />
+      <MSHelp:Attr Name="Abstract" Value="Add a PD to the control panel. This will replace an existing PD that is configured at the same address." />
       <MSHelp:Attr Name="AssemblyVersion" Value="" />
     </xml>
   <link rel="stylesheet" href="../TOC.css"><script type="text/javascript" src="../TOC.js"></script></head>
@@ -219,11 +219,6 @@
 <div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="N-OSDP.Net.Connections.htm" target="_self">OSDP.Net.Connections Namespace</a>
 <div class="Hidden">
-<div class="TreeNode">
-<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Connections.IOsdpConnection.htm" target="_self">IOsdpConnection Interface</a>
-<div class="Hidden">
-</div>
-</div>
 <div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Connections.SerialPortOsdpConnection.htm" target="_self">SerialPortOsdpConnection Class</a>
 <div class="Hidden">
@@ -542,7 +537,7 @@
             <div id="mainSection">
               <div id="mainBody">
                 <div class="summary">
-   Add a PD to the control panel. It will replace an existing PD that is configured at the same address.
+   Add a PD to the control panel. This will replace an existing PD that is configured at the same address.
    </div>
                 <p />
     <b>Namespace:</b> 
@@ -567,7 +562,7 @@
 	<a href="http://msdn.microsoft.com/en-us/library/system.boolean.aspx" target="_blank">bool</a>^ <span class="parameter">useCrc</span>, 
 	<a href="http://msdn.microsoft.com/en-us/library/system.boolean.aspx" target="_blank">bool</a>^ <span class="parameter">useSecureChannel</span>, 
 	<span class="keyword">array</span>&lt;<a href="http://msdn.microsoft.com/en-us/library/system.byte.aspx" target="_blank">unsigned char</a>^&gt;^ <span class="parameter">secureChannelKey</span>
-)</pre></div></div></div><div id="parameters"><h4 class="subHeading">Parameters</h4><dl paramName="connectionId"><dt><span class="parameterItalic">connectionId</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.guid.aspx" target="_blank">Guid</a><br />Identify the connection for communicating to the device</dd></dl><dl paramName="address"><dt><span class="parameterItalic">address</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.byte.aspx" target="_blank">Byte</a><br />Address assigned to the device</dd></dl><dl paramName="useCrc"><dt><span class="parameterItalic">useCrc</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.boolean.aspx" target="_blank">Boolean</a><br />Use CRC for error checking</dd></dl><dl paramName="useSecureChannel"><dt><span class="parameterItalic">useSecureChannel</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.boolean.aspx" target="_blank">Boolean</a><br />Require the device to communicate with a secure channel</dd></dl><dl paramName="secureChannelKey"><dt><span class="parameterItalic">secureChannelKey</span></dt><dd>Type: <span class="languageSpecificText"><span class="cpp">array&lt;</span></span><a href="http://msdn.microsoft.com/en-us/library/system.byte.aspx" target="_blank">Byte</a><span class="languageSpecificText"><span class="cpp">&gt;</span><span class="cs">[]</span><span class="vb">()</span><span class="nu">[]</span><span class="fs">[]</span></span><br />Set the secure channel key, default installation key is used if not specified</dd></dl></div></div><div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">See Also</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="seeAlsoSection"><!----></a><div class="seeAlsoStyle"><a href="T-OSDP.Net.ControlPanel.htm">ControlPanel Class</a></div><div class="seeAlsoStyle"><a href="N-OSDP.Net.htm">OSDP.Net Namespace</a></div></div></div>
+)</pre></div></div></div><div id="parameters"><h4 class="subHeading">Parameters</h4><dl paramName="connectionId"><dt><span class="parameterItalic">connectionId</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.guid.aspx" target="_blank">Guid</a><br />Identify the connection for communicating to the device.</dd></dl><dl paramName="address"><dt><span class="parameterItalic">address</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.byte.aspx" target="_blank">Byte</a><br />Address assigned to the device.</dd></dl><dl paramName="useCrc"><dt><span class="parameterItalic">useCrc</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.boolean.aspx" target="_blank">Boolean</a><br />Use CRC for error checking.</dd></dl><dl paramName="useSecureChannel"><dt><span class="parameterItalic">useSecureChannel</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.boolean.aspx" target="_blank">Boolean</a><br />Require the device to communicate with a secure channel.</dd></dl><dl paramName="secureChannelKey"><dt><span class="parameterItalic">secureChannelKey</span></dt><dd>Type: <span class="languageSpecificText"><span class="cpp">array&lt;</span></span><a href="http://msdn.microsoft.com/en-us/library/system.byte.aspx" target="_blank">Byte</a><span class="languageSpecificText"><span class="cpp">&gt;</span><span class="cs">[]</span><span class="vb">()</span><span class="nu">[]</span><span class="fs">[]</span></span><br />Set the secure channel key, default installation key is used if not specified.</dd></dl></div></div><div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">See Also</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="seeAlsoSection"><!----></a><div class="seeAlsoStyle"><a href="T-OSDP.Net.ControlPanel.htm">ControlPanel Class</a></div><div class="seeAlsoStyle"><a href="N-OSDP.Net.htm">OSDP.Net Namespace</a></div></div></div>
             </div>
           </div>
         </div>

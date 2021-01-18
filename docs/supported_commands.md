@@ -1,11 +1,11 @@
-# Supported Commands #
+# Supported OSDP v2.2 Commands and Reply Codes
 
-## Commands ##
+## Commands
 | Name | Value | Support | Description | Documentation |
 |:-----|:------|:-------:|:------------|:--------------|
 | osdp_POLL      | 0x60 | Yes | Poll | None |
 | osdp_ID        | 0x61 | Yes | ID Report Request | [IdReport](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.IdReport.htm) |
-| osdp_CAP       | 0x62 | Yes | | |
+| osdp_CAP       | 0x62 | Yes | PD Capabilities Request | [DeviceCapabilities](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.DeviceCapabilities.htm) |
 | osdp_LSTAT     | 0x64 | Yes | | |
 | osdp_ISTAT     | 0x65 | Yes | | |
 | osdp_OSTAT     | 0x66 | Yes | | |
@@ -21,11 +21,14 @@
 | osdp_CHLNG     | 0x76 | Yes | | |
 | osdp_SCRYPT    | 0x77 | Yes | | |
 | osdp_ACURXSIZE | 0x7B | No  | | |
+| osdp_FILETRANSFER | 0x7C | No | | |
 | osdp_MFG       | 0x80 | Yes | | |
 | osdp_XWR       | 0XA1 | Yes | | |
-| osdp_PIVDATA   | 0XA2 | Yes | | |
+| osdp_ABORT     | 0XA2 | No  | | |
+| osdp_PIVDATA   | 0XA3 | Yes | | |
+| osdp_GENAUTH   | 0XA4 | No  | | |
 
-## Replies ##
+## Replies
 | Name | Value | Support |
 |:-----|:------|:-------:|
 | osdp_ACK      | 0x40 | YES |

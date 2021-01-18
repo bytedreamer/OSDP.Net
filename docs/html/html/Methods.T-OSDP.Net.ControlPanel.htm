@@ -214,11 +214,6 @@
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="N-OSDP.Net.Connections.htm" target="_self">OSDP.Net.Connections Namespace</a>
 <div class="Hidden">
 <div class="TreeNode">
-<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Connections.IOsdpConnection.htm" target="_self">IOsdpConnection Interface</a>
-<div class="Hidden">
-</div>
-</div>
-<div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Connections.SerialPortOsdpConnection.htm" target="_self">SerialPortOsdpConnection Class</a>
 <div class="Hidden">
 </div>
@@ -563,7 +558,7 @@
                       </td>
                       <td>
                         <div class="summary">
-   Add a PD to the control panel. It will replace an existing PD that is configured at the same address.
+   Add a PD to the control panel. This will replace an existing PD that is configured at the same address.
    </div>
                       </td>
                     </tr>
@@ -583,7 +578,9 @@
                       <td>
                         <a href="M-OSDP.Net.ControlPanel.DeviceCapabilities.htm">DeviceCapabilities</a>
                       </td>
-                      <td />
+                      <td>
+                        <div class="summary">Request to get the capabilities of the PD.</div>
+                      </td>
                     </tr>
                     <tr data="public;inherited;notNetfw;">
                       <td>
@@ -655,7 +652,7 @@
                         <a href="M-OSDP.Net.ControlPanel.IdReport.htm">IdReport</a>
                       </td>
                       <td>
-                        <div class="summary">Request to get an ID Report from the PD</div>
+                        <div class="summary">Request to get an ID Report from the PD.</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -784,7 +781,7 @@
                       </td>
                       <td>
                         <div class="summary">
-   Reset communication sequence with the PD specified
+   Reset communication sequence with the PD specified.
    </div>
                       </td>
                     </tr>
@@ -797,7 +794,7 @@
                       </td>
                       <td>
                         <div class="summary">
-   Send a custom command for testing
+   Send a custom command for testing.
    </div>
                       </td>
                     </tr>
@@ -810,7 +807,7 @@
                       </td>
                       <td>
                         <div class="summary">
-   Shutdown the control panel and stop all communication to PDs
+   Shutdown the control panel and stop all communication to PDs.
    </div>
                       </td>
                     </tr>
@@ -823,7 +820,7 @@
                       </td>
                       <td>
                         <div class="summary">
-   Start polling on a connection
+   Start polling on the defined connection.
    </div>
                       </td>
                     </tr>

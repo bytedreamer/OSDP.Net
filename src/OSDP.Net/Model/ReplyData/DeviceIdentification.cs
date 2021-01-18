@@ -7,7 +7,7 @@ using OSDP.Net.Messages;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// Device identification data
+    /// The data contained in a PD identification reply.
     /// </summary>
     public class DeviceIdentification
     {
