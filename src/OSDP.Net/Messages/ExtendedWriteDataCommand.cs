@@ -3,7 +3,7 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class ExtendedWriteDataCommand : Command
+    internal class ExtendedWriteDataCommand : Command
     {
         private readonly ExtendedWrite _extendedWrite;
 

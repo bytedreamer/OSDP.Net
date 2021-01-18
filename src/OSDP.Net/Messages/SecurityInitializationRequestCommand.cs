@@ -2,7 +2,7 @@ using System;
 
 namespace OSDP.Net.Messages
 {
-    public class SecurityInitializationRequestCommand : Command
+    internal class SecurityInitializationRequestCommand : Command
     {
         private readonly byte[] _serverRandomNumber;
 

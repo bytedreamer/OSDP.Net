@@ -3,7 +3,7 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class GetPIVDataCommand : Command
+    internal class GetPIVDataCommand : Command
     {
         private readonly GetPIVData _getPivData;
 

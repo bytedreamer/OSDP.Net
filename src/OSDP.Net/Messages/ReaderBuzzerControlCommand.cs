@@ -4,7 +4,7 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class ReaderBuzzerControlCommand : Command
+    internal class ReaderBuzzerControlCommand : Command
     {
         private readonly ReaderBuzzerControl _readerBuzzerControl;
 

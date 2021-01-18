@@ -4,7 +4,7 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class EncryptionKeySetCommand : Command
+    internal class EncryptionKeySetCommand : Command
     {
         private readonly EncryptionKeyConfiguration _encryptionKeyConfiguration;
 

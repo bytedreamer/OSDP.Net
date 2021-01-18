@@ -2,7 +2,7 @@ using System;
 
 namespace OSDP.Net.Messages
 {
-    public class IdReportCommand : Command
+    internal class IdReportCommand : Command
     {
         public IdReportCommand(byte address)
         {

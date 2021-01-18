@@ -4,7 +4,7 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class OutputControlCommand : Command
+    internal class OutputControlCommand : Command
     {
         private readonly OutputControls _outputControls;
 

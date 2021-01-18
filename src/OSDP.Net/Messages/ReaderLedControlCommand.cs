@@ -4,7 +4,7 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class ReaderLedControlCommand : Command
+    internal class ReaderLedControlCommand : Command
     {
         private readonly ReaderLedControls _readerLedControls;
 

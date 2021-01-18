@@ -4,7 +4,7 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class CommunicationSetCommand : Command
+    internal class CommunicationSetCommand : Command
     {
         private readonly CommunicationConfiguration _communicationConfiguration;
 

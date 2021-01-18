@@ -6,17 +6,17 @@
   <HelpKINode Title="AddDevice method" Url="html/M-OSDP.Net.ControlPanel.AddDevice.htm" />
   <HelpKINode Title="Address property">
     <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.Model.ReplyData.CommunicationConfiguration.Address.htm" />
-    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.NakReplyEventArgs.Address.htm" />
-    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.Address.htm" />
-    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.Address.htm" />
-    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.Address.htm" />
+    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.Address.htm" />
     <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.Model.CommandData.CommunicationConfiguration.Address.htm" />
     <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.Address.htm" />
     <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.Messages.Message.Address.htm" />
-    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.Address.htm" />
-    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.Address.htm" />
+    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.Address.htm" />
+    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.Address.htm" />
     <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.Address.htm" />
+    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.Address.htm" />
+    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.NakReplyEventArgs.Address.htm" />
     <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.Address.htm" />
+    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.Address.htm" />
   </HelpKINode>
   <HelpKINode Title="Amber enumeration member" Url="html/T-OSDP.Net.Model.CommandData.LedColor.htm" />
   <HelpKINode Title="Amber field" Url="html/F-OSDP.Net.Model.CommandData.LedColor.Amber.htm" />
@@ -24,10 +24,10 @@
   <HelpKINode Title="BadChecksumOrCrc field" Url="html/F-OSDP.Net.Model.ReplyData.ErrorCode.BadChecksumOrCrc.htm" />
   <HelpKINode Title="BaudRate property">
     <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.IOsdpConnection.BaudRate.htm" />
+    <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.BaudRate.htm" />
     <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.TcpClientOsdpConnection.BaudRate.htm" />
     <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Model.ReplyData.CommunicationConfiguration.BaudRate.htm" />
     <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.TcpServerOsdpConnection.BaudRate.htm" />
-    <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.BaudRate.htm" />
     <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Model.CommandData.CommunicationConfiguration.BaudRate.htm" />
   </HelpKINode>
   <HelpKINode Title="BeginNewSecureConnectionSequence enumeration member" Url="html/T-OSDP.Net.Messages.SecurityBlockType.htm" />
@@ -48,17 +48,17 @@
   <HelpKINode Title="Blue enumeration member" Url="html/T-OSDP.Net.Model.CommandData.LedColor.htm" />
   <HelpKINode Title="Blue field" Url="html/F-OSDP.Net.Model.CommandData.LedColor.Blue.htm" />
   <HelpKINode Title="BuildData method">
-    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.OutputControl.BuildData.htm" />
-    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderBuzzerControl.BuildData.htm" />
-    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ManufacturerSpecific.BuildData.htm" />
-    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.CommunicationConfiguration.BuildData.htm" />
     <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderLedControls.BuildData.htm" />
-    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.BuildData.htm" />
+    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderBuzzerControl.BuildData.htm" />
     <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderTextOutput.BuildData.htm" />
-    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.GetPIVData.BuildData.htm" />
-    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.BuildData.htm" />
-    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderLedControl.BuildData.htm" />
     <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.OutputControls.BuildData.htm" />
+    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.GetPIVData.BuildData.htm" />
+    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.OutputControl.BuildData.htm" />
+    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.CommunicationConfiguration.BuildData.htm" />
+    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.BuildData.htm" />
+    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ReaderLedControl.BuildData.htm" />
+    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.ManufacturerSpecific.BuildData.htm" />
+    <HelpKINode Title="BuildData Method " Url="html/M-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.BuildData.htm" />
   </HelpKINode>
   <HelpKINode Title="Busy enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="Busy field" Url="html/F-OSDP.Net.Messages.ReplyType.Busy.htm" />
@@ -95,9 +95,9 @@
   <HelpKINode Title="CheckCharacterSupport field" Url="html/F-OSDP.Net.Model.ReplyData.CapabilityFunction.CheckCharacterSupport.htm" />
   <HelpKINode Title="Close method">
     <HelpKINode Title="Close Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.Close.htm" />
+    <HelpKINode Title="Close Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.Close.htm" />
     <HelpKINode Title="Close Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.Close.htm" />
     <HelpKINode Title="Close Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.Close.htm" />
-    <HelpKINode Title="Close Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.Close.htm" />
   </HelpKINode>
   <HelpKINode Title="Column property" Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.Column.htm" />
   <HelpKINode Title="Command class">
@@ -114,14 +114,14 @@
   <HelpKINode Title="CommandMessageWithNoDataSecurity enumeration member" Url="html/T-OSDP.Net.Messages.SecurityBlockType.htm" />
   <HelpKINode Title="CommandMessageWithNoDataSecurity field" Url="html/F-OSDP.Net.Messages.SecurityBlockType.CommandMessageWithNoDataSecurity.htm" />
   <HelpKINode Title="CommunicationConfiguration class">
-    <HelpKINode Title="CommunicationConfiguration Class" Url="html/T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm" />
     <HelpKINode Title="CommunicationConfiguration Class" Url="html/T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm" />
-    <HelpKINode Title="CommunicationConfiguration Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm" />
+    <HelpKINode Title="CommunicationConfiguration Class" Url="html/T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm" />
     <HelpKINode Title="CommunicationConfiguration Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm" />
+    <HelpKINode Title="CommunicationConfiguration Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm" />
     <HelpKINode Title="about CommunicationConfiguration class" Url="html/T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm" />
     <HelpKINode Title="about CommunicationConfiguration class" Url="html/T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm" />
     <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm" />
+    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm" />
     <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Model.CommandData.CommunicationConfiguration.-ctor.htm" />
     <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm" />
     <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.CommunicationConfiguration.htm" />
@@ -130,12 +130,12 @@
   </HelpKINode>
   <HelpKINode Title="CommunicationConfiguration method" Url="html/M-OSDP.Net.ControlPanel.CommunicationConfiguration.htm" />
   <HelpKINode Title="CommunicationConfiguration.Address property">
-    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.Model.ReplyData.CommunicationConfiguration.Address.htm" />
     <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.Model.CommandData.CommunicationConfiguration.Address.htm" />
+    <HelpKINode Title="Address Property " Url="html/P-OSDP.Net.Model.ReplyData.CommunicationConfiguration.Address.htm" />
   </HelpKINode>
   <HelpKINode Title="CommunicationConfiguration.BaudRate property">
-    <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Model.ReplyData.CommunicationConfiguration.BaudRate.htm" />
     <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Model.CommandData.CommunicationConfiguration.BaudRate.htm" />
+    <HelpKINode Title="BaudRate Property " Url="html/P-OSDP.Net.Model.ReplyData.CommunicationConfiguration.BaudRate.htm" />
   </HelpKINode>
   <HelpKINode Title="CommunicationConfiguration.BuildData method" Url="html/M-OSDP.Net.Model.CommandData.CommunicationConfiguration.BuildData.htm" />
   <HelpKINode Title="CommunicationConfiguration.CommunicationConfiguration constructor" Url="html/M-OSDP.Net.Model.CommandData.CommunicationConfiguration.-ctor.htm" />
@@ -144,27 +144,16 @@
   <HelpKINode Title="CommunicationSecurity field" Url="html/F-OSDP.Net.Model.ReplyData.CapabilityFunction.CommunicationSecurity.htm" />
   <HelpKINode Title="CommunicationSecurityNotMet enumeration member" Url="html/T-OSDP.Net.Model.ReplyData.ErrorCode.htm" />
   <HelpKINode Title="CommunicationSecurityNotMet field" Url="html/F-OSDP.Net.Model.ReplyData.ErrorCode.CommunicationSecurityNotMet.htm" />
-  <HelpKINode Title="CommunicationSetCommand class">
-    <HelpKINode Title="CommunicationSetCommand Class" Url="html/T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-    <HelpKINode Title="CommunicationSetCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-    <HelpKINode Title="about CommunicationSetCommand class" Url="html/T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.CommunicationSetCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="CommunicationSetCommand.CommunicationSetCommand constructor" Url="html/M-OSDP.Net.Messages.CommunicationSetCommand.-ctor.htm" />
   <HelpKINode Title="Compliance property" Url="html/P-OSDP.Net.Model.ReplyData.DeviceCapability.Compliance.htm" />
   <HelpKINode Title="ConnectionId property">
     <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.ConnectionId.htm" />
-    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.ConnectionId.htm" />
-    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.ConnectionId.htm" />
     <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.NakReplyEventArgs.ConnectionId.htm" />
-    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.ConnectionId.htm" />
-    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.ConnectionId.htm" />
-    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.ConnectionId.htm" />
+    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.ConnectionId.htm" />
     <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.ConnectionId.htm" />
+    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.ConnectionId.htm" />
+    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.RawCardDataReplyEventArgs.ConnectionId.htm" />
+    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.ConnectionId.htm" />
+    <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.ConnectionId.htm" />
     <HelpKINode Title="ConnectionId Property " Url="html/P-OSDP.Net.ControlPanel.ExtendedReadReplyEventArgs.ConnectionId.htm" />
   </HelpKINode>
   <HelpKINode Title="ConnectionStatusChanged event" Url="html/E-OSDP.Net.ControlPanel.ConnectionStatusChanged.htm" />
@@ -313,10 +302,10 @@
   <HelpKINode Title="CrypticData enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="CrypticData field" Url="html/F-OSDP.Net.Messages.ReplyType.CrypticData.htm" />
   <HelpKINode Title="Data property">
-    <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.ReplyData.RawCardData.Data.htm" />
-    <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.CommandData.ManufacturerSpecific.Data.htm" />
     <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.ReplyData.PIVData.Data.htm" />
     <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.ReplyData.ManufacturerSpecific.Data.htm" />
+    <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.CommandData.ManufacturerSpecific.Data.htm" />
+    <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.ReplyData.RawCardData.Data.htm" />
   </HelpKINode>
   <HelpKINode Title="DataOffset property" Url="html/P-OSDP.Net.Model.CommandData.GetPIVData.DataOffset.htm" />
   <HelpKINode Title="Default enumeration member" Url="html/T-OSDP.Net.Model.CommandData.ToneCode.htm" />
@@ -332,17 +321,6 @@
   <HelpKINode Title="DeviceCapabilities method" Url="html/M-OSDP.Net.ControlPanel.DeviceCapabilities.htm" />
   <HelpKINode Title="DeviceCapabilities.Capabilities property" Url="html/P-OSDP.Net.Model.ReplyData.DeviceCapabilities.Capabilities.htm" />
   <HelpKINode Title="DeviceCapabilities.ToString method" Url="html/M-OSDP.Net.Model.ReplyData.DeviceCapabilities.ToString.htm" />
-  <HelpKINode Title="DeviceCapabilitiesCommand class">
-    <HelpKINode Title="DeviceCapabilitiesCommand Class" Url="html/T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-    <HelpKINode Title="DeviceCapabilitiesCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-    <HelpKINode Title="about DeviceCapabilitiesCommand class" Url="html/T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.DeviceCapabilitiesCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="DeviceCapabilitiesCommand.DeviceCapabilitiesCommand constructor" Url="html/M-OSDP.Net.Messages.DeviceCapabilitiesCommand.-ctor.htm" />
   <HelpKINode Title="DeviceCapability class">
     <HelpKINode Title="DeviceCapability Class" Url="html/T-OSDP.Net.Model.ReplyData.DeviceCapability.htm" />
     <HelpKINode Title="DeviceCapability Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.DeviceCapability.htm" />
@@ -386,17 +364,6 @@
   <HelpKINode Title="EncryptionKeyConfiguration.EncryptionKeyConfiguration constructor" Url="html/M-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.-ctor.htm" />
   <HelpKINode Title="EncryptionKeyConfiguration.KeyData property" Url="html/P-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.KeyData.htm" />
   <HelpKINode Title="EncryptionKeyConfiguration.KeyType property" Url="html/P-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.KeyType.htm" />
-  <HelpKINode Title="EncryptionKeySetCommand class">
-    <HelpKINode Title="EncryptionKeySetCommand Class" Url="html/T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-    <HelpKINode Title="EncryptionKeySetCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-    <HelpKINode Title="about EncryptionKeySetCommand class" Url="html/T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.EncryptionKeySetCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="EncryptionKeySetCommand.EncryptionKeySetCommand constructor" Url="html/M-OSDP.Net.Messages.EncryptionKeySetCommand.-ctor.htm" />
   <HelpKINode Title="ErrorCode enumeration" Url="html/T-OSDP.Net.Model.ReplyData.ErrorCode.htm" />
   <HelpKINode Title="ErrorCode property" Url="html/P-OSDP.Net.Model.ReplyData.Nak.ErrorCode.htm" />
   <HelpKINode Title="ErrorCode.BadChecksumOrCrc field" Url="html/F-OSDP.Net.Model.ReplyData.ErrorCode.BadChecksumOrCrc.htm" />
@@ -453,17 +420,6 @@
   <HelpKINode Title="ExtendedWrite.PData property" Url="html/P-OSDP.Net.Model.CommandData.ExtendedWrite.PData.htm" />
   <HelpKINode Title="ExtendedWrite.ReadModeSetting method" Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.ReadModeSetting.htm" />
   <HelpKINode Title="ExtendedWriteData method" Url="html/M-OSDP.Net.ControlPanel.ExtendedWriteData.htm" />
-  <HelpKINode Title="ExtendedWriteDataCommand class">
-    <HelpKINode Title="ExtendedWriteDataCommand Class" Url="html/T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-    <HelpKINode Title="ExtendedWriteDataCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-    <HelpKINode Title="about ExtendedWriteDataCommand class" Url="html/T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.ExtendedWriteDataCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="ExtendedWriteDataCommand.ExtendedWriteDataCommand constructor" Url="html/M-OSDP.Net.Messages.ExtendedWriteDataCommand.-ctor.htm" />
   <HelpKINode Title="ExtraData property" Url="html/P-OSDP.Net.Model.ReplyData.Nak.ExtraData.htm" />
   <HelpKINode Title="FirmwareBuild property" Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.FirmwareBuild.htm" />
   <HelpKINode Title="FirmwareMajor property" Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.FirmwareMajor.htm" />
@@ -492,32 +448,10 @@
   <HelpKINode Title="GetPIVData.ElementId property" Url="html/P-OSDP.Net.Model.CommandData.GetPIVData.ElementId.htm" />
   <HelpKINode Title="GetPIVData.GetPIVData constructor" Url="html/M-OSDP.Net.Model.CommandData.GetPIVData.-ctor.htm" />
   <HelpKINode Title="GetPIVData.ObjectId property" Url="html/P-OSDP.Net.Model.CommandData.GetPIVData.ObjectId.htm" />
-  <HelpKINode Title="GetPIVDataCommand class">
-    <HelpKINode Title="GetPIVDataCommand Class" Url="html/T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-    <HelpKINode Title="GetPIVDataCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-    <HelpKINode Title="about GetPIVDataCommand class" Url="html/T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.GetPIVDataCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="GetPIVDataCommand.GetPIVDataCommand constructor" Url="html/M-OSDP.Net.Messages.GetPIVDataCommand.-ctor.htm" />
   <HelpKINode Title="Green enumeration member" Url="html/T-OSDP.Net.Model.CommandData.LedColor.htm" />
   <HelpKINode Title="Green field" Url="html/F-OSDP.Net.Model.CommandData.LedColor.Green.htm" />
   <HelpKINode Title="HasSecurityControlBlock property" Url="html/P-OSDP.Net.Messages.Control.HasSecurityControlBlock.htm" />
   <HelpKINode Title="IdReport method" Url="html/M-OSDP.Net.ControlPanel.IdReport.htm" />
-  <HelpKINode Title="IdReportCommand class">
-    <HelpKINode Title="IdReportCommand Class" Url="html/T-OSDP.Net.Messages.IdReportCommand.htm" />
-    <HelpKINode Title="IdReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.IdReportCommand.htm" />
-    <HelpKINode Title="about IdReportCommand class" Url="html/T-OSDP.Net.Messages.IdReportCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.IdReportCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.IdReportCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.IdReportCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.IdReportCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.IdReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="IdReportCommand.IdReportCommand constructor" Url="html/M-OSDP.Net.Messages.IdReportCommand.-ctor.htm" />
   <HelpKINode Title="IncrementSequence method" Url="html/M-OSDP.Net.Messages.Control.IncrementSequence.htm" />
   <HelpKINode Title="InitialRMac enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="InitialRMac field" Url="html/F-OSDP.Net.Messages.ReplyType.InitialRMac.htm" />
@@ -536,17 +470,6 @@
   <HelpKINode Title="InputStatuses property" Url="html/P-OSDP.Net.Model.ReplyData.InputStatus.InputStatuses.htm" />
   <HelpKINode Title="InputStatusReport enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="InputStatusReport field" Url="html/F-OSDP.Net.Messages.ReplyType.InputStatusReport.htm" />
-  <HelpKINode Title="InputStatusReportCommand class">
-    <HelpKINode Title="InputStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-    <HelpKINode Title="InputStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-    <HelpKINode Title="about InputStatusReportCommand class" Url="html/T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.InputStatusReportCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="InputStatusReportCommand.InputStatusReportCommand constructor" Url="html/M-OSDP.Net.Messages.InputStatusReportCommand.-ctor.htm" />
   <HelpKINode Title="InputStatusReportReplyEventArgs class">
     <HelpKINode Title="constructor" Url="html/M-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.-ctor.htm" />
   </HelpKINode>
@@ -575,10 +498,10 @@
   <HelpKINode Title="IsConnected property" Url="html/P-OSDP.Net.ControlPanel.ConnectionStatusEventArgs.IsConnected.htm" />
   <HelpKINode Title="IsOnline method" Url="html/M-OSDP.Net.ControlPanel.IsOnline.htm" />
   <HelpKINode Title="IsOpen property">
-    <HelpKINode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.TcpServerOsdpConnection.IsOpen.htm" />
-    <HelpKINode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.IsOpen.htm" />
-    <HelpKINode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.TcpClientOsdpConnection.IsOpen.htm" />
     <HelpKINode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.IOsdpConnection.IsOpen.htm" />
+    <HelpKINode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.TcpServerOsdpConnection.IsOpen.htm" />
+    <HelpKINode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.TcpClientOsdpConnection.IsOpen.htm" />
+    <HelpKINode Title="IsOpen Property " Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.IsOpen.htm" />
   </HelpKINode>
   <HelpKINode Title="KeyData property" Url="html/P-OSDP.Net.Model.CommandData.EncryptionKeyConfiguration.KeyData.htm" />
   <HelpKINode Title="KeypadData enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
@@ -611,17 +534,6 @@
   <HelpKINode Title="LocalStatus.ToString method" Url="html/M-OSDP.Net.Model.ReplyData.LocalStatus.ToString.htm" />
   <HelpKINode Title="LocalStatusReport enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="LocalStatusReport field" Url="html/F-OSDP.Net.Messages.ReplyType.LocalStatusReport.htm" />
-  <HelpKINode Title="LocalStatusReportCommand class">
-    <HelpKINode Title="LocalStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-    <HelpKINode Title="LocalStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-    <HelpKINode Title="about LocalStatusReportCommand class" Url="html/T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.LocalStatusReportCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="LocalStatusReportCommand.LocalStatusReportCommand constructor" Url="html/M-OSDP.Net.Messages.LocalStatusReportCommand.-ctor.htm" />
   <HelpKINode Title="LocalStatusReportReplyEventArgs class">
     <HelpKINode Title="constructor" Url="html/M-OSDP.Net.ControlPanel.LocalStatusReportReplyEventArgs.-ctor.htm" />
   </HelpKINode>
@@ -633,42 +545,31 @@
   <HelpKINode Title="ManufacturerSpecific class">
     <HelpKINode Title="ManufacturerSpecific Class" Url="html/T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
     <HelpKINode Title="ManufacturerSpecific Class" Url="html/T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm" />
-    <HelpKINode Title="ManufacturerSpecific Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
     <HelpKINode Title="ManufacturerSpecific Members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm" />
-    <HelpKINode Title="about ManufacturerSpecific class" Url="html/T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
+    <HelpKINode Title="ManufacturerSpecific Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
     <HelpKINode Title="about ManufacturerSpecific class" Url="html/T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
+    <HelpKINode Title="about ManufacturerSpecific class" Url="html/T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
     <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm" />
+    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
     <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Model.CommandData.ManufacturerSpecific.-ctor.htm" />
     <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
     <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm" />
     <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Model.CommandData.ManufacturerSpecific.htm" />
+    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Model.ReplyData.ManufacturerSpecific.htm" />
   </HelpKINode>
   <HelpKINode Title="ManufacturerSpecific property" Url="html/P-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.ManufacturerSpecific.htm" />
   <HelpKINode Title="ManufacturerSpecific.BuildData method" Url="html/M-OSDP.Net.Model.CommandData.ManufacturerSpecific.BuildData.htm" />
   <HelpKINode Title="ManufacturerSpecific.Data property">
-    <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.CommandData.ManufacturerSpecific.Data.htm" />
     <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.ReplyData.ManufacturerSpecific.Data.htm" />
+    <HelpKINode Title="Data Property " Url="html/P-OSDP.Net.Model.CommandData.ManufacturerSpecific.Data.htm" />
   </HelpKINode>
   <HelpKINode Title="ManufacturerSpecific.ManufacturerSpecific constructor" Url="html/M-OSDP.Net.Model.CommandData.ManufacturerSpecific.-ctor.htm" />
   <HelpKINode Title="ManufacturerSpecific.ToString method" Url="html/M-OSDP.Net.Model.ReplyData.ManufacturerSpecific.ToString.htm" />
   <HelpKINode Title="ManufacturerSpecific.VendorCode property">
-    <HelpKINode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.ReplyData.ManufacturerSpecific.VendorCode.htm" />
     <HelpKINode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.CommandData.ManufacturerSpecific.VendorCode.htm" />
-  </HelpKINode>
-  <HelpKINode Title="ManufacturerSpecificCommand class">
-    <HelpKINode Title="ManufacturerSpecificCommand Class" Url="html/T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
-    <HelpKINode Title="ManufacturerSpecificCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
-    <HelpKINode Title="about ManufacturerSpecificCommand class" Url="html/T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.ManufacturerSpecificCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
+    <HelpKINode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.ReplyData.ManufacturerSpecific.VendorCode.htm" />
   </HelpKINode>
   <HelpKINode Title="ManufacturerSpecificCommand method" Url="html/M-OSDP.Net.ControlPanel.ManufacturerSpecificCommand.htm" />
-  <HelpKINode Title="ManufacturerSpecificCommand.ManufacturerSpecificCommand constructor" Url="html/M-OSDP.Net.Messages.ManufacturerSpecificCommand.-ctor.htm" />
   <HelpKINode Title="ManufacturerSpecificReplyEventArgs class">
     <HelpKINode Title="constructor" Url="html/M-OSDP.Net.ControlPanel.ManufacturerSpecificReplyEventArgs.-ctor.htm" />
   </HelpKINode>
@@ -735,8 +636,8 @@
     <HelpKINode Title="TemporaryReaderControlCode Enumeration" Url="html/T-OSDP.Net.Model.CommandData.TemporaryReaderControlCode.htm" />
   </HelpKINode>
   <HelpKINode Title="Nop field">
-    <HelpKINode Title="Nop Field" Url="html/F-OSDP.Net.Model.CommandData.TemporaryReaderControlCode.Nop.htm" />
     <HelpKINode Title="Nop Field" Url="html/F-OSDP.Net.Model.CommandData.OutputControlCode.Nop.htm" />
+    <HelpKINode Title="Nop Field" Url="html/F-OSDP.Net.Model.CommandData.TemporaryReaderControlCode.Nop.htm" />
     <HelpKINode Title="Nop Field" Url="html/F-OSDP.Net.Model.CommandData.PermanentReaderControlCode.Nop.htm" />
   </HelpKINode>
   <HelpKINode Title="Normal enumeration member" Url="html/T-OSDP.Net.Model.ReplyData.ReaderStatus.ReaderTamperStatus.htm" />
@@ -757,10 +658,10 @@
   <HelpKINode Title="OffTime property" Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.OffTime.htm" />
   <HelpKINode Title="OnTime property" Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.OnTime.htm" />
   <HelpKINode Title="Open method">
+    <HelpKINode Title="Open Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.Open.htm" />
+    <HelpKINode Title="Open Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.Open.htm" />
     <HelpKINode Title="Open Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.Open.htm" />
     <HelpKINode Title="Open Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.Open.htm" />
-    <HelpKINode Title="Open Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.Open.htm" />
-    <HelpKINode Title="Open Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.Open.htm" />
   </HelpKINode>
   <HelpKINode Title="OSDP.Net namespace" Url="html/N-OSDP.Net.htm" />
   <HelpKINode Title="OSDP.Net.Connections namespace" Url="html/N-OSDP.Net.Connections.htm" />
@@ -825,84 +726,16 @@
     <HelpKINode Title="Command Class" Url="html/T-OSDP.Net.Messages.Command.htm" />
     <HelpKINode Title="Command Members" Url="html/AllMembers.T-OSDP.Net.Messages.Command.htm" />
   </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.CommunicationSetCommand class">
-    <HelpKINode Title="CommunicationSetCommand Class" Url="html/T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-    <HelpKINode Title="CommunicationSetCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.CommunicationSetCommand.htm" />
-  </HelpKINode>
   <HelpKINode Title="OSDP.Net.Messages.Control class">
     <HelpKINode Title="Control Class" Url="html/T-OSDP.Net.Messages.Control.htm" />
     <HelpKINode Title="Control Members" Url="html/AllMembers.T-OSDP.Net.Messages.Control.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.DeviceCapabilitiesCommand class">
-    <HelpKINode Title="DeviceCapabilitiesCommand Class" Url="html/T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-    <HelpKINode Title="DeviceCapabilitiesCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.DeviceCapabilitiesCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.EncryptionKeySetCommand class">
-    <HelpKINode Title="EncryptionKeySetCommand Class" Url="html/T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-    <HelpKINode Title="EncryptionKeySetCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.EncryptionKeySetCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.ExtendedWriteDataCommand class">
-    <HelpKINode Title="ExtendedWriteDataCommand Class" Url="html/T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-    <HelpKINode Title="ExtendedWriteDataCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ExtendedWriteDataCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.GetPIVDataCommand class">
-    <HelpKINode Title="GetPIVDataCommand Class" Url="html/T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-    <HelpKINode Title="GetPIVDataCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.GetPIVDataCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.IdReportCommand class">
-    <HelpKINode Title="IdReportCommand Class" Url="html/T-OSDP.Net.Messages.IdReportCommand.htm" />
-    <HelpKINode Title="IdReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.IdReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.InputStatusReportCommand class">
-    <HelpKINode Title="InputStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-    <HelpKINode Title="InputStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.InputStatusReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.LocalStatusReportCommand class">
-    <HelpKINode Title="LocalStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-    <HelpKINode Title="LocalStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.LocalStatusReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.ManufacturerSpecificCommand class">
-    <HelpKINode Title="ManufacturerSpecificCommand Class" Url="html/T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
-    <HelpKINode Title="ManufacturerSpecificCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ManufacturerSpecificCommand.htm" />
   </HelpKINode>
   <HelpKINode Title="OSDP.Net.Messages.Message class">
     <HelpKINode Title="Message Class" Url="html/T-OSDP.Net.Messages.Message.htm" />
     <HelpKINode Title="Message Members" Url="html/AllMembers.T-OSDP.Net.Messages.Message.htm" />
   </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.OutputControlCommand class">
-    <HelpKINode Title="OutputControlCommand Class" Url="html/T-OSDP.Net.Messages.OutputControlCommand.htm" />
-    <HelpKINode Title="OutputControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.OutputControlCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.OutputStatusReportCommand class">
-    <HelpKINode Title="OutputStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-    <HelpKINode Title="OutputStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.ReaderBuzzerControlCommand class">
-    <HelpKINode Title="ReaderBuzzerControlCommand Class" Url="html/T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-    <HelpKINode Title="ReaderBuzzerControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.ReaderLedControlCommand class">
-    <HelpKINode Title="ReaderLedControlCommand Class" Url="html/T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-    <HelpKINode Title="ReaderLedControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.ReaderStatusReportCommand class">
-    <HelpKINode Title="ReaderStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-    <HelpKINode Title="ReaderStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.ReaderTextOutputCommand class">
-    <HelpKINode Title="ReaderTextOutputCommand Class" Url="html/T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-    <HelpKINode Title="ReaderTextOutputCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-  </HelpKINode>
   <HelpKINode Title="OSDP.Net.Messages.ReplyType enumeration" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="OSDP.Net.Messages.SecurityBlockType enumeration" Url="html/T-OSDP.Net.Messages.SecurityBlockType.htm" />
-  <HelpKINode Title="OSDP.Net.Messages.SecurityInitializationRequestCommand class">
-    <HelpKINode Title="SecurityInitializationRequestCommand Class" Url="html/T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-    <HelpKINode Title="SecurityInitializationRequestCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OSDP.Net.Messages.ServerCryptogramCommand class">
-    <HelpKINode Title="ServerCryptogramCommand Class" Url="html/T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-    <HelpKINode Title="ServerCryptogramCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-  </HelpKINode>
   <HelpKINode Title="OSDP.Net.Model.CommandData namespace" Url="html/N-OSDP.Net.Model.CommandData.htm" />
   <HelpKINode Title="OSDP.Net.Model.CommandData.CommunicationConfiguration class">
     <HelpKINode Title="CommunicationConfiguration Class" Url="html/T-OSDP.Net.Model.CommandData.CommunicationConfiguration.htm" />
@@ -1049,17 +882,6 @@
   <HelpKINode Title="OutputControlCode.PermanentStateOnAllowTimedOperation field" Url="html/F-OSDP.Net.Model.CommandData.OutputControlCode.PermanentStateOnAllowTimedOperation.htm" />
   <HelpKINode Title="OutputControlCode.TemporaryStateOffResumePermanentState field" Url="html/F-OSDP.Net.Model.CommandData.OutputControlCode.TemporaryStateOffResumePermanentState.htm" />
   <HelpKINode Title="OutputControlCode.TemporaryStateOnResumePermanentState field" Url="html/F-OSDP.Net.Model.CommandData.OutputControlCode.TemporaryStateOnResumePermanentState.htm" />
-  <HelpKINode Title="OutputControlCommand class">
-    <HelpKINode Title="OutputControlCommand Class" Url="html/T-OSDP.Net.Messages.OutputControlCommand.htm" />
-    <HelpKINode Title="OutputControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.OutputControlCommand.htm" />
-    <HelpKINode Title="about OutputControlCommand class" Url="html/T-OSDP.Net.Messages.OutputControlCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.OutputControlCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.OutputControlCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.OutputControlCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.OutputControlCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.OutputControlCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OutputControlCommand.OutputControlCommand constructor" Url="html/M-OSDP.Net.Messages.OutputControlCommand.-ctor.htm" />
   <HelpKINode Title="OutputControls class">
     <HelpKINode Title="OutputControls Class" Url="html/T-OSDP.Net.Model.CommandData.OutputControls.htm" />
     <HelpKINode Title="OutputControls Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.OutputControls.htm" />
@@ -1088,17 +910,6 @@
   <HelpKINode Title="OutputStatuses property" Url="html/P-OSDP.Net.Model.ReplyData.OutputStatus.OutputStatuses.htm" />
   <HelpKINode Title="OutputStatusReport enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="OutputStatusReport field" Url="html/F-OSDP.Net.Messages.ReplyType.OutputStatusReport.htm" />
-  <HelpKINode Title="OutputStatusReportCommand class">
-    <HelpKINode Title="OutputStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-    <HelpKINode Title="OutputStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-    <HelpKINode Title="about OutputStatusReportCommand class" Url="html/T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.OutputStatusReportCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.OutputStatusReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="OutputStatusReportCommand.OutputStatusReportCommand constructor" Url="html/M-OSDP.Net.Messages.OutputStatusReportCommand.-ctor.htm" />
   <HelpKINode Title="OutputStatusReportReplyEventArgs class">
     <HelpKINode Title="constructor" Url="html/M-OSDP.Net.ControlPanel.OutputStatusReportReplyEventArgs.-ctor.htm" />
   </HelpKINode>
@@ -1109,8 +920,8 @@
   <HelpKINode Title="OutputStatusReportReplyReceived event" Url="html/E-OSDP.Net.ControlPanel.OutputStatusReportReplyReceived.htm" />
   <HelpKINode Title="PCommand property" Url="html/P-OSDP.Net.Model.CommandData.ExtendedWrite.PCommand.htm" />
   <HelpKINode Title="PData property">
-    <HelpKINode Title="PData Property " Url="html/P-OSDP.Net.Model.ReplyData.ExtendedRead.PData.htm" />
     <HelpKINode Title="PData Property " Url="html/P-OSDP.Net.Model.CommandData.ExtendedWrite.PData.htm" />
+    <HelpKINode Title="PData Property " Url="html/P-OSDP.Net.Model.ReplyData.ExtendedRead.PData.htm" />
   </HelpKINode>
   <HelpKINode Title="PdCapabilitiesReport enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="PdCapabilitiesReport field" Url="html/F-OSDP.Net.Messages.ReplyType.PdCapabilitiesReport.htm" />
@@ -1180,10 +991,10 @@
   <HelpKINode Title="RawReaderData enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="RawReaderData field" Url="html/F-OSDP.Net.Messages.ReplyType.RawReaderData.htm" />
   <HelpKINode Title="ReadAsync method">
-    <HelpKINode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.ReadAsync.htm" />
-    <HelpKINode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.ReadAsync.htm" />
     <HelpKINode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.ReadAsync.htm" />
     <HelpKINode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.ReadAsync.htm" />
+    <HelpKINode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.ReadAsync.htm" />
+    <HelpKINode Title="ReadAsync Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.ReadAsync.htm" />
   </HelpKINode>
   <HelpKINode Title="ReaderAudibleOutput enumeration member" Url="html/T-OSDP.Net.Model.ReplyData.CapabilityFunction.htm" />
   <HelpKINode Title="ReaderAudibleOutput field" Url="html/F-OSDP.Net.Model.ReplyData.CapabilityFunction.ReaderAudibleOutput.htm" />
@@ -1204,17 +1015,6 @@
   <HelpKINode Title="ReaderBuzzerControl.ReaderBuzzerControl constructor" Url="html/M-OSDP.Net.Model.CommandData.ReaderBuzzerControl.-ctor.htm" />
   <HelpKINode Title="ReaderBuzzerControl.ReaderNumber property" Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.ReaderNumber.htm" />
   <HelpKINode Title="ReaderBuzzerControl.ToneCode property" Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.ToneCode.htm" />
-  <HelpKINode Title="ReaderBuzzerControlCommand class">
-    <HelpKINode Title="ReaderBuzzerControlCommand Class" Url="html/T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-    <HelpKINode Title="ReaderBuzzerControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-    <HelpKINode Title="about ReaderBuzzerControlCommand class" Url="html/T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.ReaderBuzzerControlCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.ReaderBuzzerControlCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="ReaderBuzzerControlCommand.ReaderBuzzerControlCommand constructor" Url="html/M-OSDP.Net.Messages.ReaderBuzzerControlCommand.-ctor.htm" />
   <HelpKINode Title="ReaderLedControl class">
     <HelpKINode Title="ReaderLedControl Class" Url="html/T-OSDP.Net.Model.CommandData.ReaderLedControl.htm" />
     <HelpKINode Title="ReaderLedControl Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ReaderLedControl.htm" />
@@ -1242,17 +1042,6 @@
   <HelpKINode Title="ReaderLedControl.TemporaryOnColor property" Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryOnColor.htm" />
   <HelpKINode Title="ReaderLedControl.TemporaryOnTime property" Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryOnTime.htm" />
   <HelpKINode Title="ReaderLedControl.TemporaryTimer property" Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.TemporaryTimer.htm" />
-  <HelpKINode Title="ReaderLedControlCommand class">
-    <HelpKINode Title="ReaderLedControlCommand Class" Url="html/T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-    <HelpKINode Title="ReaderLedControlCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-    <HelpKINode Title="about ReaderLedControlCommand class" Url="html/T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.ReaderLedControlCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.ReaderLedControlCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="ReaderLedControlCommand.ReaderLedControlCommand constructor" Url="html/M-OSDP.Net.Messages.ReaderLedControlCommand.-ctor.htm" />
   <HelpKINode Title="ReaderLedControls class">
     <HelpKINode Title="ReaderLedControls Class" Url="html/T-OSDP.Net.Model.CommandData.ReaderLedControls.htm" />
     <HelpKINode Title="ReaderLedControls Members" Url="html/AllMembers.T-OSDP.Net.Model.CommandData.ReaderLedControls.htm" />
@@ -1266,9 +1055,9 @@
   <HelpKINode Title="ReaderLedControls.Controls property" Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControls.Controls.htm" />
   <HelpKINode Title="ReaderLedControls.ReaderLedControls constructor" Url="html/M-OSDP.Net.Model.CommandData.ReaderLedControls.-ctor.htm" />
   <HelpKINode Title="ReaderNumber property">
-    <HelpKINode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.ReplyData.RawCardData.ReaderNumber.htm" />
-    <HelpKINode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.ReaderNumber.htm" />
     <HelpKINode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.ReaderNumber.htm" />
+    <HelpKINode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderBuzzerControl.ReaderNumber.htm" />
+    <HelpKINode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.ReplyData.RawCardData.ReaderNumber.htm" />
     <HelpKINode Title="ReaderNumber Property " Url="html/P-OSDP.Net.Model.CommandData.ReaderLedControl.ReaderNumber.htm" />
   </HelpKINode>
   <HelpKINode Title="Readers enumeration member" Url="html/T-OSDP.Net.Model.ReplyData.CapabilityFunction.htm" />
@@ -1289,17 +1078,6 @@
   <HelpKINode Title="ReaderStatuses property" Url="html/P-OSDP.Net.Model.ReplyData.ReaderStatus.ReaderStatuses.htm" />
   <HelpKINode Title="ReaderStatusReport enumeration member" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="ReaderStatusReport field" Url="html/F-OSDP.Net.Messages.ReplyType.ReaderStatusReport.htm" />
-  <HelpKINode Title="ReaderStatusReportCommand class">
-    <HelpKINode Title="ReaderStatusReportCommand Class" Url="html/T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-    <HelpKINode Title="ReaderStatusReportCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-    <HelpKINode Title="about ReaderStatusReportCommand class" Url="html/T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.ReaderStatusReportCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.ReaderStatusReportCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="ReaderStatusReportCommand.ReaderStatusReportCommand constructor" Url="html/M-OSDP.Net.Messages.ReaderStatusReportCommand.-ctor.htm" />
   <HelpKINode Title="ReaderStatusReportReplyEventArgs class">
     <HelpKINode Title="constructor" Url="html/M-OSDP.Net.ControlPanel.ReaderStatusReportReplyEventArgs.-ctor.htm" />
   </HelpKINode>
@@ -1331,17 +1109,6 @@
   <HelpKINode Title="ReaderTextOutput.TemporaryTextTime property" Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.TemporaryTextTime.htm" />
   <HelpKINode Title="ReaderTextOutput.Text property" Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.Text.htm" />
   <HelpKINode Title="ReaderTextOutput.TextCommand property" Url="html/P-OSDP.Net.Model.CommandData.ReaderTextOutput.TextCommand.htm" />
-  <HelpKINode Title="ReaderTextOutputCommand class">
-    <HelpKINode Title="ReaderTextOutputCommand Class" Url="html/T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-    <HelpKINode Title="ReaderTextOutputCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-    <HelpKINode Title="about ReaderTextOutputCommand class" Url="html/T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-    <HelpKINode Title="constructor" Url="html/M-OSDP.Net.Messages.ReaderTextOutputCommand.-ctor.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.ReaderTextOutputCommand.htm" />
-  </HelpKINode>
-  <HelpKINode Title="ReaderTextOutputCommand.ReaderTextOutputCommand constructor" Url="html/M-OSDP.Net.Messages.ReaderTextOutputCommand.-ctor.htm" />
   <HelpKINode Title="ReadModeSetting method" Url="html/M-OSDP.Net.Model.CommandData.ExtendedWrite.ReadModeSetting.htm" />
   <HelpKINode Title="ReceiveBufferSize enumeration member" Url="html/T-OSDP.Net.Model.ReplyData.CapabilityFunction.htm" />
   <HelpKINode Title="ReceiveBufferSize field" Url="html/F-OSDP.Net.Model.ReplyData.CapabilityFunction.ReceiveBufferSize.htm" />
@@ -1354,10 +1121,10 @@
   <HelpKINode Title="ReplyMessageWithNoDataSecurity enumeration member" Url="html/T-OSDP.Net.Messages.SecurityBlockType.htm" />
   <HelpKINode Title="ReplyMessageWithNoDataSecurity field" Url="html/F-OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity.htm" />
   <HelpKINode Title="ReplyTimeout property">
-    <HelpKINode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.TcpClientOsdpConnection.ReplyTimeout.htm" />
     <HelpKINode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.IOsdpConnection.ReplyTimeout.htm" />
     <HelpKINode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.ReplyTimeout.htm" />
     <HelpKINode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.TcpServerOsdpConnection.ReplyTimeout.htm" />
+    <HelpKINode Title="ReplyTimeout Property " Url="html/P-OSDP.Net.Connections.TcpClientOsdpConnection.ReplyTimeout.htm" />
   </HelpKINode>
   <HelpKINode Title="ReplyType enumeration" Url="html/T-OSDP.Net.Messages.ReplyType.htm" />
   <HelpKINode Title="ReplyType.Ack field" Url="html/F-OSDP.Net.Messages.ReplyType.Ack.htm" />
@@ -1425,15 +1192,6 @@
   <HelpKINode Title="SecurityBlockType.SecureConnectionSequenceStep2 field" Url="html/F-OSDP.Net.Messages.SecurityBlockType.SecureConnectionSequenceStep2.htm" />
   <HelpKINode Title="SecurityBlockType.SecureConnectionSequenceStep3 field" Url="html/F-OSDP.Net.Messages.SecurityBlockType.SecureConnectionSequenceStep3.htm" />
   <HelpKINode Title="SecurityBlockType.SecureConnectionSequenceStep4 field" Url="html/F-OSDP.Net.Messages.SecurityBlockType.SecureConnectionSequenceStep4.htm" />
-  <HelpKINode Title="SecurityInitializationRequestCommand class">
-    <HelpKINode Title="SecurityInitializationRequestCommand Class" Url="html/T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-    <HelpKINode Title="SecurityInitializationRequestCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-    <HelpKINode Title="about SecurityInitializationRequestCommand class" Url="html/T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.SecurityInitializationRequestCommand.htm" />
-  </HelpKINode>
   <HelpKINode Title="SendCustomCommand method" Url="html/M-OSDP.Net.ControlPanel.SendCustomCommand.htm" />
   <HelpKINode Title="Sequence property" Url="html/P-OSDP.Net.Messages.Control.Sequence.htm" />
   <HelpKINode Title="SerialNumber property" Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.SerialNumber.htm" />
@@ -1454,15 +1212,6 @@
   <HelpKINode Title="SerialPortOsdpConnection.ReplyTimeout property" Url="html/P-OSDP.Net.Connections.SerialPortOsdpConnection.ReplyTimeout.htm" />
   <HelpKINode Title="SerialPortOsdpConnection.SerialPortOsdpConnection constructor" Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.-ctor.htm" />
   <HelpKINode Title="SerialPortOsdpConnection.WriteAsync method" Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.WriteAsync.htm" />
-  <HelpKINode Title="ServerCryptogramCommand class">
-    <HelpKINode Title="ServerCryptogramCommand Class" Url="html/T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-    <HelpKINode Title="ServerCryptogramCommand Members" Url="html/AllMembers.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-    <HelpKINode Title="about ServerCryptogramCommand class" Url="html/T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-    <HelpKINode Title="all members" Url="html/AllMembers.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-    <HelpKINode Title="fields" Url="html/Fields.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-    <HelpKINode Title="methods" Url="html/Methods.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-    <HelpKINode Title="properties" Url="html/Properties.T-OSDP.Net.Messages.ServerCryptogramCommand.htm" />
-  </HelpKINode>
   <HelpKINode Title="SetPermanentState enumeration member" Url="html/T-OSDP.Net.Model.CommandData.PermanentReaderControlCode.htm" />
   <HelpKINode Title="SetPermanentState field" Url="html/F-OSDP.Net.Model.CommandData.PermanentReaderControlCode.SetPermanentState.htm" />
   <HelpKINode Title="SetTemporaryAndStartTimer enumeration member" Url="html/T-OSDP.Net.Model.CommandData.TemporaryReaderControlCode.htm" />
@@ -1544,17 +1293,17 @@
   <HelpKINode Title="ToneCode.None field" Url="html/F-OSDP.Net.Model.CommandData.ToneCode.None.htm" />
   <HelpKINode Title="ToneCode.Off field" Url="html/F-OSDP.Net.Model.CommandData.ToneCode.Off.htm" />
   <HelpKINode Title="ToString method">
-    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.CommunicationConfiguration.ToString.htm" />
-    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.ReturnReplyData-1.ToString.htm" />
-    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.DeviceIdentification.ToString.htm" />
-    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.InputStatus.ToString.htm" />
+    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.ReaderStatus.ToString.htm" />
     <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.RawCardData.ToString.htm" />
     <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.PIVData.ToString.htm" />
+    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.ReturnReplyData-1.ToString.htm" />
+    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.CommunicationConfiguration.ToString.htm" />
     <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.DeviceCapabilities.ToString.htm" />
-    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.ReaderStatus.ToString.htm" />
+    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.DeviceIdentification.ToString.htm" />
+    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.OutputStatus.ToString.htm" />
+    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.InputStatus.ToString.htm" />
     <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.LocalStatus.ToString.htm" />
     <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.ManufacturerSpecific.ToString.htm" />
-    <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.OutputStatus.ToString.htm" />
     <HelpKINode Title="ToString Method " Url="html/M-OSDP.Net.Model.ReplyData.Nak.ToString.htm" />
   </HelpKINode>
   <HelpKINode Title="UnableToProcessCommand enumeration member" Url="html/T-OSDP.Net.Model.ReplyData.ErrorCode.htm" />
@@ -1567,8 +1316,8 @@
   <HelpKINode Title="UnknownCommandCode field" Url="html/F-OSDP.Net.Model.ReplyData.ErrorCode.UnknownCommandCode.htm" />
   <HelpKINode Title="UseCrc property" Url="html/P-OSDP.Net.Messages.Control.UseCrc.htm" />
   <HelpKINode Title="VendorCode property">
-    <HelpKINode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.VendorCode.htm" />
     <HelpKINode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.ReplyData.ManufacturerSpecific.VendorCode.htm" />
+    <HelpKINode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.VendorCode.htm" />
     <HelpKINode Title="VendorCode Property " Url="html/P-OSDP.Net.Model.CommandData.ManufacturerSpecific.VendorCode.htm" />
   </HelpKINode>
   <HelpKINode Title="Version property" Url="html/P-OSDP.Net.Model.ReplyData.DeviceIdentification.Version.htm" />
@@ -1576,9 +1325,9 @@
   <HelpKINode Title="Wiegand enumeration member" Url="html/T-OSDP.Net.Model.ReplyData.FormatCode.htm" />
   <HelpKINode Title="Wiegand field" Url="html/F-OSDP.Net.Model.ReplyData.FormatCode.Wiegand.htm" />
   <HelpKINode Title="WriteAsync method">
-    <HelpKINode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.WriteAsync.htm" />
+    <HelpKINode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.WriteAsync.htm" />
     <HelpKINode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.IOsdpConnection.WriteAsync.htm" />
     <HelpKINode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.TcpClientOsdpConnection.WriteAsync.htm" />
-    <HelpKINode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.TcpServerOsdpConnection.WriteAsync.htm" />
+    <HelpKINode Title="WriteAsync Method " Url="html/M-OSDP.Net.Connections.SerialPortOsdpConnection.WriteAsync.htm" />
   </HelpKINode>
 </HelpKI>
