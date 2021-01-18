@@ -4,7 +4,7 @@
 | Name | Value | Support | Description | Documentation |
 |:-----|:------|:-------:|:------------|:--------------|
 | osdp_POLL      | 0x60 | Yes | Poll | None |
-| osdp_ID        | 0x61 | Yes | ID Report Request | [IdReport](http://bytedreamer.github.io/OSDP.Net/html/M-OSDP.Net.ControlPanel.IdReport.htm){:target="_blank"} |
+| osdp_ID        | 0x61 | Yes | ID Report Request | [IdReport](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.IdReport.htm) |
 | osdp_CAP       | 0x62 | Yes | | |
 | osdp_LSTAT     | 0x64 | Yes | | |
 | osdp_ISTAT     | 0x65 | Yes | | |
