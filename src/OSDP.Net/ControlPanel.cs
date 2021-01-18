@@ -110,6 +110,12 @@ namespace OSDP.Net
             };
         }
 
+        /// <summary>
+        /// Request to get the local status of a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns>Device local status reply data that was requested.</returns>
         public async Task<LocalStatus> LocalStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.LocalStatus.ParseData((await SendCommand(connectionId,

@@ -27,7 +27,7 @@
       <MSHelp:Attr Name="Locale" Value="en-us" />
       <MSHelp:Attr Name="TopicType" Value="kbSyntax" />
       <MSHelp:Attr Name="TopicType" Value="apiref" />
-      <MSHelp:Attr Name="Abstract" Value="Request to get PIV data from PD" />
+      <MSHelp:Attr Name="Abstract" Value="Request to get PIV data from PD." />
       <MSHelp:Attr Name="AssemblyVersion" Value="" />
     </xml>
   <link rel="stylesheet" href="../TOC.css"><script type="text/javascript" src="../TOC.js"></script></head>
@@ -219,6 +219,11 @@
 <div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="N-OSDP.Net.Connections.htm" target="_self">OSDP.Net.Connections Namespace</a>
 <div class="Hidden">
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Connections.IOsdpConnection.htm" target="_self">IOsdpConnection Interface</a>
+<div class="Hidden">
+</div>
+</div>
 <div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Connections.SerialPortOsdpConnection.htm" target="_self">SerialPortOsdpConnection Class</a>
 <div class="Hidden">
@@ -537,7 +542,7 @@
             <div id="mainSection">
               <div id="mainBody">
                 <div class="summary">
-   Request to get PIV data from PD
+   Request to get PIV data from PD.
    </div>
                 <p />
     <b>Namespace:</b> 
@@ -562,7 +567,7 @@
 	<a href="T-OSDP.Net.Model.CommandData.GetPIVData.htm">GetPIVData</a>^ <span class="parameter">getPIVData</span>, 
 	<a href="http://msdn.microsoft.com/en-us/library/system.timespan.aspx" target="_blank">TimeSpan</a>^ <span class="parameter">timeout</span>, 
 	<span class="nolink">CancellationToken</span>^ <span class="parameter">cancellationToken</span>
-)</pre></div></div></div><div id="parameters"><h4 class="subHeading">Parameters</h4><dl paramName="connectionId"><dt><span class="parameterItalic">connectionId</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.guid.aspx" target="_blank">Guid</a><br />Identify the connection for communicating to the device</dd></dl><dl paramName="address"><dt><span class="parameterItalic">address</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.byte.aspx" target="_blank">Byte</a><br />Address assigned to the device</dd></dl><dl paramName="getPIVData"><dt><span class="parameterItalic">getPIVData</span></dt><dd>Type: <a href="T-OSDP.Net.Model.CommandData.GetPIVData.htm">OSDP.Net.Model.CommandData<span class="languageSpecificText"><span class="cs">.</span><span class="vb">.</span><span class="cpp">::</span><span class="nu">.</span><span class="fs">.</span></span>GetPIVData</a><br />Describe the PIV data to retrieve</dd></dl><dl paramName="timeout"><dt><span class="parameterItalic">timeout</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.timespan.aspx" target="_blank">TimeSpan</a><br />A TimeSpan that represents the number of milliseconds to wait, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</dd></dl><dl paramName="cancellationToken"><dt><span class="parameterItalic">cancellationToken</span></dt><dd>Type: <span class="nolink">CancellationToken</span><br />The CancellationToken token to observe.</dd></dl></div><h4 class="subHeading">Return Value</h4>PIV data response</div><div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">See Also</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="seeAlsoSection"><!----></a><div class="seeAlsoStyle"><a href="T-OSDP.Net.ControlPanel.htm">ControlPanel Class</a></div><div class="seeAlsoStyle"><a href="N-OSDP.Net.htm">OSDP.Net Namespace</a></div></div></div>
+)</pre></div></div></div><div id="parameters"><h4 class="subHeading">Parameters</h4><dl paramName="connectionId"><dt><span class="parameterItalic">connectionId</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.guid.aspx" target="_blank">Guid</a><br />Identify the connection for communicating to the device.</dd></dl><dl paramName="address"><dt><span class="parameterItalic">address</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.byte.aspx" target="_blank">Byte</a><br />Address assigned to the device.</dd></dl><dl paramName="getPIVData"><dt><span class="parameterItalic">getPIVData</span></dt><dd>Type: <a href="T-OSDP.Net.Model.CommandData.GetPIVData.htm">OSDP.Net.Model.CommandData<span class="languageSpecificText"><span class="cs">.</span><span class="vb">.</span><span class="cpp">::</span><span class="nu">.</span><span class="fs">.</span></span>GetPIVData</a><br />Describe the PIV data to retrieve.</dd></dl><dl paramName="timeout"><dt><span class="parameterItalic">timeout</span></dt><dd>Type: <a href="http://msdn.microsoft.com/en-us/library/system.timespan.aspx" target="_blank">TimeSpan</a><br />A TimeSpan that represents the number of milliseconds to wait, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</dd></dl><dl paramName="cancellationToken"><dt><span class="parameterItalic">cancellationToken</span></dt><dd>Type: <span class="nolink">CancellationToken</span><br />The CancellationToken token to observe.</dd></dl></div><h4 class="subHeading">Return Value</h4>A response with the PIV data requested.</div><div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">See Also</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="seeAlsoSection"><!----></a><div class="seeAlsoStyle"><a href="T-OSDP.Net.ControlPanel.htm">ControlPanel Class</a></div><div class="seeAlsoStyle"><a href="N-OSDP.Net.htm">OSDP.Net Namespace</a></div></div></div>
             </div>
           </div>
         </div>

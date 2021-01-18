@@ -6,7 +6,7 @@
 | osdp_POLL         | 0x60 | Yes | Poll | None |
 | osdp_ID           | 0x61 | Yes | ID Report Request | [IdReport](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.IdReport.htm) |
 | osdp_CAP          | 0x62 | Yes | PD Capabilities Request | [DeviceCapabilities](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.DeviceCapabilities.htm) |
-| osdp_LSTAT        | 0x64 | Yes | | |
+| osdp_LSTAT        | 0x64 | Yes | Local Status Report Request | [LocalStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.LocalStatus.htm) |
 | osdp_ISTAT        | 0x65 | Yes | | |
 | osdp_OSTAT        | 0x66 | Yes | | |
 | osdp_RSTAT        | 0x67 | Yes | | |
