@@ -10,11 +10,11 @@
 | osdp_ISTAT        | 0x65 | Yes | Input Status Report Request | [InputStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.InputStatus.htm) |
 | osdp_OSTAT        | 0x66 | Yes | Output Status Report Request | [OutputStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.OutputStatus.htm) |
 | osdp_RSTAT        | 0x67 | Yes | Reader Status Report Request | [ReaderStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ReaderStatus.htm) |
-| osdp_OUT          | 0x68 | Yes | | |
-| osdp_LED          | 0x69 | Yes | | | 
-| osdp_BUZ          | 0x6A | Yes | | |
-| osdp_TEXT         | 0x6B | Yes | | |
-| osdp_COMSET       | 0x6E | Yes | | |
+| osdp_OUT          | 0x68 | Yes | Output Control Command | |
+| osdp_LED          | 0x69 | Yes | Reader Led Control Command | | 
+| osdp_BUZ          | 0x6A | Yes | Reader Buzzer Control Command | |
+| osdp_TEXT         | 0x6B | Yes | Text Output Command | |
+| osdp_COMSET       | 0x6E | Yes | PD Communication Configuration Command | |
 | osdp_BIOREAD      | 0x73 | No  | Scan and Send Biometric Data | |
 | osdp_BIOMATCH     | 0x74 | No  | Scan and Match Biometric Template | |
 | osdp_KEYSET       | 0x75 | Yes | | |

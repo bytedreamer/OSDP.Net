@@ -15,7 +15,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <summary>
-        /// Gets the all the PDs input statuses as an array ordered by input number.
+        /// Gets the all the PD's input statuses as an array ordered by input number.
         /// </summary>
         public IEnumerable<bool> InputStatuses { get; private set; }
 
