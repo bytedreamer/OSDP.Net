@@ -135,7 +135,7 @@ namespace OSDP.Net.Model.ReplyData
         LargestCombinedMessageSize = 11,
 
         /// <summary>
-        ///   <para>Smart card communication support for the PD.</para
+        ///   <para>Smart card communication support for the PD.</para>
         ///   <para></para>
         ///   <para>Compliance Levels:</para>
         ///   <para>Bit 0 (mask 0x01) – PD supports transparent reader mode.</para>
@@ -155,7 +155,7 @@ namespace OSDP.Net.Model.ReplyData
         Readers = 13,
 
         /// <summary>
-        ///   <para>The compliance level of reader biometric input.</para
+        ///   <para>The compliance level of reader biometric input.</para>
         ///   <para></para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">

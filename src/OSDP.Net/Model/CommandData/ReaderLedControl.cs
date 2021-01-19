@@ -3,6 +3,9 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
 {
+    /// <summary>
+    /// Contains data to control the color of a single LED on a PD.
+    /// </summary>
     public class ReaderLedControl
     {
         /// <summary>

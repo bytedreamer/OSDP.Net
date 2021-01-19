@@ -285,7 +285,7 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
-        /// <param name="readerLedControls">One or more reader LEDs to change color.</param>
+        /// <param name="readerLedControls">Data to change color on one or more reader LEDs.</param>
         /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
         public async Task<bool> ReaderLedControl(Guid connectionId, byte address, ReaderLedControls readerLedControls)
         {
@@ -295,6 +295,13 @@ namespace OSDP.Net
             return reply.Type == ReplyType.Ack;
         }
 
+        /// <summary>
+        /// Send a command to control the buzzer on a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="readerBuzzerControl">Data for the reader buzzer control.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
         public async Task<bool> ReaderBuzzerControl(Guid connectionId, byte address, ReaderBuzzerControl readerBuzzerControl)
         {
             var reply = await SendCommand(connectionId,
@@ -303,6 +310,13 @@ namespace OSDP.Net
             return reply.Type == ReplyType.Ack;
         }
 
+        /// <summary>
+        /// Send a command that sends text to be shown on a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="readerTextOutput">Data for the reader text output.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
         public async Task<bool> ReaderTextOutput(Guid connectionId, byte address, ReaderTextOutput readerTextOutput)
         {
             var reply = await SendCommand(connectionId,
