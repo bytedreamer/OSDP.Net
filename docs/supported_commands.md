@@ -7,24 +7,24 @@
 | osdp_ID           | 0x61 | Yes | ID Report Request | [IdReport](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.IdReport.htm) |
 | osdp_CAP          | 0x62 | Yes | PD Capabilities Request | [DeviceCapabilities](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.DeviceCapabilities.htm) |
 | osdp_LSTAT        | 0x64 | Yes | Local Status Report Request | [LocalStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.LocalStatus.htm) |
-| osdp_ISTAT        | 0x65 | Yes | | |
-| osdp_OSTAT        | 0x66 | Yes | | |
-| osdp_RSTAT        | 0x67 | Yes | | |
+| osdp_ISTAT        | 0x65 | Yes | Input Status Report Request | [InputStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.InputStatus.htm) |
+| osdp_OSTAT        | 0x66 | Yes | Output Status Report Request | [OutputStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.OutputStatus.htm) |
+| osdp_RSTAT        | 0x67 | Yes | Reader Status Report Request | [ReaderStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ReaderStatus.htm) |
 | osdp_OUT          | 0x68 | Yes | | |
 | osdp_LED          | 0x69 | Yes | | | 
 | osdp_BUZ          | 0x6A | Yes | | |
 | osdp_TEXT         | 0x6B | Yes | | |
 | osdp_COMSET       | 0x6E | Yes | | |
-| osdp_BIOREAD      | 0x73 | No  | | |
-| osdp_BIOMATCH     | 0x74 | No  | | |
+| osdp_BIOREAD      | 0x73 | No  | Scan and Send Biometric Data | |
+| osdp_BIOMATCH     | 0x74 | No  | Scan and Match Biometric Template | |
 | osdp_KEYSET       | 0x75 | Yes | | |
-| osdp_CHLNG        | 0x76 | Yes | | |
-| osdp_SCRYPT       | 0x77 | Yes | | |
-| osdp_ACURXSIZE    | 0x7B | No  | | |
-| osdp_FILETRANSFER | 0x7C | No  | | |
+| osdp_CHLNG        | 0x76 | Yes | Challenge and Secure Session Initialization Rq. | None |
+| osdp_SCRYPT       | 0x77 | Yes | Server Cryptogram | None |
+| osdp_ACURXSIZE    | 0x7B | No  | Max ACU receive size | |
+| osdp_FILETRANSFER | 0x7C | No  | Send data file to PD | |
 | osdp_MFG          | 0x80 | Yes | | |
 | osdp_XWR          | 0XA1 | Yes | | |
-| osdp_ABORT        | 0XA2 | No  | | |
+| osdp_ABORT        | 0XA2 | No  | Abort PD operation | |
 | osdp_PIVDATA      | 0XA3 | Yes | Get PIV Data | [GetPIVData ](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.GetPIVData.htm) |
 | osdp_GENAUTH      | 0XA4 | No  | Request Authenticate | |
 | osdp_CRAUTH       | 0XA5 | No  | Request Crypto Response | |

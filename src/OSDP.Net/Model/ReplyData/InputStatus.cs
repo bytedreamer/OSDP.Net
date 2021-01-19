@@ -5,12 +5,18 @@ using System.Text;
 
 namespace OSDP.Net.Model.ReplyData
 {
+    /// <summary>
+    /// The input status report sent as a reply.
+    /// </summary>
     public class InputStatus
     {
         private InputStatus()
         {
         }
 
+        /// <summary>
+        /// Gets the all the PDs input statuses as an array ordered by input number.
+        /// </summary>
         public IEnumerable<bool> InputStatuses { get; private set; }
 
         internal static InputStatus ParseData(ReadOnlySpan<byte> data)
@@ -18,6 +24,7 @@ namespace OSDP.Net.Model.ReplyData
             return new InputStatus {InputStatuses = data.ToArray().Select(Convert.ToBoolean)};
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             byte inputNumber = 0;

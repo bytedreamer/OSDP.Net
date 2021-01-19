@@ -122,12 +122,24 @@ namespace OSDP.Net
                 new LocalStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
+        /// <summary>
+        /// Request to get the status all of the inputs of a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns>Device input status reply data that was requested.</returns>
         public async Task<InputStatus> InputStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.InputStatus.ParseData((await SendCommand(connectionId,
                 new InputStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
+        /// <summary>
+        /// Request to get the status all of the outputs of a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns>Device output status reply data that was requested.</returns>
         public async Task<OutputStatus> OutputStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.OutputStatus.ParseData((await SendCommand(connectionId,
@@ -222,6 +234,12 @@ namespace OSDP.Net
             }
         }
 
+        /// <summary>
+        /// Request to get the status all of the readers of a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns>Device reader status reply data that was requested.</returns>
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.ReaderStatus.ParseData((await SendCommand(connectionId,
