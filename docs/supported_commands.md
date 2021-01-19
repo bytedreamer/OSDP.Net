@@ -10,20 +10,20 @@
 | osdp_ISTAT        | 0x65 | Yes | Input Status Report Request | [InputStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.InputStatus.htm) |
 | osdp_OSTAT        | 0x66 | Yes | Output Status Report Request | [OutputStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.OutputStatus.htm) |
 | osdp_RSTAT        | 0x67 | Yes | Reader Status Report Request | [ReaderStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ReaderStatus.htm) |
-| osdp_OUT          | 0x68 | Yes | Output Control Command | |
+| osdp_OUT          | 0x68 | Yes | Output Control Command | [OutputControl](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.OutputControl.htm) |
 | osdp_LED          | 0x69 | Yes | Reader Led Control Command | | 
 | osdp_BUZ          | 0x6A | Yes | Reader Buzzer Control Command | |
 | osdp_TEXT         | 0x6B | Yes | Text Output Command | |
 | osdp_COMSET       | 0x6E | Yes | PD Communication Configuration Command | |
 | osdp_BIOREAD      | 0x73 | No  | Scan and Send Biometric Data | |
 | osdp_BIOMATCH     | 0x74 | No  | Scan and Match Biometric Template | |
-| osdp_KEYSET       | 0x75 | Yes | | |
+| osdp_KEYSET       | 0x75 | Yes | Encryption Key Set Command | |
 | osdp_CHLNG        | 0x76 | Yes | Challenge and Secure Session Initialization Rq. | None |
 | osdp_SCRYPT       | 0x77 | Yes | Server Cryptogram | None |
 | osdp_ACURXSIZE    | 0x7B | No  | Max ACU receive size | |
 | osdp_FILETRANSFER | 0x7C | No  | Send data file to PD | |
-| osdp_MFG          | 0x80 | Yes | | |
-| osdp_XWR          | 0XA1 | Yes | | |
+| osdp_MFG          | 0x80 | Yes | Manufacturer Specific Command | |
+| osdp_XWR          | 0XA1 | Yes | Extended write data | |
 | osdp_ABORT        | 0XA2 | No  | Abort PD operation | |
 | osdp_PIVDATA      | 0XA3 | Yes | Get PIV Data | [GetPIVData ](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.GetPIVData.htm) |
 | osdp_GENAUTH      | 0XA4 | No  | Request Authenticate | |

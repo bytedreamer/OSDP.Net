@@ -260,6 +260,13 @@ namespace OSDP.Net
             };
         }
 
+        /// <summary>
+        /// Send a command to alter the state of one or more outputs on a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="outputControls">One or more outputs to control.</param>
+        /// <returns>Reply data that is returned after sending the command. A different replies can be returned from PD.</returns>
         public async Task<ReturnReplyData<OutputStatus>> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
         {
             var reply = await SendCommand(connectionId,

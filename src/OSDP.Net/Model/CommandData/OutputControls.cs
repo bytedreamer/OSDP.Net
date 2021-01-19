@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace OSDP.Net.Model.CommandData
 {
+    /// <summary>
+    /// Command to control the outputs of a PD.
+    /// </summary>
     public class OutputControls
     {
         public OutputControls(IEnumerable<OutputControl> controls)
@@ -9,6 +12,9 @@ namespace OSDP.Net.Model.CommandData
             Controls = controls;
         }
 
+        /// <summary>
+        /// One or more commands to control the outputs of a PD.
+        /// </summary>
         public IEnumerable<OutputControl> Controls { get; }
 
         public IEnumerable<byte> BuildData()
@@ -21,16 +27,5 @@ namespace OSDP.Net.Model.CommandData
 
             return data;
         }
-    }
-
-    public enum OutputControlCode
-    {
-        Nop = 0x00,
-        PermanentStateOffAbortTimedOperation = 0x01,
-        PermanentStateOnAbortTimedOperation = 0x02,
-        PermanentStateOffAllowTimedOperation = 0x03,
-        PermanentStateOnAllowTimedOperation = 0x04,
-        TemporaryStateOnResumePermanentState = 0x05,
-        TemporaryStateOffResumePermanentState = 0x06
     }
 }
