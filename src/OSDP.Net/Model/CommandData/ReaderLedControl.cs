@@ -3,29 +3,24 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
 {
-    public class ReaderLedControls
-    {
-        public ReaderLedControls(IEnumerable<ReaderLedControl> controls)
-        {
-            Controls = controls;
-        }
-
-        public IEnumerable<ReaderLedControl> Controls { get; }
-
-        public IEnumerable<byte> BuildData()
-        {
-            var data = new List<byte>();
-            foreach (var readerLedControl in Controls)
-            {
-                data.AddRange(readerLedControl.BuildData());
-            }
-
-            return data;
-        }
-    }
-    
     public class ReaderLedControl
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ReaderLedControl"/> class.
+        /// </summary>
+        /// <param name="readerNumber">The reader number.</param>
+        /// <param name="ledNumber">The LED number.</param>
+        /// <param name="temporaryMode">The temporary mode.</param>
+        /// <param name="temporaryOnTime">The temporary on time in units of 100ms.</param>
+        /// <param name="temporaryOffTime">The temporary off time in units of 100ms.</param>
+        /// <param name="temporaryOnColor">Color of the temporary on.</param>
+        /// <param name="temporaryOffColor">Color of the temporary off.</param>
+        /// <param name="temporaryTimer">The temporary timer in units of 100ms.</param>
+        /// <param name="permanentMode">The permanent mode.</param>
+        /// <param name="permanentOnTime">The permanent on time in units of 100ms.</param>
+        /// <param name="permanentOffTime">The permanent off time in units of 100ms.</param>
+        /// <param name="permanentOnColor">Color of the permanent on.</param>
+        /// <param name="permanentOffColor">Color of the permanent off.</param>
         public ReaderLedControl(
             byte readerNumber, 
             byte ledNumber, 
@@ -56,21 +51,70 @@ namespace OSDP.Net.Model.CommandData
             PermanentOffColor = permanentOffColor;
         }
 
+        /// <summary>Gets the reader number.</summary>
         public byte ReaderNumber { get; }
+
+        /// <summary>
+        /// Gets the LED number.
+        /// </summary>
         public byte LedNumber { get; }
+
+        /// <summary>
+        /// Gets the temporary mode.
+        /// </summary>
         public TemporaryReaderControlCode TemporaryMode { get; }
+
+        /// <summary>
+        /// Gets the temporary on time in units of 100ms.
+        /// </summary>
         public byte TemporaryOnTime { get; }
+
+        /// <summary>
+        /// Gets the temporary off time in units of 100ms.
+        /// </summary>
         public byte TemporaryOffTime { get; }
+
+        /// <summary>
+        /// Gets the color of the temporary on.
+        /// </summary>
         public LedColor TemporaryOnColor { get; }
+
+        /// <summary>
+        /// Gets the color of the temporary off.
+        /// </summary>
         public LedColor TemporaryOffColor { get; }
+
+        /// <summary>
+        /// Gets the temporary timer  in units of 100ms.
+        /// </summary>
         public ushort TemporaryTimer { get; }
+
+        /// <summary>
+        /// Gets the permanent mode.
+        /// </summary>
         public PermanentReaderControlCode PermanentMode { get; }
+
+        /// <summary>
+        /// Gets the permanent on time in units of 100ms.
+        /// </summary>
         public byte PermanentOnTime { get; }
+
+        /// <summary>
+        /// Gets the permanent off time in units of 100ms.
+        /// </summary>
         public byte PermanentOffTime { get; }
+
+        /// <summary>
+        /// Gets the color of the permanent on.
+        /// </summary>
         public LedColor PermanentOnColor { get; }
+
+        /// <summary>
+        /// Gets the color of the permanent off.
+        /// </summary>
         public LedColor PermanentOffColor { get; }
 
-        public IEnumerable<byte> BuildData()
+        internal IEnumerable<byte> BuildData()
         {
             var temporaryTimerBytes = Message.ConvertShortToBytes(TemporaryTimer);
             
@@ -94,19 +138,46 @@ namespace OSDP.Net.Model.CommandData
         }
     }
 
+    /// <summary>
+    /// Temporary control code values.
+    /// </summary>
     public enum TemporaryReaderControlCode
     {
+        /// <summary>
+        /// Do not alter this LED's temporary settings. The remaining values of the temporary settings record are ignored.
+        /// </summary>
         Nop = 0x00,
+
+        /// <summary>
+        /// Cancel any temporary operation and display this LED's permanent state immediately.
+        /// </summary>
         CancelAnyTemporaryAndDisplayPermanent = 0x01,
+
+        /// <summary>
+        /// Set the temporary state as given and start timer immediately.
+        /// </summary>
         SetTemporaryAndStartTimer = 0x02
     }
-    
+
+    /// <summary>
+    /// Permanent control code values.
+    /// </summary>
     public enum PermanentReaderControlCode
     {
+        /// <summary>
+        /// Do not alter this LED's permanent settings. The remaining values of the temporary settings record are ignored.
+        /// </summary>
         Nop = 0x00,
+
+        /// <summary>
+        /// Set the permanent state as given.
+        /// </summary>
         SetPermanentState = 0x01
     }
 
+    /// <summary>
+    /// Color values.
+    /// </summary>
     public enum LedColor
     {
         Black = 0,

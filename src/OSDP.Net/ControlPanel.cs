@@ -266,7 +266,7 @@ namespace OSDP.Net
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <param name="outputControls">One or more outputs to control.</param>
-        /// <returns>Reply data that is returned after sending the command. A different replies can be returned from PD.</returns>
+        /// <returns>Reply data that is returned after sending the command. There is the possibility of different replies can be returned from PD.</returns>
         public async Task<ReturnReplyData<OutputStatus>> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
         {
             var reply = await SendCommand(connectionId,
@@ -280,6 +280,13 @@ namespace OSDP.Net
             };
         }
 
+        /// <summary>
+        /// Send a command to alter the LED color on a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="readerLedControls">One or more reader LEDs to change color.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
         public async Task<bool> ReaderLedControl(Guid connectionId, byte address, ReaderLedControls readerLedControls)
         {
             var reply = await SendCommand(connectionId,

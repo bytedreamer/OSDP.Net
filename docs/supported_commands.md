@@ -11,7 +11,7 @@
 | osdp_OSTAT        | 0x66 | Yes | Output Status Report Request | [OutputStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.OutputStatus.htm) |
 | osdp_RSTAT        | 0x67 | Yes | Reader Status Report Request | [ReaderStatus](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ReaderStatus.htm) |
 | osdp_OUT          | 0x68 | Yes | Output Control Command | [OutputControl](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.OutputControl.htm) |
-| osdp_LED          | 0x69 | Yes | Reader Led Control Command | | 
+| osdp_LED          | 0x69 | Yes | Reader Led Control Command | [ReaderLedControl](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ReaderLedControl.htm) | 
 | osdp_BUZ          | 0x6A | Yes | Reader Buzzer Control Command | |
 | osdp_TEXT         | 0x6B | Yes | Text Output Command | |
 | osdp_COMSET       | 0x6E | Yes | PD Communication Configuration Command | |

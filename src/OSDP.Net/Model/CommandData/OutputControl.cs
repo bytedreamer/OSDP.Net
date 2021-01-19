@@ -4,7 +4,7 @@ using OSDP.Net.Messages;
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
-    /// Contains information to control the output of a PD.
+    /// Contains data to control a single output on a PD.
     /// </summary>
     public class OutputControl
     {
@@ -13,7 +13,7 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         /// <param name="outputNumber">The output number.</param>
         /// <param name="outputControlCode">The output control code.</param>
-        /// <param name="timer">The timer in 100ms increments.</param>
+        /// <param name="timer">The timer in units of 100ms.</param>
         public OutputControl(byte outputNumber, OutputControlCode outputControlCode, ushort timer)
         {
             OutputNumber = outputNumber;
@@ -32,11 +32,11 @@ namespace OSDP.Net.Model.CommandData
         public OutputControlCode OutputControlCode { get; }
 
         /// <summary>
-        /// Gets the timer in 100ms increments.
+        /// Gets the timer in units of 100ms.
         /// </summary>
         public ushort Timer { get; }
 
-        public IEnumerable<byte> BuildData()
+        internal IEnumerable<byte> BuildData()
         {
             var timerBytes = Message.ConvertShortToBytes(Timer);
             

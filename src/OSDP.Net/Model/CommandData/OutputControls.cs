@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
-    /// Command to control the outputs of a PD.
+    /// Command data to control the outputs of a PD.
     /// </summary>
     public class OutputControls
     {
@@ -17,7 +17,7 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public IEnumerable<OutputControl> Controls { get; }
 
-        public IEnumerable<byte> BuildData()
+        internal IEnumerable<byte> BuildData()
         {
             var data = new List<byte>();
             foreach (var outputControl in Controls)
