@@ -7,12 +7,14 @@ namespace OSDP.Net.Model.ReplyData
     /// </summary>
     public enum CapabilityFunction
     {
-        /// <summary>Function is not known.</summary>
+        /// <summary>Capability is not defined.</summary>
         Unknown = 0,
 
         /// <summary>
         ///   <para>The compliance level of contact status monitoring.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>PD monitors and reports the state of the circuit without any supervision. The PD encodes the circuit status per its default interpretation of contact state to active/inactive status.</item>
@@ -26,7 +28,9 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>
         ///   <para>The compliance level of output control.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>The PD is able to activate and deactivate the Output per direct command from the ACU.</item>
@@ -40,7 +44,9 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>
         ///   <para>The form card data format presented to the control panel.</para>.
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>The PD sends card data to the ACU as array of bits, not exceeding 1024 bits.</item>
@@ -53,7 +59,9 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>
         ///   <para>The compliance level of reader LEDs.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>The PD support on/off control only.</item>
@@ -67,7 +75,9 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>
         ///   <para>The compliance level of reader audio output.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>The PD supports on/off control only.</item>
@@ -79,7 +89,9 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>
         ///   <para>The compliance level of reader text output.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>The PD has no text display support.</item>
@@ -96,7 +108,9 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>
         ///   <para>Check character support for the PD.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>The PD does not support CRC-16, only checksum mode.</item>
@@ -108,55 +122,77 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>
         ///   <para>Secure communications support for the PD.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <para>Bit 0 (mask 0x01) – AES128 support.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Number Of: (Bit-0) default AES128 key.</para>
         /// </summary>
         CommunicationSecurity = 9,
 
         /// <summary>
         ///   <para>Maximum size single message the PD can receive.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels: LSB of the buffer size.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Number Of: MSB of the buffer size.</para>
         /// </summary>
         ReceiveBufferSize = 10,
 
         /// <summary>
         ///   <para>Maximum size multi-part message  the PD can handle.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels: LSB of the combined buffer size.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Number Of: MSB of the combined buffer size.</para>
         /// </summary>
         LargestCombinedMessageSize = 11,
 
         /// <summary>
         ///   <para>Smart card communication support for the PD.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <para>Bit 0 (mask 0x01) – PD supports transparent reader mode.</para>
         ///   <para>Bit 1 (mask 0x02) – PD supports extended packet mode.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Number Of: N/A, set to 0.</para>
         /// </summary>
         SmartCardSupport = 12,
 
         /// <summary>
         ///   <para>Number of readers present on PD.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels: Must be zero.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Number Of: Indicates the number of attached downstream readers.</para>
         /// </summary>
         Readers = 13,
 
         /// <summary>
         ///   <para>The compliance level of reader biometric input.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>No Biometric.</item>
@@ -170,7 +206,9 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>
         ///   <para>Secure PIN entry support for the PD.</para>
-        ///   <para></para>
+        ///   <para>
+        ///     <br />
+        ///   </para>
         ///   <para>Compliance Levels:</para>
         ///   <list type="number">
         ///     <item>Does not support SPE.</item>

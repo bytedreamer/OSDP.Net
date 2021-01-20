@@ -4,7 +4,7 @@ using System.Text;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The local status report sent as a reply.
+    /// The local status report of the PD sent as a reply.
     /// </summary>
     public class LocalStatus
     {

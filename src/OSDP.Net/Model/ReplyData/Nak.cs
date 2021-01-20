@@ -13,6 +13,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         public ErrorCode ErrorCode { get; private set; }
+
         public IEnumerable<byte> ExtraData { get; private set;  }
 
         internal static Nak ParseData(ReadOnlySpan<byte> data)
@@ -32,6 +33,7 @@ namespace OSDP.Net.Model.ReplyData
             return nak;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var build = new StringBuilder();

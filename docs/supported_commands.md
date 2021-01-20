@@ -14,7 +14,7 @@
 | osdp_LED          | 0x69 | Yes | Reader Led Control Command | [ReaderLedControl](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ReaderLedControl.htm) | 
 | osdp_BUZ          | 0x6A | Yes | Reader Buzzer Control Command | [ReaderBuzzerControl](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ReaderBuzzerControl.htm) |
 | osdp_TEXT         | 0x6B | Yes | Text Output Command | [ReaderTextOutput](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ReaderTextOutput.htm) |
-| osdp_COMSET       | 0x6E | Yes | PD Communication Configuration Command | |
+| osdp_COMSET       | 0x6E | Yes | PD Communication Configuration Command | [CommunicationConfiguration](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.CommunicationConfiguration.htm) |
 | osdp_BIOREAD      | 0x73 | No  | Scan and Send Biometric Data | |
 | osdp_BIOMATCH     | 0x74 | No  | Scan and Match Biometric Template | |
 | osdp_KEYSET       | 0x75 | Yes | Encryption Key Set Command | |

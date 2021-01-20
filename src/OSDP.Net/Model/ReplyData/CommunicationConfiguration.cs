@@ -5,13 +5,23 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
+    /// <summary>
+    /// The actual communication configuration of the PD sent as a reply.
+    /// </summary>
     public class CommunicationConfiguration
     {
         private CommunicationConfiguration()
         {
         }
 
+        /// <summary>
+        /// Gets the address.
+        /// </summary>
         public byte Address { get; private set; }
+
+        /// <summary>
+        /// Gets the baud rate.
+        /// </summary>
         public int BaudRate { get; private set; }
 
         internal static CommunicationConfiguration ParseData(ReadOnlySpan<byte> data)
@@ -29,6 +39,7 @@ namespace OSDP.Net.Model.ReplyData
             };
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var build = new StringBuilder();

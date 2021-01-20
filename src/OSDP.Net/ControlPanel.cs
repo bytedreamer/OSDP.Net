@@ -265,7 +265,7 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
-        /// <param name="outputControls">One or more outputs to control.</param>
+        /// <param name="outputControls">Data for one or more outputs to control.</param>
         /// <returns>Reply data that is returned after sending the command. There is the possibility of different replies can be returned from PD.</returns>
         public async Task<ReturnReplyData<OutputStatus>> OutputControl(Guid connectionId, byte address, OutputControls outputControls)
         {
@@ -300,7 +300,7 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
-        /// <param name="readerBuzzerControl">Data for the reader buzzer control.</param>
+        /// <param name="readerBuzzerControl">Data for the reader buzzer control on the PD.</param>
         /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
         public async Task<bool> ReaderBuzzerControl(Guid connectionId, byte address, ReaderBuzzerControl readerBuzzerControl)
         {
@@ -315,7 +315,7 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
-        /// <param name="readerTextOutput">Data for the reader text output.</param>
+        /// <param name="readerTextOutput">Data for the reader text output on the PD.</param>
         /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
         public async Task<bool> ReaderTextOutput(Guid connectionId, byte address, ReaderTextOutput readerTextOutput)
         {
@@ -325,6 +325,13 @@ namespace OSDP.Net
             return reply.Type == ReplyType.Ack;
         }
 
+        /// <summary>
+        /// Send a command that sets the communication configuration on a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="communicationConfiguration">Data for the communication configuration on the PD.</param>
+        /// <returns>Reply data of the actual communication configuration being set on the PD.</returns>
         public async Task<Model.ReplyData.CommunicationConfiguration> CommunicationConfiguration(Guid connectionId,
             byte address, CommunicationConfiguration communicationConfiguration)
         {

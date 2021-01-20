@@ -6,7 +6,7 @@ using System.Text;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The input status report sent as a reply.
+    /// The input status report of the PD sent as a reply.
     /// </summary>
     public class InputStatus
     {
