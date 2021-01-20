@@ -1,7 +1,7 @@
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// Individual capability information for a PD
+    /// Individual capability data for a PD
     /// </summary>
     public class DeviceCapability
     {

@@ -43,7 +43,7 @@ namespace OSDP.Net.Model.ReplyData
         OutputControl = 2,
 
         /// <summary>
-        ///   <para>The form card data format presented to the control panel.</para>.
+        ///   <para>The form card data format presented to the control panel.</para>
         ///   <para>
         ///     <br />
         ///   </para>

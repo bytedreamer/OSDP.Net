@@ -7,7 +7,7 @@ using OSDP.Net.Messages;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The data contained in a PD identification reply.
+    /// The PD identification data sent as a reply.
     /// </summary>
     public class DeviceIdentification
     {
@@ -18,10 +18,10 @@ namespace OSDP.Net.Model.ReplyData
         /// <summary>Gets the vendor code.</summary>
         public IEnumerable<byte> VendorCode { get; private set; }
 
-        /// <summary> Gets the model number. </summary>
+        /// <summary>Gets the model number.</summary>
         public byte ModelNumber { get;private set;  }
 
-        /// <summary> Gets the hardware version. </summary>
+        /// <summary>Gets the hardware version.</summary>
         public byte Version { get; private set; }
 
         /// <summary>Gets the serial number.</summary>

@@ -5,7 +5,7 @@ using OSDP.Net.Messages;
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
-    /// Data for the communication configuration on the PD.
+    /// Command data to set the communication configuration on a PD.
     /// </summary>
     public class CommunicationConfiguration
     {

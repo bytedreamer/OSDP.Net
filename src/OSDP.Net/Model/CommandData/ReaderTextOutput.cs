@@ -5,7 +5,7 @@ using System.Text;
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
-    /// Contains data for sending text to be shown on a PD.
+    /// Command data for sending text to be shown on a PD.
     /// </summary>
     public class ReaderTextOutput
     {

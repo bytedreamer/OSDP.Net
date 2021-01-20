@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
-    /// Contains data to control the buzzer on a PD.
+    /// Command data to control the buzzer on a PD.
     /// </summary>
     public class ReaderBuzzerControl
     {

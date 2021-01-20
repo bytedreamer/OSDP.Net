@@ -7,7 +7,7 @@ using OSDP.Net.Messages;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The data contained in a PD device capabilities reply.
+    /// The PD device capabilities data sent as a reply.
     /// </summary>
     public class DeviceCapabilities
     {
