@@ -17,13 +17,13 @@
 | osdp_COMSET       | 0x6E | Yes | PD Communication Configuration Command | [CommunicationConfiguration](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.CommunicationConfiguration.htm) |
 | osdp_BIOREAD      | 0x73 | No  | Scan and Send Biometric Data | |
 | osdp_BIOMATCH     | 0x74 | No  | Scan and Match Biometric Template | |
-| osdp_KEYSET       | 0x75 | Yes | Encryption Key Set Command | |
+| osdp_KEYSET       | 0x75 | Yes | Encryption Key Set Command | [EncryptionKeySet](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.EncryptionKeySet.htm) |
 | osdp_CHLNG        | 0x76 | Yes | Challenge and Secure Session Initialization Rq. | None |
 | osdp_SCRYPT       | 0x77 | Yes | Server Cryptogram | None |
 | osdp_ACURXSIZE    | 0x7B | No  | Max ACU receive size | |
 | osdp_FILETRANSFER | 0x7C | No  | Send data file to PD | |
-| osdp_MFG          | 0x80 | Yes | Manufacturer Specific Command | |
-| osdp_XWR          | 0XA1 | Yes | Extended write data | |
+| osdp_MFG          | 0x80 | Yes | Manufacturer Specific Command | [ManufacturerSpecificCommand](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ManufacturerSpecificCommand.htm) |
+| osdp_XWR          | 0XA1 | Yes | Extended write data | [ExtendedWriteData](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.ExtendedWriteData.htm) |
 | osdp_ABORT        | 0XA2 | No  | Abort PD operation | |
 | osdp_PIVDATA      | 0XA3 | Yes | Get PIV Data | [GetPIVData ](https://bytedreamer.github.io/OSDP.Net/html/html/M-OSDP.Net.ControlPanel.GetPIVData.htm) |
 | osdp_GENAUTH      | 0XA4 | No  | Request Authenticate | |

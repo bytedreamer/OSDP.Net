@@ -4,8 +4,17 @@ using System.Linq;
 
 namespace OSDP.Net.Model.CommandData
 {
+    /// <summary>
+    /// The extended write data.
+    /// </summary>
     public class ExtendedWrite
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExtendedWrite"/> class.
+        /// </summary>
+        /// <param name="mode">The mode.</param>
+        /// <param name="pCommand">The command code dependent on the command.</param>
+        /// <param name="pData">The data dependent on the command.</param>
         public ExtendedWrite(byte mode, byte pCommand, byte[] pData)
         {
             Mode = mode;
@@ -13,8 +22,19 @@ namespace OSDP.Net.Model.CommandData
             PData = pData;
         }
 
+        /// <summary>
+        /// Gets the extended READ/WRITE Mode.
+        /// </summary>
         public byte Mode { get; }
+
+        /// <summary>
+        /// Gets command code dependent on the command.
+        /// </summary>
         public byte PCommand { get; }
+
+        /// <summary>
+        /// Gets data dependent on the command.
+        /// </summary>
         public byte[] PData { get; }
 
         /// <summary>
@@ -48,7 +68,7 @@ namespace OSDP.Net.Model.CommandData
         /// <summary>
         /// Pass the APDU embedded in this command to the specified reader
         /// </summary>
-        /// <param name="readerNumber"></param>
+        /// <param name="readerNumber">The reader number starting at 0.</param>
         /// <param name="command"></param>
         /// <returns></returns>
         public static ExtendedWrite ModeOnePassAPDUCommand(byte readerNumber, byte[] command)
@@ -59,7 +79,7 @@ namespace OSDP.Net.Model.CommandData
         /// <summary>
         /// Notifies the designated reader to terminate its connection to the Smart Card
         /// </summary>
-        /// <param name="readerNumber"></param>
+        /// <param name="readerNumber">The reader number starting at 0.</param>
         /// <returns></returns>
         public static ExtendedWrite ModeOneTerminateSmartCardConnection(byte readerNumber)
         {
@@ -69,7 +89,7 @@ namespace OSDP.Net.Model.CommandData
         /// <summary>
         /// Instructs the designated reader to perform a Smart Card Scan
         /// </summary>
-        /// <param name="readerNumber"></param>
+        /// <param name="readerNumber">The reader number starting at 0.</param>
         /// <returns></returns>
         public static ExtendedWrite ModeOneSmartCardScan(byte readerNumber)
         {

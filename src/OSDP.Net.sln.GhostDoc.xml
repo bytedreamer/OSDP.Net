@@ -99,6 +99,6 @@
 </HelpConfigurations>
 <GeneralProperties>
   <SearchInheritedCommentsOnlyWithinProject description="Search for inherited comments only within current project" type="Boolean">False</SearchInheritedCommentsOnlyWithinProject>
-  <UseInheritdocTag description="Use &amp;lt;inheritdoc /&amp;gt; tag for inherited comments  instead of copying the base member documentation" type="Boolean">True</UseInheritdocTag>
+  <UseInheritdocTag description="Use &lt;inheritdoc /&gt; tag for inherited comments  instead of copying the base member documentation" type="Boolean">True</UseInheritdocTag>
 </GeneralProperties>
 </GhostDoc>

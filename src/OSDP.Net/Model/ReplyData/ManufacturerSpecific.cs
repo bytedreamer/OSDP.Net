@@ -5,14 +5,23 @@ using System.Text;
 
 namespace OSDP.Net.Model.ReplyData
 {
+    /// <summary>
+    /// The manufacture specific data sent as a reply.
+    /// </summary>
     public class ManufacturerSpecific
     {
         private ManufacturerSpecific()
         {
         }
 
+        /// <summary>
+        /// Gets the vendor code.
+        /// </summary>
         public IEnumerable<byte> VendorCode { get; private set; }
 
+        /// <summary>
+        /// Gets the manufacture specific data.
+        /// </summary>
         public IEnumerable<byte> Data { get; private set; }
 
         internal static ManufacturerSpecific ParseData(ReadOnlySpan<byte> data)
@@ -32,6 +41,7 @@ namespace OSDP.Net.Model.ReplyData
             return manufacturerSpecificReply;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var build = new StringBuilder();

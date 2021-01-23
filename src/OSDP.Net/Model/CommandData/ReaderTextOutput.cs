@@ -12,7 +12,7 @@ namespace OSDP.Net.Model.CommandData
         /// <summary>
         /// Initializes a new instance of the <see cref="ReaderTextOutput"/> class.
         /// </summary>
-        /// <param name="readerNumber">The reader number.</param>
+        /// <param name="readerNumber">The reader number starting at 0.</param>
         /// <param name="textCommand">The text command for displaying.</param>
         /// <param name="temporaryTextTime">The temporary text time in units of 100ms.</param>
         /// <param name="row">The row where the first character will be displayed. 0x01 = top row.</param>
@@ -29,7 +29,7 @@ namespace OSDP.Net.Model.CommandData
         }
 
         /// <summary>
-        /// Gets the reader number.
+        /// Gets the reader number starting at 0.
         /// </summary>
         public byte ReaderNumber { get; }
 

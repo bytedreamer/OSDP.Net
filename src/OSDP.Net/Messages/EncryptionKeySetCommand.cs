@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
@@ -28,7 +27,7 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _encryptionKeyConfiguration.BuildData().ToArray();
+            return _encryptionKeyConfiguration.BuildData();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)

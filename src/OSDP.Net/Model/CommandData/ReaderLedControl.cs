@@ -11,7 +11,7 @@ namespace OSDP.Net.Model.CommandData
         /// <summary>
         /// Initializes a new instance of the <see cref="ReaderLedControl"/> class.
         /// </summary>
-        /// <param name="readerNumber">The reader number.</param>
+        /// <param name="readerNumber">The reader number starting at 0.</param>
         /// <param name="ledNumber">The LED number.</param>
         /// <param name="temporaryMode">The temporary mode.</param>
         /// <param name="temporaryOnTime">The temporary on time in units of 100ms.</param>
@@ -54,7 +54,7 @@ namespace OSDP.Net.Model.CommandData
             PermanentOffColor = permanentOffColor;
         }
 
-        /// <summary>Gets the reader number.</summary>
+        /// <summary>Gets the reader number starting at 0.</summary>
         public byte ReaderNumber { get; }
 
         /// <summary>

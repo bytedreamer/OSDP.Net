@@ -3,14 +3,28 @@ using System.Linq;
 
 namespace OSDP.Net.Model.ReplyData
 {
+    /// <summary>
+    /// Reply data for smart card handling on a PD.
+    /// </summary>
     public class ExtendedRead
     {
         private ExtendedRead()
         {
         }
 
+        /// <summary>
+        /// Gets the extended READ/WRITE Mode.
+        /// </summary>
         public byte Mode { get; private set; }
+
+        /// <summary>
+        /// Gets the reply code dependent on command.
+        /// </summary>
         public byte PReply { get; private set; }
+
+        /// <summary>
+        /// Gets the data dependent on command.
+        /// </summary>
         public byte[] PData { get; private set; }
 
         internal static ExtendedRead ParseData(ReadOnlySpan<byte> data)

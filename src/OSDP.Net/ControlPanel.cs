@@ -96,6 +96,14 @@ namespace OSDP.Net
                 new DeviceCapabilitiesCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
+        /// <summary>
+        /// Command that implements extended write mode to facilitate communications with an ISO 7816-4 based credential to a PD.
+        /// </summary>
+        /// <summary>Request to get the capabilities of the PD.</summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="extendedWrite">The extended write data.</param>
+        /// <returns>Reply data that is returned after sending the command. There is the possibility of different replies can be returned from PD.</returns>
         public async Task<ReturnReplyData<ExtendedRead>> ExtendedWriteData(Guid connectionId, byte address,
             ExtendedWrite extendedWrite)
         {
@@ -246,8 +254,15 @@ namespace OSDP.Net
                 new ReaderStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
         }
 
+        /// <summary>
+        /// Send a  manufacture specific command to a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="manufacturerSpecific">The manufacturer specific data.</param>
+        /// <returns>Reply data that is returned after sending the command. There is the possibility of different replies can be returned from PD.</returns>
         public async Task<ReturnReplyData<ManufacturerSpecific>> ManufacturerSpecificCommand(Guid connectionId, byte address,
-            OSDP.Net.Model.CommandData.ManufacturerSpecific manufacturerSpecific)
+            Model.CommandData.ManufacturerSpecific manufacturerSpecific)
         {
             var reply = await SendCommand(connectionId,
                 new ManufacturerSpecificCommand(address, manufacturerSpecific)).ConfigureAwait(false);
@@ -338,6 +353,22 @@ namespace OSDP.Net
             return Model.ReplyData.CommunicationConfiguration.ParseData((await SendCommand(connectionId,
                     new CommunicationSetCommand(address, communicationConfiguration)).ConfigureAwait(false))
                 .ExtractReplyData);
+        }
+
+        /// <summary>
+        ///  Send a command that sets the encryption key configuration on a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="encryptionKeyConfiguration">Data for the encryption key configuration on the PD.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<bool> EncryptionKeySet(Guid connectionId, byte address,
+            EncryptionKeyConfiguration encryptionKeyConfiguration)
+        {
+            var reply = await SendCommand(connectionId,
+                new EncryptionKeySetCommand(address, encryptionKeyConfiguration)).ConfigureAwait(false);
+
+            return reply.Type == ReplyType.Ack;
         }
 
         /// <summary>
@@ -533,24 +564,54 @@ namespace OSDP.Net
 
         private event EventHandler<ReplyEventArgs> ReplyReceived;
 
+        /// <summary>
+        /// Occurs when connection status changed.
+        /// </summary>
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
 
+        /// <summary>
+        /// Occurs when NAK reply received.
+        /// </summary>
         public event EventHandler<NakReplyEventArgs> NakReplyReceived;
 
+        /// <summary>
+        /// Occurs when local status report reply received.
+        /// </summary>
         public event EventHandler<LocalStatusReportReplyEventArgs> LocalStatusReportReplyReceived;
 
+        /// <summary>
+        /// Occurs when input status report reply received.
+        /// </summary>
         public event EventHandler<InputStatusReportReplyEventArgs> InputStatusReportReplyReceived;
 
+        /// <summary>
+        /// Occurs when output status report reply received.
+        /// </summary>
         public event EventHandler<OutputStatusReportReplyEventArgs> OutputStatusReportReplyReceived;
 
+        /// <summary>
+        /// Occurs when reader status report reply received.
+        /// </summary>
         public event EventHandler<ReaderStatusReportReplyEventArgs> ReaderStatusReportReplyReceived;
 
+        /// <summary>
+        /// Occurs when raw card data reply received.
+        /// </summary>
         public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
 
+        /// <summary>
+        /// Occurs when manufacturer specific reply received.
+        /// </summary>
         public event EventHandler<ManufacturerSpecificReplyEventArgs> ManufacturerSpecificReplyReceived;
 
+        /// <summary>
+        /// Occurs when extended read reply received.
+        /// </summary>
         public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
 
+        /// <summary>
+        /// Occurs when piv data reply received.
+        /// </summary>
         private event EventHandler<PIVDataReplyEventArgs> PIVDataReplyReceived;
 
         public class NakReplyEventArgs : EventArgs

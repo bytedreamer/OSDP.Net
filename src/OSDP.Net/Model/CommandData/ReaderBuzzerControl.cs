@@ -11,7 +11,7 @@ namespace OSDP.Net.Model.CommandData
         /// <summary>
         /// Initializes a new instance of the <see cref="ReaderBuzzerControl"/> class.
         /// </summary>
-        /// <param name="readerNumber">The reader number.</param>
+        /// <param name="readerNumber">The reader number starting at 0.</param>
         /// <param name="toneCode">The tone code.</param>
         /// <param name="onTime">The on time in units of 100ms.</param>
         /// <param name="offTime">The off time in units of 100ms.</param>
@@ -26,7 +26,7 @@ namespace OSDP.Net.Model.CommandData
         }
 
         /// <summary>
-        /// Gets the reader number.
+        /// Gets the reader number starting at 0.
         /// </summary>
         public byte ReaderNumber { get; }
 
