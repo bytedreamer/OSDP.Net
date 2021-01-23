@@ -2,7 +2,7 @@ using System;
 
 namespace OSDP.Net.Messages
 {
-    public class ServerCryptogramCommand : Command
+    internal class ServerCryptogramCommand : Command
     {
         private readonly byte[] _serverCryptogram;
 

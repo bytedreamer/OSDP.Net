@@ -39,7 +39,7 @@ namespace OSDP.Net.Messages
                 (IsSecureMessage ? MacSize : 0)).ToArray();
             if (SecurityBlockType == (byte) OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity)
             {
-                ExtractReplyData = DecryptData(device);
+                ExtractReplyData = DecryptData(device).ToArray();
             }
 
             IsDataCorrect = isUsingCrc
@@ -68,7 +68,7 @@ namespace OSDP.Net.Messages
         };
 
         public ReplyType Type { get; }
-        public IEnumerable<byte> ExtractReplyData { get; }
+        public byte[] ExtractReplyData { get; }
         public IEnumerable<byte> MessageForMacGeneration { get; }
         public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType);
 

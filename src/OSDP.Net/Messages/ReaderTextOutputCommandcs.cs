@@ -4,7 +4,7 @@ using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    public class ReaderTextOutputCommand : Command
+    internal class ReaderTextOutputCommand : Command
     {
         private readonly ReaderTextOutput _readerTextOutput;
 

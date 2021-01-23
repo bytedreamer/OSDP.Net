@@ -2,7 +2,7 @@ using System;
 
 namespace OSDP.Net.Messages
 {
-    public class LocalStatusReportCommand : Command
+    internal class LocalStatusReportCommand : Command
     {
         public LocalStatusReportCommand(byte address)
         {

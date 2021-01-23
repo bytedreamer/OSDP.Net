@@ -75,6 +75,8 @@ namespace OSDP.Net.Tests
 
         public bool IsOpen => true;
 
+        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(1);
+
         public void Open()
         {
             NumberOfTimesCalledOpen++;

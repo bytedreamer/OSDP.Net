@@ -2,23 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
+    /// <summary>
+    /// The output status report sent as a reply.
+    /// </summary>
     public class OutputStatus
     {
         private OutputStatus()
         {
         }
 
+        /// <summary>
+        /// Gets the all the PDs output statuses as an array ordered by output number.
+        /// </summary>
         public IEnumerable<bool> OutputStatuses { get; private set; }
 
-        internal static OutputStatus ParseData(Reply reply)
+        internal static OutputStatus ParseData(ReadOnlySpan<byte> data)
         {
-            return new OutputStatus {OutputStatuses = reply.ExtractReplyData.Select(Convert.ToBoolean)};
+            return new OutputStatus {OutputStatuses = data.ToArray().Select(Convert.ToBoolean)};
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             byte outputNumber = 0;

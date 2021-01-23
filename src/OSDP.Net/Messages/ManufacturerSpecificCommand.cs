@@ -3,8 +3,8 @@ using OSDP.Net.Model.CommandData;
 using System.Linq;
 
 namespace OSDP.Net.Messages
-{
-    public class ManufacturerSpecificCommand : Command
+{  
+    internal class ManufacturerSpecificCommand : Command
     {
         private readonly ManufacturerSpecific _manufacturerData;
 

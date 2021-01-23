@@ -2,7 +2,7 @@ using System;
 
 namespace OSDP.Net.Messages
 {
-    public class DeviceCapabilitiesCommand : Command
+    internal class DeviceCapabilitiesCommand : Command
     {
         public DeviceCapabilitiesCommand(byte address)
         {

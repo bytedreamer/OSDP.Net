@@ -25,8 +25,6 @@ namespace OSDP.Net
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
-
-        private readonly TimeSpan _readTimeout = TimeSpan.FromMilliseconds(200);
         private readonly BlockingCollection<Reply> _replies;
 
         private bool _isShuttingDown;
@@ -185,7 +183,11 @@ namespace OSDP.Net
                         // Make sure the security is reset properly if reader goes offline
                         if (device.IsSecurityEstablished && !IsOnline(command.Address))
                         {
-                            ResetSecurity(device);
+                            ResetDevice(device);
+                        }
+                        else if (device.UseSecureChannel)
+                        {
+                            device.CreateNewRandomNumber();
                         }
 
                         continue;
@@ -239,7 +241,9 @@ namespace OSDP.Net
                 var mac = device.GenerateMac(reply.MessageForMacGeneration.ToArray(), false);
                 if (!reply.IsValidMac(mac))
                 {
-                    ResetSecurity(device);
+                    // Appears that some legacy readers need a few seconds before attempting to reset
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                    ResetDevice(device);
                     return;
                 }
             }
@@ -257,7 +261,7 @@ namespace OSDP.Net
                 (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))
             {
-                if (reply.Sequence > 0) ResetSecurity(device);
+                if (reply.Sequence > 0) ResetDevice(device);
             }
 
             switch (reply.Type)
@@ -273,10 +277,17 @@ namespace OSDP.Net
             _replies.Add(reply);
         }
 
-        private void ResetSecurity(Device device)
+        public void ResetDevice(int address)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+            
+            ResetDevice(foundDevice);
+        }
+
+        private void ResetDevice(Device device)
         {
             RemoveDevice(device.Address);
-            AddDevice(device.Address, device.MessageControl.UseCrc, true, device.SecureChannelKey);
+            AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
         private async Task<Reply> SendCommandAndReceiveReply(Command command, Device device)
@@ -292,7 +303,7 @@ namespace OSDP.Net
                 throw;
             }
 
-            // _logger?.LogTrace($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
+            // _logger?.LogInformation($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
 
             var buffer = new byte[commandData.Length + 1];
             buffer[0] = DriverByte;
@@ -316,8 +327,8 @@ namespace OSDP.Net
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
 
-            // _logger?.LogTrace($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
-            //     command.Address);
+            // _logger?.LogInformation($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
+            //      command.Address);
 
             return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }
@@ -331,8 +342,8 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < replyLength)
             {
-                byte[] readBuffer = new byte[replyLength - replyBuffer.Count];
-                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
+                byte[] readBuffer = new byte[_connection.BaudRate/60];
+                int bytesRead = await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
@@ -354,7 +365,7 @@ namespace OSDP.Net
             while (replyBuffer.Count < 4)
             {
                 byte[] readBuffer = new byte[4];
-                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
+                int bytesRead = await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
@@ -376,7 +387,7 @@ namespace OSDP.Net
             while (true)
             {
                 byte[] readBuffer = new byte[1];
-                int bytesRead = await TimeOutReadAsync(readBuffer).ConfigureAwait(false);
+                int bytesRead = await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout).ConfigureAwait(false);
                 if (bytesRead == 0)
                 {
                     return false;
@@ -394,18 +405,16 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<int> TimeOutReadAsync(byte[] buffer)
+        private async Task<int> TimeOutReadAsync(byte[] buffer, TimeSpan timeout)
         {
-            using (var cancellationTokenSource = new CancellationTokenSource(_readTimeout))
+            using var cancellationTokenSource = new CancellationTokenSource(timeout);
+            try
             {
-                try
-                {
-                    return await _connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    return 0;
-                }
+                return await _connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return 0;
             }
         }
 

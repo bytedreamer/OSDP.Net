@@ -13,25 +13,27 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         public ErrorCode ErrorCode { get; private set; }
+
         public IEnumerable<byte> ExtraData { get; private set;  }
 
-        internal static Nak ParseData(Reply reply)
+        internal static Nak ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length < 1)
+            var dataArray = data.ToArray();
+            if (dataArray.Length < 1)
             {
                 throw new Exception("Invalid size for the data");
             }
 
             var nak = new Nak
             {
-                ErrorCode = (ErrorCode)data[0],
-                ExtraData = data.Skip(1).Take(data.Length - 1)
+                ErrorCode = (ErrorCode)dataArray[0],
+                ExtraData = dataArray.Skip(1).Take(dataArray.Length - 1)
             };
 
             return nak;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var build = new StringBuilder();

@@ -2,7 +2,7 @@ using System;
 
 namespace OSDP.Net.Messages
 {
-    public class OutputStatusReportCommand : Command
+    internal class OutputStatusReportCommand : Command
     {
         public OutputStatusReportCommand(byte address)
         {

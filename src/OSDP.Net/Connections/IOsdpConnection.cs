@@ -1,19 +1,26 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace OSDP.Net.Connections
 {
+    /// <summary>
+    /// Defines a connection for communicating with PDs
+    /// </summary>
     public interface IOsdpConnection
     {
-        /// <summary>
-        /// Speed of the connection
-        /// </summary>
+        /// <summary>Speed of the connection</summary>
         int BaudRate { get; }
 
         /// <summary>
         /// Is the connection open and ready to communicate
         /// </summary>
         bool IsOpen { get; }
+
+        /// <summary>
+        /// Timeout value waiting for a reply
+        /// </summary>
+        TimeSpan ReplyTimeout { get; set; }
 
         /// <summary>
         /// Open the connection for communications

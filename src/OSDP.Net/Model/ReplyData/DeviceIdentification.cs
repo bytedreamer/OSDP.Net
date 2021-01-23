@@ -6,42 +6,66 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
+    /// <summary>
+    /// The PD identification data sent as a reply.
+    /// </summary>
     public class DeviceIdentification
     {
         private DeviceIdentification()
         {
         }
 
+        /// <summary>Gets the vendor code.</summary>
         public IEnumerable<byte> VendorCode { get; private set; }
+
+        /// <summary>Gets the model number.</summary>
         public byte ModelNumber { get;private set;  }
+
+        /// <summary>Gets the hardware version.</summary>
         public byte Version { get; private set; }
+
+        /// <summary>Gets the serial number.</summary>
         public int SerialNumber { get; private set; }
+
+        /// <summary>
+        /// Gets the firmware major version.
+        /// </summary>
         public byte FirmwareMajor { get; private set; }
+
+        /// <summary>
+        /// Gets the firmware minor version.
+        /// </summary>
         public byte FirmwareMinor { get; private set; }
+
+        /// <summary>
+        /// Gets the firmware build.
+        /// </summary>
         public byte FirmwareBuild { get; private set; }
 
-        internal static DeviceIdentification ParseData(Reply reply)
+
+        internal static DeviceIdentification ParseData(ReadOnlySpan<byte> data)
         {
-            var data = reply.ExtractReplyData.ToArray();
-            if (data.Length != 12)
+            var dataArray = data.ToArray();
+            if (dataArray.Length != 12)
             {
                 throw new Exception("Invalid size for the data");
             }
 
             var deviceIdentification = new DeviceIdentification
             {
-                VendorCode = data.Take(3),
-                ModelNumber = data[3],
-                Version = data[4],
-                SerialNumber = Message.ConvertBytesToInt(data.Skip(5).Take(4).ToArray()),
-                FirmwareMajor = data[9],
-                FirmwareMinor = data[10],
-                FirmwareBuild = data[11]
+                VendorCode = dataArray.Take(3),
+                ModelNumber = dataArray[3],
+                Version = dataArray[4],
+                SerialNumber = Message.ConvertBytesToInt(dataArray.Skip(5).Take(4).ToArray()),
+                FirmwareMajor = dataArray[9],
+                FirmwareMinor = dataArray[10],
+                FirmwareBuild = dataArray[11]
             };
 
             return deviceIdentification;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var build = new StringBuilder();

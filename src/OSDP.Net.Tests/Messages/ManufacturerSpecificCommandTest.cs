@@ -22,13 +22,13 @@ namespace OSDP.Net.Tests.Messages
             {
                 get
                 {
-                    var mfgData = new ManufacturerSpecific(new byte[] { 0x01, 0x02, 0x03 }, new byte[] { 0x0A, 0x0B, 0x0C });
+                    var data = new ManufacturerSpecific(new byte[] { 0x01, 0x02, 0x03 }, new byte[] { 0x0A, 0x0B, 0x0C });
 
-                    yield return new TestCaseData((byte) 0x0, true, true, mfgData).Returns(
+                    yield return new TestCaseData((byte) 0x0, true, true, data).Returns(
                         "53-00-10-00-0C-02-17-80-01-02-03-0A-0B-0C-B5-0D");
-                    yield return new TestCaseData((byte) 0x0, true, false, mfgData).Returns(
+                    yield return new TestCaseData((byte) 0x0, true, false, data).Returns(
                         "53-00-0E-00-04-80-01-02-03-0A-0B-0C-CD-9B");
-                    yield return new TestCaseData((byte) 0x0, false, false, mfgData).Returns(
+                    yield return new TestCaseData((byte) 0x0, false, false, data).Returns(
                         "53-00-0D-00-00-80-01-02-03-0A-0B-0C-F9");
                 }
             }
