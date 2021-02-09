@@ -342,7 +342,9 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < replyLength)
             {
-                byte[] readBuffer = new byte[_connection.BaudRate/60];
+                int maxReadBufferLength = _connection.BaudRate / 60;
+                int remainingLength = replyLength - replyBuffer.Count;
+                byte[] readBuffer = new byte[Math.Min(maxReadBufferLength, remainingLength)];
                 int bytesRead = await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
