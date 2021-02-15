@@ -31,8 +31,8 @@ namespace OSDP.Net.Messages
             {
                 SecureBlockData = data.Slice(ReplyMessageHeaderSize + 2, secureBlockSize - 2).ToArray();
                 Mac = data.Slice(messageLength, MacSize).ToArray();
-                Type = (ReplyType) data[ReplyTypeIndex + secureBlockSize];
             }
+            Type = (ReplyType) data[ReplyTypeIndex + secureBlockSize];
 
             ExtractReplyData = data.Slice(ReplyMessageHeaderSize + secureBlockSize, data.Length -
                 ReplyMessageHeaderSize - secureBlockSize - replyMessageFooterSize -
@@ -81,7 +81,7 @@ namespace OSDP.Net.Messages
         public static Reply Parse(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, Device device)
         {
             var reply = new UnknownReply(data, connectionId, issuingCommand, device);
-
+            
             return reply;
         }
 
