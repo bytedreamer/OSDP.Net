@@ -33,7 +33,7 @@ namespace OSDP.Net
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    _logger?.LogDebug($"Received a reply {reply}");
+                    // _logger?.LogDebug($"Received a reply {reply}");
                     
                     OnReplyReceived(reply);
                 }

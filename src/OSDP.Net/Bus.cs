@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.ReplyData;
+// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace OSDP.Net
 {
@@ -29,6 +30,7 @@ namespace OSDP.Net
 
         private bool _isShuttingDown;
 
+        // ReSharper disable once ContextualLoggerProblem
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -137,7 +139,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError("Error while opening connection", exception);
+                        _logger?.LogError(exception, "Error while opening connection");
                     }
                 }
 
@@ -164,7 +166,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError("Error while notifying connection status for address {command.Address}", exception);
+                        _logger?.LogError(exception, "Error while notifying connection status for address {command.Address}");
                     }
 
                     try
@@ -173,7 +175,7 @@ namespace OSDP.Net
                     }
                     catch (InvalidOperationException exception)
                     {
-                        _logger?.LogWarning("Port is closed, reconnecting...", exception);
+                        _logger?.LogWarning(exception, "Port is closed, reconnecting...");
                         _connection.Close();
                         await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                         break;
@@ -194,8 +196,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError($"Error while sending command {command} to address {command.Address}",
-                            exception);
+                        _logger?.LogError(exception, $"Error while sending command {command} to address {command.Address}");
                         continue;
                     }
 
@@ -205,7 +206,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError($"Error while processing reply {reply} from address {reply.Address}", exception);
+                        _logger?.LogError(exception, $"Error while processing reply {reply} from address {reply.Address}");
                         continue;
                     }
 
@@ -300,7 +301,7 @@ namespace OSDP.Net
             }
             catch (Exception exception)
             {
-                _logger?.LogError($"Error while building command {command}", exception);
+                _logger?.LogError(exception, $"Error while building command {command}");
                 throw;
             }
 
