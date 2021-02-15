@@ -259,7 +259,8 @@ namespace OSDP.Net
             
             if (reply.Type == ReplyType.Nak &&
                 (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
-                 reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))
+                 reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet ||
+                 reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber))
             {
                 if (reply.Sequence > 0) ResetDevice(device);
             }
