@@ -559,6 +559,15 @@ namespace OSDP.Net
                             PIVData.ParseData(reply.ExtractReplyData)));   
                     break;
                 }
+
+                case ReplyType.KeypadData:
+                {
+                    var handler = KeypadReplyReceived;
+                    handler?.Invoke(this,
+                        new KeypadReplyEventArgs(reply.ConnectionId, reply.Address,
+                            KeypadReplyData.ParseData(reply.ExtractReplyData)));
+                    break;
+                }
             }
         }
 
@@ -608,6 +617,11 @@ namespace OSDP.Net
         /// Occurs when extended read reply received.
         /// </summary>
         public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
+
+        /// <summary>
+        /// Occurs when key pad data reply received.
+        /// </summary>
+        public event EventHandler<KeypadReplyEventArgs> KeypadReplyReceived;
 
         /// <summary>
         /// Occurs when piv data reply received.
@@ -758,6 +772,22 @@ namespace OSDP.Net
             public byte Address { get; }
 
             public PIVData PIVData { get; }
+        }
+
+        public class KeypadReplyEventArgs : EventArgs
+        {
+            public KeypadReplyEventArgs(Guid connectionId, byte address, KeypadReplyData keypadData)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                KeypadData = keypadData;
+            }
+
+            public Guid ConnectionId { get; }
+
+            public byte Address { get; }
+
+            public KeypadReplyData KeypadData { get; }
         }
 
         private class ReplyEventArgs : EventArgs
