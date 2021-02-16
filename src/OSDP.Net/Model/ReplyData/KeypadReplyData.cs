@@ -7,8 +7,8 @@ namespace OSDP.Net.Model.ReplyData
 {
     public class KeypadReplyData
     {
-        private const int REPLY_KEYPPAD_DATA_LEN = 2;
-       
+        private const int ReplyKeyPadDataLength = 2;
+
         public byte ReaderNumber { get; private set; }
         public ushort BitCount { get; private set; }
         public BitArray Data { get; private set; }
@@ -16,12 +16,13 @@ namespace OSDP.Net.Model.ReplyData
         internal static KeypadReplyData ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();
-            if (dataArray.Length < REPLY_KEYPPAD_DATA_LEN)
+            if (dataArray.Length < ReplyKeyPadDataLength)
             {
                 throw new Exception("Invalid size for the data");
             }
 
-            var keypadData = new BitArray(dataArray.Skip(REPLY_KEYPPAD_DATA_LEN).Take(dataArray.Length - REPLY_KEYPPAD_DATA_LEN).Reverse().ToArray());
+            var keypadData = new BitArray(dataArray.Skip(ReplyKeyPadDataLength)
+                .Take(dataArray.Length - ReplyKeyPadDataLength).Reverse().ToArray());
             Reverse(keypadData);
             var keypadReplyData = new KeypadReplyData
             {
