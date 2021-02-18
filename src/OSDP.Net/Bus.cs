@@ -47,6 +47,8 @@ namespace OSDP.Net
         /// </summary>
         public Guid Id { get; }
 
+        public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.Select(device => device.Address);
+
         /// <summary>
         /// Closes down the connection
         /// </summary>
@@ -175,9 +177,13 @@ namespace OSDP.Net
                     }
                     catch (InvalidOperationException exception)
                     {
-                        _logger?.LogWarning(exception, "Port is closed, reconnecting...");
-                        _connection.Close();
-                        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                        if (!_isShuttingDown)
+                        {
+                            _logger?.LogWarning(exception, "Port is closed, reconnecting...");
+                            _connection.Close();
+                            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                        }
+
                         break;
                     }
                     catch (TimeoutException)
@@ -263,7 +269,7 @@ namespace OSDP.Net
                  reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber))
             {
-                if (reply.Sequence > 0) ResetDevice(device);
+                if (reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber || reply.Sequence > 0) ResetDevice(device);
             }
 
             switch (reply.Type)

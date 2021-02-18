@@ -420,6 +420,11 @@ namespace OSDP.Net
                 bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
                 
                 bus.Close();
+                
+                foreach (byte address in bus.ConfigureDeviceAddresses)
+                {
+                    OnConnectionStatusChanged(bus.Id, address, false);
+                }
             }
 
             foreach (var pivDataLock in _pivDataLocks.Values)
