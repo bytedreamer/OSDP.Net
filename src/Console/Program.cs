@@ -178,6 +178,11 @@ namespace Console
                 DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
                     args.RawCardData.ToString());
             };
+            _controlPanel.KeypadReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Received keypad data reply for address {args.Address}",
+                    args.KeypadData.ToString());
+            };
         }
 
         private static void StartSerialConnection()
