@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using NUnit.Framework;
-using OSDP.Net.Messages;
 using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net.Tests.Model.ReplyData
