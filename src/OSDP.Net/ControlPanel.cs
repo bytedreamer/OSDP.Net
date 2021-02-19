@@ -426,6 +426,10 @@ namespace OSDP.Net
                     OnConnectionStatusChanged(bus.Id, address, false);
                 }
             }
+            while (!_buses.IsEmpty) 
+            {
+                _buses.TryTake(out _);
+            }
 
             foreach (var pivDataLock in _pivDataLocks.Values)
             {
