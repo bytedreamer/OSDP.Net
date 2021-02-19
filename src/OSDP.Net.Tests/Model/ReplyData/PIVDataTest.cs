@@ -3,7 +3,7 @@ using NUnit.Framework;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.ReplyData;
 
-namespace OSDP.Net.Tests.Model
+namespace OSDP.Net.Tests.Model.ReplyData
 {
     [TestFixture]
     public class PIVDataTest

@@ -41,7 +41,7 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(5);
+        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
 
         /// <inheritdoc />
         public void Open()

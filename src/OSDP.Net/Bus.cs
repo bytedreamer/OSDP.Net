@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.ReplyData;
+// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace OSDP.Net
 {
@@ -29,6 +30,7 @@ namespace OSDP.Net
 
         private bool _isShuttingDown;
 
+        // ReSharper disable once ContextualLoggerProblem
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -44,6 +46,8 @@ namespace OSDP.Net
         /// Unique identifier of the bus
         /// </summary>
         public Guid Id { get; }
+
+        public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.Select(device => device.Address);
 
         /// <summary>
         /// Closes down the connection
@@ -137,7 +141,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError("Error while opening connection", exception);
+                        _logger?.LogError(exception, "Error while opening connection");
                     }
                 }
 
@@ -164,7 +168,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError("Error while notifying connection status for address {command.Address}", exception);
+                        _logger?.LogError(exception, "Error while notifying connection status for address {command.Address}");
                     }
 
                     try
@@ -173,9 +177,13 @@ namespace OSDP.Net
                     }
                     catch (InvalidOperationException exception)
                     {
-                        _logger?.LogWarning("Port is closed, reconnecting...", exception);
-                        _connection.Close();
-                        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                        if (!_isShuttingDown)
+                        {
+                            _logger?.LogWarning(exception, "Port is closed, reconnecting...");
+                            _connection.Close();
+                            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                        }
+
                         break;
                     }
                     catch (TimeoutException)
@@ -194,8 +202,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError($"Error while sending command {command} to address {command.Address}",
-                            exception);
+                        _logger?.LogError(exception, $"Error while sending command {command} to address {command.Address}");
                         continue;
                     }
 
@@ -205,7 +212,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError($"Error while processing reply {reply} from address {reply.Address}", exception);
+                        _logger?.LogError(exception, $"Error while processing reply {reply} from address {reply.Address}");
                         continue;
                     }
 
@@ -262,7 +269,7 @@ namespace OSDP.Net
                  reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber))
             {
-                if (reply.Sequence > 0) ResetDevice(device);
+                if (reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber || reply.Sequence > 0) ResetDevice(device);
             }
 
             switch (reply.Type)
@@ -300,7 +307,7 @@ namespace OSDP.Net
             }
             catch (Exception exception)
             {
-                _logger?.LogError($"Error while building command {command}", exception);
+                _logger?.LogError(exception, $"Error while building command {command}");
                 throw;
             }
 

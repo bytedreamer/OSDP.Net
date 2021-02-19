@@ -33,7 +33,7 @@ namespace OSDP.Net
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    _logger?.LogDebug($"Received a reply {reply}");
+                    // _logger?.LogDebug($"Received a reply {reply}");
                     
                     OnReplyReceived(reply);
                 }
@@ -420,6 +420,15 @@ namespace OSDP.Net
                 bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
                 
                 bus.Close();
+                
+                foreach (byte address in bus.ConfigureDeviceAddresses)
+                {
+                    OnConnectionStatusChanged(bus.Id, address, false);
+                }
+            }
+            while (!_buses.IsEmpty) 
+            {
+                _buses.TryTake(out _);
             }
 
             foreach (var pivDataLock in _pivDataLocks.Values)
@@ -559,6 +568,15 @@ namespace OSDP.Net
                             PIVData.ParseData(reply.ExtractReplyData)));   
                     break;
                 }
+
+                case ReplyType.KeypadData:
+                {
+                    var handler = KeypadReplyReceived;
+                    handler?.Invoke(this,
+                        new KeypadReplyEventArgs(reply.ConnectionId, reply.Address,
+                            KeypadData.ParseData(reply.ExtractReplyData)));
+                    break;
+                }
             }
         }
 
@@ -608,6 +626,11 @@ namespace OSDP.Net
         /// Occurs when extended read reply received.
         /// </summary>
         public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
+
+        /// <summary>
+        /// Occurs when key pad data reply received.
+        /// </summary>
+        public event EventHandler<KeypadReplyEventArgs> KeypadReplyReceived;
 
         /// <summary>
         /// Occurs when piv data reply received.
@@ -758,6 +781,22 @@ namespace OSDP.Net
             public byte Address { get; }
 
             public PIVData PIVData { get; }
+        }
+
+        public class KeypadReplyEventArgs : EventArgs
+        {
+            public KeypadReplyEventArgs(Guid connectionId, byte address, KeypadData keypadData)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                KeypadData = keypadData;
+            }
+
+            public Guid ConnectionId { get; }
+
+            public byte Address { get; }
+
+            public KeypadData KeypadData { get; }
         }
 
         private class ReplyEventArgs : EventArgs

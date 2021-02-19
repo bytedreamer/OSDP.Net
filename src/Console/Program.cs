@@ -178,6 +178,11 @@ namespace Console
                 DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
                     args.RawCardData.ToString());
             };
+            _controlPanel.KeypadReplyReceived += (sender, args) =>
+            {
+                DisplayReceivedReply($"Received keypad data reply for address {args.Address}",
+                    args.KeypadData.ToString());
+            };
         }
 
         private static void StartSerialConnection()
@@ -594,19 +599,19 @@ namespace Console
 
         private static void SendReaderLedControlCommand()
         {
-            var readerAddressTextField = new TextField(20, 1, 20, "0");
-            var colorTextField = new TextField(20, 3, 20, "Red");
+            var ledNumberTextField = new TextField(20, 1, 20, "0");
+            var colorComboBox = new ComboBox(new Rect(20, 3, 20, 1), Enum.GetNames(typeof(LedColor))) {Text = "Red"};
 
             void SendReaderLedControlButtonClicked()
             {
-                if (!byte.TryParse(readerAddressTextField.Text.ToString(), out var readerNumber))
+                if (!byte.TryParse(ledNumberTextField.Text.ToString(), out var ledNumber))
                 {
 
-                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid LED number entered!", "OK");
                     return;
                 }
 
-                if (!Enum.TryParse(colorTextField.Text.ToString(), out LedColor color))
+                if (!Enum.TryParse(colorComboBox.Text.ToString(), out LedColor color))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid LED color entered!", "OK");
@@ -615,7 +620,7 @@ namespace Console
 
                 SendCommand("Reader LED Control Command", _connectionId, new ReaderLedControls(new[]
                 {
-                    new ReaderLedControl(readerNumber, 0,
+                    new ReaderLedControl(0, ledNumber,
                         TemporaryReaderControlCode.CancelAnyTemporaryAndDisplayPermanent, 0, 0,
                         LedColor.Red, LedColor.Green, 0,
                         PermanentReaderControlCode.SetPermanentState, 0, 0, color, color)
@@ -630,10 +635,10 @@ namespace Console
             cancelButton.Clicked += Application.RequestStop;
             Application.Run(new Dialog("Send Reader LED Control Command", 60, 10, sendButton, cancelButton)
             {
-                new Label(1, 1, "Reader Number:"),
-                readerAddressTextField,
+                new Label(1, 1, "LED Number:"),
+                ledNumberTextField,
                 new Label(1, 3, "Color:"),
-                colorTextField
+                colorComboBox
             });
         }
 
