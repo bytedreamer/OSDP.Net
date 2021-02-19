@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 
 namespace OSDP.Net.Model.ReplyData
@@ -7,9 +6,9 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// Keypad data entered on PD
     /// </summary>
-    public class KeypadReplyData
+    public class KeypadData
     {
-        private const int ReplyKeyPadDataLength = 2;
+        private const int DataStartIndex = 2;
 
         /// <summary>
         /// Reader number 0=First Reader 1=Second Reader
@@ -34,19 +33,18 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public byte[] Data { get; private set; }
 
-        internal static KeypadReplyData ParseData(ReadOnlySpan<byte> data)
+        internal static KeypadData ParseData(ReadOnlySpan<byte> data)
         {
-            var dataArray = data.ToArray();
-            if (dataArray.Length < ReplyKeyPadDataLength)
+            if (data.Length < DataStartIndex)
             {
                 throw new Exception("Invalid size for the data");
             }
 
-            var keypadReplyData = new KeypadReplyData
+            var keypadReplyData = new KeypadData
             {
-                ReaderNumber = dataArray[0],
-                DigitCount = dataArray[1],
-                Data = dataArray.Skip(ReplyKeyPadDataLength).Take(dataArray.Length - ReplyKeyPadDataLength).ToArray()
+                ReaderNumber = data[0],
+                DigitCount = data[1],
+                Data = data.Slice(DataStartIndex, data.Length - DataStartIndex).ToArray()
             };
 
             return keypadReplyData;

@@ -574,7 +574,7 @@ namespace OSDP.Net
                     var handler = KeypadReplyReceived;
                     handler?.Invoke(this,
                         new KeypadReplyEventArgs(reply.ConnectionId, reply.Address,
-                            KeypadReplyData.ParseData(reply.ExtractReplyData)));
+                            KeypadData.ParseData(reply.ExtractReplyData)));
                     break;
                 }
             }
@@ -785,7 +785,7 @@ namespace OSDP.Net
 
         public class KeypadReplyEventArgs : EventArgs
         {
-            public KeypadReplyEventArgs(Guid connectionId, byte address, KeypadReplyData keypadData)
+            public KeypadReplyEventArgs(Guid connectionId, byte address, KeypadData keypadData)
             {
                 ConnectionId = connectionId;
                 Address = address;
@@ -796,7 +796,7 @@ namespace OSDP.Net
 
             public byte Address { get; }
 
-            public KeypadReplyData KeypadData { get; }
+            public KeypadData KeypadData { get; }
         }
 
         private class ReplyEventArgs : EventArgs
