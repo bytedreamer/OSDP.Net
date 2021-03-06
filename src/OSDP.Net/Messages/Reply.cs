@@ -45,7 +45,7 @@ namespace OSDP.Net.Messages
             IsDataCorrect = isUsingCrc
                 ? CalculateCrc(data.Slice(0, data.Length - 2)) ==
                   ConvertBytesToShort(data.Slice(data.Length - 2, 2))
-                : CalculateChecksum(data.Slice(data.Length - 1, 1).ToArray()) == data[data.Length - 1];
+                : CalculateChecksum(data.Slice(0, data.Length - 1).ToArray()) == data[^1];
             MessageForMacGeneration = data.Slice(0, messageLength).ToArray();
 
             ConnectionId = connectionId;
