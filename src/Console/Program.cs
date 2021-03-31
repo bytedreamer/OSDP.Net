@@ -68,6 +68,8 @@ namespace Console
             {
                 new MenuBarItem("_System", new[]
                 {
+                    new MenuItem("_About", "", () => MessageBox.Query("About",
+                        $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}", "OK")),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
