@@ -22,10 +22,10 @@ variables:
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Install .NET Core SDK'
+  displayName: 'Install .NET 5 SDK'
   inputs:
     packageType: 'sdk'
-    version: '3.x'
+    version: '5.x'
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet build'
