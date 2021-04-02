@@ -174,6 +174,8 @@ namespace OSDP.Net
                     try
                     {
                         reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
+                        
+                        // Prevent plain text message replies when secure channel has been established
                         if (device.IsSecurityEstablished && !reply.IsSecureMessage)
                         {
                             _logger?.LogWarning("An plain text message was received when the secure channel had been established");

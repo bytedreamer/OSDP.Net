@@ -68,12 +68,12 @@ namespace Console
             {
                 new MenuBarItem("_System", new[]
                 {
-                    new MenuItem("_About", "", () => MessageBox.Query("About",
+                    new MenuItem("_About", "", () => MessageBox.Query(40, 6,"About",
                         $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}", "OK")),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
-                        if (MessageBox.Query(40, 10, "Quit", "Quit program?", "Yes", "No") == 0)
+                        if (MessageBox.Query(40, 6, "Quit", "Quit program?", "Yes", "No") == 0)
                         {
                             Application.RequestStop();
                         }
