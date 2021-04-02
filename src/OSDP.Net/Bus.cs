@@ -174,6 +174,13 @@ namespace OSDP.Net
                     try
                     {
                         reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
+                        if (device.IsSecurityEstablished && !reply.IsSecureMessage)
+                        {
+                            _logger?.LogWarning("An plain text message was received when the secure channel had been established");
+                            device.CreateNewRandomNumber();
+                            ResetDevice(device);
+                            continue;
+                        }
                     }
                     catch (InvalidOperationException exception)
                     {
