@@ -28,6 +28,10 @@ steps:
     version: '5.x'
 
 - task: DotNetCoreCLI@2
+  inputs:
+    command: 'restore'
+
+- task: DotNetCoreCLI@2
   displayName: 'dotnet build'
   inputs:
     command: 'build'
