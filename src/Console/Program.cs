@@ -655,7 +655,7 @@ namespace Console
                 byte[] vendorCode;
                 try
                 {
-                    vendorCode = Convert.FromBase64String(vendorCodeTextField.Text.ToString() ?? string.Empty);
+                    vendorCode = Convert.FromHexString(vendorCodeTextField.Text.ToString() ?? string.Empty);
                 }
                 catch
                 {
@@ -672,7 +672,7 @@ namespace Console
                 byte[] data;
                 try
                 {
-                    data = Convert.FromBase64String(dataTextField.Text.ToString() ?? string.Empty);
+                    data = Convert.FromHexString(dataTextField.Text.ToString() ?? string.Empty);
                 }
                 catch
                 {
@@ -691,7 +691,7 @@ namespace Console
             sendButton.Clicked += SendOutputControlButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Send Manufacturer Specific Command (Enter Base64)", 60, 10, sendButton, cancelButton)
+            Application.Run(new Dialog("Send Manufacturer Specific Command (Enter Hex Strings)", 60, 10, sendButton, cancelButton)
             {
                 new Label(1, 1, "Vendor Code:"),
                 vendorCodeTextField,
@@ -825,7 +825,7 @@ namespace Console
             sendButton.Clicked += SendButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Encryption Key Set Command", 60, 8, sendButton, cancelButton)
+            Application.Run(new Dialog("Encryption Key Set Command (Enter Hex String)", 60, 8, sendButton, cancelButton)
             {
                 new Label(1, 1, "Key:"),
                 keyTextField
