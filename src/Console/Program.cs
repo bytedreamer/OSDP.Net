@@ -143,13 +143,13 @@ namespace Console
 
         private static void RegisterEvents()
         {
-            _controlPanel.ConnectionStatusChanged += (sender, args) =>
+            _controlPanel.ConnectionStatusChanged += (_, args) =>
             {
                 DisplayReceivedReply($"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
                                      $"at address {args.Address} is now {(args.IsConnected ? "connected" : "disconnected")}",
                     string.Empty);
             };
-            _controlPanel.NakReplyReceived += (sender, args) =>
+            _controlPanel.NakReplyReceived += (_, args) =>
             {
                 _lastNak.TryRemove(args.Address, out var lastNak);
                 _lastNak.TryAdd(args.Address, args);
@@ -161,32 +161,32 @@ namespace Console
 
                 AddLogMessage($"!!! Received NAK reply for address {args.Address} !!!{Environment.NewLine}{args.Nak}");
             };
-            _controlPanel.LocalStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.LocalStatusReportReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Local status updated for address {args.Address}",
                     args.LocalStatus.ToString());
             };
-            _controlPanel.InputStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.InputStatusReportReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Input status updated for address {args.Address}",
                     args.InputStatus.ToString());
             };
-            _controlPanel.OutputStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.OutputStatusReportReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Output status updated for address {args.Address}",
                     args.OutputStatus.ToString());
             };
-            _controlPanel.ReaderStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.ReaderStatusReportReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Reader tamper status updated for address {args.Address}",
                     args.ReaderStatus.ToString());
             };
-            _controlPanel.RawCardDataReplyReceived += (sender, args) =>
+            _controlPanel.RawCardDataReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
                     args.RawCardData.ToString());
             };
-            _controlPanel.KeypadReplyReceived += (sender, args) =>
+            _controlPanel.KeypadReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Received keypad data reply for address {args.Address}",
                     args.KeypadData.ToString());
@@ -616,7 +616,7 @@ namespace Console
                     new OutputControl(outputNumber, activateOutputCheckBox.Checked
                         ? OutputControlCode.PermanentStateOnAbortTimedOperation
                         : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
-                }), _controlPanel.OutputControl, (address, result) => { });
+                }), _controlPanel.OutputControl, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -660,7 +660,7 @@ namespace Console
                         TemporaryReaderControlCode.CancelAnyTemporaryAndDisplayPermanent, 0, 0,
                         LedColor.Red, LedColor.Green, 0,
                         PermanentReaderControlCode.SetPermanentState, 0, 0, color, color)
-                }), _controlPanel.ReaderLedControl, (address, result) => { });
+                }), _controlPanel.ReaderLedControl, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -715,7 +715,7 @@ namespace Console
 
                 SendCommand("Manufacturer Specific Command", _connectionId,
                     new ManufacturerSpecific(vendorCode.ToArray(), data.ToArray()),
-                    _controlPanel.ManufacturerSpecificCommand, (b, b1) => { });
+                    _controlPanel.ManufacturerSpecificCommand, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -755,7 +755,7 @@ namespace Console
 
                 SendCommand("Reader Buzzer Control Command", _connectionId,
                     new ReaderBuzzerControl(readerNumber, ToneCode.Default, 2, 2, repeatNumber),
-                    _controlPanel.ReaderBuzzerControl, (address, result) => { });
+                    _controlPanel.ReaderBuzzerControl, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -790,7 +790,7 @@ namespace Console
                 SendCommand("Reader Text Output Command", _connectionId,
                     new ReaderTextOutput(readerNumber, TextCommand.PermanentTextNoWrap, 0, 1, 1,
                         textOutputTextField.Text.ToString()),
-                    _controlPanel.ReaderTextOutput, (address, result) => { });
+                    _controlPanel.ReaderTextOutput, (_, _) => { });
 
                 Application.RequestStop();
             }

@@ -7,7 +7,7 @@
     <RepositoryUrl>https://github.com/bytedreamer/OSDP.Net</RepositoryUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
-    <LangVersion>8</LangVersion>
+    <LangVersion>default</LangVersion>
     <TargetFrameworks>net5.0;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
   
