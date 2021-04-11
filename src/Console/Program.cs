@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -36,7 +37,7 @@ namespace Console
         private static Window _window;
         private static ScrollView _scrollView;
         private static MenuBar _menuBar;
-        private static ControlPanel.NakReplyEventArgs _lastNak;
+        private static ConcurrentDictionary<byte, ControlPanel.NakReplyEventArgs> _lastNak = new ConcurrentDictionary<byte, ControlPanel.NakReplyEventArgs>();
 
         private static Settings _settings;
 
@@ -68,12 +69,12 @@ namespace Console
             {
                 new MenuBarItem("_System", new[]
                 {
-                    new MenuItem("_About", "", () => MessageBox.Query("About",
+                    new MenuItem("_About", "", () => MessageBox.Query(40, 6,"About",
                         $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}", "OK")),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
-                        if (MessageBox.Query(40, 10, "Quit", "Quit program?", "Yes", "No") == 0)
+                        if (MessageBox.Query(40, 6, "Quit", "Quit program?", "Yes", "No") == 0)
                         {
                             Application.RequestStop();
                         }
@@ -84,7 +85,11 @@ namespace Console
                     new MenuItem("Start Serial Connection", "", StartSerialConnection),
                     new MenuItem("Start TCP Server Connection", "", StartTcpServerConnection),
                     new MenuItem("Start TCP Client Connection", "", StartTcpClientConnection),
-                    new MenuItem("Stop Connections", "", _controlPanel.Shutdown),
+                    new MenuItem("Stop Connections", "", () =>
+                    {
+                        _connectionId = Guid.Empty;
+                        _controlPanel.Shutdown();
+                    })
                 }),
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
@@ -92,12 +97,13 @@ namespace Console
                     new MenuItem("Communication Configuration", "", SendCommunicationConfiguration), 
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, _controlPanel.DeviceCapabilities)),
+                    new MenuItem("Encryption Key Set", "", SendEncryptionKeySetCommand),
                     new MenuItem("_ID Report", "",
                         () => SendCommand("ID report", _connectionId, _controlPanel.IdReport)),
                     new MenuItem("Input Status", "",
                         () => SendCommand("Input status", _connectionId, _controlPanel.InputStatus)),
                     new MenuItem("_Local Status", "",
-                        () => SendCommand("Local status", _connectionId, _controlPanel.LocalStatus)),
+                        () => SendCommand("Local Status", _connectionId, _controlPanel.LocalStatus)),
                     new MenuItem("Manufacturer Specific", "", SendManufacturerSpecificCommand),
                     new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "",
@@ -137,16 +143,16 @@ namespace Console
 
         private static void RegisterEvents()
         {
-            _controlPanel.ConnectionStatusChanged += (sender, args) =>
+            _controlPanel.ConnectionStatusChanged += (_, args) =>
             {
                 DisplayReceivedReply($"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
                                      $"at address {args.Address} is now {(args.IsConnected ? "connected" : "disconnected")}",
                     string.Empty);
             };
-            _controlPanel.NakReplyReceived += (sender, args) =>
+            _controlPanel.NakReplyReceived += (_, args) =>
             {
-                var lastNak = _lastNak;
-                _lastNak = args;
+                _lastNak.TryRemove(args.Address, out var lastNak);
+                _lastNak.TryAdd(args.Address, args);
                 if (lastNak != null && lastNak.Address == args.Address &&
                     lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
                 {
@@ -155,32 +161,32 @@ namespace Console
 
                 AddLogMessage($"!!! Received NAK reply for address {args.Address} !!!{Environment.NewLine}{args.Nak}");
             };
-            _controlPanel.LocalStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.LocalStatusReportReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Local status updated for address {args.Address}",
                     args.LocalStatus.ToString());
             };
-            _controlPanel.InputStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.InputStatusReportReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Input status updated for address {args.Address}",
                     args.InputStatus.ToString());
             };
-            _controlPanel.OutputStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.OutputStatusReportReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Output status updated for address {args.Address}",
                     args.OutputStatus.ToString());
             };
-            _controlPanel.ReaderStatusReportReplyReceived += (sender, args) =>
+            _controlPanel.ReaderStatusReportReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Reader tamper status updated for address {args.Address}",
                     args.ReaderStatus.ToString());
             };
-            _controlPanel.RawCardDataReplyReceived += (sender, args) =>
+            _controlPanel.RawCardDataReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Received raw card data reply for address {args.Address}",
                     args.RawCardData.ToString());
             };
-            _controlPanel.KeypadReplyReceived += (sender, args) =>
+            _controlPanel.KeypadReplyReceived += (_, args) =>
             {
                 DisplayReceivedReply($"Received keypad data reply for address {args.Address}",
                     args.KeypadData.ToString());
@@ -321,7 +327,12 @@ namespace Console
 
         private static void StartConnection(IOsdpConnection osdpConnection)
         {
-            _controlPanel.Shutdown();
+            _lastNak.Clear();
+
+            if (_connectionId != Guid.Empty)
+            {
+                _controlPanel.Shutdown();
+            }
 
             _connectionId = _controlPanel.StartConnection(osdpConnection);
 
@@ -413,7 +424,7 @@ namespace Console
         {
             if (_connectionId == Guid.Empty)
             {
-                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before adding devices.", "OK");
+                MessageBox.ErrorQuery(60, 12, "Information", "Start a connection before adding devices.", "OK");
                 return;
             }
 
@@ -421,13 +432,30 @@ namespace Console
             var addressTextField = new TextField(15, 3, 35, string.Empty);
             var useCrcCheckBox = new CheckBox(1, 5, "Use CRC", true);
             var useSecureChannelCheckBox = new CheckBox(1, 6, "Use Secure Channel", true);
+            var keyTextField = new TextField(15, 8, 35, Convert.ToHexString(DeviceSetting.DefaultKey));
 
             void AddDeviceButtonClicked()
             {
                 if (!byte.TryParse(addressTextField.Text.ToString(), out var address))
                 {
-
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid address entered!", "OK");
+                    return;
+                }
+                
+                if (keyTextField.Text == null || keyTextField.Text.Length != 32)
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid key length entered!", "OK");
+                    return;
+                }
+
+                byte[] key;
+                try
+                {
+                    key = Convert.FromHexString(keyTextField.Text.ToString()!);
+                }
+                catch
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid hex characters!", "OK");
                     return;
                 }
 
@@ -440,8 +468,9 @@ namespace Console
                     }
                 }
 
+                _lastNak.TryRemove(address, out _);
                 _controlPanel.AddDevice(_connectionId, address, useCrcCheckBox.Checked,
-                    useSecureChannelCheckBox.Checked);
+                    useSecureChannelCheckBox.Checked, key);
 
                 var foundDevice = _settings.Devices.FirstOrDefault(device => device.Address == address);
                 if (foundDevice != null)
@@ -453,7 +482,8 @@ namespace Console
                 {
                     Address = address, Name = nameTextField.Text.ToString(),
                     UseSecureChannel = useSecureChannelCheckBox.Checked,
-                    UseCrc = useCrcCheckBox.Checked
+                    UseCrc = useCrcCheckBox.Checked,
+                    SecureChannelKey = key
                 });
 
                 Application.RequestStop();
@@ -470,7 +500,9 @@ namespace Console
                 new Label(1, 3, "Address:"),
                 addressTextField,
                 useCrcCheckBox,
-                useSecureChannelCheckBox
+                useSecureChannelCheckBox,
+                new Label(1, 8, "Secure Key:"),
+                keyTextField
             });
         }
 
@@ -498,6 +530,7 @@ namespace Console
             {
                 var removedDevice = orderedDevices[deviceRadioGroup.SelectedItem];
                 _controlPanel.RemoveDevice(_connectionId, removedDevice.Address);
+                _lastNak.TryRemove(removedDevice.Address, out _);
                 _settings.Devices.Remove(removedDevice);
                 Application.RequestStop();
             }
@@ -518,7 +551,7 @@ namespace Console
                 ((_settings.Devices.OrderBy(device => device.Address).LastOrDefault()?.Address ?? 0) + 1).ToString());
             var baudRateTextField = new TextField(20, 3, 20, _settings.SerialConnectionSettings.BaudRate.ToString());
 
-            void SendCommunictationConfigurationButtonClicked()
+            void SendCommunicationConfigurationButtonClicked()
             {
                 if (!byte.TryParse(addressTextField.Text.ToString(), out var updatedAddress))
                 {
@@ -540,6 +573,7 @@ namespace Console
                     (address, configuration) =>
                     {
                         _controlPanel.RemoveDevice(_connectionId, address);
+                        _lastNak.TryRemove(address, out _);
 
                         var updatedDevice = _settings.Devices.First(device => device.Address == address);
                         updatedDevice.Address = configuration.Address;
@@ -551,7 +585,7 @@ namespace Console
             }
 
             var sendButton = new Button("Send");
-            sendButton.Clicked += SendCommunictationConfigurationButtonClicked;
+            sendButton.Clicked += SendCommunicationConfigurationButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
             Application.Run(new Dialog("Send Communication Configuration Command", 60, 10, sendButton, cancelButton)
@@ -582,7 +616,7 @@ namespace Console
                     new OutputControl(outputNumber, activateOutputCheckBox.Checked
                         ? OutputControlCode.PermanentStateOnAbortTimedOperation
                         : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
-                }), _controlPanel.OutputControl, (address, result) => { });
+                }), _controlPanel.OutputControl, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -626,7 +660,7 @@ namespace Console
                         TemporaryReaderControlCode.CancelAnyTemporaryAndDisplayPermanent, 0, 0,
                         LedColor.Red, LedColor.Green, 0,
                         PermanentReaderControlCode.SetPermanentState, 0, 0, color, color)
-                }), _controlPanel.ReaderLedControl, (address, result) => { });
+                }), _controlPanel.ReaderLedControl, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -654,7 +688,7 @@ namespace Console
                 byte[] vendorCode;
                 try
                 {
-                    vendorCode = Convert.FromBase64String(vendorCodeTextField.Text.ToString() ?? string.Empty);
+                    vendorCode = Convert.FromHexString(vendorCodeTextField.Text.ToString() ?? string.Empty);
                 }
                 catch
                 {
@@ -671,7 +705,7 @@ namespace Console
                 byte[] data;
                 try
                 {
-                    data = Convert.FromBase64String(dataTextField.Text.ToString() ?? string.Empty);
+                    data = Convert.FromHexString(dataTextField.Text.ToString() ?? string.Empty);
                 }
                 catch
                 {
@@ -681,7 +715,7 @@ namespace Console
 
                 SendCommand("Manufacturer Specific Command", _connectionId,
                     new ManufacturerSpecific(vendorCode.ToArray(), data.ToArray()),
-                    _controlPanel.ManufacturerSpecificCommand, (b, b1) => { });
+                    _controlPanel.ManufacturerSpecificCommand, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -690,7 +724,7 @@ namespace Console
             sendButton.Clicked += SendOutputControlButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Send Manufacturer Specific Command (Enter Base64)", 60, 10, sendButton, cancelButton)
+            Application.Run(new Dialog("Send Manufacturer Specific Command (Enter Hex Strings)", 60, 10, sendButton, cancelButton)
             {
                 new Label(1, 1, "Vendor Code:"),
                 vendorCodeTextField,
@@ -708,7 +742,6 @@ namespace Console
             {
                 if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
                 {
-
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
                     return;
                 }
@@ -722,7 +755,7 @@ namespace Console
 
                 SendCommand("Reader Buzzer Control Command", _connectionId,
                     new ReaderBuzzerControl(readerNumber, ToneCode.Default, 2, 2, repeatNumber),
-                    _controlPanel.ReaderBuzzerControl, (address, result) => { });
+                    _controlPanel.ReaderBuzzerControl, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -757,7 +790,7 @@ namespace Console
                 SendCommand("Reader Text Output Command", _connectionId,
                     new ReaderTextOutput(readerNumber, TextCommand.PermanentTextNoWrap, 0, 1, 1,
                         textOutputTextField.Text.ToString()),
-                    _controlPanel.ReaderTextOutput, (address, result) => { });
+                    _controlPanel.ReaderTextOutput, (_, _) => { });
 
                 Application.RequestStop();
             }
@@ -772,6 +805,65 @@ namespace Console
                 readerAddressTextField,
                 new Label(1, 3, "Text Output:"),
                 textOutputTextField
+            });
+        }
+
+        private static void SendEncryptionKeySetCommand()
+        {
+            var keyTextField = new TextField(20, 1, 32, string.Empty);
+
+            void SendButtonClicked()
+            {
+                if (keyTextField.Text == null || keyTextField.Text.Length != 32)
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid key length entered!", "OK");
+                    return;
+                }
+
+                byte[] key;
+                try
+                {
+                    key = Convert.FromHexString(keyTextField.Text.ToString()!);
+                }
+                catch
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid hex characters!", "OK");
+                    return;
+                }
+                
+                MessageBox.ErrorQuery(40, 10, "Warning", "The new key will be required to access the device in the future. Saving the updated configuration will store the key in clear text.", "OK");
+                
+                SendCommand("Encryption Key Configuration", _connectionId,
+                    new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, key),
+                    _controlPanel.EncryptionKeySet,
+                    (address, result) =>
+                    {
+                        if (!result)
+                        {
+                            return;
+                        }
+
+                        _lastNak.TryRemove(address, out _);
+
+                        var updatedDevice = _settings.Devices.First(device => device.Address == address);
+                        updatedDevice.UseSecureChannel = true;
+                        updatedDevice.SecureChannelKey = key;
+
+                        //_controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
+                         //   updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
+                    }, true);
+
+                Application.RequestStop();
+            }
+
+            var sendButton = new Button("Send");
+            sendButton.Clicked += SendButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += Application.RequestStop;
+            Application.Run(new Dialog("Encryption Key Set Command (Enter Hex String)", 60, 8, sendButton, cancelButton)
+            {
+                new Label(1, 1, "Key:"),
+                keyTextField
             });
         }
 
@@ -820,7 +912,7 @@ namespace Console
         }
 
         private static void SendCommand<T, TU>(string title, Guid connectionId, TU commandData,
-            Func<Guid, byte, TU, Task<T>> sendCommandFunction, Action<byte, T> handleResult)
+            Func<Guid, byte, TU, Task<T>> sendCommandFunction, Action<byte, T> handleResult, bool requireSecurity = false)
         {
             if (_connectionId == Guid.Empty)
             {
@@ -835,6 +927,12 @@ namespace Console
                 var selectedDevice = orderedDevices[deviceRadioGroup.SelectedItem];
                 byte address = selectedDevice.Address;
                 Application.RequestStop();
+
+                if (requireSecurity && !selectedDevice.UseSecureChannel)
+                {
+                    MessageBox.ErrorQuery(60, 10, "Warning", "Requires secure channel to process this command.", "OK");
+                    return;
+                }
 
                 Task.Run(async () =>
                 {

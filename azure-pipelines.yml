@@ -16,16 +16,22 @@ variables:
   buildConfiguration: 'Release'
   major: 2
   minor: 0
-  patch: 5
+  patch: 6
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Install .NET Core SDK'
+  displayName: 'Install .NET 5 SDK'
   inputs:
     packageType: 'sdk'
-    version: '3.x'
+    version: '5.x'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'restore'
+    restoreSolution: '**/*.sln'
+    feedsToUse: 'select'
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet build'

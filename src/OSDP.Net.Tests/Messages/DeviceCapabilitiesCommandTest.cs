@@ -12,7 +12,7 @@ namespace OSDP.Net.Tests.Messages
         public string DeviceCapabilitiesCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
             var deviceCapabilitiesCommand = new DeviceCapabilitiesCommand(address);
-            return BitConverter.ToString(deviceCapabilitiesCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
+            return BitConverter.ToString(deviceCapabilitiesCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
         }
 
         public class DeviceCapabilitiesCommandTestClass

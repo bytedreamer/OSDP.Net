@@ -13,7 +13,7 @@ namespace OSDP.Net.Tests.Messages
         {
             var outputStatusReportCommand = new OutputStatusReportCommand(address);
             return BitConverter.ToString(
-                outputStatusReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
+                outputStatusReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
         }
 
         public class OutputStatusReportCommandTestClass

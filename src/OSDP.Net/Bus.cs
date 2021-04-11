@@ -87,11 +87,8 @@ namespace OSDP.Net
                     _configuredDevices.Remove(foundDevice);
                 }
 
-                var addedDevice = new Device(address, useCrc, useSecureChannel);
-                if (secureChannelKey != null)
-                {
-                    addedDevice.UpdateSecureChannelKey(secureChannelKey);
-                }
+                var addedDevice = new Device(address, useCrc, useSecureChannel, secureChannelKey);
+
                 _configuredDevices.Add(addedDevice);
             }
         }
@@ -174,6 +171,15 @@ namespace OSDP.Net
                     try
                     {
                         reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
+                        
+                        // Prevent plain text message replies when secure channel has been established
+                        if (device.IsSecurityEstablished && !reply.IsSecureMessage)
+                        {
+                            _logger?.LogWarning("An plain text message was received when the secure channel had been established");
+                            device.CreateNewRandomNumber();
+                            ResetDevice(device);
+                            continue;
+                        }
                     }
                     catch (InvalidOperationException exception)
                     {
@@ -265,8 +271,8 @@ namespace OSDP.Net
             }
             
             if (reply.Type == ReplyType.Nak &&
-                (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
-                 reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet ||
+                (device.UseSecureChannel && (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
+                 reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet) ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber))
             {
                 if (reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber || reply.Sequence > 0) ResetDevice(device);
