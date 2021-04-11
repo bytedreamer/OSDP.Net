@@ -92,12 +92,13 @@ namespace Console
                     new MenuItem("Communication Configuration", "", SendCommunicationConfiguration), 
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, _controlPanel.DeviceCapabilities)),
+                    new MenuItem("Encryption Key Set", "", SendEncryptionKeySetCommand),
                     new MenuItem("_ID Report", "",
                         () => SendCommand("ID report", _connectionId, _controlPanel.IdReport)),
                     new MenuItem("Input Status", "",
                         () => SendCommand("Input status", _connectionId, _controlPanel.InputStatus)),
                     new MenuItem("_Local Status", "",
-                        () => SendCommand("Local status", _connectionId, _controlPanel.LocalStatus)),
+                        () => SendCommand("Local Status", _connectionId, _controlPanel.LocalStatus)),
                     new MenuItem("Manufacturer Specific", "", SendManufacturerSpecificCommand),
                     new MenuItem("Output Control", "", SendOutputControlCommand),
                     new MenuItem("Output Status", "",
@@ -518,7 +519,7 @@ namespace Console
                 ((_settings.Devices.OrderBy(device => device.Address).LastOrDefault()?.Address ?? 0) + 1).ToString());
             var baudRateTextField = new TextField(20, 3, 20, _settings.SerialConnectionSettings.BaudRate.ToString());
 
-            void SendCommunictationConfigurationButtonClicked()
+            void SendCommunicationConfigurationButtonClicked()
             {
                 if (!byte.TryParse(addressTextField.Text.ToString(), out var updatedAddress))
                 {
@@ -551,7 +552,7 @@ namespace Console
             }
 
             var sendButton = new Button("Send");
-            sendButton.Clicked += SendCommunictationConfigurationButtonClicked;
+            sendButton.Clicked += SendCommunicationConfigurationButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
             Application.Run(new Dialog("Send Communication Configuration Command", 60, 10, sendButton, cancelButton)
@@ -708,7 +709,6 @@ namespace Console
             {
                 if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
                 {
-
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
                     return;
                 }
@@ -772,6 +772,63 @@ namespace Console
                 readerAddressTextField,
                 new Label(1, 3, "Text Output:"),
                 textOutputTextField
+            });
+        }
+
+        private static void SendEncryptionKeySetCommand()
+        {
+            var keyTextField = new TextField(20, 1, 32, string.Empty);
+
+            void SendButtonClicked()
+            {
+                if (keyTextField.Text == null || keyTextField.Text.Length != 32)
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid key length entered!", "OK");
+                    return;
+                }
+
+                byte[] key;
+                try
+                {
+                    key = Convert.FromHexString(keyTextField.Text.ToString()!);
+                }
+                catch
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid hex characters!", "OK");
+                    return;
+                }
+                
+                MessageBox.ErrorQuery(40, 10, "Warning", "The new key will be required to access the device in the future. Saving the updated configuration will store the key in clear text.", "OK");
+                
+                SendCommand("Encryption Key Configuration", _connectionId,
+                    new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, key),
+                    _controlPanel.EncryptionKeySet,
+                    (address, result) =>
+                    {
+                        if (!result)
+                        {
+                            return;
+                        }
+                        
+                        _controlPanel.RemoveDevice(_connectionId, address);
+
+                        var updatedDevice = _settings.Devices.First(device => device.Address == address);
+                        updatedDevice.SecureChannelKey = key;
+                        _controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
+                            updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
+                    });
+
+                Application.RequestStop();
+            }
+
+            var sendButton = new Button("Send");
+            sendButton.Clicked += SendButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += Application.RequestStop;
+            Application.Run(new Dialog("Encryption Key Set Command", 60, 8, sendButton, cancelButton)
+            {
+                new Label(1, 1, "Key:"),
+                keyTextField
             });
         }
 
