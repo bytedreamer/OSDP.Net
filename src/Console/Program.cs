@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Console.Commands;
 using Console.Configuration;
@@ -36,7 +38,7 @@ namespace Console
         private static Window _window;
         private static ScrollView _scrollView;
         private static MenuBar _menuBar;
-        private static ControlPanel.NakReplyEventArgs _lastNak;
+        private static ConcurrentDictionary<byte, ControlPanel.NakReplyEventArgs> _lastNak = new ConcurrentDictionary<byte, ControlPanel.NakReplyEventArgs>();
 
         private static Settings _settings;
 
@@ -84,7 +86,11 @@ namespace Console
                     new MenuItem("Start Serial Connection", "", StartSerialConnection),
                     new MenuItem("Start TCP Server Connection", "", StartTcpServerConnection),
                     new MenuItem("Start TCP Client Connection", "", StartTcpClientConnection),
-                    new MenuItem("Stop Connections", "", _controlPanel.Shutdown),
+                    new MenuItem("Stop Connections", "", () =>
+                    {
+                        _connectionId = Guid.Empty;
+                        _controlPanel.Shutdown();
+                    })
                 }),
                 DevicesMenuBarItem,
                 new MenuBarItem("_Commands", new[]
@@ -146,8 +152,8 @@ namespace Console
             };
             _controlPanel.NakReplyReceived += (sender, args) =>
             {
-                var lastNak = _lastNak;
-                _lastNak = args;
+                _lastNak.TryRemove(args.Address, out var lastNak);
+                _lastNak.TryAdd(args.Address, args);
                 if (lastNak != null && lastNak.Address == args.Address &&
                     lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
                 {
@@ -322,7 +328,12 @@ namespace Console
 
         private static void StartConnection(IOsdpConnection osdpConnection)
         {
-            _controlPanel.Shutdown();
+            _lastNak.Clear();
+
+            if (_connectionId != Guid.Empty)
+            {
+                _controlPanel.Shutdown();
+            }
 
             _connectionId = _controlPanel.StartConnection(osdpConnection);
 
@@ -414,7 +425,7 @@ namespace Console
         {
             if (_connectionId == Guid.Empty)
             {
-                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before adding devices.", "OK");
+                MessageBox.ErrorQuery(60, 12, "Information", "Start a connection before adding devices.", "OK");
                 return;
             }
 
@@ -422,13 +433,30 @@ namespace Console
             var addressTextField = new TextField(15, 3, 35, string.Empty);
             var useCrcCheckBox = new CheckBox(1, 5, "Use CRC", true);
             var useSecureChannelCheckBox = new CheckBox(1, 6, "Use Secure Channel", true);
+            var keyTextField = new TextField(15, 8, 35, Convert.ToHexString(DeviceSetting.DefaultKey));
 
             void AddDeviceButtonClicked()
             {
                 if (!byte.TryParse(addressTextField.Text.ToString(), out var address))
                 {
-
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid address entered!", "OK");
+                    return;
+                }
+                
+                if (keyTextField.Text == null || keyTextField.Text.Length != 32)
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid key length entered!", "OK");
+                    return;
+                }
+
+                byte[] key;
+                try
+                {
+                    key = Convert.FromHexString(keyTextField.Text.ToString()!);
+                }
+                catch
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid hex characters!", "OK");
                     return;
                 }
 
@@ -441,8 +469,9 @@ namespace Console
                     }
                 }
 
+                _lastNak.TryRemove(address, out _);
                 _controlPanel.AddDevice(_connectionId, address, useCrcCheckBox.Checked,
-                    useSecureChannelCheckBox.Checked);
+                    useSecureChannelCheckBox.Checked, key);
 
                 var foundDevice = _settings.Devices.FirstOrDefault(device => device.Address == address);
                 if (foundDevice != null)
@@ -454,7 +483,8 @@ namespace Console
                 {
                     Address = address, Name = nameTextField.Text.ToString(),
                     UseSecureChannel = useSecureChannelCheckBox.Checked,
-                    UseCrc = useCrcCheckBox.Checked
+                    UseCrc = useCrcCheckBox.Checked,
+                    SecureChannelKey = key
                 });
 
                 Application.RequestStop();
@@ -471,7 +501,9 @@ namespace Console
                 new Label(1, 3, "Address:"),
                 addressTextField,
                 useCrcCheckBox,
-                useSecureChannelCheckBox
+                useSecureChannelCheckBox,
+                new Label(1, 8, "Secure Key:"),
+                keyTextField
             });
         }
 
@@ -499,6 +531,7 @@ namespace Console
             {
                 var removedDevice = orderedDevices[deviceRadioGroup.SelectedItem];
                 _controlPanel.RemoveDevice(_connectionId, removedDevice.Address);
+                _lastNak.TryRemove(removedDevice.Address, out _);
                 _settings.Devices.Remove(removedDevice);
                 Application.RequestStop();
             }
@@ -541,6 +574,7 @@ namespace Console
                     (address, configuration) =>
                     {
                         _controlPanel.RemoveDevice(_connectionId, address);
+                        _lastNak.TryRemove(address, out _);
 
                         var updatedDevice = _settings.Devices.First(device => device.Address == address);
                         updatedDevice.Address = configuration.Address;
@@ -809,14 +843,16 @@ namespace Console
                         {
                             return;
                         }
-                        
-                        _controlPanel.RemoveDevice(_connectionId, address);
+
+                        _lastNak.TryRemove(address, out _);
 
                         var updatedDevice = _settings.Devices.First(device => device.Address == address);
+                        updatedDevice.UseSecureChannel = true;
                         updatedDevice.SecureChannelKey = key;
-                        _controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
-                            updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
-                    });
+
+                        //_controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
+                         //   updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
+                    }, true);
 
                 Application.RequestStop();
             }
@@ -877,7 +913,7 @@ namespace Console
         }
 
         private static void SendCommand<T, TU>(string title, Guid connectionId, TU commandData,
-            Func<Guid, byte, TU, Task<T>> sendCommandFunction, Action<byte, T> handleResult)
+            Func<Guid, byte, TU, Task<T>> sendCommandFunction, Action<byte, T> handleResult, bool requireSecurity = false)
         {
             if (_connectionId == Guid.Empty)
             {
@@ -892,6 +928,12 @@ namespace Console
                 var selectedDevice = orderedDevices[deviceRadioGroup.SelectedItem];
                 byte address = selectedDevice.Address;
                 Application.RequestStop();
+
+                if (requireSecurity && !selectedDevice.UseSecureChannel)
+                {
+                    MessageBox.ErrorQuery(60, 10, "Warning", "Requires secure channel to process this command.", "OK");
+                    return;
+                }
 
                 Task.Run(async () =>
                 {

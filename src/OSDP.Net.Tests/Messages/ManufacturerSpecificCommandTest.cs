@@ -13,7 +13,7 @@ namespace OSDP.Net.Tests.Messages
         public string BuildCommand_TestCases(byte address, bool useCrc, bool useSecureChannel, ManufacturerSpecific manufacturerSpecific)
         {
             var manufacturerSpecificCommand = new ManufacturerSpecificCommand(address, manufacturerSpecific);
-            return BitConverter.ToString(manufacturerSpecificCommand.BuildCommand(new Device(address, useCrc, useSecureChannel)));
+            return BitConverter.ToString(manufacturerSpecificCommand.BuildCommand(new Device(address, useCrc, useSecureChannel, null)));
         }
 
         public class ManufacturerSpecificCommandTestDataClass

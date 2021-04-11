@@ -94,7 +94,9 @@ namespace OSDP.Net.Messages
 
         internal ReadOnlySpan<byte> EncryptedData(Device device)
         {
-            return !Data().IsEmpty ? device.EncryptData(Data()) : Data();
+            var data = Data();
+            
+            return !data.IsEmpty ? device.EncryptData(data) : data;
         }
 
         internal static int ConvertBytesToInt(byte[] bytes)

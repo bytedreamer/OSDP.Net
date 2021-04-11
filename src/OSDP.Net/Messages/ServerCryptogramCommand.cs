@@ -4,12 +4,14 @@ namespace OSDP.Net.Messages
 {
     internal class ServerCryptogramCommand : Command
     {
+        private readonly bool _isDefaultKey;
         private readonly byte[] _serverCryptogram;
 
-        internal ServerCryptogramCommand(byte address, byte[] serverCryptogram)
+        internal ServerCryptogramCommand(byte address, byte[] serverCryptogram, bool isDefaultKey)
         {
             Address = address;
             _serverCryptogram = serverCryptogram ?? throw new ArgumentNullException(nameof(serverCryptogram));
+            _isDefaultKey = isDefaultKey;
         }
 
         protected override byte CommandCode => 0x77;
@@ -20,7 +22,7 @@ namespace OSDP.Net.Messages
             {
                 0x03,
                 0x13,
-                0x00
+                (byte)(_isDefaultKey ? 0x00 : 0x01)
             };
         }
 

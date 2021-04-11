@@ -9,19 +9,36 @@ namespace OSDP.Net
     internal class Device : IComparable<Device>
     {
         private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
+
+        private readonly byte[] _defaultKey = {
+            0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
+        };
+
         private readonly SecureChannel _secureChannel = new SecureChannel();
 
         private DateTime _lastValidReply = DateTime.MinValue;
 
-        public Device(byte address, bool useCrc, bool useSecureChannel)
+        public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey)
         {
             UseSecureChannel = useSecureChannel;
             Address = address;
             MessageControl = new Control(0, useCrc, useSecureChannel);
+
+            if (UseSecureChannel && secureChannelKey == null)
+            {
+                SecureChannelKey = _defaultKey;
+            }
+            else if (UseSecureChannel)
+            {
+                SecureChannelKey = secureChannelKey;
+            }
+
+            IsDefaultKey = _defaultKey.SequenceEqual(secureChannelKey ?? Array.Empty<byte>());
         }
 
-        internal byte[] SecureChannelKey { get; set; } =
-            {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F};
+        internal byte[] SecureChannelKey { get; }
+
+        private bool IsDefaultKey { get; }
 
         public byte Address { get; }
 
@@ -42,27 +59,11 @@ namespace OSDP.Net
             return Address.CompareTo(other.Address);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="secureChannelKey"></param>
-        /// <exception cref="ArgumentOutOfRangeException">The length of the key must be 16 bytes</exception>
-        public void UpdateSecureChannelKey(byte[] secureChannelKey)
-        {
-            if (secureChannelKey.Length != 16)
-            {
-                throw new ArgumentOutOfRangeException(nameof(secureChannelKey),
-                    "The length of the key must be 16 bytes");
-            }
-
-            SecureChannelKey = secureChannelKey;
-        }
-
         public Command GetNextCommandData()
         {
             if (UseSecureChannel && !_secureChannel.IsInitialized)
             {
-                return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray());
+                return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray(), IsDefaultKey);
             }
 
             if (MessageControl.Sequence == 0)
@@ -72,7 +73,7 @@ namespace OSDP.Net
 
             if (UseSecureChannel && !_secureChannel.IsEstablished)
             {
-                return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram);
+                return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram, IsDefaultKey);
             }
 
             if (!_commands.TryDequeue(out var command))
