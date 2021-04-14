@@ -43,6 +43,7 @@ namespace OSDP.Net.Connections
         {
             _listener.Start();
             _tcpClient = _listener.AcceptTcpClient();
+            _tcpClient.LingerState = new LingerOption(true, 0);
         }
 
         /// <inheritdoc />
@@ -50,6 +51,7 @@ namespace OSDP.Net.Connections
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
+            tcpClient.GetStream().Close();
             tcpClient?.Close();
         }
 

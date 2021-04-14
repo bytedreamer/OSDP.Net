@@ -46,7 +46,7 @@ namespace OSDP.Net.Connections
         /// <inheritdoc />
         public void Open()
         {
-            _tcpClient = new TcpClient();
+            _tcpClient = new TcpClient {LingerState = new LingerOption(true, 0)};
             _tcpClient.Connect(_server, _portNumber);
         }
 
@@ -55,6 +55,7 @@ namespace OSDP.Net.Connections
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
+            tcpClient.GetStream().Close();
             tcpClient?.Close();
         }
 
