@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -19,22 +20,25 @@ namespace OSDP.Net
     internal class Bus
     {
         private const byte DriverByte = 0xFF;
+
+        public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(250);
         private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
         private readonly object _configuredDevicesLock = new object();
         private readonly IOsdpConnection _connection;
         private readonly Dictionary<byte, bool> _lastConnectionStatus = new Dictionary<byte, bool>();
 
         private readonly ILogger<ControlPanel> _logger;
-        private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
+        private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
 
         private bool _isShuttingDown;
 
-        // ReSharper disable once ContextualLoggerProblem
-        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, ILogger<ControlPanel> logger = null)
+        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
+            ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
+            _pollInterval = pollInterval;
             _logger = logger;
 
             Id = Guid.NewGuid();
