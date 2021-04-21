@@ -92,7 +92,9 @@ namespace OSDP.Net
         public void ValidReplyHasBeenReceived(byte sequence)
         {
             MessageControl.IncrementSequence(sequence);
-            _lastValidReply = DateTime.UtcNow;
+            
+            // It's valid once sequences are above zero
+            if (sequence > 0) _lastValidReply = DateTime.UtcNow;
         }
 
         public void InitializeSecureChannel(Reply reply)
