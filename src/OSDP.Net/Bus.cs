@@ -133,9 +133,6 @@ namespace OSDP.Net
 
             while (!_isShuttingDown)
             {
-                
-                bool lostConnection = false;
-                
                 if (!_connection.IsOpen)
                 {
                     try
@@ -145,13 +142,15 @@ namespace OSDP.Net
                     catch (Exception exception)
                     {
                         _logger?.LogError(exception, "Error while opening connection");
-                        lostConnection = true;
                         foreach (var device in _configuredDevices.ToArray())
                         {
                             ResetDevice(device);
+                            UpdateConnectionStatus(device);
                         }
 
                         await Task.Delay(TimeSpan.FromSeconds(5));
+
+                        continue;
                     }
                 }
 
@@ -183,11 +182,6 @@ namespace OSDP.Net
                     catch (Exception exception)
                     {
                         _logger?.LogError(exception, "Error while notifying connection status for address {command.Address}");
-                    }
-
-                    if (lostConnection)
-                    {
-                        continue;
                     }
 
                     try
