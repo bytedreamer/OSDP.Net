@@ -130,6 +130,9 @@ namespace OSDP.Net
 
             while (!_isShuttingDown)
             {
+                
+                bool lostConnection = false;
+                
                 if (!_connection.IsOpen)
                 {
                     try
@@ -139,6 +142,13 @@ namespace OSDP.Net
                     catch (Exception exception)
                     {
                         _logger?.LogError(exception, "Error while opening connection");
+                        lostConnection = true;
+                        foreach (var device in _configuredDevices.ToArray())
+                        {
+                            ResetDevice(device);
+                        }
+
+                        await Task.Delay(TimeSpan.FromSeconds(5));
                     }
                 }
 
@@ -161,11 +171,20 @@ namespace OSDP.Net
                     
                     try
                     {
-                        UpdateConnectionStatus(device);
+                        // Reset the device if it looses connection
+                        if (UpdateConnectionStatus(device) && !device.IsConnected)
+                        {
+                            ResetDevice(device);
+                        }
                     }
                     catch (Exception exception)
                     {
                         _logger?.LogError(exception, "Error while notifying connection status for address {command.Address}");
+                    }
+
+                    if (lostConnection)
+                    {
+                        continue;
                     }
 
                     try
@@ -180,17 +199,6 @@ namespace OSDP.Net
                             ResetDevice(device);
                             continue;
                         }
-                    }
-                    catch (InvalidOperationException exception)
-                    {
-                        if (!_isShuttingDown)
-                        {
-                            _logger?.LogWarning(exception, "Port is closed, reconnecting...");
-                            _connection.Close();
-                            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
-                        }
-
-                        break;
                     }
                     catch (TimeoutException)
                     {
@@ -229,17 +237,19 @@ namespace OSDP.Net
 
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
 
-        private void UpdateConnectionStatus(Device device)
+        private bool UpdateConnectionStatus(Device device)
         {
             bool isConnected = device.IsConnected;
 
             if (_lastConnectionStatus.ContainsKey(device.Address) &&
-                _lastConnectionStatus[device.Address] == isConnected) return;
+                _lastConnectionStatus[device.Address] == isConnected) return false;
             
             var handler = ConnectionStatusChanged;
             handler?.Invoke(this, new ConnectionStatusEventArgs(device.Address, isConnected));
                 
             _lastConnectionStatus[device.Address] = isConnected;
+
+            return true;
         }
 
         private void ProcessReply(Reply reply, Device device)
