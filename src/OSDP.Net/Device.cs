@@ -24,16 +24,17 @@ namespace OSDP.Net
             Address = address;
             MessageControl = new Control(0, useCrc, useSecureChannel);
 
-            if (UseSecureChannel && secureChannelKey == null)
+            switch (UseSecureChannel)
             {
-                SecureChannelKey = _defaultKey;
-            }
-            else if (UseSecureChannel)
-            {
-                SecureChannelKey = secureChannelKey;
+                case true when secureChannelKey == null:
+                    SecureChannelKey = _defaultKey;
+                    break;
+                case true:
+                    SecureChannelKey = secureChannelKey;
+                    break;
             }
 
-            IsDefaultKey = _defaultKey.SequenceEqual(secureChannelKey ?? Array.Empty<byte>());
+            if (UseSecureChannel) IsDefaultKey = _defaultKey.SequenceEqual(SecureChannelKey ?? Array.Empty<byte>());
         }
 
         internal byte[] SecureChannelKey { get; }
