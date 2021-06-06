@@ -27,7 +27,7 @@ namespace Console
         private static readonly object MessageLock = new object();
 
         private static readonly MenuBarItem DevicesMenuBarItem =
-            new MenuBarItem("_Devices", new[]
+            new ("_Devices", new[]
             {
                 new MenuItem("_Add", string.Empty, AddDevice),
                 new MenuItem("_Remove", string.Empty, RemoveDevice)
@@ -196,11 +196,11 @@ namespace Console
         private static void StartSerialConnection()
         {
             var portNameTextField = new TextField(15, 1, 35, _settings.SerialConnectionSettings.PortName);
-            var baudRateTextField = new TextField(15, 3, 35, _settings.SerialConnectionSettings.BaudRate.ToString());
+            var baudRateTextField = new TextField(25, 3, 25, _settings.SerialConnectionSettings.BaudRate.ToString());
+            var replyTimeoutTextField = new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
             void StartConnectionButtonClicked()
             {
-                _settings.SerialConnectionSettings.PortName = portNameTextField.Text.ToString();
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
 
@@ -208,11 +208,21 @@ namespace Console
                     return;
                 }
 
+                if (!int.TryParse(replyTimeoutTextField.Text.ToString(), out var replyTimeout))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
+                _settings.SerialConnectionSettings.PortName = portNameTextField.Text.ToString();
                 _settings.SerialConnectionSettings.BaudRate = baudRate;
-                
+                _settings.SerialConnectionSettings.ReplyTimeout = replyTimeout;
+
                 StartConnection(new SerialPortOsdpConnection(_settings.SerialConnectionSettings.PortName,
-                    _settings.SerialConnectionSettings.BaudRate));
-                
+                        _settings.SerialConnectionSettings.BaudRate)
+                    {ReplyTimeout = TimeSpan.FromMilliseconds(_settings.SerialConnectionSettings.ReplyTimeout)});
+
                 Application.RequestStop();
             }
 
@@ -221,20 +231,23 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Start Serial Connection", 60, 10,
+            var dialog = new Dialog("Start Serial Connection", 60, 12,
                 startButton, cancelButton);
             dialog.Add(new Label(1, 1, "Port:"),
                 portNameTextField,
                 new Label(1, 3, "Baud Rate:"),
-                baudRateTextField);
+                baudRateTextField,
+                new Label(1, 5, "Reply Timeout(ms):"),
+                replyTimeoutTextField);
             
             Application.Run(dialog);
         }
 
         private static void StartTcpServerConnection()
         {
-            var portNumberTextField = new TextField(15, 1, 35, _settings.TcpServerConnectionSettings.PortNumber.ToString());
-            var baudRateTextField = new TextField(15, 3, 35, _settings.TcpServerConnectionSettings.BaudRate.ToString());
+            var portNumberTextField = new TextField(25, 1, 25, _settings.TcpServerConnectionSettings.PortNumber.ToString());
+            var baudRateTextField = new TextField(25, 3, 25, _settings.TcpServerConnectionSettings.BaudRate.ToString());
+            var replyTimeoutTextField = new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
             void StartConnectionButtonClicked()
             {
@@ -244,33 +257,45 @@ namespace Console
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid port number entered!", "OK");
                     return;
                 }
-                _settings.TcpServerConnectionSettings.PortNumber = portNumber;
-                
+
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid baud rate entered!", "OK");
                     return;
                 }
+
+                if (!int.TryParse(replyTimeoutTextField.Text.ToString(), out var replyTimeout))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
+                _settings.TcpServerConnectionSettings.PortNumber = portNumber;
                 _settings.TcpServerConnectionSettings.BaudRate = baudRate;
-                
-                StartConnection( new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.BaudRate = portNumber,
-                    _settings.TcpServerConnectionSettings.BaudRate));
-                
+                _settings.TcpServerConnectionSettings.ReplyTimeout = replyTimeout;
+
+                StartConnection(new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.BaudRate = portNumber,
+                        _settings.TcpServerConnectionSettings.BaudRate)
+                    {ReplyTimeout = TimeSpan.FromMilliseconds(_settings.TcpServerConnectionSettings.ReplyTimeout)});
+
                 Application.RequestStop();
             }
-            
+
             var startButton = new Button("Start");
             startButton.Clicked += StartConnectionButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Start TCP Server Connection", 60, 10,
+            var dialog = new Dialog("Start TCP Server Connection", 60, 12,
                 startButton, cancelButton);
             dialog.Add( new Label(1, 1, "Port Number:"),
                 portNumberTextField,
                 new Label(1, 3, "Baud Rate:"),
-                baudRateTextField);
+                baudRateTextField,
+                new Label(1, 5, "Reply Timeout(ms):"),
+                replyTimeoutTextField);
             
             Application.Run(dialog);
         }
@@ -279,13 +304,13 @@ namespace Console
         {
             var hostTextField = new TextField(15, 1, 35, _settings.TcpClientConnectionSettings.Host);
             var portNumberTextField =
-                new TextField(15, 3, 35, _settings.TcpClientConnectionSettings.PortNumber.ToString());
-            var baudRateTextField = new TextField(15, 5, 35, _settings.TcpClientConnectionSettings.BaudRate.ToString());
+                new TextField(25, 3, 25, _settings.TcpClientConnectionSettings.PortNumber.ToString());
+            var baudRateTextField = new TextField(25, 5, 25, _settings.TcpClientConnectionSettings.BaudRate.ToString());
+            var replyTimeoutTextField = new TextField(25, 7, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
+
 
             void StartConnectionButtonClicked()
             {
-                _settings.TcpClientConnectionSettings.Host = hostTextField.Text.ToString();
-
                 if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
                 {
 
@@ -293,16 +318,24 @@ namespace Console
                     return;
                 }
 
-                _settings.TcpClientConnectionSettings.PortNumber = portNumber;
-
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid baud rate entered!", "OK");
                     return;
                 }
+                
+                if (!int.TryParse(replyTimeoutTextField.Text.ToString(), out var replyTimeout))
+                {
 
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
+                _settings.TcpClientConnectionSettings.Host = hostTextField.Text.ToString();
                 _settings.TcpClientConnectionSettings.BaudRate = baudRate;
+                _settings.TcpClientConnectionSettings.PortNumber = portNumber;
+                _settings.TcpClientConnectionSettings.ReplyTimeout = replyTimeout;
 
                 StartConnection(new TcpClientOsdpConnection(
                     _settings.TcpClientConnectionSettings.Host,
@@ -317,13 +350,15 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Start TCP Client Connection", 60, 13, startButton, cancelButton);
+            var dialog = new Dialog("Start TCP Client Connection", 60, 15, startButton, cancelButton);
             dialog.Add(new Label(1, 1, "Host Name:"),
                 hostTextField,
                 new Label(1, 3, "Port Number:"),
                 portNumberTextField,
                 new Label(1, 5, "Baud Rate:"),
-                baudRateTextField);
+                baudRateTextField,
+                new Label(1, 7, "Reply Timeout(ms):"),
+                replyTimeoutTextField);
             
             Application.Run(dialog);
         }
