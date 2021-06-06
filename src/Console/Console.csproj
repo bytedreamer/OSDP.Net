@@ -22,7 +22,7 @@
       <PackageReference Include="apache.log4net.Extensions.Logging" Version="2.0.0.12" />
       <PackageReference Include="log4net" Version="2.0.12" />
       <PackageReference Include="Microsoft.NETCore.Platforms" Version="5.0.2" />
-      <PackageReference Include="Terminal.Gui" Version="0.90.3" />
+      <PackageReference Include="Terminal.Gui" Version="1.1.1" />
     </ItemGroup>
 
     <ItemGroup>
