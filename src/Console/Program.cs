@@ -23,11 +23,11 @@ namespace Console
     internal static class Program
     {
         private static ControlPanel _controlPanel;
-        private static readonly Queue<string> Messages = new Queue<string>();
-        private static readonly object MessageLock = new object();
+        private static readonly Queue<string> Messages = new ();
+        private static readonly object MessageLock = new ();
 
         private static readonly MenuBarItem DevicesMenuBarItem =
-            new MenuBarItem("_Devices", new[]
+            new ("_Devices", new[]
             {
                 new MenuItem("_Add", string.Empty, AddDevice),
                 new MenuItem("_Remove", string.Empty, RemoveDevice)
@@ -37,7 +37,7 @@ namespace Console
         private static Window _window;
         private static ScrollView _scrollView;
         private static MenuBar _menuBar;
-        private static ConcurrentDictionary<byte, ControlPanel.NakReplyEventArgs> _lastNak = new ConcurrentDictionary<byte, ControlPanel.NakReplyEventArgs>();
+        private static readonly ConcurrentDictionary<byte, ControlPanel.NakReplyEventArgs> LastNak = new ();
 
         private static Settings _settings;
 
@@ -71,13 +71,15 @@ namespace Console
                 {
                     new MenuItem("_About", "", () => MessageBox.Query(40, 6,"About",
                         $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}", "OK")),
+                    new MenuItem("_Polling Interval", "", UpdatePollingInterval),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
-                        if (MessageBox.Query(40, 6, "Quit", "Quit program?", "Yes", "No") == 0)
+                        if (MessageBox.Query(40, 6, "Quit", "Save configuration before exiting?", "Yes", "No") == 0)
                         {
-                            Application.RequestStop();
+                            SetConnectionSettings(_settings);
                         }
+                        Application.RequestStop();
                     })
                 }),
                 new MenuBarItem("Co_nnections", new[]
@@ -151,8 +153,8 @@ namespace Console
             };
             _controlPanel.NakReplyReceived += (_, args) =>
             {
-                _lastNak.TryRemove(args.Address, out var lastNak);
-                _lastNak.TryAdd(args.Address, args);
+                LastNak.TryRemove(args.Address, out var lastNak);
+                LastNak.TryAdd(args.Address, args);
                 if (lastNak != null && lastNak.Address == args.Address &&
                     lastNak.Nak.ErrorCode == args.Nak.ErrorCode)
                 {
@@ -196,11 +198,11 @@ namespace Console
         private static void StartSerialConnection()
         {
             var portNameTextField = new TextField(15, 1, 35, _settings.SerialConnectionSettings.PortName);
-            var baudRateTextField = new TextField(15, 3, 35, _settings.SerialConnectionSettings.BaudRate.ToString());
+            var baudRateTextField = new TextField(25, 3, 25, _settings.SerialConnectionSettings.BaudRate.ToString());
+            var replyTimeoutTextField = new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
             void StartConnectionButtonClicked()
             {
-                _settings.SerialConnectionSettings.PortName = portNameTextField.Text.ToString();
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
 
@@ -208,11 +210,21 @@ namespace Console
                     return;
                 }
 
+                if (!int.TryParse(replyTimeoutTextField.Text.ToString(), out var replyTimeout))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
+                _settings.SerialConnectionSettings.PortName = portNameTextField.Text.ToString();
                 _settings.SerialConnectionSettings.BaudRate = baudRate;
-                
+                _settings.SerialConnectionSettings.ReplyTimeout = replyTimeout;
+
                 StartConnection(new SerialPortOsdpConnection(_settings.SerialConnectionSettings.PortName,
-                    _settings.SerialConnectionSettings.BaudRate));
-                
+                        _settings.SerialConnectionSettings.BaudRate)
+                    {ReplyTimeout = TimeSpan.FromMilliseconds(_settings.SerialConnectionSettings.ReplyTimeout)});
+
                 Application.RequestStop();
             }
 
@@ -220,20 +232,24 @@ namespace Console
             startButton.Clicked += StartConnectionButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Start Serial Connection", 60, 10,
-                startButton, cancelButton)
-            {
-                new Label(1, 1, "Port:"),
+
+            var dialog = new Dialog("Start Serial Connection", 60, 12,
+                startButton, cancelButton);
+            dialog.Add(new Label(1, 1, "Port:"),
                 portNameTextField,
                 new Label(1, 3, "Baud Rate:"),
-                baudRateTextField
-            });
+                baudRateTextField,
+                new Label(1, 5, "Reply Timeout(ms):"),
+                replyTimeoutTextField);
+            
+            Application.Run(dialog);
         }
 
         private static void StartTcpServerConnection()
         {
-            var portNumberTextField = new TextField(15, 1, 35, _settings.TcpServerConnectionSettings.PortNumber.ToString());
-            var baudRateTextField = new TextField(15, 3, 35, _settings.TcpServerConnectionSettings.BaudRate.ToString());
+            var portNumberTextField = new TextField(25, 1, 25, _settings.TcpServerConnectionSettings.PortNumber.ToString());
+            var baudRateTextField = new TextField(25, 3, 25, _settings.TcpServerConnectionSettings.BaudRate.ToString());
+            var replyTimeoutTextField = new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
             void StartConnectionButtonClicked()
             {
@@ -243,47 +259,59 @@ namespace Console
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid port number entered!", "OK");
                     return;
                 }
-                _settings.TcpServerConnectionSettings.PortNumber = portNumber;
-                
+
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid baud rate entered!", "OK");
                     return;
                 }
+
+                if (!int.TryParse(replyTimeoutTextField.Text.ToString(), out var replyTimeout))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
+                _settings.TcpServerConnectionSettings.PortNumber = portNumber;
                 _settings.TcpServerConnectionSettings.BaudRate = baudRate;
-                
-                StartConnection( new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.BaudRate = portNumber,
-                    _settings.TcpServerConnectionSettings.BaudRate));
-                
+                _settings.TcpServerConnectionSettings.ReplyTimeout = replyTimeout;
+
+                StartConnection(new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.BaudRate = portNumber,
+                        _settings.TcpServerConnectionSettings.BaudRate)
+                    {ReplyTimeout = TimeSpan.FromMilliseconds(_settings.TcpServerConnectionSettings.ReplyTimeout)});
+
                 Application.RequestStop();
             }
-            
+
             var startButton = new Button("Start");
             startButton.Clicked += StartConnectionButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Start TCP Server Connection", 60, 10,
-                startButton, cancelButton)
-            {
-                new Label(1, 1, "Port Number:"),
+
+            var dialog = new Dialog("Start TCP Server Connection", 60, 12,
+                startButton, cancelButton);
+            dialog.Add( new Label(1, 1, "Port Number:"),
                 portNumberTextField,
                 new Label(1, 3, "Baud Rate:"),
-                baudRateTextField
-            });
+                baudRateTextField,
+                new Label(1, 5, "Reply Timeout(ms):"),
+                replyTimeoutTextField);
+            
+            Application.Run(dialog);
         }
 
         private static void StartTcpClientConnection()
         {
             var hostTextField = new TextField(15, 1, 35, _settings.TcpClientConnectionSettings.Host);
             var portNumberTextField =
-                new TextField(15, 3, 35, _settings.TcpClientConnectionSettings.PortNumber.ToString());
-            var baudRateTextField = new TextField(15, 5, 35, _settings.TcpClientConnectionSettings.BaudRate.ToString());
+                new TextField(25, 3, 25, _settings.TcpClientConnectionSettings.PortNumber.ToString());
+            var baudRateTextField = new TextField(25, 5, 25, _settings.TcpClientConnectionSettings.BaudRate.ToString());
+            var replyTimeoutTextField = new TextField(25, 7, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
             void StartConnectionButtonClicked()
             {
-                _settings.TcpClientConnectionSettings.Host = hostTextField.Text.ToString();
-
                 if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
                 {
 
@@ -291,16 +319,24 @@ namespace Console
                     return;
                 }
 
-                _settings.TcpClientConnectionSettings.PortNumber = portNumber;
-
                 if (!int.TryParse(baudRateTextField.Text.ToString(), out var baudRate))
                 {
 
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid baud rate entered!", "OK");
                     return;
                 }
+                
+                if (!int.TryParse(replyTimeoutTextField.Text.ToString(), out var replyTimeout))
+                {
 
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
+                _settings.TcpClientConnectionSettings.Host = hostTextField.Text.ToString();
                 _settings.TcpClientConnectionSettings.BaudRate = baudRate;
+                _settings.TcpClientConnectionSettings.PortNumber = portNumber;
+                _settings.TcpClientConnectionSettings.ReplyTimeout = replyTimeout;
 
                 StartConnection(new TcpClientOsdpConnection(
                     _settings.TcpClientConnectionSettings.Host,
@@ -314,27 +350,62 @@ namespace Console
             startButton.Clicked += StartConnectionButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Start TCP Client Connection", 60, 13, startButton, cancelButton)
-            {
-                new Label(1, 1, "Host Name:"),
+
+            var dialog = new Dialog("Start TCP Client Connection", 60, 15, startButton, cancelButton);
+            dialog.Add(new Label(1, 1, "Host Name:"),
                 hostTextField,
                 new Label(1, 3, "Port Number:"),
                 portNumberTextField,
                 new Label(1, 5, "Baud Rate:"),
-                baudRateTextField
-            });
+                baudRateTextField,
+                new Label(1, 7, "Reply Timeout(ms):"),
+                replyTimeoutTextField);
+            
+            Application.Run(dialog);
+        }
+
+        private static void UpdatePollingInterval()
+        {
+            var pollingIntervalTextField = new TextField(25, 4, 25, _settings.PollingInterval.ToString());
+            
+            void UpdatePollingIntervalButtonClicked()
+            {
+                if (!int.TryParse(pollingIntervalTextField.Text.ToString(), out var pollingInterval))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid polling interval entered!", "OK");
+                    return;
+                }
+
+                _settings.PollingInterval = pollingInterval;
+                
+                Application.RequestStop();
+            }
+
+            var updateButton = new Button("Update");
+            updateButton.Clicked += UpdatePollingIntervalButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += Application.RequestStop;
+
+            var dialog = new Dialog("Update Polling Interval", 60, 10, updateButton, cancelButton);
+            dialog.Add(new Label(new Rect(1, 1, 55, 2), "Connection will need to be restarted for setting to take effect."),
+                new Label(1, 4, "Polling Interval(ms):"),
+                pollingIntervalTextField);
+            
+            Application.Run(dialog);
         }
 
         private static void StartConnection(IOsdpConnection osdpConnection)
         {
-            _lastNak.Clear();
+            LastNak.Clear();
 
             if (_connectionId != Guid.Empty)
             {
                 _controlPanel.Shutdown();
             }
 
-            _connectionId = _controlPanel.StartConnection(osdpConnection);
+            _connectionId =
+                _controlPanel.StartConnection(osdpConnection, TimeSpan.FromMilliseconds(_settings.PollingInterval));
 
             foreach (var device in _settings.Devices)
             {
@@ -441,7 +512,7 @@ namespace Console
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid address entered!", "OK");
                     return;
                 }
-                
+
                 if (keyTextField.Text == null || keyTextField.Text.Length != 32)
                 {
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid key length entered!", "OK");
@@ -468,7 +539,7 @@ namespace Console
                     }
                 }
 
-                _lastNak.TryRemove(address, out _);
+                LastNak.TryRemove(address, out _);
                 _controlPanel.AddDevice(_connectionId, address, useCrcCheckBox.Checked,
                     useSecureChannelCheckBox.Checked, key);
 
@@ -493,17 +564,18 @@ namespace Console
             addButton.Clicked += AddDeviceButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Add Device", 60, 13, addButton, cancelButton)
-            {
-                new Label(1, 1, "Name:"),
+
+            var dialog = new Dialog("Add Device", 60, 13, addButton, cancelButton);
+            dialog.Add(new Label(1, 1, "Name:"),
                 nameTextField,
                 new Label(1, 3, "Address:"),
                 addressTextField,
                 useCrcCheckBox,
                 useSecureChannelCheckBox,
                 new Label(1, 8, "Secure Key:"),
-                keyTextField
-            });
+                keyTextField);
+
+            Application.Run(dialog);
         }
 
         private static void RemoveDevice()
@@ -530,7 +602,7 @@ namespace Console
             {
                 var removedDevice = orderedDevices[deviceRadioGroup.SelectedItem];
                 _controlPanel.RemoveDevice(_connectionId, removedDevice.Address);
-                _lastNak.TryRemove(removedDevice.Address, out _);
+                LastNak.TryRemove(removedDevice.Address, out _);
                 _settings.Devices.Remove(removedDevice);
                 Application.RequestStop();
             }
@@ -539,10 +611,11 @@ namespace Console
             removeButton.Clicked += RemoveDeviceButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Remove Device", 60, 13, removeButton, cancelButton)
-            {
-                scrollView
-            });
+
+            var dialog = new Dialog("Remove Device", 60, 13, removeButton, cancelButton);
+            dialog.Add(scrollView);
+            
+            Application.Run(dialog);
         }
 
         private static void SendCommunicationConfiguration()
@@ -573,7 +646,7 @@ namespace Console
                     (address, configuration) =>
                     {
                         _controlPanel.RemoveDevice(_connectionId, address);
-                        _lastNak.TryRemove(address, out _);
+                        LastNak.TryRemove(address, out _);
 
                         var updatedDevice = _settings.Devices.First(device => device.Address == address);
                         updatedDevice.Address = configuration.Address;
@@ -588,13 +661,14 @@ namespace Console
             sendButton.Clicked += SendCommunicationConfigurationButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Send Communication Configuration Command", 60, 10, sendButton, cancelButton)
-            {
-                new Label(1, 1, "Updated Address:"),
+
+            var dialog = new Dialog("Send Communication Configuration Command", 60, 10, sendButton, cancelButton);
+            dialog.Add(new Label(1, 1, "Updated Address:"),
                 addressTextField,
                 new Label(1, 3, "Updated Baud Rate:"),
-                baudRateTextField
-            });
+                baudRateTextField);
+
+            Application.Run(dialog);
         }
 
         private static void SendOutputControlCommand()
@@ -625,12 +699,13 @@ namespace Console
             sendButton.Clicked += SendOutputControlButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Send Output Control Command", 60, 10, sendButton, cancelButton)
-            {
-                new Label(1, 1, "Output Number:"),
+
+            var dialog = new Dialog("Send Output Control Command", 60, 10, sendButton, cancelButton);
+            dialog.Add(                new Label(1, 1, "Output Number:"),
                 outputAddressTextField,
-                activateOutputCheckBox
-            });
+                activateOutputCheckBox);
+            
+            Application.Run(dialog);
         }
 
         private static void SendReaderLedControlCommand()
@@ -669,13 +744,14 @@ namespace Console
             sendButton.Clicked += SendReaderLedControlButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Send Reader LED Control Command", 60, 10, sendButton, cancelButton)
-            {
-                new Label(1, 1, "LED Number:"),
+
+            var dialog = new Dialog("Send Reader LED Control Command", 60, 10, sendButton, cancelButton);
+            dialog.Add(new Label(1, 1, "LED Number:"),
                 ledNumberTextField,
                 new Label(1, 3, "Color:"),
-                colorComboBox
-            });
+                colorComboBox);
+            
+            Application.Run(dialog);
         }
 
         private static void SendManufacturerSpecificCommand()
@@ -724,13 +800,15 @@ namespace Console
             sendButton.Clicked += SendOutputControlButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Send Manufacturer Specific Command (Enter Hex Strings)", 60, 10, sendButton, cancelButton)
-            {
-                new Label(1, 1, "Vendor Code:"),
+
+            var dialog = new Dialog("Send Manufacturer Specific Command (Enter Hex Strings)", 60, 10, sendButton,
+                cancelButton);
+            dialog.Add(new Label(1, 1, "Vendor Code:"),
                 vendorCodeTextField,
                 new Label(1, 3, "Data:"),
-                dataTextField
-            });
+                dataTextField);
+            
+            Application.Run(dialog);
         }
 
         private static void SendReaderBuzzerControlCommand()
@@ -764,13 +842,14 @@ namespace Console
             sendButton.Clicked += SendReaderBuzzerControlButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Send Reader Buzzer Control Command", 60, 10, sendButton, cancelButton)
-            {
-                new Label(1, 1, "Reader Number:"),
+
+            var dialog = new Dialog("Send Reader Buzzer Control Command", 60, 10, sendButton, cancelButton);
+            dialog.Add(new Label(1, 1, "Reader Number:"),
                 readerAddressTextField,
                 new Label(1, 3, "Repeat Times:"),
-                repeatTimesTextField
-            });
+                repeatTimesTextField);
+            
+            Application.Run(dialog);
         }
 
         private static void SendReaderTextOutputCommand()
@@ -799,13 +878,14 @@ namespace Console
             sendButton.Clicked += SendReaderTextOutputButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Reader Text Output Command", 60, 10, sendButton, cancelButton)
-            {
-                new Label(1, 1, "Reader Number:"),
+
+            var dialog = new Dialog("Reader Text Output Command", 60, 10, sendButton, cancelButton);
+            dialog.Add(new Label(1, 1, "Reader Number:"),
                 readerAddressTextField,
                 new Label(1, 3, "Text Output:"),
-                textOutputTextField
-            });
+                textOutputTextField);
+            
+            Application.Run(dialog);
         }
 
         private static void SendEncryptionKeySetCommand()
@@ -843,7 +923,7 @@ namespace Console
                             return;
                         }
 
-                        _lastNak.TryRemove(address, out _);
+                        LastNak.TryRemove(address, out _);
 
                         var updatedDevice = _settings.Devices.First(device => device.Address == address);
                         updatedDevice.UseSecureChannel = true;
@@ -860,11 +940,12 @@ namespace Console
             sendButton.Clicked += SendButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog("Encryption Key Set Command (Enter Hex String)", 60, 8, sendButton, cancelButton)
-            {
-                new Label(1, 1, "Key:"),
-                keyTextField
-            });
+
+            var dialog = new Dialog("Encryption Key Set Command (Enter Hex String)", 60, 8, sendButton, cancelButton);
+            dialog.Add(new Label(1, 1, "Key:"),
+                keyTextField);
+                
+            Application.Run(dialog);
         }
 
         private static void SendCommand<T>(string title, Guid connectionId, Func<Guid, byte, Task<T>> sendCommandFunction)
@@ -905,10 +986,11 @@ namespace Console
             sendButton.Clicked += SendCommandButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog(title, 60, 13, sendButton, cancelButton)
-            {
-                deviceSelectionView
-            });
+
+            var dialog = new Dialog(title, 60, 13, sendButton, cancelButton);
+            dialog.Add(deviceSelectionView);
+            
+            Application.Run(dialog);
         }
 
         private static void SendCommand<T, TU>(string title, Guid connectionId, TU commandData,
@@ -958,10 +1040,11 @@ namespace Console
             sendButton.Clicked += SendCommandButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog(title, 60, 13, sendButton, cancelButton)
-            {
-                deviceSelectionView
-            });
+
+            var dialog = new Dialog(title, 60, 13, sendButton, cancelButton);
+            dialog.Add(deviceSelectionView);
+            
+            Application.Run(dialog);
         }
 
         private static void SendCustomCommand(string title, Guid connectionId,
@@ -1002,10 +1085,11 @@ namespace Console
             sendButton.Clicked += SendCommandButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
-            Application.Run(new Dialog(title, 60, 13, sendButton, cancelButton)
-            {
-                deviceSelectionView
-            });
+
+            var dialog = new Dialog(title, 60, 13, sendButton, cancelButton);
+            dialog.Add(deviceSelectionView);
+            
+            Application.Run(dialog);
         }
 
         private static ScrollView CreateDeviceSelectionView(out DeviceSetting[] orderedDevices,
@@ -1020,8 +1104,10 @@ namespace Console
             };
 
             deviceRadioGroup = new RadioGroup(0, 0,
-                orderedDevices.Select(device => ustring.Make($"{device.Address} : {device.Name}")).ToArray());
-            deviceRadioGroup.SelectedItem = 0;
+                orderedDevices.Select(device => ustring.Make($"{device.Address} : {device.Name}")).ToArray())
+            {
+                SelectedItem = 0
+            };
             scrollView.Add(deviceRadioGroup);
             return scrollView;
         }

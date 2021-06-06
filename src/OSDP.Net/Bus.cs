@@ -21,10 +21,10 @@ namespace OSDP.Net
         private const byte DriverByte = 0xFF;
 
         public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(250);
-        private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
-        private readonly object _configuredDevicesLock = new object();
+        private readonly SortedSet<Device> _configuredDevices = new ();
+        private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
-        private readonly Dictionary<byte, bool> _lastConnectionStatus = new Dictionary<byte, bool>();
+        private readonly Dictionary<byte, bool> _lastConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval;
@@ -33,6 +33,7 @@ namespace OSDP.Net
         private bool _isShuttingDown;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
+            // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -213,7 +214,10 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, $"Error while sending command {command} to address {command.Address}");
+                        if (!_isShuttingDown)
+                        {
+                            _logger?.LogError(exception, $"Error while sending command {command} to address {command.Address}");
+                        }
                         continue;
                     }
 
@@ -329,6 +333,7 @@ namespace OSDP.Net
             var buffer = new byte[commandData.Length + 1];
             buffer[0] = DriverByte;
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
+            
             await _connection.WriteAsync(buffer).ConfigureAwait(false);
 
             var replyBuffer = new Collection<byte>();
@@ -437,6 +442,12 @@ namespace OSDP.Net
             }
             catch (OperationCanceledException)
             {
+                return 0;
+            }
+            catch
+            {
+                if (!_isShuttingDown) throw;
+
                 return 0;
             }
         }
