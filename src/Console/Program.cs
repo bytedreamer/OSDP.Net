@@ -23,8 +23,8 @@ namespace Console
     internal static class Program
     {
         private static ControlPanel _controlPanel;
-        private static readonly Queue<string> Messages = new Queue<string>();
-        private static readonly object MessageLock = new object();
+        private static readonly Queue<string> Messages = new ();
+        private static readonly object MessageLock = new ();
 
         private static readonly MenuBarItem DevicesMenuBarItem =
             new ("_Devices", new[]
@@ -71,6 +71,7 @@ namespace Console
                 {
                     new MenuItem("_About", "", () => MessageBox.Query(40, 6,"About",
                         $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}", "OK")),
+                    new MenuItem("_Polling Interval", "", UpdatePollingInterval),
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
@@ -308,7 +309,6 @@ namespace Console
             var baudRateTextField = new TextField(25, 5, 25, _settings.TcpClientConnectionSettings.BaudRate.ToString());
             var replyTimeoutTextField = new TextField(25, 7, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
-
             void StartConnectionButtonClicked()
             {
                 if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
@@ -363,6 +363,37 @@ namespace Console
             Application.Run(dialog);
         }
 
+        private static void UpdatePollingInterval()
+        {
+            var pollingIntervalTextField = new TextField(25, 4, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
+            
+            void UpdatePollingIntervalButtonClicked()
+            {
+                if (!int.TryParse(pollingIntervalTextField.Text.ToString(), out var pollingInterval))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid polling interval entered!", "OK");
+                    return;
+                }
+
+                _settings.PollingInterval = pollingInterval;
+                
+                Application.RequestStop();
+            }
+
+            var updateButton = new Button("Update");
+            updateButton.Clicked += UpdatePollingIntervalButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += Application.RequestStop;
+
+            var dialog = new Dialog("Update Polling Interval", 60, 10, updateButton, cancelButton);
+            dialog.Add(new Label(new Rect(1, 1, 55, 2), "Connection will need to be restarted for setting to take effect."),
+                new Label(1, 4, "Polling Interval(ms):"),
+                pollingIntervalTextField);
+            
+            Application.Run(dialog);
+        }
+
         private static void StartConnection(IOsdpConnection osdpConnection)
         {
             LastNak.Clear();
@@ -372,7 +403,8 @@ namespace Console
                 _controlPanel.Shutdown();
             }
 
-            _connectionId = _controlPanel.StartConnection(osdpConnection);
+            _connectionId =
+                _controlPanel.StartConnection(osdpConnection, TimeSpan.FromMilliseconds(_settings.PollingInterval));
 
             foreach (var device in _settings.Devices)
             {
