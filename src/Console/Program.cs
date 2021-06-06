@@ -75,10 +75,11 @@ namespace Console
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
-                        if (MessageBox.Query(40, 6, "Quit", "Quit program?", "Yes", "No") == 0)
+                        if (MessageBox.Query(40, 6, "Quit", "Save configuration before exiting?", "Yes", "No") == 0)
                         {
-                            Application.RequestStop();
+                            SetConnectionSettings(_settings);
                         }
+                        Application.RequestStop();
                     })
                 }),
                 new MenuBarItem("Co_nnections", new[]
@@ -365,7 +366,7 @@ namespace Console
 
         private static void UpdatePollingInterval()
         {
-            var pollingIntervalTextField = new TextField(25, 4, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
+            var pollingIntervalTextField = new TextField(25, 4, 25, _settings.PollingInterval.ToString());
             
             void UpdatePollingIntervalButtonClicked()
             {
