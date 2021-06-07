@@ -53,24 +53,33 @@ namespace OSDP.Net
             return Address.CompareTo(other.Address);
         }
 
-        public Command GetNextCommandData()
+        /// <summary>
+        /// Get the next command in the queue, setup security, or send a poll command
+        /// </summary>
+        /// <param name="isPolling">If false, only send commands in the queue</param>
+        /// <returns>The next command always if polling, could be null if not polling</returns>
+        public Command GetNextCommandData(bool isPolling)
         {
-            if (UseSecureChannel && !_secureChannel.IsInitialized)
+            if (isPolling)
             {
-                return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray(), IsDefaultKey);
+                if (UseSecureChannel && !_secureChannel.IsInitialized)
+                {
+                    return new SecurityInitializationRequestCommand(Address,
+                        _secureChannel.ServerRandomNumber().ToArray(), IsDefaultKey);
+                }
+
+                if (MessageControl.Sequence == 0)
+                {
+                    return new PollCommand(Address);
+                }
+
+                if (UseSecureChannel && !_secureChannel.IsEstablished)
+                {
+                    return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram, IsDefaultKey);
+                }
             }
 
-            if (MessageControl.Sequence == 0)
-            {
-                return new PollCommand(Address);
-            }
-
-            if (UseSecureChannel && !_secureChannel.IsEstablished)
-            {
-                return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram, IsDefaultKey);
-            }
-
-            if (!_commands.TryDequeue(out var command))
+            if (!_commands.TryDequeue(out var command) && isPolling)
             {
                 return new PollCommand(Address);
             }
