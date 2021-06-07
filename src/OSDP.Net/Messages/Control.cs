@@ -26,5 +26,10 @@ namespace OSDP.Net.Messages
 
             Sequence = sequence;
         }
+
+        public void ResetSequence()
+        {
+            Sequence = 0;
+        }
     }
 }

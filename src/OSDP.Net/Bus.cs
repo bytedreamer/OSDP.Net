@@ -46,6 +46,8 @@ namespace OSDP.Net
 
         private TimeSpan IdleLineDelay => TimeSpan.FromSeconds(1.0/_connection.BaudRate * 16.0);
 
+        private bool IsPolling => _pollInterval > TimeSpan.Zero;
+
         /// <summary>
         /// Unique identifier of the bus
         /// </summary>
@@ -155,18 +157,37 @@ namespace OSDP.Net
                     }
                 }
 
-                TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
-                await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero).ConfigureAwait(false);
-
-                if (!_configuredDevices.Any())
+                if (IsPolling)
                 {
-                    lastMessageSentTime = DateTime.UtcNow;
-                    continue;
+                    TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
+                    await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero)
+                        .ConfigureAwait(false);
+                    
+                    if (!_configuredDevices.Any())
+                    {
+                        lastMessageSentTime = DateTime.UtcNow;
+                        continue;
+                    }
+                }
+                else
+                {
+                    // Keep CPU usage down while waiting for next command
+                    await Task.Delay(TimeSpan.FromMilliseconds(10));
                 }
 
                 foreach (var device in _configuredDevices.ToArray())
                 {
-                    var command = device.GetNextCommandData();
+                    // Right now it always sends sequence 0
+                    if (!IsPolling)
+                    {
+                        device.MessageControl.ResetSequence();
+                    }
+                    
+                    var command = device.GetNextCommandData(IsPolling);
+                    if (command == null)
+                    {
+                        continue;
+                    }
                     
                     lastMessageSentTime = DateTime.UtcNow;
 
@@ -174,8 +195,8 @@ namespace OSDP.Net
                     
                     try
                     {
-                        // Reset the device if it looses connection
-                        if (UpdateConnectionStatus(device) && !device.IsConnected)
+                        // Reset the device if it loses connection
+                        if (IsPolling && UpdateConnectionStatus(device) && !device.IsConnected)
                         {
                             ResetDevice(device);
                         }
@@ -201,11 +222,11 @@ namespace OSDP.Net
                     catch (TimeoutException)
                     {
                         // Make sure the security is reset properly if reader goes offline
-                        if (device.IsSecurityEstablished && !IsOnline(command.Address))
+                        if (IsPolling && device.IsSecurityEstablished && !IsOnline(command.Address))
                         {
                             ResetDevice(device);
                         }
-                        else if (device.UseSecureChannel)
+                        else if (IsPolling && device.UseSecureChannel)
                         {
                             device.CreateNewRandomNumber();
                         }
