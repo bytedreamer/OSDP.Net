@@ -54,7 +54,7 @@ namespace OSDP.Net
         /// Start polling on the defined connection.
         /// </summary>
         /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
-        /// <param name="pollInterval">The interval at which the devices will be polled, zero indicates no polling</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
         /// <returns>An identifier that represents the connection</returns>
         public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval)
         {
