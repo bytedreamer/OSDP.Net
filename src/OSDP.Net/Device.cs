@@ -45,6 +45,8 @@ namespace OSDP.Net
         public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow &&
                                    (!MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
 
+        public bool IsSendingMultiMessage { get; set; }
+
         /// <inheritdoc />
         public int CompareTo(Device other)
         {

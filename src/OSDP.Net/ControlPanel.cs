@@ -383,6 +383,61 @@ namespace OSDP.Net
         }
 
         /// <summary>
+        /// Send a file to a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="fileType"></param>
+        /// <param name="fileData"></param>
+        /// <param name="fragmentSize"></param>
+        /// <param name="callback"></param>
+        /// <param name="cancellationToken"></param>
+        public void FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
+            Action<FileTransferStatus> callback,
+            CancellationToken cancellationToken = default)
+        {
+            Task.Factory.StartNew(async () =>
+            {
+                _buses.First(bus => bus.Id == connectionId)?.SetSendingMultiMessage(address, true);
+                try
+                {
+                    await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
+                        cancellationToken);
+                }
+                finally
+                {
+                    _buses.First(bus => bus.Id == connectionId)?.SetSendingMultiMessage(address, false);
+                }
+            }, TaskCreationOptions.LongRunning);
+        }
+
+        private async Task SendFileTransferCommands(Guid connectionId, byte address, byte fileType, byte[] fileData,
+            ushort fragmentSize, Action<FileTransferStatus> callback, CancellationToken cancellationToken)
+        {
+            int totalSize = fileData.Length;
+            int offset = 0;
+
+            while (!cancellationToken.IsCancellationRequested || offset < totalSize)
+            {
+                var reply = await SendCommand(connectionId,
+                        new FileTransferCommand(address,
+                            new FileTransfer(fileType, totalSize, offset, fragmentSize,
+                                fileData.Skip(offset).Take(fragmentSize).ToArray())), cancellationToken)
+                    .ConfigureAwait(false);
+
+                callback(new FileTransferStatus(new ReturnReplyData
+                {
+                    Ack = reply.Type == ReplyType.Ack,
+                    Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null
+                }, offset));
+
+                if (reply.Type == ReplyType.Nak) return;
+
+                offset += fragmentSize;
+            }
+        }
+
+        /// <summary>
         /// Is the PD online
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device</param>
@@ -414,11 +469,9 @@ namespace OSDP.Net
             {
                 return await source.Task;
             }
-            else
-            {
-                ReplyReceived -= EventHandler;
-                throw new TimeoutException();
-            }
+
+            ReplyReceived -= EventHandler;
+            throw new TimeoutException();
         }
 
         /// <summary>
@@ -808,6 +861,19 @@ namespace OSDP.Net
             public byte Address { get; }
 
             public KeypadData KeypadData { get; }
+        }
+
+        public class FileTransferStatus
+        {
+            public FileTransferStatus(ReturnReplyData lastReply, int currentOffset)
+            {
+                this.lastReply = lastReply;
+                this.currentOffset = currentOffset;
+            }
+
+            public ReturnReplyData lastReply { get; }
+
+            public int currentOffset { get; }
         }
 
         private class ReplyEventArgs : EventArgs

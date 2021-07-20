@@ -184,7 +184,7 @@ namespace OSDP.Net
                     }
                     
                     var command = device.GetNextCommandData(IsPolling);
-                    if (command == null)
+                    if (command == null || WaitingForNextMultiMessage(command, device.IsSendingMultiMessage))
                     {
                         continue;
                     }
@@ -255,6 +255,11 @@ namespace OSDP.Net
                     await Task.Delay(IdleLineDelay).ConfigureAwait(false);
                 }
             }
+        }
+
+        private static bool WaitingForNextMultiMessage(Command command, bool sendingMultiMessage)
+        {
+            return sendingMultiMessage && command is not FileTransferCommand;
         }
 
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
@@ -328,6 +333,13 @@ namespace OSDP.Net
             var foundDevice = _configuredDevices.First(device => device.Address == address);
             
             ResetDevice(foundDevice);
+        }
+
+        public void SetSendingMultiMessage(byte address, bool isSendingMultiMessage)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.IsSendingMultiMessage = isSendingMultiMessage;
         }
 
         private void ResetDevice(Device device)
