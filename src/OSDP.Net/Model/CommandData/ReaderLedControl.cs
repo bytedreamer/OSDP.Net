@@ -187,6 +187,9 @@ namespace OSDP.Net.Model.CommandData
         Red = 1,
         Green =  2,
         Amber = 3,
-        Blue = 4
+        Blue = 4,
+        Magenta = 5,
+        Cyan = 6,
+        White = 7
     }
 }
