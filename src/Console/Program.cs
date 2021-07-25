@@ -6,6 +6,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Console.Commands;
 using Console.Configuration;
@@ -706,11 +707,17 @@ namespace Console
                     return;
                 }
 
-                var cancelFileTransferButton = new Button("Cancel");
-                cancelFileTransferButton.Clicked += Application.RequestStop;
-                
                 SendCommand("File Transfer", _connectionId, (connectionId, address) =>
                 {
+                    var tokenSource = new CancellationTokenSource();
+                    var cancelFileTransferButton = new Button("Cancel");
+                    cancelFileTransferButton.Clicked += () =>
+                    {
+                        tokenSource.Cancel();
+                        tokenSource.Dispose();
+                        Application.RequestStop();
+                    };
+
                     var transferStatusLabel = new Label(20, 1, "None");
                     var progressBar = new ProgressBar(new Rect(1, 3, 35, 1));
                     var progressPercentage = new Label(new Rect(40, 3, 10, 1), "0%");
@@ -738,7 +745,7 @@ namespace Console
                                 progressBar.Fraction = percentage;
                                 progressPercentage.Text = percentage.ToString("P");
                             });
-                        });
+                        }, tokenSource.Token);
 
                     return Task.FromResult(true);
                 });
