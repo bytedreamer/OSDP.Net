@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
-using OSDP.Net.Tests.Utilities;
 
 namespace OSDP.Net.Tests
 {

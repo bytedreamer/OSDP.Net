@@ -398,7 +398,7 @@ namespace OSDP.Net
         {
             Task.Factory.StartNew(async () =>
             {
-                _buses.First(bus => bus.Id == connectionId)?.SetSendingMultiMessage(address, true);
+                _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessage(address, true);
                 try
                 {
                     await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
@@ -406,7 +406,7 @@ namespace OSDP.Net
                 }
                 finally
                 {
-                    _buses.First(bus => bus.Id == connectionId)?.SetSendingMultiMessage(address, false);
+                    _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessage(address, false);
                 }
             }, TaskCreationOptions.LongRunning);
         }
@@ -425,13 +425,13 @@ namespace OSDP.Net
                                 fileData.Skip(offset).Take(fragmentSize).ToArray())), cancellationToken)
                     .ConfigureAwait(false);
 
-                callback(new FileTransferStatus(new ReturnReplyData
-                {
-                    Ack = reply.Type == ReplyType.Ack,
-                    Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null
-                }, offset));
+                var fileTransferStatusData = reply.Type == ReplyType.FileTransferStatus
+                    ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
+                    : null;
+                callback(new FileTransferStatus(fileTransferStatusData?.StatusDetail ?? -1, offset,
+                    reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null));
 
-                if (reply.Type == ReplyType.Nak) return;
+                if (reply.Type == ReplyType.Nak || (fileTransferStatusData?.StatusDetail ?? -1) < 0) return;
 
                 offset += fragmentSize;
             }
@@ -865,15 +865,18 @@ namespace OSDP.Net
 
         public class FileTransferStatus
         {
-            public FileTransferStatus(ReturnReplyData lastReply, int currentOffset)
+            public FileTransferStatus(short status, int currentOffset, Nak nak)
             {
-                this.lastReply = lastReply;
-                this.currentOffset = currentOffset;
+                Status = status;
+                CurrentOffset = currentOffset;
+                Nak = nak;
             }
 
-            public ReturnReplyData lastReply { get; }
+            public short Status { get; }
 
-            public int currentOffset { get; }
+            public int CurrentOffset { get; }
+
+            public Nak Nak { get; }
         }
 
         private class ReplyEventArgs : EventArgs

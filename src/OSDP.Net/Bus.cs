@@ -394,7 +394,7 @@ namespace OSDP.Net
 
         private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
         {
-            return Message.ConvertBytesToShort(new[] {replyBuffer[2], replyBuffer[3]});
+            return Message.ConvertBytesToUnsignedShort(new[] {replyBuffer[2], replyBuffer[3]});
         }
 
         private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength)

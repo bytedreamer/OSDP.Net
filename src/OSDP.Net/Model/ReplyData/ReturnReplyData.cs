@@ -26,24 +26,4 @@ namespace OSDP.Net.Model.ReplyData
             return Nak != null ? Nak.ToString() : ReplyData?.ToString();
         }
     }
-    
-    public class ReturnReplyData
-    {
-        /// True if Ack reply is returned.
-        public bool Ack { get; internal set; }
-
-        /// Contains Nak data if returned.
-        public Nak Nak { get; internal set; }
-
-        /// <inheritdoc />
-        public override string ToString()
-        {
-            if (Ack)
-            {
-                return "Ack";
-            }
-
-            return Nak != null ? Nak.ToString() : string.Empty;
-        }
-    }
 }

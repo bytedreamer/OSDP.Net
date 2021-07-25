@@ -101,6 +101,7 @@ namespace Console
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, _controlPanel.DeviceCapabilities)),
                     new MenuItem("Encryption Key Set", "", SendEncryptionKeySetCommand),
+                    new MenuItem("File Transfer", "", SendFileTransferCommand),
                     new MenuItem("_ID Report", "",
                         () => SendCommand("ID report", _connectionId, _controlPanel.IdReport)),
                     new MenuItem("Input Status", "",
@@ -198,9 +199,11 @@ namespace Console
 
         private static void StartSerialConnection()
         {
-            var portNameComboBox = new ComboBox(new Rect(15, 1, 35, 5), SerialPort.GetPortNames()){Text = _settings.SerialConnectionSettings.PortName};
+            var portNameComboBox = new ComboBox(new Rect(15, 1, 35, 5), SerialPort.GetPortNames())
+                {Text = _settings.SerialConnectionSettings.PortName ?? string.Empty};
             var baudRateTextField = new TextField(25, 3, 25, _settings.SerialConnectionSettings.BaudRate.ToString());
-            var replyTimeoutTextField = new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
+            var replyTimeoutTextField =
+                new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
             void StartConnectionButtonClicked()
             {
@@ -242,7 +245,7 @@ namespace Console
                 baudRateTextField,
                 new Label(1, 5, "Reply Timeout(ms):"),
                 replyTimeoutTextField);
-            
+
             Application.Run(dialog);
         }
 
@@ -663,11 +666,96 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Send Communication Configuration Command", 60, 10, sendButton, cancelButton);
+            var dialog = new Dialog("Send Communication Configuration Command", 60, 10, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Updated Address:"),
                 addressTextField,
                 new Label(1, 3, "Updated Baud Rate:"),
                 baudRateTextField);
+
+            Application.Run(dialog);
+        }
+
+        private static void SendFileTransferCommand()
+        {
+            var typeTextField = new TextField(20, 1, 20, "1");
+            var messageSizeTextField = new TextField(20, 3, 20, "128");
+
+            void FileTransferButtonClicked()
+            {
+                if (!byte.TryParse(typeTextField.Text.ToString(), out byte type))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid file transfer type entered!", "OK");
+                    return;
+                }
+
+                if (!byte.TryParse(messageSizeTextField.Text.ToString(), out byte messageSize))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid message size entered!", "OK");
+                    return;
+                }
+
+                var openDialog = new OpenDialog("File Transfer", "Select file to transfer");
+                Application.Run(openDialog);
+
+                string path = openDialog.FilePath.ToString() ?? string.Empty;
+                if (!File.Exists(path))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "No file selected!", "OK");
+                    return;
+                }
+
+                var cancelFileTransferButton = new Button("Cancel");
+                cancelFileTransferButton.Clicked += Application.RequestStop;
+                
+                SendCommand("File Transfer", _connectionId, (connectionId, address) =>
+                {
+                    var transferStatusLabel = new Label(20, 1, "None");
+                    var progressBar = new ProgressBar(new Rect(1, 3, 35, 1));
+                    var progressPercentage = new Label(new Rect(40, 3, 10, 1), "0%");
+                    
+                    Application.MainLoop.Invoke(() =>
+                    {
+                        var statusDialog = new Dialog("File Transfer Status", 60, 10, cancelFileTransferButton);
+                        statusDialog.Add(new Label(1, 1, "Status:"),
+                            transferStatusLabel,
+                            progressBar,
+                            progressPercentage);
+
+                        Application.Run(statusDialog);
+                    });
+
+                    var data = File.ReadAllBytes(path);
+                    int fileSize = data.Length;
+                    _controlPanel.FileTransfer(connectionId, address, type, data, messageSize,
+                        status =>
+                        {
+                            Application.MainLoop.Invoke(() =>
+                            {
+                                transferStatusLabel.Text = status?.Status.ToString();
+                                float percentage = (status?.CurrentOffset ?? 0) / (float) fileSize;
+                                progressBar.Fraction = percentage;
+                                progressPercentage.Text = percentage.ToString("P");
+                            });
+                        });
+
+                    return Task.FromResult(true);
+                });
+
+                Application.RequestStop();
+            }
+
+            var sendButton = new Button("Send");
+            sendButton.Clicked += FileTransferButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += Application.RequestStop;
+
+            var dialog = new Dialog("File Transfer", 60, 10,cancelButton, sendButton);
+            dialog.Add(new Label(1, 1, "Type:"),
+                typeTextField,
+                new Label(1, 3, "Message Size:"),
+                messageSizeTextField);
 
             Application.Run(dialog);
         }
@@ -701,7 +789,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Send Output Control Command", 60, 10, sendButton, cancelButton);
+            var dialog = new Dialog("Send Output Control Command", 60, 10, cancelButton, sendButton);
             dialog.Add(                new Label(1, 1, "Output Number:"),
                 outputAddressTextField,
                 activateOutputCheckBox);
@@ -746,7 +834,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Send Reader LED Control Command", 60, 10, sendButton, cancelButton);
+            var dialog = new Dialog("Send Reader LED Control Command", 60, 10, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "LED Number:"),
                 ledNumberTextField,
                 new Label(1, 3, "Color:"),
@@ -844,7 +932,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Send Reader Buzzer Control Command", 60, 10, sendButton, cancelButton);
+            var dialog = new Dialog("Send Reader Buzzer Control Command", 60, 10, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Reader Number:"),
                 readerAddressTextField,
                 new Label(1, 3, "Repeat Times:"),
@@ -880,7 +968,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Reader Text Output Command", 60, 10, sendButton, cancelButton);
+            var dialog = new Dialog("Reader Text Output Command", 60, 10, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Reader Number:"),
                 readerAddressTextField,
                 new Label(1, 3, "Text Output:"),
@@ -942,7 +1030,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Encryption Key Set Command (Enter Hex String)", 60, 8, sendButton, cancelButton);
+            var dialog = new Dialog("Encryption Key Set Command (Enter Hex String)", 60, 8, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Key:"),
                 keyTextField);
                 
@@ -988,7 +1076,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog(title, 60, 13, sendButton, cancelButton);
+            var dialog = new Dialog(title, 60, 13, cancelButton, sendButton);
             dialog.Add(deviceSelectionView);
             
             Application.Run(dialog);
@@ -1042,7 +1130,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog(title, 60, 13, sendButton, cancelButton);
+            var dialog = new Dialog(title, 60, 13, cancelButton, sendButton);
             dialog.Add(deviceSelectionView);
             
             Application.Run(dialog);
@@ -1087,7 +1175,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog(title, 60, 13, sendButton, cancelButton);
+            var dialog = new Dialog(title, 60, 13, cancelButton, sendButton);
             dialog.Add(deviceSelectionView);
             
             Application.Run(dialog);
