@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Ports;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -197,7 +198,7 @@ namespace Console
 
         private static void StartSerialConnection()
         {
-            var portNameTextField = new TextField(15, 1, 35, _settings.SerialConnectionSettings.PortName);
+            var portNameComboBox = new ComboBox(new Rect(15, 1, 35, 5), SerialPort.GetPortNames()){Text = _settings.SerialConnectionSettings.PortName};
             var baudRateTextField = new TextField(25, 3, 25, _settings.SerialConnectionSettings.BaudRate.ToString());
             var replyTimeoutTextField = new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
@@ -217,7 +218,7 @@ namespace Console
                     return;
                 }
 
-                _settings.SerialConnectionSettings.PortName = portNameTextField.Text.ToString();
+                _settings.SerialConnectionSettings.PortName = portNameComboBox.Text.ToString();
                 _settings.SerialConnectionSettings.BaudRate = baudRate;
                 _settings.SerialConnectionSettings.ReplyTimeout = replyTimeout;
 
@@ -233,10 +234,10 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Start Serial Connection", 60, 12,
+            var dialog = new Dialog("Start Serial Connection", 70, 12,
                 startButton, cancelButton);
             dialog.Add(new Label(1, 1, "Port:"),
-                portNameTextField,
+                portNameComboBox,
                 new Label(1, 3, "Baud Rate:"),
                 baudRateTextField,
                 new Label(1, 5, "Reply Timeout(ms):"),
@@ -711,7 +712,7 @@ namespace Console
         private static void SendReaderLedControlCommand()
         {
             var ledNumberTextField = new TextField(20, 1, 20, "0");
-            var colorComboBox = new ComboBox(new Rect(20, 3, 20, 1), Enum.GetNames(typeof(LedColor))) {Text = "Red"};
+            var colorComboBox = new ComboBox(new Rect(20, 3, 20, 5), Enum.GetNames(typeof(LedColor))) {Text = "Red"};
 
             void SendReaderLedControlButtonClicked()
             {
