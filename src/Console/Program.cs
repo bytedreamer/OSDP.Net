@@ -732,9 +732,9 @@ namespace Console
                 SendCommand("Reader LED Control Command", _connectionId, new ReaderLedControls(new[]
                 {
                     new ReaderLedControl(0, ledNumber,
-                        TemporaryReaderControlCode.CancelAnyTemporaryAndDisplayPermanent, 0, 0,
+                        TemporaryReaderControlCode.CancelAnyTemporaryAndDisplayPermanent, 1, 0,
                         LedColor.Red, LedColor.Green, 0,
-                        PermanentReaderControlCode.SetPermanentState, 0, 0, color, color)
+                        PermanentReaderControlCode.SetPermanentState, 1, 0, color, color)
                 }), _controlPanel.ReaderLedControl, (_, _) => { });
 
                 Application.RequestStop();

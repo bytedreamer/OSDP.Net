@@ -14,13 +14,13 @@ namespace OSDP.Net.Model.CommandData
         /// <param name="readerNumber">The reader number starting at 0.</param>
         /// <param name="ledNumber">The LED number.</param>
         /// <param name="temporaryMode">The temporary mode.</param>
-        /// <param name="temporaryOnTime">The temporary on time in units of 100ms.</param>
+        /// <param name="temporaryOnTime">The temporary on time in units of 100ms. NOTE: Both On and Off time shouldn't be zero, set this to one if not needed.</param>
         /// <param name="temporaryOffTime">The temporary off time in units of 100ms.</param>
         /// <param name="temporaryOnColor">Color of the temporary on.</param>
         /// <param name="temporaryOffColor">Color of the temporary off.</param>
         /// <param name="temporaryTimer">The temporary timer in units of 100ms.</param>
         /// <param name="permanentMode">The permanent mode.</param>
-        /// <param name="permanentOnTime">The permanent on time in units of 100ms.</param>
+        /// <param name="permanentOnTime">The permanent on time in units of 100ms. NOTE: Both On and Off time shouldn't be zero, set this to one if not needed.</param>
         /// <param name="permanentOffTime">The permanent off time in units of 100ms.</param>
         /// <param name="permanentOnColor">Color of the permanent on.</param>
         /// <param name="permanentOffColor">Color of the permanent off.</param>
