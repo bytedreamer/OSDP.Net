@@ -417,14 +417,18 @@ namespace OSDP.Net
             int totalSize = fileData.Length;
             int offset = 0;
 
-            while (!cancellationToken.IsCancellationRequested || offset < totalSize)
+            while (!cancellationToken.IsCancellationRequested && offset < totalSize)
             {
+                ushort updatedFragmentSize = (ushort)Math.Min(fragmentSize, totalSize - offset);
+                
                 var reply = await SendCommand(connectionId,
                         new FileTransferCommand(address,
-                            new FileTransfer(fileType, totalSize, offset, fragmentSize,
-                                fileData.Skip(offset).Take(fragmentSize).ToArray())), cancellationToken)
+                            new FileTransfer(fileType, totalSize, offset, updatedFragmentSize,
+                                fileData.Skip(offset).Take(updatedFragmentSize).ToArray())), cancellationToken)
                     .ConfigureAwait(false);
 
+                offset += updatedFragmentSize;
+                
                 var fileTransferStatusData = reply.Type == ReplyType.FileTransferStatus
                     ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
                     : null;
@@ -432,8 +436,6 @@ namespace OSDP.Net
                     reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null));
 
                 if (reply.Type == ReplyType.Nak || (fileTransferStatusData?.StatusDetail ?? -1) < 0) return;
-
-                offset += fragmentSize;
             }
         }
 
