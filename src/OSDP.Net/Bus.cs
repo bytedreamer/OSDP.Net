@@ -20,7 +20,7 @@ namespace OSDP.Net
     {
         private const byte DriverByte = 0xFF;
 
-        public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(250);
+        public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
@@ -182,6 +182,12 @@ namespace OSDP.Net
                     {
                         device.MessageControl.ResetSequence();
                     }
+
+                    // Requested delay for multi-messages
+                    if (device.RequestDelay > DateTime.UtcNow)
+                    {
+                        continue;
+                    }
                     
                     var command = device.GetNextCommandData(IsPolling);
                     if (command == null || WaitingForNextMultiMessage(command, device.IsSendingMultiMessage))
@@ -203,7 +209,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, "Error while notifying connection status for address {command.Address}");
+                        _logger?.LogError(exception, $"Error while notifying connection status for address {command.Address}");
                     }
 
                     try
@@ -340,6 +346,13 @@ namespace OSDP.Net
             var foundDevice = _configuredDevices.First(device => device.Address == address);
 
             foundDevice.IsSendingMultiMessage = isSendingMultiMessage;
+        }
+
+        public void SetRequestDelay(byte address, DateTime requestDelay)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.RequestDelay = requestDelay;
         }
 
         private void ResetDevice(Device device)

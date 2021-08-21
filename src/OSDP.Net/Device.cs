@@ -8,13 +8,13 @@ namespace OSDP.Net
 {
     internal class Device : IComparable<Device>
     {
-        private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
-
-        private readonly byte[] _defaultKey = {
+        private static readonly byte[] DefaultKey = {
             0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
         };
 
-        private readonly SecureChannel _secureChannel = new SecureChannel();
+        private readonly ConcurrentQueue<Command> _commands = new();
+
+        private readonly SecureChannel _secureChannel = new();
 
         private DateTime _lastValidReply = DateTime.MinValue;
 
@@ -26,8 +26,9 @@ namespace OSDP.Net
 
             if (!UseSecureChannel) return;
 
-            SecureChannelKey = secureChannelKey ?? _defaultKey;
-            IsDefaultKey = _defaultKey.SequenceEqual(SecureChannelKey);
+            SecureChannelKey = secureChannelKey ?? DefaultKey;
+            
+            IsDefaultKey = DefaultKey.SequenceEqual(SecureChannelKey);
         }
 
         internal byte[] SecureChannelKey { get; }
@@ -46,6 +47,8 @@ namespace OSDP.Net
                                    (!MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
 
         public bool IsSendingMultiMessage { get; set; }
+
+        public DateTime RequestDelay { get; set; }
 
         /// <inheritdoc />
         public int CompareTo(Device other)

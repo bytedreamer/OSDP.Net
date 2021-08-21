@@ -416,8 +416,9 @@ namespace OSDP.Net
         {
             int totalSize = fileData.Length;
             int offset = 0;
+            bool continueTransfer = true;
 
-            while (!cancellationToken.IsCancellationRequested && offset < totalSize)
+            while (!cancellationToken.IsCancellationRequested && continueTransfer)
             {
                 ushort updatedFragmentSize = (ushort)Math.Min(fragmentSize, totalSize - offset);
                 
@@ -429,13 +430,37 @@ namespace OSDP.Net
 
                 offset += updatedFragmentSize;
                 
-                var fileTransferStatusData = reply.Type == ReplyType.FileTransferStatus
+                var fileTransferStatus = reply.Type == ReplyType.FileTransferStatus
                     ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
                     : null;
-                callback(new FileTransferStatus(fileTransferStatusData?.StatusDetail ?? -1, offset,
+
+                // Set request delay if specified
+                if (fileTransferStatus is { RequestedDelay: > 0 })
+                {
+                    _buses.First(bus => bus.Id == connectionId)
+                        .SetRequestDelay(address, DateTime.UtcNow.AddMilliseconds(fileTransferStatus.RequestedDelay));
+                }
+
+                // Set fragment size if requested
+                if (fileTransferStatus is { UpdateMessageMaximum: > 0 } or { StatusDetail: 3 })
+                {
+                    fragmentSize = fileTransferStatus.UpdateMessageMaximum;
+                }
+
+                callback(new FileTransferStatus(fileTransferStatus?.StatusDetail ?? -1, offset,
                     reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null));
 
-                if (reply.Type == ReplyType.Nak || (fileTransferStatusData?.StatusDetail ?? -1) < 0) return;
+                if (reply.Type == ReplyType.Nak || (fileTransferStatus?.StatusDetail ?? -1) < 0) return;
+                
+                // Determine if we should continue on successful status
+                if (fileTransferStatus is not { StatusDetail: 3 })
+                {
+                    continueTransfer = offset < totalSize;
+                }
+                else
+                {
+                    fragmentSize = 0;
+                }
             }
         }
 
