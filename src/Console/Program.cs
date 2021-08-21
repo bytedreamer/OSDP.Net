@@ -718,7 +718,7 @@ namespace Console
                         Application.RequestStop();
                     };
 
-                    var transferStatusLabel = new Label(20, 1, "None");
+                    var transferStatusLabel = new Label(new Rect(20, 1, 45, 1), "None");
                     var progressBar = new ProgressBar(new Rect(1, 3, 35, 1));
                     var progressPercentage = new Label(new Rect(40, 3, 10, 1), "0%");
                     

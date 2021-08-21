@@ -421,7 +421,7 @@ namespace OSDP.Net
             while (!cancellationToken.IsCancellationRequested && continueTransfer)
             {
                 ushort updatedFragmentSize = (ushort)Math.Min(fragmentSize, totalSize - offset);
-                
+
                 var reply = await SendCommand(connectionId,
                         new FileTransferCommand(address,
                             new FileTransfer(fileType, totalSize, offset, updatedFragmentSize,
@@ -429,7 +429,7 @@ namespace OSDP.Net
                     .ConfigureAwait(false);
 
                 offset += updatedFragmentSize;
-                
+
                 var fileTransferStatus = reply.Type == ReplyType.FileTransferStatus
                     ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
                     : null;
@@ -442,18 +442,21 @@ namespace OSDP.Net
                 }
 
                 // Set fragment size if requested
-                if (fileTransferStatus is { UpdateMessageMaximum: > 0 } or { StatusDetail: 3 })
+                if (fileTransferStatus is { UpdateMessageMaximum: > 0 } )
                 {
                     fragmentSize = fileTransferStatus.UpdateMessageMaximum;
                 }
 
-                callback(new FileTransferStatus(fileTransferStatus?.StatusDetail ?? -1, offset,
+                callback(new FileTransferStatus(
+                    fileTransferStatus?.Detail ?? Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError, offset,
                     reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null));
 
-                if (reply.Type == ReplyType.Nak || (fileTransferStatus?.StatusDetail ?? -1) < 0) return;
-                
+                if (reply.Type == ReplyType.Nak || (fileTransferStatus?.Detail ??
+                                                    Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError) < 0) return;
+
                 // Determine if we should continue on successful status
-                if (fileTransferStatus is not { StatusDetail: 3 })
+                if (fileTransferStatus is not
+                    { Detail: Model.ReplyData.FileTransferStatus.StatusDetail.FinishingFileTransfer })
                 {
                     continueTransfer = offset < totalSize;
                 }
@@ -892,14 +895,15 @@ namespace OSDP.Net
 
         public class FileTransferStatus
         {
-            public FileTransferStatus(short status, int currentOffset, Nak nak)
+            public FileTransferStatus(Model.ReplyData.FileTransferStatus.StatusDetail status, int currentOffset,
+                Nak nak)
             {
                 Status = status;
                 CurrentOffset = currentOffset;
                 Nak = nak;
             }
 
-            public short Status { get; }
+            public Model.ReplyData.FileTransferStatus.StatusDetail  Status { get; }
 
             public int CurrentOffset { get; }
 
