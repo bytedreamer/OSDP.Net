@@ -11,6 +11,7 @@ namespace OSDP.Net.Tests
     [TestFixture]
     public class ControlPanelFileTransferTest
     {
+        // ReSharper disable once UnusedType.Local
         class TestConnection : IOsdpConnection
         {
             private readonly MemoryStream _stream = new MemoryStream();
