@@ -421,6 +421,7 @@ namespace OSDP.Net
 
             while (!cancellationToken.IsCancellationRequested && continueTransfer)
             {
+                // Get the fragment size if it doesn't exceed the total size
                 ushort updatedFragmentSize = (ushort)Math.Min(fragmentSize, totalSize - offset);
 
                 var reply = await SendCommand(connectionId,
@@ -429,35 +430,44 @@ namespace OSDP.Net
                                 fileData.Skip(offset).Take(updatedFragmentSize).ToArray())), cancellationToken)
                     .ConfigureAwait(false);
 
+                // Update offset
                 offset += updatedFragmentSize;
 
+                // Parse the fileTransfer status
                 var fileTransferStatus = reply.Type == ReplyType.FileTransferStatus
                     ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
                     : null;
 
-                // Leave secure channel if needed
-                if (fileTransferStatus?.Action == Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel)
+                if (fileTransferStatus != null)
                 {
-                    _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessageNoSecureChannel(address, true);
-                }
-                
-                // Set request delay if specified
-                if (fileTransferStatus is { RequestedDelay: > 0 })
-                {
-                    _buses.First(bus => bus.Id == connectionId)
-                        .SetRequestDelay(address, DateTime.UtcNow.AddMilliseconds(fileTransferStatus.RequestedDelay));
-                }
+                    // Leave secure channel if needed
+                    if (fileTransferStatus.Action ==
+                        Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel)
+                    {
+                        _buses.First(bus => bus.Id == connectionId)
+                            .SetSendingMultiMessageNoSecureChannel(address, true);
+                    }
 
-                // Set fragment size if requested
-                if (fileTransferStatus is { UpdateMessageMaximum: > 0 } )
-                {
-                    fragmentSize = fileTransferStatus.UpdateMessageMaximum;
+                    // Set request delay if specified
+                    if (fileTransferStatus is { RequestedDelay: > 0 })
+                    {
+                        _buses.First(bus => bus.Id == connectionId)
+                            .SetRequestDelay(address,
+                                DateTime.UtcNow.AddMilliseconds(fileTransferStatus.RequestedDelay));
+                    }
+
+                    // Set fragment size if requested
+                    if (fileTransferStatus is { UpdateMessageMaximum: > 0 })
+                    {
+                        fragmentSize = fileTransferStatus.UpdateMessageMaximum;
+                    }
                 }
 
                 callback(new FileTransferStatus(
                     fileTransferStatus?.Detail ?? Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError, offset,
                     reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null));
 
+                // End transfer is Nak reply is received
                 if (reply.Type == ReplyType.Nak || (fileTransferStatus?.Detail ??
                                                     Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError) < 0) return;
 
