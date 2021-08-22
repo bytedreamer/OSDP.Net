@@ -10,6 +10,14 @@ namespace OSDP.Net.Model.ReplyData
     /// </summary>
     public class FileTransferStatus
     {
+        [Flags]
+        public enum ControlFlags
+        {
+            Interleave = 0x0,
+            LeaveSecureChannel = 0x1,
+            PollResponseAvailable = 0x2
+        }
+
         public enum StatusDetail
         {
             UnknownError = -4,
@@ -28,7 +36,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <summary>Gets the control flags.</summary>
-        public byte Action { get; private set; }
+        public ControlFlags Action { get; private set; }
 
         /// <summary>Gets the request ACU time delay in milliseconds before next osdp_FILETRANSFER command.</summary>
         public ushort RequestedDelay { get;private set;  }
@@ -49,10 +57,10 @@ namespace OSDP.Net.Model.ReplyData
 
             return new FileTransferStatus
             {
-                Action = dataArray[0],
-                RequestedDelay = Message.ConvertBytesToUnsignedShort(dataArray.Skip(1).Take(2).ToArray()),
-                Detail = SetStatusDetailDefault(Message.ConvertBytesToShort(dataArray.Skip(3).Take(2).ToArray())),
-                UpdateMessageMaximum = Message.ConvertBytesToUnsignedShort(dataArray.Skip(5).Take(2).ToArray()),
+                Action = (ControlFlags)dataArray[0],
+                RequestedDelay = Message.ConvertBytesToUnsignedShort(dataArray.Skip(1).Take(2).ToArray(), true),
+                Detail = SetStatusDetailDefault(Message.ConvertBytesToShort(dataArray.Skip(3).Take(2).ToArray(), true)),
+                UpdateMessageMaximum = Message.ConvertBytesToUnsignedShort(dataArray.Skip(5).Take(2).ToArray(), true)
             };
         }
 
@@ -60,7 +68,7 @@ namespace OSDP.Net.Model.ReplyData
         public override string ToString()
         {
             var build = new StringBuilder();
-            build.AppendLine($"             Action: {Action}");
+            build.AppendLine($"             Action: {Action:G}");
             build.AppendLine($"    Requested Delay: {RequestedDelay}");
             build.AppendLine($"      Status Detail: {Detail}");
             build.AppendLine($" Update Message Max: {UpdateMessageMaximum}");

@@ -15,12 +15,14 @@ namespace OSDP.Net
         private readonly ConcurrentQueue<Command> _commands = new();
 
         private readonly SecureChannel _secureChannel = new();
+        private readonly bool _useSecureChannel;
 
         private DateTime _lastValidReply = DateTime.MinValue;
 
         public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey)
         {
-            UseSecureChannel = useSecureChannel;
+            _useSecureChannel = useSecureChannel;
+            
             Address = address;
             MessageControl = new Control(0, useCrc, useSecureChannel);
 
@@ -39,7 +41,7 @@ namespace OSDP.Net
 
         public Control MessageControl { get; }
 
-        public bool UseSecureChannel { get; }
+        public bool UseSecureChannel => _useSecureChannel && !IsSendingMultiMessageNoSecureChannel;
 
         public bool IsSecurityEstablished => MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
 
@@ -47,6 +49,8 @@ namespace OSDP.Net
                                    (!MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
 
         public bool IsSendingMultiMessage { get; set; }
+
+        public bool IsSendingMultiMessageNoSecureChannel { get; set; }
 
         public DateTime RequestDelay { get; set; }
 

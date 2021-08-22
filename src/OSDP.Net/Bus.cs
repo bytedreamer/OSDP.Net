@@ -348,6 +348,13 @@ namespace OSDP.Net
             foundDevice.IsSendingMultiMessage = isSendingMultiMessage;
         }
 
+        public void SetSendingMultiMessageNoSecureChannel(byte address, bool isSendingMultiMessageNoSecureChannel)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
+        }
+
         public void SetRequestDelay(byte address, DateTime requestDelay)
         {
             var foundDevice = _configuredDevices.First(device => device.Address == address);

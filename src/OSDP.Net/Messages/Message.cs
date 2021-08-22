@@ -49,16 +49,16 @@ namespace OSDP.Net.Messages
             return byteArray;
         }
 
-        internal static ushort ConvertBytesToUnsignedShort(ReadOnlySpan<byte> data)
+        internal static ushort ConvertBytesToUnsignedShort(ReadOnlySpan<byte> data, bool useLittleEndian = false)
         {
-            return BitConverter.IsLittleEndian
+            return BitConverter.IsLittleEndian || useLittleEndian
                 ? BinaryPrimitives.ReadUInt16LittleEndian(data)
                 : BinaryPrimitives.ReadUInt16BigEndian(data);
         }
 
-        internal static short ConvertBytesToShort(ReadOnlySpan<byte> data)
+        internal static short ConvertBytesToShort(ReadOnlySpan<byte> data, bool useLittleEndian = false)
         {
-            return BitConverter.IsLittleEndian
+            return BitConverter.IsLittleEndian || useLittleEndian
                 ? BinaryPrimitives.ReadInt16LittleEndian(data)
                 : BinaryPrimitives.ReadInt16BigEndian(data);
         }

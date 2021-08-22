@@ -407,6 +407,7 @@ namespace OSDP.Net
                 finally
                 {
                     _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessage(address, false);
+                    _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessageNoSecureChannel(address, false);
                 }
             }, TaskCreationOptions.LongRunning);
         }
@@ -434,6 +435,12 @@ namespace OSDP.Net
                     ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
                     : null;
 
+                // Leave secure channel if needed
+                if (fileTransferStatus?.Action == Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel)
+                {
+                    _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessageNoSecureChannel(address, true);
+                }
+                
                 // Set request delay if specified
                 if (fileTransferStatus is { RequestedDelay: > 0 })
                 {
