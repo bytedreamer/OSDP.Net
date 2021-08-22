@@ -18,7 +18,10 @@ using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
+using OSDP.Net.Model.ReplyData;
 using Terminal.Gui;
+using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
+using ManufacturerSpecific = OSDP.Net.Model.CommandData.ManufacturerSpecific;
 
 namespace Console
 {
@@ -77,10 +80,11 @@ namespace Console
                     new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
-                        if (MessageBox.Query(40, 6, "Quit", "Save configuration before exiting?",  1, "No", "Yes") == 0)
+                        if (MessageBox.Query(40, 6, "Quit", "Save configuration before exiting?", 1, "No", "Yes") == 1)
                         {
                             SetConnectionSettings(_settings);
                         }
+
                         Application.RequestStop();
                     })
                 }),
@@ -559,7 +563,7 @@ namespace Console
                 if (_settings.Devices.Any(device => device.Address == address))
                 {
                     if (MessageBox.Query(60, 10, "Overwrite", "Device already exists at that address, overwrite?", 1,
-                         "No", "Yes") == 1)
+                         "No", "Yes") == 0)
                     {
                         return;
                     }
@@ -591,7 +595,7 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Add Device", 60, 13, addButton, cancelButton);
+            var dialog = new Dialog("Add Device", 60, 13,  cancelButton, addButton);
             dialog.Add(new Label(1, 1, "Name:"),
                 nameTextField,
                 new Label(1, 3, "Address:"),
@@ -768,6 +772,11 @@ namespace Console
                                 float percentage = (status?.CurrentOffset ?? 0) / (float) fileSize;
                                 progressBar.Fraction = percentage;
                                 progressPercentage.Text = percentage.ToString("P");
+
+                                if (status?.Status is not (FileTransferStatus.StatusDetail.OkToProceed or FileTransferStatus.StatusDetail.FinishingFileTransfer))
+                                {
+                                    cancelFileTransferButton.Text = "Close";
+                                }
                             });
                         }, tokenSource.Token);
 
@@ -924,8 +933,8 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += Application.RequestStop;
 
-            var dialog = new Dialog("Send Manufacturer Specific Command (Enter Hex Strings)", 60, 10, sendButton,
-                cancelButton);
+            var dialog = new Dialog("Send Manufacturer Specific Command (Enter Hex Strings)", 60, 10, 
+                cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Vendor Code:"),
                 vendorCodeTextField,
                 new Label(1, 3, "Data:"),
