@@ -41,18 +41,18 @@ namespace OSDP.Net
 
         public Control MessageControl { get; }
 
-        public bool UseSecureChannel => _useSecureChannel && !IsSendingMultiMessageNoSecureChannel;
+        public bool UseSecureChannel => !IsSendingMultiMessageNoSecureChannel && _useSecureChannel;
 
-        public bool IsSecurityEstablished => MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
+        public bool IsSecurityEstablished => !IsSendingMultiMessageNoSecureChannel && MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
 
-        public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow &&
-                                   (!MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
+        public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
+                                   (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
 
         public bool IsSendingMultiMessage { get; set; }
 
-        public bool IsSendingMultiMessageNoSecureChannel { get; set; }
-
         public DateTime RequestDelay { get; set; }
+
+        public bool IsSendingMultiMessageNoSecureChannel { get; set; }
 
         /// <inheritdoc />
         public int CompareTo(Device other)

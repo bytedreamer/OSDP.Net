@@ -217,7 +217,7 @@ namespace OSDP.Net
                         reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
                         
                         // Prevent plain text message replies when secure channel has been established
-                        if (device.IsSecurityEstablished && !reply.IsSecureMessage)
+                        if (device.UseSecureChannel && device.IsSecurityEstablished && !reply.IsSecureMessage)
                         {
                             _logger?.LogWarning("An plain text message was received when the secure channel had been established");
                             device.CreateNewRandomNumber();
@@ -353,6 +353,11 @@ namespace OSDP.Net
             var foundDevice = _configuredDevices.First(device => device.Address == address);
 
             foundDevice.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
+            foundDevice.MessageControl.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
+            if (isSendingMultiMessageNoSecureChannel)
+            {
+                foundDevice.CreateNewRandomNumber();
+            }
         }
 
         public void SetRequestDelay(byte address, DateTime requestDelay)
@@ -364,7 +369,6 @@ namespace OSDP.Net
 
         private void ResetDevice(Device device)
         {
-            RemoveDevice(device.Address);
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 

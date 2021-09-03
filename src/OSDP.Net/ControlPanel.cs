@@ -20,7 +20,7 @@ namespace OSDP.Net
         private readonly ILogger<ControlPanel> _logger;
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _pivDataLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
-        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(5);
+        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
 
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
@@ -393,8 +393,7 @@ namespace OSDP.Net
         /// <param name="callback"></param>
         /// <param name="cancellationToken"></param>
         public void FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
-            Action<FileTransferStatus> callback,
-            CancellationToken cancellationToken = default)
+            Action<FileTransferStatus> callback, CancellationToken cancellationToken = default)
         {
             Task.Factory.StartNew(async () =>
             {
@@ -441,7 +440,7 @@ namespace OSDP.Net
                 if (fileTransferStatus != null)
                 {
                     // Leave secure channel if needed
-                    if (fileTransferStatus.Action ==
+                    if ((fileTransferStatus.Action & Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel) ==
                         Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel)
                     {
                         _buses.First(bus => bus.Id == connectionId)

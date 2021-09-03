@@ -91,7 +91,7 @@ namespace OSDP.Net.Messages
         private Span<byte> BuildHeader(Device device)
         {
             const int startOfMessageLength = 5;
-
+            
             var securityControlBlock = device.MessageControl.HasSecurityControlBlock
                 ? SecurityControlBlock()
                 : ReadOnlySpan<byte>.Empty;

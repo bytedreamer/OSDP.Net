@@ -726,6 +726,11 @@ namespace Console
                 }
 
                 var openDialog = new OpenDialog("File Transfer", "Select file to transfer");
+                if (File.Exists(_settings.LastFileTransferDirectory))
+                {
+                    var fileInfo = new FileInfo(_settings.LastFileTransferDirectory);
+                    openDialog.DirectoryPath = ustring.Make(fileInfo.DirectoryName);
+                }
                 Application.Run(openDialog);
 
                 string path = openDialog.FilePath.ToString() ?? string.Empty;
@@ -734,6 +739,8 @@ namespace Console
                     MessageBox.ErrorQuery(40, 10, "Error", "No file selected!", "OK");
                     return;
                 }
+
+                _settings.LastFileTransferDirectory = path;
 
                 SendCommand("File Transfer", _connectionId, (connectionId, address) =>
                 {

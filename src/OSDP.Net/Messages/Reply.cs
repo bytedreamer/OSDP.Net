@@ -100,7 +100,7 @@ namespace OSDP.Net.Messages
                 control.ControlByte
             };
 
-            if ( control.HasSecurityControlBlock)
+            if ( control.HasSecurityControlBlock )
             {
                 commandBuffer.AddRange(SecurityControlBlock());
             }

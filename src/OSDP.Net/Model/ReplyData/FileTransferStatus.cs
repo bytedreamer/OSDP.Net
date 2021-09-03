@@ -13,9 +13,9 @@ namespace OSDP.Net.Model.ReplyData
         [Flags]
         public enum ControlFlags
         {
-            Interleave = 0x0,
-            LeaveSecureChannel = 0x1,
-            PollResponseAvailable = 0x2
+            Interleave = 0x1,
+            LeaveSecureChannel = 0x2,
+            PollResponseAvailable = 0x4
         }
 
         public enum StatusDetail
