@@ -49,11 +49,18 @@ namespace OSDP.Net.Messages
             return byteArray;
         }
 
-        internal static ushort ConvertBytesToShort(ReadOnlySpan<byte> data)
+        internal static ushort ConvertBytesToUnsignedShort(ReadOnlySpan<byte> data, bool useLittleEndian = false)
         {
-            return BitConverter.IsLittleEndian
+            return BitConverter.IsLittleEndian || useLittleEndian
                 ? BinaryPrimitives.ReadUInt16LittleEndian(data)
                 : BinaryPrimitives.ReadUInt16BigEndian(data);
+        }
+
+        internal static short ConvertBytesToShort(ReadOnlySpan<byte> data, bool useLittleEndian = false)
+        {
+            return BitConverter.IsLittleEndian || useLittleEndian
+                ? BinaryPrimitives.ReadInt16LittleEndian(data)
+                : BinaryPrimitives.ReadInt16BigEndian(data);
         }
 
         protected static ushort CalculateCrc(ReadOnlySpan<byte> packet)
@@ -94,7 +101,9 @@ namespace OSDP.Net.Messages
 
         internal ReadOnlySpan<byte> EncryptedData(Device device)
         {
-            return !Data().IsEmpty ? device.EncryptData(Data()) : Data();
+            var data = Data();
+            
+            return !data.IsEmpty ? device.EncryptData(data) : data;
         }
 
         internal static int ConvertBytesToInt(byte[] bytes)

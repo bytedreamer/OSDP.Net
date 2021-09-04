@@ -28,16 +28,16 @@ namespace SmartCardSample
             byte readerNumber = byte.Parse(osdpSection["ReaderNumber"]);
             
             var panel = new ControlPanel();
-            panel.ConnectionStatusChanged += (sender, eventArgs) =>
+            panel.ConnectionStatusChanged += (_, eventArgs) =>
             {
                 Console.WriteLine($"Device is {(eventArgs.IsConnected ? "Online" : "Offline")}");
 
             };
-            panel.NakReplyReceived += (sender, args) =>
+            panel.NakReplyReceived += (_, args) =>
             {
                 Console.WriteLine($"Received NAK {args.Nak}");
             };
-            panel.ExtendedReadReplyReceived += (sender, eventArgs) =>
+            panel.ExtendedReadReplyReceived += (_, eventArgs) =>
             {
                 Task.Run(async () =>
                 {
@@ -103,7 +103,7 @@ namespace SmartCardSample
                     }
                 });
             };
-            panel.RawCardDataReplyReceived += (sender, eventArgs) => 
+            panel.RawCardDataReplyReceived += (_, eventArgs) => 
             {
                 Console.WriteLine($"Raw card read {FormatData(eventArgs.RawCardData.Data)}");
             }; 
@@ -112,7 +112,7 @@ namespace SmartCardSample
             panel.AddDevice(_connectionId, 0, true, true);
 
             Timer timer = new Timer(5000);
-            timer.Elapsed += (sender, eventArgs) =>
+            timer.Elapsed += (_, _) =>
             {
                 Task.Run(async () =>
                 {
@@ -158,10 +158,9 @@ namespace SmartCardSample
             }
 
             return builder.ToString();
-            
         }
 
-        public static byte[] StringToByteArray(string hex) {
+        private static byte[] StringToByteArray(string hex) {
             return Enumerable.Range(0, hex.Length)
                 .Where(x => x % 2 == 0)
                 .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))

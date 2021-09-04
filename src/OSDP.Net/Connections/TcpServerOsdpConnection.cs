@@ -36,13 +36,14 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(5);
+        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
 
         /// <inheritdoc />
         public void Open()
         {
             _listener.Start();
             _tcpClient = _listener.AcceptTcpClient();
+            _tcpClient.LingerState = new LingerOption(true, 0);
         }
 
         /// <inheritdoc />
@@ -50,6 +51,7 @@ namespace OSDP.Net.Connections
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
+            tcpClient.GetStream().Close();
             tcpClient?.Close();
         }
 

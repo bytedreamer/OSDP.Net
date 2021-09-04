@@ -12,7 +12,7 @@ namespace OSDP.Net.Tests.Messages
         public string BuildCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
             var idReportCommand = new IdReportCommand(address);
-            return BitConverter.ToString(idReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
+            return BitConverter.ToString(idReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
         }
 
         public class IdReportCommandDataClass

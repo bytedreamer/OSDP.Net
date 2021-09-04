@@ -19,6 +19,7 @@ namespace OSDP.Net.Messages
         CrypticData = 0x76,
         InitialRMac = 0x78,
         Busy = 0x79,
+        FileTransferStatus = 0x7A,
         PIVData = 0x80,
         ManufactureSpecific = 0x90,
         ExtendedRead = 0xB1

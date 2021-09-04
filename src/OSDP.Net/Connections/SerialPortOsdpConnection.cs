@@ -8,7 +8,7 @@ namespace OSDP.Net.Connections
     /// <summary>Connect using a serial port.</summary>
     public class SerialPortOsdpConnection : IOsdpConnection
     {
-        private readonly SerialPort _serialPort = new SerialPort();
+        private readonly SerialPort _serialPort = new();
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.Connections.SerialPortOsdpConnection" /> class.</summary>
         /// <param name="portName">Name of the port.</param>
@@ -27,7 +27,7 @@ namespace OSDP.Net.Connections
         public bool IsOpen => _serialPort.IsOpen;
 
         /// <inheritdoc />
-        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(5);
+        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
 
         /// <inheritdoc />
         public void Open()

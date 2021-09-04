@@ -14,18 +14,24 @@ variables:
   solution: '**/*.sln'#
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-  major: 1
-  minor: 1
-  patch: 0
+  major: 2
+  minor: 0
+  patch: 12
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Install .NET Core SDK'
+  displayName: 'Install .NET 5 SDK'
   inputs:
     packageType: 'sdk'
-    version: '3.x'
+    version: '5.x'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'restore'
+    restoreSolution: '**/*.sln'
+    feedsToUse: 'select'
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet build'
@@ -48,7 +54,7 @@ steps:
   inputs:
     solutionOrProjectPath: 'src/OSDP.Net.sln'
     failBuildLevelSelector: 'Warning'
-    additionalArguments: '--no-swea'
+    additionalArguments: '--build'
 
 - task: DotNetCoreCLI@2
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
@@ -67,7 +73,7 @@ steps:
     command: 'publish'
     publishWebProjects: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r osx-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/osx-x64'
+    arguments: '-r osx-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true --self-contained true --output $(Build.ArtifactStagingDirectory)/TestConsole/osx-x64'
     zipAfterPublish: false
     modifyOutputPath: false
     versioningScheme: 'byEnvVar'
@@ -82,7 +88,7 @@ steps:
     zipAfterPublish: false
     modifyOutputPath: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r win-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/win-x64'
+    arguments: '-r win-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true --self-contained true --output $(Build.ArtifactStagingDirectory)/TestConsole/win-x64'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 
@@ -95,7 +101,7 @@ steps:
     zipAfterPublish: false
     modifyOutputPath: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r linux-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-x64'
+    arguments: '-r linux-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true --self-contained true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-x64'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 
@@ -108,7 +114,7 @@ steps:
     zipAfterPublish: false
     modifyOutputPath: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r linux-arm --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:PublishTrimmed=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm'
+    arguments: '-r linux-arm --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true --self-contained true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 

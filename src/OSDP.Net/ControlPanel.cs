@@ -20,7 +20,7 @@ namespace OSDP.Net
         private readonly ILogger<ControlPanel> _logger;
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _pivDataLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
-        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(5);
+        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
 
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
@@ -33,7 +33,7 @@ namespace OSDP.Net
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    _logger?.LogDebug($"Received a reply {reply}");
+                    // _logger?.LogDebug($"Received a reply {reply}");
                     
                     OnReplyReceived(reply);
                 }
@@ -47,7 +47,18 @@ namespace OSDP.Net
         /// <returns>An identifier that represents the connection</returns>
         public Guid StartConnection(IOsdpConnection connection)
         {
-            var newBus = new Bus(connection, _replies, _logger);
+            return StartConnection(connection, Bus.DefaultPollInterval);
+        }
+
+        /// <summary>
+        /// Start polling on the defined connection.
+        /// </summary>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <returns>An identifier that represents the connection</returns>
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval)
+        {
+            var newBus = new Bus(connection, _replies, pollInterval, _logger);
             
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
             
@@ -155,12 +166,12 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Request to get PIV data from PD.
+        /// Request to get PIV data from PD. Only one PIV request is processed at a time for each connection. 
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <param name="getPIVData">Describe the PIV data to retrieve.</param>
-        /// <param name="timeout">A TimeSpan that represents the number of milliseconds to wait, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="timeout">A TimeSpan that represents the number of milliseconds to wait until waiting for the other PIV data requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns>A response with the PIV data requested.</returns>
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
@@ -372,6 +383,107 @@ namespace OSDP.Net
         }
 
         /// <summary>
+        /// Send a file to a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="fileType"></param>
+        /// <param name="fileData"></param>
+        /// <param name="fragmentSize"></param>
+        /// <param name="callback"></param>
+        /// <param name="cancellationToken"></param>
+        public void FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
+            Action<FileTransferStatus> callback, CancellationToken cancellationToken = default)
+        {
+            Task.Factory.StartNew(async () =>
+            {
+                _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessage(address, true);
+                try
+                {
+                    await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
+                        cancellationToken);
+                }
+                finally
+                {
+                    _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessage(address, false);
+                    _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessageNoSecureChannel(address, false);
+                }
+            }, TaskCreationOptions.LongRunning);
+        }
+
+        private async Task SendFileTransferCommands(Guid connectionId, byte address, byte fileType, byte[] fileData,
+            ushort fragmentSize, Action<FileTransferStatus> callback, CancellationToken cancellationToken)
+        {
+            int totalSize = fileData.Length;
+            int offset = 0;
+            bool continueTransfer = true;
+
+            while (!cancellationToken.IsCancellationRequested && continueTransfer)
+            {
+                // Get the fragment size if it doesn't exceed the total size
+                ushort updatedFragmentSize = (ushort)Math.Min(fragmentSize, totalSize - offset);
+
+                var reply = await SendCommand(connectionId,
+                        new FileTransferCommand(address,
+                            new FileTransfer(fileType, totalSize, offset, updatedFragmentSize,
+                                fileData.Skip(offset).Take(updatedFragmentSize).ToArray())), cancellationToken)
+                    .ConfigureAwait(false);
+
+                // Update offset
+                offset += updatedFragmentSize;
+
+                // Parse the fileTransfer status
+                var fileTransferStatus = reply.Type == ReplyType.FileTransferStatus
+                    ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
+                    : null;
+
+                if (fileTransferStatus != null)
+                {
+                    // Leave secure channel if needed
+                    if ((fileTransferStatus.Action & Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel) ==
+                        Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel)
+                    {
+                        _buses.First(bus => bus.Id == connectionId)
+                            .SetSendingMultiMessageNoSecureChannel(address, true);
+                    }
+
+                    // Set request delay if specified
+                    if (fileTransferStatus is { RequestedDelay: > 0 })
+                    {
+                        _buses.First(bus => bus.Id == connectionId)
+                            .SetRequestDelay(address,
+                                DateTime.UtcNow.AddMilliseconds(fileTransferStatus.RequestedDelay));
+                    }
+
+                    // Set fragment size if requested
+                    if (fileTransferStatus is { UpdateMessageMaximum: > 0 })
+                    {
+                        fragmentSize = fileTransferStatus.UpdateMessageMaximum;
+                    }
+                }
+
+                callback(new FileTransferStatus(
+                    fileTransferStatus?.Detail ?? Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError, offset,
+                    reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null));
+
+                // End transfer is Nak reply is received
+                if (reply.Type == ReplyType.Nak || (fileTransferStatus?.Detail ??
+                                                    Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError) < 0) return;
+
+                // Determine if we should continue on successful status
+                if (fileTransferStatus is not
+                    { Detail: Model.ReplyData.FileTransferStatus.StatusDetail.FinishingFileTransfer })
+                {
+                    continueTransfer = offset < totalSize;
+                }
+                else
+                {
+                    fragmentSize = 0;
+                }
+            }
+        }
+
+        /// <summary>
         /// Is the PD online
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device</param>
@@ -403,11 +515,9 @@ namespace OSDP.Net
             {
                 return await source.Task;
             }
-            else
-            {
-                ReplyReceived -= EventHandler;
-                throw new TimeoutException();
-            }
+
+            ReplyReceived -= EventHandler;
+            throw new TimeoutException();
         }
 
         /// <summary>
@@ -420,6 +530,15 @@ namespace OSDP.Net
                 bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
                 
                 bus.Close();
+                
+                foreach (byte address in bus.ConfigureDeviceAddresses)
+                {
+                    OnConnectionStatusChanged(bus.Id, address, false);
+                }
+            }
+            while (!_buses.IsEmpty) 
+            {
+                _buses.TryTake(out _);
             }
 
             foreach (var pivDataLock in _pivDataLocks.Values)
@@ -559,6 +678,15 @@ namespace OSDP.Net
                             PIVData.ParseData(reply.ExtractReplyData)));   
                     break;
                 }
+
+                case ReplyType.KeypadData:
+                {
+                    var handler = KeypadReplyReceived;
+                    handler?.Invoke(this,
+                        new KeypadReplyEventArgs(reply.ConnectionId, reply.Address,
+                            KeypadData.ParseData(reply.ExtractReplyData)));
+                    break;
+                }
             }
         }
 
@@ -608,6 +736,11 @@ namespace OSDP.Net
         /// Occurs when extended read reply received.
         /// </summary>
         public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
+
+        /// <summary>
+        /// Occurs when key pad data reply received.
+        /// </summary>
+        public event EventHandler<KeypadReplyEventArgs> KeypadReplyReceived;
 
         /// <summary>
         /// Occurs when piv data reply received.
@@ -758,6 +891,39 @@ namespace OSDP.Net
             public byte Address { get; }
 
             public PIVData PIVData { get; }
+        }
+
+        public class KeypadReplyEventArgs : EventArgs
+        {
+            public KeypadReplyEventArgs(Guid connectionId, byte address, KeypadData keypadData)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                KeypadData = keypadData;
+            }
+
+            public Guid ConnectionId { get; }
+
+            public byte Address { get; }
+
+            public KeypadData KeypadData { get; }
+        }
+
+        public class FileTransferStatus
+        {
+            public FileTransferStatus(Model.ReplyData.FileTransferStatus.StatusDetail status, int currentOffset,
+                Nak nak)
+            {
+                Status = status;
+                CurrentOffset = currentOffset;
+                Nak = nak;
+            }
+
+            public Model.ReplyData.FileTransferStatus.StatusDetail  Status { get; }
+
+            public int CurrentOffset { get; }
+
+            public Nak Nak { get; }
         }
 
         private class ReplyEventArgs : EventArgs

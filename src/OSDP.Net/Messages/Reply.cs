@@ -31,8 +31,8 @@ namespace OSDP.Net.Messages
             {
                 SecureBlockData = data.Slice(ReplyMessageHeaderSize + 2, secureBlockSize - 2).ToArray();
                 Mac = data.Slice(messageLength, MacSize).ToArray();
-                Type = (ReplyType) data[ReplyTypeIndex + secureBlockSize];
             }
+            Type = (ReplyType) data[ReplyTypeIndex + secureBlockSize];
 
             ExtractReplyData = data.Slice(ReplyMessageHeaderSize + secureBlockSize, data.Length -
                 ReplyMessageHeaderSize - secureBlockSize - replyMessageFooterSize -
@@ -44,8 +44,8 @@ namespace OSDP.Net.Messages
 
             IsDataCorrect = isUsingCrc
                 ? CalculateCrc(data.Slice(0, data.Length - 2)) ==
-                  ConvertBytesToShort(data.Slice(data.Length - 2, 2))
-                : CalculateChecksum(data.Slice(data.Length - 1, 1).ToArray()) == data[data.Length - 1];
+                  ConvertBytesToUnsignedShort(data.Slice(data.Length - 2, 2))
+                : CalculateChecksum(data.Slice(0, data.Length - 1).ToArray()) == data[data.Length - 1];
             MessageForMacGeneration = data.Slice(0, messageLength).ToArray();
 
             ConnectionId = connectionId;
@@ -81,7 +81,7 @@ namespace OSDP.Net.Messages
         public static Reply Parse(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, Device device)
         {
             var reply = new UnknownReply(data, connectionId, issuingCommand, device);
-
+            
             return reply;
         }
 
@@ -100,7 +100,7 @@ namespace OSDP.Net.Messages
                 control.ControlByte
             };
 
-            if ( control.HasSecurityControlBlock)
+            if ( control.HasSecurityControlBlock )
             {
                 commandBuffer.AddRange(SecurityControlBlock());
             }

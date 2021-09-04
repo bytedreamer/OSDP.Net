@@ -14,7 +14,7 @@ namespace OSDP.Net.Tests.Messages
         {
             var communicationSetCommand = new CommunicationSetCommand(address, 
                 new CommunicationConfiguration(1, 9600));
-            return BitConverter.ToString(communicationSetCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
+            return BitConverter.ToString(communicationSetCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
         }
 
         public class CommunicationSetCommandTestClass

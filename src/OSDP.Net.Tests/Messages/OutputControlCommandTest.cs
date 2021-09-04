@@ -19,7 +19,7 @@ namespace OSDP.Net.Tests.Messages
                     new OutputControl(1, OutputControlCode.TemporaryStateOffResumePermanentState, 120),
                 }));
             return BitConverter.ToString(
-                outputControlCommand.BuildCommand(new Device(0, useCrc, useSecureChannel)));
+                outputControlCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
         }
 
         public class OutputControlCommandTestClass

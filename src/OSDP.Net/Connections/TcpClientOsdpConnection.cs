@@ -36,17 +36,19 @@ namespace OSDP.Net.Connections
             get
             {
                 var tcpClient = _tcpClient;
-                return tcpClient != null && tcpClient.Connected;
+                return tcpClient?.Connected ?? false;
             }
         }
 
         /// <inheritdoc />
-        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(5);
+        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
 
         /// <inheritdoc />
         public void Open()
         {
-            _tcpClient = new TcpClient();
+            Close();
+
+            _tcpClient = new TcpClient {NoDelay = true};
             _tcpClient.Connect(_server, _portNumber);
         }
 
@@ -55,6 +57,7 @@ namespace OSDP.Net.Connections
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
+            if (_tcpClient?.Connected ?? false) tcpClient?.GetStream().Close();
             tcpClient?.Close();
         }
 
@@ -62,6 +65,7 @@ namespace OSDP.Net.Connections
         public async Task WriteAsync(byte[] buffer)
         {
             var tcpClient = _tcpClient;
+
             if (tcpClient != null)
             {
                 await tcpClient.GetStream().WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);

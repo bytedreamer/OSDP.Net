@@ -13,7 +13,7 @@ namespace OSDP.Net.Tests.Messages
         public string BuildCommand_TestCases(byte address, bool useCrc, bool useSecureChannel, GetPIVData getPIVData)
         {
             var getPIVDataCommand = new GetPIVDataCommand(address, getPIVData);
-            return BitConverter.ToString(getPIVDataCommand.BuildCommand(new Device(address, useCrc, useSecureChannel)));
+            return BitConverter.ToString(getPIVDataCommand.BuildCommand(new Device(address, useCrc, useSecureChannel, null)));
         }
 
         public class GetPIVCommandTestDataClass

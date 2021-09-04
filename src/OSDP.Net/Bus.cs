@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.ReplyData;
+// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace OSDP.Net
 {
@@ -18,21 +19,26 @@ namespace OSDP.Net
     internal class Bus
     {
         private const byte DriverByte = 0xFF;
-        private readonly SortedSet<Device> _configuredDevices = new SortedSet<Device>();
-        private readonly object _configuredDevicesLock = new object();
+
+        public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
+        private readonly SortedSet<Device> _configuredDevices = new ();
+        private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
-        private readonly Dictionary<byte, bool> _lastConnectionStatus = new Dictionary<byte, bool>();
+        private readonly Dictionary<byte, bool> _lastConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
-        private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
+        private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
 
         private bool _isShuttingDown;
 
-        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, ILogger<ControlPanel> logger = null)
+        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
+            // ReSharper disable once ContextualLoggerProblem
+            ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
+            _pollInterval = pollInterval;
             _logger = logger;
 
             Id = Guid.NewGuid();
@@ -40,10 +46,14 @@ namespace OSDP.Net
 
         private TimeSpan IdleLineDelay => TimeSpan.FromSeconds(1.0/_connection.BaudRate * 16.0);
 
+        private bool IsPolling => _pollInterval > TimeSpan.Zero;
+
         /// <summary>
         /// Unique identifier of the bus
         /// </summary>
         public Guid Id { get; }
+
+        public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.Select(device => device.Address);
 
         /// <summary>
         /// Closes down the connection
@@ -83,11 +93,8 @@ namespace OSDP.Net
                     _configuredDevices.Remove(foundDevice);
                 }
 
-                var addedDevice = new Device(address, useCrc, useSecureChannel);
-                if (secureChannelKey != null)
-                {
-                    addedDevice.UpdateSecureChannelKey(secureChannelKey);
-                }
+                var addedDevice = new Device(address, useCrc, useSecureChannel, secureChannelKey);
+
                 _configuredDevices.Add(addedDevice);
             }
         }
@@ -137,22 +144,56 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError("Error while opening connection", exception);
+                        _logger?.LogError(exception, "Error while opening connection");
+                        foreach (var device in _configuredDevices.ToArray())
+                        {
+                            ResetDevice(device);
+                            UpdateConnectionStatus(device);
+                        }
+
+                        await Task.Delay(TimeSpan.FromSeconds(5));
+
+                        continue;
                     }
                 }
 
-                TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
-                await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero).ConfigureAwait(false);
-
-                if (!_configuredDevices.Any())
+                if (IsPolling)
                 {
-                    lastMessageSentTime = DateTime.UtcNow;
-                    continue;
+                    TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
+                    await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero)
+                        .ConfigureAwait(false);
+                    
+                    if (!_configuredDevices.Any())
+                    {
+                        lastMessageSentTime = DateTime.UtcNow;
+                        continue;
+                    }
+                }
+                else
+                {
+                    // Keep CPU usage down while waiting for next command
+                    await Task.Delay(TimeSpan.FromMilliseconds(10));
                 }
 
                 foreach (var device in _configuredDevices.ToArray())
                 {
-                    var command = device.GetNextCommandData();
+                    // Right now it always sends sequence 0
+                    if (!IsPolling)
+                    {
+                        device.MessageControl.ResetSequence();
+                    }
+
+                    // Requested delay for multi-messages
+                    if (device.RequestDelay > DateTime.UtcNow)
+                    {
+                        continue;
+                    }
+                    
+                    var command = device.GetNextCommandData(IsPolling);
+                    if (command == null || WaitingForNextMultiMessage(command, device.IsSendingMultiMessage))
+                    {
+                        continue;
+                    }
                     
                     lastMessageSentTime = DateTime.UtcNow;
 
@@ -160,32 +201,38 @@ namespace OSDP.Net
                     
                     try
                     {
-                        UpdateConnectionStatus(device);
+                        // Reset the device if it loses connection
+                        if (IsPolling && UpdateConnectionStatus(device) && !device.IsConnected)
+                        {
+                            ResetDevice(device);
+                        }
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError("Error while notifying connection status for address {command.Address}", exception);
+                        _logger?.LogError(exception, $"Error while notifying connection status for address {command.Address}");
                     }
 
                     try
                     {
                         reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
-                    }
-                    catch (InvalidOperationException exception)
-                    {
-                        _logger?.LogWarning("Port is closed, reconnecting...", exception);
-                        _connection.Close();
-                        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
-                        break;
+                        
+                        // Prevent plain text message replies when secure channel has been established
+                        if (device.UseSecureChannel && device.IsSecurityEstablished && !reply.IsSecureMessage)
+                        {
+                            _logger?.LogWarning("An plain text message was received when the secure channel had been established");
+                            device.CreateNewRandomNumber();
+                            ResetDevice(device);
+                            continue;
+                        }
                     }
                     catch (TimeoutException)
                     {
                         // Make sure the security is reset properly if reader goes offline
-                        if (device.IsSecurityEstablished && !IsOnline(command.Address))
+                        if (IsPolling && device.IsSecurityEstablished && !IsOnline(command.Address))
                         {
                             ResetDevice(device);
                         }
-                        else if (device.UseSecureChannel)
+                        else if (IsPolling && device.UseSecureChannel)
                         {
                             device.CreateNewRandomNumber();
                         }
@@ -194,8 +241,10 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError($"Error while sending command {command} to address {command.Address}",
-                            exception);
+                        if (!_isShuttingDown)
+                        {
+                            _logger?.LogError(exception, $"Error while sending command {command} to address {command.Address}");
+                        }
                         continue;
                     }
 
@@ -205,7 +254,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError($"Error while processing reply {reply} from address {reply.Address}", exception);
+                        _logger?.LogError(exception, $"Error while processing reply {reply} from address {reply.Address}");
                         continue;
                     }
 
@@ -214,19 +263,26 @@ namespace OSDP.Net
             }
         }
 
+        private static bool WaitingForNextMultiMessage(Command command, bool sendingMultiMessage)
+        {
+            return sendingMultiMessage && command is not FileTransferCommand;
+        }
+
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
 
-        private void UpdateConnectionStatus(Device device)
+        private bool UpdateConnectionStatus(Device device)
         {
             bool isConnected = device.IsConnected;
 
             if (_lastConnectionStatus.ContainsKey(device.Address) &&
-                _lastConnectionStatus[device.Address] == isConnected) return;
+                _lastConnectionStatus[device.Address] == isConnected) return false;
             
             var handler = ConnectionStatusChanged;
             handler?.Invoke(this, new ConnectionStatusEventArgs(device.Address, isConnected));
                 
             _lastConnectionStatus[device.Address] = isConnected;
+
+            return true;
         }
 
         private void ProcessReply(Reply reply, Device device)
@@ -258,10 +314,11 @@ namespace OSDP.Net
             }
             
             if (reply.Type == ReplyType.Nak &&
-                (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
-                 reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet))
+                (device.UseSecureChannel && (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
+                 reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet) ||
+                 reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber))
             {
-                if (reply.Sequence > 0) ResetDevice(device);
+                if (reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber || reply.Sequence > 0) ResetDevice(device);
             }
 
             switch (reply.Type)
@@ -284,9 +341,34 @@ namespace OSDP.Net
             ResetDevice(foundDevice);
         }
 
+        public void SetSendingMultiMessage(byte address, bool isSendingMultiMessage)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.IsSendingMultiMessage = isSendingMultiMessage;
+        }
+
+        public void SetSendingMultiMessageNoSecureChannel(byte address, bool isSendingMultiMessageNoSecureChannel)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
+            foundDevice.MessageControl.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
+            if (isSendingMultiMessageNoSecureChannel)
+            {
+                foundDevice.CreateNewRandomNumber();
+            }
+        }
+
+        public void SetRequestDelay(byte address, DateTime requestDelay)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.RequestDelay = requestDelay;
+        }
+
         private void ResetDevice(Device device)
         {
-            RemoveDevice(device.Address);
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
@@ -299,7 +381,7 @@ namespace OSDP.Net
             }
             catch (Exception exception)
             {
-                _logger?.LogError($"Error while building command {command}", exception);
+                _logger?.LogError(exception, $"Error while building command {command}");
                 throw;
             }
 
@@ -308,6 +390,7 @@ namespace OSDP.Net
             var buffer = new byte[commandData.Length + 1];
             buffer[0] = DriverByte;
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
+            
             await _connection.WriteAsync(buffer).ConfigureAwait(false);
 
             var replyBuffer = new Collection<byte>();
@@ -335,14 +418,16 @@ namespace OSDP.Net
 
         private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
         {
-            return Message.ConvertBytesToShort(new[] {replyBuffer[2], replyBuffer[3]});
+            return Message.ConvertBytesToUnsignedShort(new[] {replyBuffer[2], replyBuffer[3]});
         }
 
         private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength)
         {
             while (replyBuffer.Count < replyLength)
             {
-                byte[] readBuffer = new byte[_connection.BaudRate/60];
+                int maxReadBufferLength = _connection.BaudRate / 60;
+                int remainingLength = replyLength - replyBuffer.Count;
+                byte[] readBuffer = new byte[Math.Min(maxReadBufferLength, remainingLength)];
                 int bytesRead = await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout).ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
@@ -414,6 +499,12 @@ namespace OSDP.Net
             }
             catch (OperationCanceledException)
             {
+                return 0;
+            }
+            catch
+            {
+                if (!_isShuttingDown) throw;
+
                 return 0;
             }
         }

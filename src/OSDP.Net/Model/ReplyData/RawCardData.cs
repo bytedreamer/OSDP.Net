@@ -25,7 +25,7 @@ namespace OSDP.Net.Model.ReplyData
                 throw new Exception("Invalid size for the data");
             }
 
-            ushort bitCount = Message.ConvertBytesToShort(new[] {dataArray[2], dataArray[3]});
+            ushort bitCount = Message.ConvertBytesToUnsignedShort(new[] {dataArray[2], dataArray[3]});
             var cardData = new BitArray(dataArray.Skip(4).Take(dataArray.Length - 4).Reverse().ToArray());
             Reverse(cardData);
             cardData.Length = bitCount;

@@ -8,31 +8,51 @@ namespace OSDP.Net
 {
     internal class Device : IComparable<Device>
     {
-        private readonly ConcurrentQueue<Command> _commands = new ConcurrentQueue<Command>();
-        private readonly SecureChannel _secureChannel = new SecureChannel();
+        private static readonly byte[] DefaultKey = {
+            0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
+        };
+
+        private readonly ConcurrentQueue<Command> _commands = new();
+
+        private readonly SecureChannel _secureChannel = new();
+        private readonly bool _useSecureChannel;
 
         private DateTime _lastValidReply = DateTime.MinValue;
 
-        public Device(byte address, bool useCrc, bool useSecureChannel)
+        public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey)
         {
-            UseSecureChannel = useSecureChannel;
+            _useSecureChannel = useSecureChannel;
+            
             Address = address;
             MessageControl = new Control(0, useCrc, useSecureChannel);
+
+            if (!UseSecureChannel) return;
+
+            SecureChannelKey = secureChannelKey ?? DefaultKey;
+            
+            IsDefaultKey = DefaultKey.SequenceEqual(SecureChannelKey);
         }
 
-        internal byte[] SecureChannelKey { get; set; } =
-            {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F};
+        internal byte[] SecureChannelKey { get; }
+
+        private bool IsDefaultKey { get; }
 
         public byte Address { get; }
 
         public Control MessageControl { get; }
 
-        public bool UseSecureChannel { get; }
+        public bool UseSecureChannel => !IsSendingMultiMessageNoSecureChannel && _useSecureChannel;
 
-        public bool IsSecurityEstablished => MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
+        public bool IsSecurityEstablished => !IsSendingMultiMessageNoSecureChannel && MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
 
-        public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(5) >= DateTime.UtcNow &&
-                                   (!MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
+        public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
+                                   (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
+
+        public bool IsSendingMultiMessage { get; set; }
+
+        public DateTime RequestDelay { get; set; }
+
+        public bool IsSendingMultiMessageNoSecureChannel { get; set; }
 
         /// <inheritdoc />
         public int CompareTo(Device other)
@@ -43,39 +63,32 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// 
+        /// Get the next command in the queue, setup security, or send a poll command
         /// </summary>
-        /// <param name="secureChannelKey"></param>
-        /// <exception cref="ArgumentOutOfRangeException">The length of the key must be 16 bytes</exception>
-        public void UpdateSecureChannelKey(byte[] secureChannelKey)
+        /// <param name="isPolling">If false, only send commands in the queue</param>
+        /// <returns>The next command always if polling, could be null if not polling</returns>
+        public Command GetNextCommandData(bool isPolling)
         {
-            if (secureChannelKey.Length != 16)
+            if (isPolling)
             {
-                throw new ArgumentOutOfRangeException(nameof(secureChannelKey),
-                    "The length of the key must be 16 bytes");
+                if (UseSecureChannel && !_secureChannel.IsInitialized)
+                {
+                    return new SecurityInitializationRequestCommand(Address,
+                        _secureChannel.ServerRandomNumber().ToArray(), IsDefaultKey);
+                }
+
+                if (MessageControl.Sequence == 0)
+                {
+                    return new PollCommand(Address);
+                }
+
+                if (UseSecureChannel && !_secureChannel.IsEstablished)
+                {
+                    return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram, IsDefaultKey);
+                }
             }
 
-            SecureChannelKey = secureChannelKey;
-        }
-
-        public Command GetNextCommandData()
-        {
-            if (UseSecureChannel && !_secureChannel.IsInitialized)
-            {
-                return new SecurityInitializationRequestCommand(Address, _secureChannel.ServerRandomNumber().ToArray());
-            }
-
-            if (MessageControl.Sequence == 0)
-            {
-                return new PollCommand(Address);
-            }
-
-            if (UseSecureChannel && !_secureChannel.IsEstablished)
-            {
-                return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram);
-            }
-
-            if (!_commands.TryDequeue(out var command))
+            if (!_commands.TryDequeue(out var command) && isPolling)
             {
                 return new PollCommand(Address);
             }
@@ -91,7 +104,9 @@ namespace OSDP.Net
         public void ValidReplyHasBeenReceived(byte sequence)
         {
             MessageControl.IncrementSequence(sequence);
-            _lastValidReply = DateTime.UtcNow;
+            
+            // It's valid once sequences are above zero
+            if (sequence > 0) _lastValidReply = DateTime.UtcNow;
         }
 
         public void InitializeSecureChannel(Reply reply)
