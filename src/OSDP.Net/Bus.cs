@@ -20,7 +20,7 @@ namespace OSDP.Net
     {
         private const byte DriverByte = 0xFF;
 
-        public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(250);
+        public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
@@ -182,9 +182,15 @@ namespace OSDP.Net
                     {
                         device.MessageControl.ResetSequence();
                     }
+
+                    // Requested delay for multi-messages
+                    if (device.RequestDelay > DateTime.UtcNow)
+                    {
+                        continue;
+                    }
                     
                     var command = device.GetNextCommandData(IsPolling);
-                    if (command == null)
+                    if (command == null || WaitingForNextMultiMessage(command, device.IsSendingMultiMessage))
                     {
                         continue;
                     }
@@ -203,7 +209,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, "Error while notifying connection status for address {command.Address}");
+                        _logger?.LogError(exception, $"Error while notifying connection status for address {command.Address}");
                     }
 
                     try
@@ -211,7 +217,7 @@ namespace OSDP.Net
                         reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
                         
                         // Prevent plain text message replies when secure channel has been established
-                        if (device.IsSecurityEstablished && !reply.IsSecureMessage)
+                        if (device.UseSecureChannel && device.IsSecurityEstablished && !reply.IsSecureMessage)
                         {
                             _logger?.LogWarning("An plain text message was received when the secure channel had been established");
                             device.CreateNewRandomNumber();
@@ -221,14 +227,15 @@ namespace OSDP.Net
                     }
                     catch (TimeoutException)
                     {
-                        // Make sure the security is reset properly if reader goes offline
-                        if (IsPolling && device.IsSecurityEstablished && !IsOnline(command.Address))
+                        switch (IsPolling)
                         {
-                            ResetDevice(device);
-                        }
-                        else if (IsPolling && device.UseSecureChannel)
-                        {
-                            device.CreateNewRandomNumber();
+                            // Make sure the security is reset properly if reader goes offline
+                            case true when device.IsSecurityEstablished && !IsOnline(command.Address):
+                                ResetDevice(device);
+                                break;
+                            case true when device.UseSecureChannel:
+                                device.CreateNewRandomNumber();
+                                break;
                         }
 
                         continue;
@@ -255,6 +262,11 @@ namespace OSDP.Net
                     await Task.Delay(IdleLineDelay).ConfigureAwait(false);
                 }
             }
+        }
+
+        private static bool WaitingForNextMultiMessage(Command command, bool sendingMultiMessage)
+        {
+            return sendingMultiMessage && command is not FileTransferCommand;
         }
 
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
@@ -330,9 +342,34 @@ namespace OSDP.Net
             ResetDevice(foundDevice);
         }
 
+        public void SetSendingMultiMessage(byte address, bool isSendingMultiMessage)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.IsSendingMultiMessage = isSendingMultiMessage;
+        }
+
+        public void SetSendingMultiMessageNoSecureChannel(byte address, bool isSendingMultiMessageNoSecureChannel)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
+            foundDevice.MessageControl.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
+            if (isSendingMultiMessageNoSecureChannel)
+            {
+                foundDevice.CreateNewRandomNumber();
+            }
+        }
+
+        public void SetRequestDelay(byte address, DateTime requestDelay)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.RequestDelay = requestDelay;
+        }
+
         private void ResetDevice(Device device)
         {
-            RemoveDevice(device.Address);
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
@@ -382,7 +419,7 @@ namespace OSDP.Net
 
         private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
         {
-            return Message.ConvertBytesToShort(new[] {replyBuffer[2], replyBuffer[3]});
+            return Message.ConvertBytesToUnsignedShort(new[] {replyBuffer[2], replyBuffer[3]});
         }
 
         private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength)

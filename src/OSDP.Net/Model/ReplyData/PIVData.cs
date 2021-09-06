@@ -29,9 +29,9 @@ namespace OSDP.Net.Model.ReplyData
 
             var pivData = new PIVData
             {
-                WholeMessageLength = Message.ConvertBytesToShort(data.Slice(0, 2)),
-                Offset = Message.ConvertBytesToShort(data.Slice(2, 2)),
-                LengthOfFragment = Message.ConvertBytesToShort(data.Slice(4, 2)),
+                WholeMessageLength = Message.ConvertBytesToUnsignedShort(data.Slice(0, 2)),
+                Offset = Message.ConvertBytesToUnsignedShort(data.Slice(2, 2)),
+                LengthOfFragment = Message.ConvertBytesToUnsignedShort(data.Slice(4, 2)),
                 Data = data.Slice(6, data.Length - 6).ToArray()
             };
 

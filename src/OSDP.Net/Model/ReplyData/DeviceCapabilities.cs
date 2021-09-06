@@ -53,7 +53,7 @@ namespace OSDP.Net.Model.ReplyData
                 if (capability.Function == CapabilityFunction.ReceiveBufferSize ||
                     capability.Function == CapabilityFunction.LargestCombinedMessageSize)
                 {
-                    build.AppendLine($"      Size: {Message.ConvertBytesToShort(new[] {capability.Compliance, capability.NumberOf})}");
+                    build.AppendLine($"      Size: {Message.ConvertBytesToUnsignedShort(new[] {capability.Compliance, capability.NumberOf})}");
                 }
                 else
                 {

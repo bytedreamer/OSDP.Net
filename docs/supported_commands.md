@@ -21,7 +21,7 @@
 | osdp_CHLNG        | 0x76 | Yes | Challenge and Secure Session Initialization Rq. | None |
 | osdp_SCRYPT       | 0x77 | Yes | Server Cryptogram | None |
 | osdp_ACURXSIZE    | 0x7B | No  | Max ACU receive size | |
-| osdp_FILETRANSFER | 0x7C | No  | Send data file to PD | |
+| osdp_FILETRANSFER | 0x7C | Yes | Send data file to PD | [FileTransfer](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.FileTransfer.htm) |
 | osdp_MFG          | 0x80 | Yes | Manufacturer Specific Command | [ManufacturerSpecificCommand](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ManufacturerSpecificCommand.htm) |
 | osdp_XWR          | 0XA1 | Yes | Extended write data | [ExtendedWriteData](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ExtendedWriteData.htm) |
 | osdp_ABORT        | 0XA2 | No  | Abort PD operation | |

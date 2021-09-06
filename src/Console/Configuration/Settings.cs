@@ -12,6 +12,8 @@ namespace Console.Configuration
 
         public List<DeviceSetting> Devices { get; set; } = new ();
 
-        public int PollingInterval { get; set; } = 250;
+        public int PollingInterval { get; set; } = 200;
+
+        public string LastFileTransferDirectory { get; set; }
     }
 }
