@@ -32,6 +32,7 @@
       <MSHelp:Keyword Index="A" Term="F:OSDP.Net.Messages.ReplyType.CrypticData" />
       <MSHelp:Keyword Index="A" Term="F:OSDP.Net.Messages.ReplyType.InitialRMac" />
       <MSHelp:Keyword Index="A" Term="F:OSDP.Net.Messages.ReplyType.Busy" />
+      <MSHelp:Keyword Index="A" Term="F:OSDP.Net.Messages.ReplyType.FileTransferStatus" />
       <MSHelp:Keyword Index="A" Term="F:OSDP.Net.Messages.ReplyType.PIVData" />
       <MSHelp:Keyword Index="A" Term="F:OSDP.Net.Messages.ReplyType.ManufactureSpecific" />
       <MSHelp:Keyword Index="A" Term="F:OSDP.Net.Messages.ReplyType.ExtendedRead" />
@@ -55,6 +56,7 @@
       <MSHelp:Keyword Index="K" Term="CrypticData enumeration member" />
       <MSHelp:Keyword Index="K" Term="InitialRMac enumeration member" />
       <MSHelp:Keyword Index="K" Term="Busy enumeration member" />
+      <MSHelp:Keyword Index="K" Term="FileTransferStatus enumeration member" />
       <MSHelp:Keyword Index="K" Term="PIVData enumeration member" />
       <MSHelp:Keyword Index="K" Term="ManufactureSpecific enumeration member" />
       <MSHelp:Keyword Index="K" Term="ExtendedRead enumeration member" />
@@ -76,6 +78,7 @@
       <MSHelp:Keyword Index="F" Term="OSDP.Net.Messages.ReplyType.CrypticData" />
       <MSHelp:Keyword Index="F" Term="OSDP.Net.Messages.ReplyType.InitialRMac" />
       <MSHelp:Keyword Index="F" Term="OSDP.Net.Messages.ReplyType.Busy" />
+      <MSHelp:Keyword Index="F" Term="OSDP.Net.Messages.ReplyType.FileTransferStatus" />
       <MSHelp:Keyword Index="F" Term="OSDP.Net.Messages.ReplyType.PIVData" />
       <MSHelp:Keyword Index="F" Term="OSDP.Net.Messages.ReplyType.ManufactureSpecific" />
       <MSHelp:Keyword Index="F" Term="OSDP.Net.Messages.ReplyType.ExtendedRead" />
@@ -100,6 +103,7 @@
       <MSHelp:Attr Name="APIName" Value="OSDP.Net.Messages.ReplyType.CrypticData" />
       <MSHelp:Attr Name="APIName" Value="OSDP.Net.Messages.ReplyType.InitialRMac" />
       <MSHelp:Attr Name="APIName" Value="OSDP.Net.Messages.ReplyType.Busy" />
+      <MSHelp:Attr Name="APIName" Value="OSDP.Net.Messages.ReplyType.FileTransferStatus" />
       <MSHelp:Attr Name="APIName" Value="OSDP.Net.Messages.ReplyType.PIVData" />
       <MSHelp:Attr Name="APIName" Value="OSDP.Net.Messages.ReplyType.ManufactureSpecific" />
       <MSHelp:Attr Name="APIName" Value="OSDP.Net.Messages.ReplyType.ExtendedRead" />
@@ -181,7 +185,17 @@
 </div>
 </div>
 <div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.FileTransferStatus.htm" target="_self">ControlPanel.FileTransferStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.htm" target="_self">ControlPanel.InputStatusReportReplyEventArgs Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.KeypadReplyEventArgs.htm" target="_self">ControlPanel.KeypadReplyEventArgs Class</a>
 <div class="Hidden">
 </div>
 </div>
@@ -386,11 +400,27 @@
 <div class="Hidden">
 </div>
 </div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.htm" target="_self">FileTransferStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeItem">
+<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.ControlFlags.htm" target="_self">FileTransferStatus.ControlFlags Enumeration</a>
+</div>
+<div class="TreeItem">
+<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.StatusDetail.htm" target="_self">FileTransferStatus.StatusDetail Enumeration</a>
+</div>
 <div class="TreeItem">
 <img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FormatCode.htm" target="_self">FormatCode Enumeration</a>
 </div>
 <div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.InputStatus.htm" target="_self">InputStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.KeypadData.htm" target="_self">KeypadData Class</a>
 <div class="Hidden">
 </div>
 </div>
@@ -461,7 +491,7 @@
     <b>Namespace:</b> 
    <a href="N-OSDP.Net.Messages.htm">OSDP.Net.Messages</a><br />
     <b>Assembly:</b>
-   <span sdata="assembly">OSDP.Net</span> (in OSDP.Net.dll)<div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">Syntax</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="syntaxSection"><!----></a><div class="CodeSnippetContainer"><div class="CodeSnippetContainerTabs"><div class="CodeSnippetContainerTabLeft"><!----></div><div class="CodeSnippetContainerTabFirst CSharpTab" id="CSharpTabId" style="background:white;border-bottom-color:white"><a href="javascript:setActiveTab('CodeSnippetContainerCode','CSharpCode','CSharpTabId');" title="C#">C#</a></div><div class="CodeSnippetContainerTab VisualBasicTab" id="VisualBasicTabId"><a href="javascript:setActiveTab('CodeSnippetContainerCode','VisualBasicCode','VisualBasicTabId');" title="Visual Basic">VB</a></div><div class="CodeSnippetContainerTab ManagedCPlusPlusTab" id="ManagedCPlusPlusTabId"><a href="javascript:setActiveTab('CodeSnippetContainerCode','ManagedCPlusPlusCode','ManagedCPlusPlusTabId');" title="Visual C++">C++</a></div><div class="CodeSnippetContainerTabRight"><!----></div></div><div class="CodeSnippetContainerCodeCollection"><div class="CodeSnippetToolBar"><div class="CodeSnippetToolBarText" /></div><div class="CodeSnippetContainerCode CSharpCode"><pre xml:space="preserve" class="libCScode"><span class="keyword">public</span> <span class="keyword">enum</span> <span class="identifier">ReplyType</span></pre></div><div class="CodeSnippetContainerCode VisualBasicCode"><pre xml:space="preserve" class="libCScode"><span class="keyword">Public</span> <span class="keyword">Enumeration</span> <span class="identifier">ReplyType</span></pre></div><div class="CodeSnippetContainerCode ManagedCPlusPlusCode"><pre xml:space="preserve" class="libCScode"><span class="keyword">public</span> <span class="keyword">enum class</span> <span class="identifier">ReplyType</span></pre></div></div></div></div><div id="enumerationSection"><div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">Members</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="membersSection"><!----></a><table class="members" id="memberList" frame="lhs" cellpadding="2"><tr><th class="iconColumn" /><th class="nameColumn">Member name</th><th class="descriptionColumn">Description</th></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.Ack"><span class="selflink">Ack</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.Nak"><span class="selflink">Nak</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.PdIdReport"><span class="selflink">PdIdReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.PdCapabilitiesReport"><span class="selflink">PdCapabilitiesReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.LocalStatusReport"><span class="selflink">LocalStatusReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.InputStatusReport"><span class="selflink">InputStatusReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.OutputStatusReport"><span class="selflink">OutputStatusReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.ReaderStatusReport"><span class="selflink">ReaderStatusReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.RawReaderData"><span class="selflink">RawReaderData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.FormattedReaderData"><span class="selflink">FormattedReaderData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.KeypadData"><span class="selflink">KeypadData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.PdCommunicationsConfigurationReport"><span class="selflink">PdCommunicationsConfigurationReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.BiometricData"><span class="selflink">BiometricData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.BiometricMatchResult"><span class="selflink">BiometricMatchResult</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.CrypticData"><span class="selflink">CrypticData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.InitialRMac"><span class="selflink">InitialRMac</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.Busy"><span class="selflink">Busy</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.PIVData"><span class="selflink">PIVData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.ManufactureSpecific"><span class="selflink">ManufactureSpecific</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.ExtendedRead"><span class="selflink">ExtendedRead</span></td><td /></tr></table></div></div><div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">See Also</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="seeAlsoSection"><!----></a><div class="seeAlsoStyle"><a href="N-OSDP.Net.Messages.htm">OSDP.Net.Messages Namespace</a></div></div></div>
+   <span sdata="assembly">OSDP.Net</span> (in OSDP.Net.dll)<div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">Syntax</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="syntaxSection"><!----></a><div class="CodeSnippetContainer"><div class="CodeSnippetContainerTabs"><div class="CodeSnippetContainerTabLeft"><!----></div><div class="CodeSnippetContainerTabFirst CSharpTab" id="CSharpTabId" style="background:white;border-bottom-color:white"><a href="javascript:setActiveTab('CodeSnippetContainerCode','CSharpCode','CSharpTabId');" title="C#">C#</a></div><div class="CodeSnippetContainerTab VisualBasicTab" id="VisualBasicTabId"><a href="javascript:setActiveTab('CodeSnippetContainerCode','VisualBasicCode','VisualBasicTabId');" title="Visual Basic">VB</a></div><div class="CodeSnippetContainerTab ManagedCPlusPlusTab" id="ManagedCPlusPlusTabId"><a href="javascript:setActiveTab('CodeSnippetContainerCode','ManagedCPlusPlusCode','ManagedCPlusPlusTabId');" title="Visual C++">C++</a></div><div class="CodeSnippetContainerTabRight"><!----></div></div><div class="CodeSnippetContainerCodeCollection"><div class="CodeSnippetToolBar"><div class="CodeSnippetToolBarText" /></div><div class="CodeSnippetContainerCode CSharpCode"><pre xml:space="preserve" class="libCScode"><span class="keyword">public</span> <span class="keyword">enum</span> <span class="identifier">ReplyType</span></pre></div><div class="CodeSnippetContainerCode VisualBasicCode"><pre xml:space="preserve" class="libCScode"><span class="keyword">Public</span> <span class="keyword">Enumeration</span> <span class="identifier">ReplyType</span></pre></div><div class="CodeSnippetContainerCode ManagedCPlusPlusCode"><pre xml:space="preserve" class="libCScode"><span class="keyword">public</span> <span class="keyword">enum class</span> <span class="identifier">ReplyType</span></pre></div></div></div></div><div id="enumerationSection"><div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">Members</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="membersSection"><!----></a><table class="members" id="memberList" frame="lhs" cellpadding="2"><tr><th class="iconColumn" /><th class="nameColumn">Member name</th><th class="descriptionColumn">Description</th></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.Ack"><span class="selflink">Ack</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.Nak"><span class="selflink">Nak</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.PdIdReport"><span class="selflink">PdIdReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.PdCapabilitiesReport"><span class="selflink">PdCapabilitiesReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.LocalStatusReport"><span class="selflink">LocalStatusReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.InputStatusReport"><span class="selflink">InputStatusReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.OutputStatusReport"><span class="selflink">OutputStatusReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.ReaderStatusReport"><span class="selflink">ReaderStatusReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.RawReaderData"><span class="selflink">RawReaderData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.FormattedReaderData"><span class="selflink">FormattedReaderData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.KeypadData"><span class="selflink">KeypadData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.PdCommunicationsConfigurationReport"><span class="selflink">PdCommunicationsConfigurationReport</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.BiometricData"><span class="selflink">BiometricData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.BiometricMatchResult"><span class="selflink">BiometricMatchResult</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.CrypticData"><span class="selflink">CrypticData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.InitialRMac"><span class="selflink">InitialRMac</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.Busy"><span class="selflink">Busy</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.FileTransferStatus"><span class="selflink">FileTransferStatus</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.PIVData"><span class="selflink">PIVData</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.ManufactureSpecific"><span class="selflink">ManufactureSpecific</span></td><td /></tr><tr><td /><td target="F:OSDP.Net.Messages.ReplyType.ExtendedRead"><span class="selflink">ExtendedRead</span></td><td /></tr></table></div></div><div class="LW_CollapsibleArea_Container"><div class="LW_CollapsibleArea_TitleDiv"><h2 class="LW_CollapsibleArea_Title">See Also</h2><div class="LW_CollapsibleArea_HrDiv"><hr class="LW_CollapsibleArea_Hr" /></div></div><a id="seeAlsoSection"><!----></a><div class="seeAlsoStyle"><a href="N-OSDP.Net.Messages.htm">OSDP.Net.Messages Namespace</a></div></div></div>
             </div>
           </div>
         </div>

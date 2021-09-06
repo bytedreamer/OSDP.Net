@@ -107,6 +107,9 @@
 <img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="M-OSDP.Net.ControlPanel.ExtendedWriteData.htm" target="_self">ExtendedWriteData Method </a>
 </div>
 <div class="TreeItem">
+<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="M-OSDP.Net.ControlPanel.FileTransfer.htm" target="_self">FileTransfer Method </a>
+</div>
+<div class="TreeItem">
 <img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="M-OSDP.Net.ControlPanel.GetPIVData.htm" target="_self">GetPIVData Method </a>
 </div>
 <div class="TreeItem">
@@ -154,8 +157,10 @@
 <div class="TreeItem">
 <img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="M-OSDP.Net.ControlPanel.Shutdown.htm" target="_self">Shutdown Method </a>
 </div>
-<div class="TreeItem">
-<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="M-OSDP.Net.ControlPanel.StartConnection.htm" target="_self">StartConnection Method </a>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="Overload-OSDP.Net.ControlPanel.StartConnection.htm" target="_self">StartConnection Method </a>
+<div class="Hidden">
+</div>
 </div>
 </div>
 </div>
@@ -177,7 +182,17 @@
 </div>
 </div>
 <div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.FileTransferStatus.htm" target="_self">ControlPanel.FileTransferStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.htm" target="_self">ControlPanel.InputStatusReportReplyEventArgs Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.KeypadReplyEventArgs.htm" target="_self">ControlPanel.KeypadReplyEventArgs Class</a>
 <div class="Hidden">
 </div>
 </div>
@@ -382,11 +397,27 @@
 <div class="Hidden">
 </div>
 </div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.htm" target="_self">FileTransferStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeItem">
+<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.ControlFlags.htm" target="_self">FileTransferStatus.ControlFlags Enumeration</a>
+</div>
+<div class="TreeItem">
+<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.StatusDetail.htm" target="_self">FileTransferStatus.StatusDetail Enumeration</a>
+</div>
 <div class="TreeItem">
 <img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FormatCode.htm" target="_self">FormatCode Enumeration</a>
 </div>
 <div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.InputStatus.htm" target="_self">InputStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.KeypadData.htm" target="_self">KeypadData Class</a>
 <div class="Hidden">
 </div>
 </div>
@@ -481,8 +512,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Add a PD to the control panel. This will replace an existing PD that is configured at the same address.
-   </div>
+Add a PD to the control panel. This will replace an existing PD that is configured at the same address.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -494,8 +525,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Send a command that sets the communication configuration on a PD.
-   </div>
+Send a command that sets the communication configuration on a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -518,8 +549,8 @@
                       </td>
                       <td>
                         <div class="summary">
-    Send a command that sets the encryption key configuration on a PD.
-   </div>
+Send a command that sets the encryption key configuration on a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;inherited;notNetfw;">
@@ -541,9 +572,22 @@
                       </td>
                       <td>
                         <div class="summary">
-   Command that implements extended write mode to facilitate communications with an ISO 7816-4 based credential to a PD.
-   </div>
+Command that implements extended write mode to facilitate communications with an ISO 7816-4 based credential to a PD.
+</div>
                         <div class="summary">Request to get the capabilities of the PD.</div>
+                      </td>
+                    </tr>
+                    <tr data="public;declared;notNetfw;">
+                      <td>
+                        <img src="../icons/pubmethod.gif" alt="Public method" title="Public method" />
+                      </td>
+                      <td>
+                        <a href="M-OSDP.Net.ControlPanel.FileTransfer.htm">FileTransfer</a>
+                      </td>
+                      <td>
+                        <div class="summary">
+Send a file to a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="protected;inherited;notNetfw;">
@@ -575,8 +619,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Request to get PIV data from PD.
-   </div>
+Request to get PIV data from PD. Only one PIV request is processed at a time for each connection. 
+</div>
                       </td>
                     </tr>
                     <tr data="public;inherited;notNetfw;">
@@ -609,8 +653,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Request to get the status all of the inputs of a PD.
-   </div>
+Request to get the status all of the inputs of a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -622,8 +666,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Is the PD online
-   </div>
+Is the PD online
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -635,8 +679,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Request to get the local status of a PD.
-   </div>
+Request to get the local status of a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -648,8 +692,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Send a  manufacture specific command to a PD.
-   </div>
+Send a  manufacture specific command to a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="protected;inherited;notNetfw;">
@@ -671,8 +715,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Send a command to alter the state of one or more outputs on a PD.
-   </div>
+Send a command to alter the state of one or more outputs on a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -684,8 +728,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Request to get the status all of the outputs of a PD.
-   </div>
+Request to get the status all of the outputs of a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -697,8 +741,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Send a command to control the buzzer on a PD.
-   </div>
+Send a command to control the buzzer on a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -710,8 +754,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Send a command to alter the LED color on a PD.
-   </div>
+Send a command to alter the LED color on a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -723,8 +767,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Request to get the status all of the readers of a PD.
-   </div>
+Request to get the status all of the readers of a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -736,8 +780,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Send a command that sends text to be shown on a PD.
-   </div>
+Send a command that sends text to be shown on a PD.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -749,8 +793,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Remove a PD from the control panel.
-   </div>
+Remove a PD from the control panel.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -762,8 +806,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Reset communication sequence with the PD specified.
-   </div>
+Reset communication sequence with the PD specified.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -775,8 +819,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Send a custom command for testing.
-   </div>
+Send a custom command for testing.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -788,8 +832,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Shutdown the control panel and stop all communication to PDs.
-   </div>
+Shutdown the control panel and stop all communication to PDs.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -797,12 +841,25 @@
                         <img src="../icons/pubmethod.gif" alt="Public method" title="Public method" />
                       </td>
                       <td>
-                        <a href="M-OSDP.Net.ControlPanel.StartConnection.htm">StartConnection</a>
+                        <a href="M-OSDP.Net.ControlPanel.StartConnection.htm">StartConnection(IOsdpConnection)</a>
                       </td>
                       <td>
                         <div class="summary">
-   Start polling on the defined connection.
-   </div>
+Start polling on the defined connection.
+</div>
+                      </td>
+                    </tr>
+                    <tr data="public;declared;notNetfw;">
+                      <td>
+                        <img src="../icons/pubmethod.gif" alt="Public method" title="Public method" />
+                      </td>
+                      <td>
+                        <a href="M-OSDP.Net.ControlPanel.StartConnection_1.htm">StartConnection(IOsdpConnection, TimeSpan)</a>
+                      </td>
+                      <td>
+                        <div class="summary">
+Start polling on the defined connection.
+</div>
                       </td>
                     </tr>
                     <tr data="public;inherited;notNetfw;">

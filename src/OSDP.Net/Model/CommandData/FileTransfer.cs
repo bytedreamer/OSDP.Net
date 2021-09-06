@@ -7,7 +7,7 @@ namespace OSDP.Net.Model.CommandData
     /// <summary>
     /// Command data to send a data fragment of a file to a PD.
     /// </summary>
-    public class FileTransfer
+    internal class FileTransfer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="FileTransfer"/> class.

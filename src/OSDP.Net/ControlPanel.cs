@@ -387,11 +387,11 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
-        /// <param name="fileType"></param>
-        /// <param name="fileData"></param>
-        /// <param name="fragmentSize"></param>
-        /// <param name="callback"></param>
-        /// <param name="cancellationToken"></param>
+        /// <param name="fileType">File transfer type</param>
+        /// <param name="fileData">The complete file data being sent to the PD</param>
+        /// <param name="fragmentSize">Initial size of the fragment sent with each packet</param>
+        /// <param name="callback">Track the status of the file transfer</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         public void FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
             Action<FileTransferStatus> callback, CancellationToken cancellationToken = default)
         {
@@ -909,8 +909,17 @@ namespace OSDP.Net
             public KeypadData KeypadData { get; }
         }
 
+        /// <summary>
+        /// Track the status of a file transfer to a PD
+        /// </summary>
         public class FileTransferStatus
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="FileTransferStatus"/> class.
+            /// </summary>
+            /// <param name="status">The last status returned from the PD</param>
+            /// <param name="currentOffset">The current offset in the data of the file transfer</param>
+            /// <param name="nak">Contains Nak reply data if returned</param>
             public FileTransferStatus(Model.ReplyData.FileTransferStatus.StatusDetail status, int currentOffset,
                 Nak nak)
             {
@@ -919,10 +928,19 @@ namespace OSDP.Net
                 Nak = nak;
             }
 
+            /// <summary>
+            /// The last status returned from the PD
+            /// </summary>
             public Model.ReplyData.FileTransferStatus.StatusDetail  Status { get; }
 
+            /// <summary>
+            /// The current offset in the data of the file transfer
+            /// </summary>
             public int CurrentOffset { get; }
 
+            /// <summary>
+            /// Contains Nak reply data if returned
+            /// </summary>
             public Nak Nak { get; }
         }
 

@@ -6,13 +6,13 @@ namespace OSDP.Net.Model.ReplyData
     /// <typeparam name="T">Expected reply data type</typeparam>
     public class ReturnReplyData<T>
     {
-        /// True if Ack reply is returned.
+        /// True if Ack reply is returned
         public bool Ack { get; internal set; }
 
-        /// Contains Nak data if returned.
+        /// Contains Nak reply data if returned
         public Nak Nak { get; internal set; }
 
-        /// Contains expected reply data type if returned.
+        /// Contains expected reply data type if returned
         public T ReplyData { get; internal set; }
 
         /// <inheritdoc />

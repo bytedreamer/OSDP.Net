@@ -106,6 +106,9 @@
 <img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="E-OSDP.Net.ControlPanel.InputStatusReportReplyReceived.htm" target="_self">InputStatusReportReplyReceived Event</a>
 </div>
 <div class="TreeItem">
+<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="E-OSDP.Net.ControlPanel.KeypadReplyReceived.htm" target="_self">KeypadReplyReceived Event</a>
+</div>
+<div class="TreeItem">
 <img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="E-OSDP.Net.ControlPanel.LocalStatusReportReplyReceived.htm" target="_self">LocalStatusReportReplyReceived Event</a>
 </div>
 <div class="TreeItem">
@@ -138,7 +141,17 @@
 </div>
 </div>
 <div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.FileTransferStatus.htm" target="_self">ControlPanel.FileTransferStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.InputStatusReportReplyEventArgs.htm" target="_self">ControlPanel.InputStatusReportReplyEventArgs Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.ControlPanel.KeypadReplyEventArgs.htm" target="_self">ControlPanel.KeypadReplyEventArgs Class</a>
 <div class="Hidden">
 </div>
 </div>
@@ -343,11 +356,27 @@
 <div class="Hidden">
 </div>
 </div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.htm" target="_self">FileTransferStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeItem">
+<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.ControlFlags.htm" target="_self">FileTransferStatus.ControlFlags Enumeration</a>
+</div>
+<div class="TreeItem">
+<img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FileTransferStatus.StatusDetail.htm" target="_self">FileTransferStatus.StatusDetail Enumeration</a>
+</div>
 <div class="TreeItem">
 <img src="../Item.gif"/><a class="UnselectedNode" onclick="javascript: return SelectNode(this);" href="T-OSDP.Net.Model.ReplyData.FormatCode.htm" target="_self">FormatCode Enumeration</a>
 </div>
 <div class="TreeNode">
 <img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.InputStatus.htm" target="_self">InputStatus Class</a>
+<div class="Hidden">
+</div>
+</div>
+<div class="TreeNode">
+<img class="TreeNodeImg" onclick="javascript: Toggle(this);" src="../Collapsed.png"/><a class="UnselectedNode" onclick="javascript: return Expand(this);" href="T-OSDP.Net.Model.ReplyData.KeypadData.htm" target="_self">KeypadData Class</a>
 <div class="Hidden">
 </div>
 </div>
@@ -442,8 +471,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when connection status changed.
-   </div>
+Occurs when connection status changed.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -455,8 +484,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when extended read reply received.
-   </div>
+Occurs when extended read reply received.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -468,8 +497,21 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when input status report reply received.
-   </div>
+Occurs when input status report reply received.
+</div>
+                      </td>
+                    </tr>
+                    <tr data="public;declared;notNetfw;">
+                      <td>
+                        <img src="../icons/pubevent.gif" alt="Public event" title="Public event" />
+                      </td>
+                      <td>
+                        <a href="E-OSDP.Net.ControlPanel.KeypadReplyReceived.htm">KeypadReplyReceived</a>
+                      </td>
+                      <td>
+                        <div class="summary">
+Occurs when key pad data reply received.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -481,8 +523,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when local status report reply received.
-   </div>
+Occurs when local status report reply received.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -494,8 +536,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when manufacturer specific reply received.
-   </div>
+Occurs when manufacturer specific reply received.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -507,8 +549,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when NAK reply received.
-   </div>
+Occurs when NAK reply received.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -520,8 +562,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when output status report reply received.
-   </div>
+Occurs when output status report reply received.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -533,8 +575,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when raw card data reply received.
-   </div>
+Occurs when raw card data reply received.
+</div>
                       </td>
                     </tr>
                     <tr data="public;declared;notNetfw;">
@@ -546,8 +588,8 @@
                       </td>
                       <td>
                         <div class="summary">
-   Occurs when reader status report reply received.
-   </div>
+Occurs when reader status report reply received.
+</div>
                       </td>
                     </tr>
                   </table>
