@@ -227,14 +227,15 @@ namespace OSDP.Net
                     }
                     catch (TimeoutException)
                     {
-                        // Make sure the security is reset properly if reader goes offline
-                        if (IsPolling && device.IsSecurityEstablished && !IsOnline(command.Address))
+                        switch (IsPolling)
                         {
-                            ResetDevice(device);
-                        }
-                        else if (IsPolling && device.UseSecureChannel)
-                        {
-                            device.CreateNewRandomNumber();
+                            // Make sure the security is reset properly if reader goes offline
+                            case true when device.IsSecurityEstablished && !IsOnline(command.Address):
+                                ResetDevice(device);
+                                break;
+                            case true when device.UseSecureChannel:
+                                device.CreateNewRandomNumber();
+                                break;
                         }
 
                         continue;

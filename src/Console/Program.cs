@@ -206,7 +206,7 @@ namespace Console
         {
             var portNames = SerialPort.GetPortNames();
             var portNameComboBox = new ComboBox(new Rect(15, 1, 35, 5), portNames);
-            
+
             // Select default port name
             if (portNames.Length > 0)
             {
