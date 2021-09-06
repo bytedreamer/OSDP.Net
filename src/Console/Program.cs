@@ -255,7 +255,7 @@ namespace Console
             var startButton = new Button("Start", true);
             startButton.Clicked += StartConnectionButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Start Serial Connection", 70, 12,
                 cancelButton, startButton);
@@ -315,7 +315,7 @@ namespace Console
             var startButton = new Button("Start", true);
             startButton.Clicked += StartConnectionButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Start TCP Server Connection", 60, 12, cancelButton,
                 startButton);
@@ -377,7 +377,7 @@ namespace Console
             var startButton = new Button("Start", true);
             startButton.Clicked += StartConnectionButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Start TCP Client Connection", 60, 15, cancelButton, startButton);
             dialog.Add(new Label(1, 1, "Host Name:"),
@@ -414,7 +414,7 @@ namespace Console
             var updateButton = new Button("Update", true);
             updateButton.Clicked += UpdatePollingIntervalButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Update Polling Interval", 60, 10, cancelButton, updateButton);
             dialog.Add(new Label(new Rect(1, 1, 55, 2), "Connection will need to be restarted for setting to take effect."),
@@ -593,7 +593,7 @@ namespace Console
             var addButton = new Button("Add", true);
             addButton.Clicked += AddDeviceButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Add Device", 60, 13,  cancelButton, addButton);
             dialog.Add(new Label(1, 1, "Name:"),
@@ -641,7 +641,7 @@ namespace Console
             var removeButton = new Button("Remove", true);
             removeButton.Clicked += RemoveDeviceButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Remove Device", 60, 13,  cancelButton, removeButton);
             dialog.Add(scrollView);
@@ -692,7 +692,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += SendCommunicationConfigurationButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Send Communication Configuration Command", 60, 10, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Updated Address:"),
@@ -796,7 +796,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += FileTransferButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("File Transfer", 60, 10,cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Type:"),
@@ -835,7 +835,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += SendOutputControlButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Send Output Control Command", 60, 10, cancelButton, sendButton);
             dialog.Add(                new Label(1, 1, "Output Number:"),
@@ -850,7 +850,7 @@ namespace Console
         {
             var ledNumberTextField = new TextField(20, 1, 20, "0");
             var colorComboBox = new ComboBox(new Rect(20, 3, 20, 5), Enum.GetNames(typeof(LedColor))) {Text = "Red"};
-
+            
             void SendReaderLedControlButtonClicked()
             {
                 if (!byte.TryParse(ledNumberTextField.Text.ToString(), out var ledNumber))
@@ -881,7 +881,7 @@ namespace Console
             var sendButton = new Button("Send");
             sendButton.Clicked += SendReaderLedControlButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Send Reader LED Control Command", 60, 10, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "LED Number:"),
@@ -938,7 +938,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += SendOutputControlButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Send Manufacturer Specific Command (Enter Hex Strings)", 60, 10, 
                 cancelButton, sendButton);
@@ -981,7 +981,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += SendReaderBuzzerControlButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Send Reader Buzzer Control Command", 60, 10, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Reader Number:"),
@@ -1018,7 +1018,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += SendReaderTextOutputButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Reader Text Output Command", 60, 10, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Reader Number:"),
@@ -1081,7 +1081,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += SendButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog("Encryption Key Set Command (Enter Hex String)", 60, 8, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Key:"),
@@ -1128,7 +1128,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += SendCommandButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog(title, 60, 13, cancelButton, sendButton);
             dialog.Add(deviceSelectionView);
@@ -1183,7 +1183,7 @@ namespace Console
             var sendButton = new Button("Send", true);
             sendButton.Clicked += SendCommandButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog(title, 60, 13, cancelButton, sendButton);
             dialog.Add(deviceSelectionView);
@@ -1229,7 +1229,7 @@ namespace Console
             var sendButton = new Button("Send");
             sendButton.Clicked += SendCommandButtonClicked;
             var cancelButton = new Button("Cancel");
-            cancelButton.Clicked += Application.RequestStop;
+            cancelButton.Clicked += () => Application.RequestStop();
 
             var dialog = new Dialog(title, 60, 13, cancelButton, sendButton);
             dialog.Add(deviceSelectionView);
