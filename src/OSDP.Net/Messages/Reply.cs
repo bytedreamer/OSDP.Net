@@ -106,20 +106,8 @@ namespace OSDP.Net.Messages
             }
 
             commandBuffer.Add(ReplyCode);
-
-/*            if (device.IsSecurityEstablished)
-            {
-                commandBuffer.AddRange(EncryptedData(device));
-                
-                // include mac and crc in length before generating mac
-                AddPacketLength(commandBuffer, (ushort) (4 + (device.MessageControl.UseCrc ? 2 : 1)));
-
-                commandBuffer.AddRange(device.GenerateMac(commandBuffer.ToArray(), true).Take(4));
-            }
-            else
-            {*/
-                commandBuffer.AddRange(Data().ToArray());
-            //}
+            
+            commandBuffer.AddRange(Data().ToArray());
 
             commandBuffer.Add(0x0);
             
