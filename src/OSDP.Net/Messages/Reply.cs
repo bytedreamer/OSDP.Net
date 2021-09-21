@@ -70,7 +70,7 @@ namespace OSDP.Net.Messages
         public ReplyType Type { get; }
         public byte[] ExtractReplyData { get; }
         public IEnumerable<byte> MessageForMacGeneration { get; }
-        public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType) && Type != ReplyType.Busy;
+        public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType);
 
         protected abstract byte ReplyCode { get; }
 
