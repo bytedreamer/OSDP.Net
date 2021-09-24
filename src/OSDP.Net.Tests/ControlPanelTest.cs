@@ -63,6 +63,26 @@ namespace OSDP.Net.Tests
                 TimeSpan.FromSeconds(3));
         }
 
+        [Test]
+        public async Task StopConnectionTest()
+        {
+            // Arrange
+            var connection = new TestConnection();
+            var panel = new ControlPanel();
+
+            Guid id = panel.StartConnection(connection);
+            panel.AddDevice(id, 0, true, false);
+
+            // Act
+            panel.StopConnection(id);
+
+            // Assert
+            await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
+                TimeSpan.FromSeconds(3));
+            await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledClose == 1, TimeSpan.FromMilliseconds(100),
+                TimeSpan.FromSeconds(3));
+        }
+
         class TestConnection : IOsdpConnection
         {
             private readonly MemoryStream _stream = new MemoryStream();
