@@ -16,7 +16,7 @@ namespace OSDP.Net
     /// <summary>The OSDP control panel used to communicate to Peripheral Devices (PDs) as an Access Control Unit (ACU). If multiple connections are needed, add them to the control panel. Avoid creating multiple control panel objects.</summary>
     public class ControlPanel
     {
-        private readonly ConcurrentBag<Bus> _buses = new ConcurrentBag<Bus>();
+        private readonly ConcurrentDictionary<Guid, Bus> _buses = new ConcurrentDictionary<Guid, Bus>();
         private readonly ILogger<ControlPanel> _logger;
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _pivDataLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
@@ -62,7 +62,7 @@ namespace OSDP.Net
             
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
             
-            _buses.Add(newBus);
+            _buses[newBus.Id] = newBus;
 
             Task.Factory.StartNew(async () =>
             {
@@ -70,6 +70,26 @@ namespace OSDP.Net
             }, TaskCreationOptions.LongRunning);
 
             return newBus.Id;
+        }
+
+        /// <summary>
+        /// Stop the bus for a specific connection.
+        /// </summary>
+        /// <param name="connectionId">The identifier that represents the connection.</param>
+        public void StopConnection(Guid connectionId)
+        {
+            if (!_buses.TryRemove(connectionId, out Bus bus))
+            {
+                return;
+            }
+
+            bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
+            bus.Close();
+
+            foreach (byte address in bus.ConfigureDeviceAddresses)
+            {
+                OnConnectionStatusChanged(bus.Id, address, false);
+            }
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
@@ -397,7 +417,7 @@ namespace OSDP.Net
         {
             Task.Factory.StartNew(async () =>
             {
-                _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessage(address, true);
+                _buses[connectionId].SetSendingMultiMessage(address, true);
                 try
                 {
                     await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
@@ -405,8 +425,8 @@ namespace OSDP.Net
                 }
                 finally
                 {
-                    _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessage(address, false);
-                    _buses.First(bus => bus.Id == connectionId).SetSendingMultiMessageNoSecureChannel(address, false);
+                    _buses[connectionId].SetSendingMultiMessage(address, false);
+                    _buses[connectionId].SetSendingMultiMessageNoSecureChannel(address, false);
                 }
             }, TaskCreationOptions.LongRunning);
         }
@@ -443,16 +463,14 @@ namespace OSDP.Net
                     if ((fileTransferStatus.Action & Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel) ==
                         Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel)
                     {
-                        _buses.First(bus => bus.Id == connectionId)
-                            .SetSendingMultiMessageNoSecureChannel(address, true);
+                        _buses[connectionId].SetSendingMultiMessageNoSecureChannel(address, true);
                     }
 
                     // Set request delay if specified
                     if (fileTransferStatus is { RequestedDelay: > 0 })
                     {
-                        _buses.First(bus => bus.Id == connectionId)
-                            .SetRequestDelay(address,
-                                DateTime.UtcNow.AddMilliseconds(fileTransferStatus.RequestedDelay));
+                        _buses[connectionId].SetRequestDelay(address,
+                            DateTime.UtcNow.AddMilliseconds(fileTransferStatus.RequestedDelay));
                     }
 
                     // Set fragment size if requested
@@ -491,7 +509,7 @@ namespace OSDP.Net
         /// <returns>Returns true if the PD is online</returns>
         public bool IsOnline(Guid connectionId, byte address)
         {
-            return _buses.First(bus => bus.Id == connectionId).IsOnline(address);
+            return _buses[connectionId].IsOnline(address);
         }
 
         internal async Task<Reply> SendCommand(Guid connectionId, Command command,
@@ -508,7 +526,10 @@ namespace OSDP.Net
 
             ReplyReceived += EventHandler;
 
-            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.SendCommand(command);
+            if (_buses.TryGetValue(connectionId, out Bus bus))
+            {
+                bus.SendCommand(command);
+            }
 
             if (source.Task == await Task.WhenAny(source.Task, Task.Delay(_replyResponseTimeout, cancellationToken))
                 .ConfigureAwait(false))
@@ -525,10 +546,9 @@ namespace OSDP.Net
         /// </summary>
         public void Shutdown()
         {
-            foreach (var bus in _buses)
+            foreach (var bus in _buses.Values)
             {
                 bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
-                
                 bus.Close();
                 
                 foreach (byte address in bus.ConfigureDeviceAddresses)
@@ -536,10 +556,7 @@ namespace OSDP.Net
                     OnConnectionStatusChanged(bus.Id, address, false);
                 }
             }
-            while (!_buses.IsEmpty) 
-            {
-                _buses.TryTake(out _);
-            }
+            _buses.Clear();
 
             foreach (var pivDataLock in _pivDataLocks.Values)
             {
@@ -555,7 +572,10 @@ namespace OSDP.Net
         /// <param name="address">Address assigned to the device.</param>
         public void ResetDevice(Guid connectionId, int address)
         {
-            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.ResetDevice(address);
+            if (_buses.TryGetValue(connectionId, out Bus bus))
+            {
+                bus.ResetDevice(address);
+            }
         }
 
         /// <summary>
@@ -568,12 +588,11 @@ namespace OSDP.Net
         /// <param name="secureChannelKey">Set the secure channel key, default installation key is used if not specified.</param>
         public void AddDevice(Guid connectionId, byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
         {
-            var foundBus = _buses.FirstOrDefault(bus => bus.Id == connectionId);
-            if (foundBus == null)
+            if (!_buses.TryGetValue(connectionId, out Bus foundBus))
             {
-                throw new ArgumentException( "Connection could not be found", nameof(connectionId));
+                throw new ArgumentException("Connection could not be found", nameof(connectionId));
             }
-            
+
             foundBus.AddDevice(address, useCrc, useSecureChannel, useSecureChannel ? secureChannelKey : null);
         }
 
@@ -584,7 +603,10 @@ namespace OSDP.Net
         /// <param name="address">Address assigned to the device.</param>
         public void RemoveDevice(Guid connectionId, byte address)
         {
-            _buses.FirstOrDefault(bus => bus.Id == connectionId)?.RemoveDevice(address);
+            if (_buses.TryGetValue(connectionId, out Bus bus))
+            {
+                bus.RemoveDevice(address);
+            }
         }
 
         private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected)
