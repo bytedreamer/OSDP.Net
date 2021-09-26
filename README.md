@@ -35,7 +35,14 @@ Guid connectionId = panel.StartConnection(new SerialPortOsdpConnection(portName,
 Once the connection has started, add Peripheral Devices (PD).
 
 ```csharp
-panel.AddDevice(connectionId, address, useCrc, useSecureChannel);
+panel.AddDevice(connectionId, address, useCrc, useSecureChannel, secureChannelKey);
+```
+
+The following code will install a PD with a unique Secure Channel key. The OSDP standard requires that setting the secure key can only occur while communications are secure.
+
+```csharp
+panel.AddDevice(connectionId, address, useCrc, useSecureChannel); // connect using default SC key
+bool successfulSet = panel.EncryptionKeySet(connectionId, address, new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, uniqueKey));
 ```
 
 The ControlPanel object can then be used to send command to the PD.
