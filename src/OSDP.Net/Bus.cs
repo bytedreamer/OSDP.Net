@@ -217,10 +217,10 @@ namespace OSDP.Net
                         reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
 
                         // Prevent plain text message replies when secure channel has been established
-                        // The busy reply type is a special case which is allowed to be sent as insecure message on a secure channel
-                        if (reply.Type != ReplyType.Busy && device.UseSecureChannel && device.IsSecurityEstablished && !reply.IsSecureMessage)
+                        // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
+                        if (reply.Type != ReplyType.Busy && reply.Type != ReplyType.Nak && device.UseSecureChannel && device.IsSecurityEstablished && !reply.IsSecureMessage)
                         {
-                            _logger?.LogWarning("An plain text message was received when the secure channel had been established");
+                            _logger?.LogWarning("A plain text message was received when the secure channel had been established");
                             device.CreateNewRandomNumber();
                             ResetDevice(device);
                             continue;

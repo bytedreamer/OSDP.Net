@@ -128,7 +128,13 @@ namespace Console
                 {
                     new MenuItem("_Bad CRC/Checksum", "",
                         () => SendCustomCommand("Bad CRC/Checksum", _connectionId, _controlPanel.SendCustomCommand,
-                            address => new InvalidCrcPollCommand(address)))
+                            address => new InvalidCrcPollCommand(address))),
+                    new MenuItem("Invalid Command Length", "",
+                    () => SendCustomCommand("Invalid Command Length", _connectionId, _controlPanel.SendCustomCommand,
+                        address => new InvalidLengthPollCommand(address))),
+                    new MenuItem("Invalid Command", "",
+                    () => SendCustomCommand("Invalid Command Length", _connectionId, _controlPanel.SendCustomCommand,
+                        address => new InvalidCommand(address)))
                 })
             });
 
