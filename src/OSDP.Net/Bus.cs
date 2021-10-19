@@ -133,7 +133,8 @@ namespace OSDP.Net
         public async Task StartPollingAsync()
         {
             DateTime lastMessageSentTime = DateTime.MinValue;
-
+            using var delayTime = new AutoResetEvent(false);
+            
             while (!_isShuttingDown)
             {
                 if (!_connection.IsOpen)
@@ -151,7 +152,7 @@ namespace OSDP.Net
                             UpdateConnectionStatus(device);
                         }
 
-                        await Task.Delay(TimeSpan.FromSeconds(5));
+                        delayTime.WaitOne(TimeSpan.FromSeconds(5));
 
                         continue;
                     }
@@ -160,8 +161,7 @@ namespace OSDP.Net
                 if (IsPolling)
                 {
                     TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
-                    await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero)
-                        .ConfigureAwait(false);
+                    delayTime.WaitOne(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
                     
                     if (!_configuredDevices.Any())
                     {
@@ -172,7 +172,7 @@ namespace OSDP.Net
                 else
                 {
                     // Keep CPU usage down while waiting for next command
-                    await Task.Delay(TimeSpan.FromMilliseconds(10));
+                    delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
                 }
 
                 foreach (var device in _configuredDevices.ToArray())
@@ -260,7 +260,7 @@ namespace OSDP.Net
                         continue;
                     }
 
-                    await Task.Delay(IdleLineDelay).ConfigureAwait(false);
+                    delayTime.WaitOne(IdleLineDelay);
                 }
             }
         }
@@ -318,7 +318,7 @@ namespace OSDP.Net
             if (reply.Type == ReplyType.Nak &&
                 (device.UseSecureChannel && (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet) ||
-                 reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber))
+                 reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber && reply.Sequence > 0))
             {
                 if (reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber || reply.Sequence > 0) ResetDevice(device);
             }
