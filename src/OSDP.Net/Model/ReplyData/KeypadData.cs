@@ -56,7 +56,29 @@ namespace OSDP.Net.Model.ReplyData
             var build = new StringBuilder();
             build.AppendLine($"Reader Number: {ReaderNumber}");
             build.AppendLine($"  Digit Count: {DigitCount}");
-            build.AppendLine($"         Data: {Encoding.Default.GetString(Data)}");
+            build.AppendLine($"         Data: {DetermineCharacters(Data, DigitCount)}");
+            return build.ToString();
+        }
+
+        private string DetermineCharacters(byte[] data, ushort count)
+        {
+            var build = new StringBuilder();
+            for (byte index = 0; index < count; index++)
+            {
+                switch (data[index])
+                {
+                    case 0x0D:
+                        build.Append('#');
+                        break;
+                    case 0x7F:
+                        build.Append('*');
+                        break;
+                    default:
+                        build.Append(Convert.ToChar(data[index]));
+                        break;
+                }
+            }
+
             return build.ToString();
         }
     }
