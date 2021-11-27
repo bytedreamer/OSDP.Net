@@ -38,11 +38,11 @@ Once the connection has started, add Peripheral Devices (PD).
 panel.AddDevice(connectionId, address, useCrc, useSecureChannel, secureChannelKey);
 ```
 
-The following code will install a PD with a unique Secure Channel key. The OSDP standard requires that setting the secure key can only occur while communications are secure.
+The following code will install a PD with an unique Secure Channel key. The OSDP standard requires that setting the secure key can only occur while communications are secure.
 
 ```csharp
 panel.AddDevice(connectionId, address, useCrc, useSecureChannel); // connect using default SC key
-bool successfulSet = panel.EncryptionKeySet(connectionId, address, new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, uniqueKey));
+bool successfulSet = await panel.EncryptionKeySet(connectionId, address, new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, uniqueKey));
 ```
 
 The ControlPanel object can then be used to send command to the PD.
