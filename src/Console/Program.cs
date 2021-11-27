@@ -76,13 +76,13 @@ namespace Console
                 {
                     new MenuItem("_About", "", () => MessageBox.Query(40, 6,"About",
                         $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}",0, "OK")),
-                    new MenuItem("_Polling Interval", "", UpdatePollingInterval),
-                    new MenuItem("Save _Configuration", "", () => SetConnectionSettings(_settings)),
+                    new MenuItem("_Connection Settings", "", UpdateConnectionSettings),
+                    new MenuItem("Save _Configuration", "", () => SaveConfigurationSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
                         if (MessageBox.Query(40, 6, "Quit", "Save configuration before exiting?", 1, "No", "Yes") == 1)
                         {
-                            SetConnectionSettings(_settings);
+                            SaveConfigurationSettings(_settings);
                         }
 
                         Application.RequestStop();
@@ -399,11 +399,12 @@ namespace Console
             Application.Run(dialog);
         }
 
-        private static void UpdatePollingInterval()
+        private static void UpdateConnectionSettings()
         {
             var pollingIntervalTextField = new TextField(25, 4, 25, _settings.PollingInterval.ToString());
+            var tracingCheckBox = new CheckBox(1, 6, "Write packet data to file", _settings.IsTracing);
             
-            void UpdatePollingIntervalButtonClicked()
+            void UpdateConnectionSettingsButtonClicked()
             {
                 if (!int.TryParse(pollingIntervalTextField.Text.ToString(), out var pollingInterval))
                 {
@@ -413,19 +414,21 @@ namespace Console
                 }
 
                 _settings.PollingInterval = pollingInterval;
+                _settings.IsTracing = tracingCheckBox.Checked;
                 
                 Application.RequestStop();
             }
 
             var updateButton = new Button("Update", true);
-            updateButton.Clicked += UpdatePollingIntervalButtonClicked;
+            updateButton.Clicked += UpdateConnectionSettingsButtonClicked;
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += () => Application.RequestStop();
 
-            var dialog = new Dialog("Update Polling Interval", 60, 10, cancelButton, updateButton);
+            var dialog = new Dialog("Update Connection Settings", 60, 12, cancelButton, updateButton);
             dialog.Add(new Label(new Rect(1, 1, 55, 2), "Connection will need to be restarted for setting to take effect."),
                 new Label(1, 4, "Polling Interval(ms):"),
-                pollingIntervalTextField);
+                pollingIntervalTextField,
+                tracingCheckBox);
             pollingIntervalTextField.SetFocus();
             
             Application.Run(dialog);
@@ -441,7 +444,8 @@ namespace Console
             }
 
             _connectionId =
-                _controlPanel.StartConnection(osdpConnection, TimeSpan.FromMilliseconds(_settings.PollingInterval));
+                _controlPanel.StartConnection(osdpConnection, TimeSpan.FromMilliseconds(_settings.PollingInterval),
+                    _settings.IsTracing);
 
             foreach (var device in _settings.Devices)
             {
@@ -514,7 +518,7 @@ namespace Console
             }
         }
 
-        private static void SetConnectionSettings(Settings connectionSettings)
+        private static void SaveConfigurationSettings(Settings connectionSettings)
         {
             try
             {

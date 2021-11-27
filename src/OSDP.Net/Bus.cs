@@ -2,7 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -24,21 +26,29 @@ namespace OSDP.Net
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
+        private readonly bool _isTracing;
         private readonly Dictionary<byte, bool> _lastConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
+        private readonly FileStream _tracerFile;
 
         private bool _isShuttingDown;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
+            bool isTracing = false,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
             _pollInterval = pollInterval;
+            _isTracing = isTracing;
+            if (_isTracing)
+            {
+                _tracerFile = new FileStream("current.osdpcap", FileMode.OpenOrCreate);
+            }
             _logger = logger;
 
             Id = Guid.NewGuid();
@@ -218,9 +228,11 @@ namespace OSDP.Net
 
                         // Prevent plain text message replies when secure channel has been established
                         // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
-                        if (reply.Type != ReplyType.Busy && reply.Type != ReplyType.Nak && device.UseSecureChannel && device.IsSecurityEstablished && !reply.IsSecureMessage)
+                        if (reply.Type != ReplyType.Busy && reply.Type != ReplyType.Nak && device.UseSecureChannel &&
+                            device.IsSecurityEstablished && !reply.IsSecureMessage)
                         {
-                            _logger?.LogWarning("A plain text message was received when the secure channel had been established");
+                            _logger?.LogWarning(
+                                "A plain text message was received when the secure channel had been established");
                             device.CreateNewRandomNumber();
                             ResetDevice(device);
                             continue;
@@ -280,7 +292,7 @@ namespace OSDP.Net
                 _lastConnectionStatus[device.Address] == isConnected) return false;
             
             var handler = ConnectionStatusChanged;
-            handler?.Invoke(this, new ConnectionStatusEventArgs(device.Address, isConnected));
+            handler?.Invoke(this, new ConnectionStatusEventArgs(device.Address, isConnected, device.IsSecurityEstablished));
                 
             _lastConnectionStatus[device.Address] = isConnected;
 
@@ -387,7 +399,21 @@ namespace OSDP.Net
                 throw;
             }
 
-            // _logger?.LogInformation($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
+            if (_isTracing)
+            {
+                var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
+                long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
+                await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
+                {
+                    timeSec = unixTime.TotalSeconds.ToString("F0"),
+                    timeNano = timeNano.ToString("000000000"),
+                    io = "output",
+                    data = BitConverter.ToString(commandData)
+                });
+                // Write newline
+                _tracerFile.WriteByte(0x0A);
+                _tracerFile.Flush();
+            }
 
             var buffer = new byte[commandData.Length + 1];
             buffer[0] = DriverByte;
@@ -412,8 +438,21 @@ namespace OSDP.Net
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
 
-            // _logger?.LogInformation($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
-            //      command.Address);
+            if (_isTracing)
+            {
+                var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
+                long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
+                await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
+                {
+                    timeSec = unixTime.TotalSeconds.ToString("F0"),
+                    timeNano = timeNano.ToString("000000000"),
+                    io = "input",
+                    data = BitConverter.ToString(replyBuffer.ToArray())
+                });
+                // Write newline
+                _tracerFile.WriteByte(0x0A);
+                _tracerFile.Flush();
+            }
 
             return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }
@@ -513,14 +552,18 @@ namespace OSDP.Net
 
         public class ConnectionStatusEventArgs
         {
-            public ConnectionStatusEventArgs(byte address, bool isConnected)
+            public ConnectionStatusEventArgs(byte address, bool isConnected, bool isSecureSessionEstablished)
             {
                 Address = address;
                 IsConnected = isConnected;
+                IsSecureSessionEstablished = isSecureSessionEstablished;
             }
 
             public byte Address { get; }
+
             public bool IsConnected { get; }
+
+            public bool IsSecureSessionEstablished { get; }
         }
     }
 }

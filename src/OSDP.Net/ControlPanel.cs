@@ -47,7 +47,7 @@ namespace OSDP.Net
         /// <returns>An identifier that represents the connection</returns>
         public Guid StartConnection(IOsdpConnection connection)
         {
-            return StartConnection(connection, Bus.DefaultPollInterval);
+            return StartConnection(connection, Bus.DefaultPollInterval, false);
         }
 
         /// <summary>
@@ -58,7 +58,19 @@ namespace OSDP.Net
         /// <returns>An identifier that represents the connection</returns>
         public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval)
         {
-            var newBus = new Bus(connection, _replies, pollInterval, _logger);
+            return StartConnection(connection, pollInterval, false);
+        }
+
+        /// <summary>
+        /// Start polling on the defined connection.
+        /// </summary>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <param name="isTracing">Write packet data to current.osdpcap file</param>
+        /// <returns>An identifier that represents the connection</returns>
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing)
+        {
+            var newBus = new Bus(connection, _replies, pollInterval, isTracing, _logger);
             
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
             
