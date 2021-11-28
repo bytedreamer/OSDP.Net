@@ -27,7 +27,8 @@ namespace OSDP.Net
         private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
         private readonly bool _isTracing;
-        private readonly Dictionary<byte, bool> _lastConnectionStatus = new ();
+        private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
+        private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval;
@@ -283,17 +284,27 @@ namespace OSDP.Net
 
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
 
+        /// <summary>
+        /// Determine if the connection status needs to be updated
+        /// </summary>
+        /// <param name="device"></param>
+        /// <returns>Return true if the connection status changed</returns>
         private bool UpdateConnectionStatus(Device device)
         {
             bool isConnected = device.IsConnected;
+            bool isSecureChannelEstablished = device.IsSecurityEstablished;
 
-            if (_lastConnectionStatus.ContainsKey(device.Address) &&
-                _lastConnectionStatus[device.Address] == isConnected) return false;
-            
+            if (_lastOnlineConnectionStatus.ContainsKey(device.Address) &&
+                _lastOnlineConnectionStatus[device.Address] == isConnected &&
+                _lastSecureConnectionStatus.ContainsKey(device.Address) &&
+                _lastSecureConnectionStatus[device.Address] == isSecureChannelEstablished) return false;
+
             var handler = ConnectionStatusChanged;
-            handler?.Invoke(this, new ConnectionStatusEventArgs(device.Address, isConnected, device.IsSecurityEstablished));
-                
-            _lastConnectionStatus[device.Address] = isConnected;
+            handler?.Invoke(this,
+                new ConnectionStatusEventArgs(device.Address, isConnected, device.IsSecurityEstablished));
+
+            _lastOnlineConnectionStatus[device.Address] = isConnected;
+            _lastSecureConnectionStatus[device.Address] = isSecureChannelEstablished;
 
             return true;
         }

@@ -160,8 +160,10 @@ namespace Console
         {
             _controlPanel.ConnectionStatusChanged += (_, args) =>
             {
-                DisplayReceivedReply($"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
-                                     $"at address {args.Address} is now {(args.IsConnected ? "connected" : "disconnected")}",
+                DisplayReceivedReply(
+                    $"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
+                    $"at address {args.Address} is now " +
+                    $"{(args.IsConnected ? (args.IsSecureChannelEstablished ? "connected with secure channel" : "connected with clear text") : "disconnected")}",
                     string.Empty);
             };
             _controlPanel.NakReplyReceived += (_, args) =>

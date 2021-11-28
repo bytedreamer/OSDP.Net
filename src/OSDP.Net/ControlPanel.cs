@@ -89,13 +89,15 @@ namespace OSDP.Net
 
             foreach (byte address in bus.ConfigureDeviceAddresses)
             {
-                OnConnectionStatusChanged(bus.Id, address, false);
+                OnConnectionStatusChanged(bus.Id, address, false, false);
             }
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
         {
-            if (sender is Bus bus) OnConnectionStatusChanged(bus.Id, eventArgs.Address, eventArgs.IsConnected);
+            if (sender is Bus bus)
+                OnConnectionStatusChanged(bus.Id, eventArgs.Address, eventArgs.IsConnected,
+                    eventArgs.IsSecureSessionEstablished);
         }
 
         /// <summary>
@@ -554,7 +556,7 @@ namespace OSDP.Net
                 
                 foreach (byte address in bus.ConfigureDeviceAddresses)
                 {
-                    OnConnectionStatusChanged(bus.Id, address, false);
+                    OnConnectionStatusChanged(bus.Id, address, false, false);
                 }
             }
             _buses.Clear();
@@ -610,10 +612,12 @@ namespace OSDP.Net
             }
         }
 
-        private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected)
+        private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected,
+            bool isSecureChannelEstablished)
         {
             var handler = ConnectionStatusChanged;
-            handler?.Invoke(this, new ConnectionStatusEventArgs(connectionId, address, isConnected));
+            handler?.Invoke(this,
+                new ConnectionStatusEventArgs(connectionId, address, isConnected, isSecureChannelEstablished));
         }
 
         internal virtual void OnReplyReceived(Reply reply)
@@ -786,16 +790,20 @@ namespace OSDP.Net
 
         public class ConnectionStatusEventArgs : EventArgs
         {
-            public ConnectionStatusEventArgs(Guid connectionId, byte address, bool isConnected)
+            public ConnectionStatusEventArgs(Guid connectionId, byte address, bool isConnected,
+                bool isSecureChannelEstablished)
             {
                 ConnectionId = connectionId;
                 Address = address;
                 IsConnected = isConnected;
+                IsSecureChannelEstablished = isSecureChannelEstablished;
             }
 
             public Guid ConnectionId { get; }
             public byte Address { get; }
             public bool IsConnected { get; }
+
+            public bool IsSecureChannelEstablished { get; }
         }
 
         public class LocalStatusReportReplyEventArgs : EventArgs
