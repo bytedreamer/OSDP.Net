@@ -45,13 +45,12 @@ namespace OSDP.Net
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
             _pollInterval = pollInterval;
             _isTracing = isTracing;
+            Id = Guid.NewGuid();
             if (_isTracing)
             {
-                _tracerFile = new FileStream("current.osdpcap", FileMode.OpenOrCreate);
+                _tracerFile = new FileStream($"{Id:D}.osdpcap", FileMode.OpenOrCreate);
             }
             _logger = logger;
-
-            Id = Guid.NewGuid();
         }
 
         private TimeSpan IdleLineDelay => TimeSpan.FromSeconds(1.0/_connection.BaudRate * 16.0);
