@@ -15,5 +15,7 @@ namespace Console.Configuration
         public int PollingInterval { get; set; } = 200;
 
         public string LastFileTransferDirectory { get; set; }
+
+        public bool IsTracing { get; set; }
     }
 }

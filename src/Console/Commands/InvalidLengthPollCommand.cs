@@ -4,11 +4,11 @@ using OSDP.Net.Messages;
 namespace Console.Commands
 {
     /// <summary>
-    /// Change the CRC on a poll command
+    /// Change the length on a poll command
     /// </summary>
-    public class InvalidCrcPollCommand : Command
+    public class InvalidLengthPollCommand : Command
     {
-        public InvalidCrcPollCommand(byte address)
+        public InvalidLengthPollCommand(byte address)
         {
             Address = address;
         }
@@ -26,12 +26,11 @@ namespace Console.Commands
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-            commandBuffer[^1] = (byte)(commandBuffer[^1] + 1);
         }
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return ReadOnlySpan<byte>.Empty;
+            return new byte[] { 0x01 };
         }
     }
 }

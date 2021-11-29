@@ -74,6 +74,7 @@ namespace OSDP.Net
             const byte paddingStart = 0x80;
 
             Span<byte> mac = stackalloc byte[cryptoLength];
+            mac.Clear();
             int currentLocation = 0;
 
             using var messageAuthenticationCodeAlgorithm = Aes.Create();
@@ -198,6 +199,8 @@ namespace OSDP.Net
             int paddingLength = dataLength + (cryptoLength - dataLength % cryptoLength) % cryptoLength;
             
             Span<byte> buffer = stackalloc byte[paddingLength];
+            buffer.Clear();
+            
             var cursor = buffer.Slice(0);
 
             data.CopyTo(cursor);

@@ -42,7 +42,7 @@ The following code will install a PD with an unique Secure Channel key. The OSDP
 
 ```csharp
 panel.AddDevice(connectionId, address, useCrc, useSecureChannel); // connect using default SC key
-bool successfulSet = panel.EncryptionKeySet(connectionId, address, new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, uniqueKey));
+bool successfulSet = await panel.EncryptionKeySet(connectionId, address, new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, uniqueKey));
 ```
 
 The ControlPanel object can then be used to send command to the PD.

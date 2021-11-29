@@ -55,10 +55,11 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
         /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <param name="isTracing">Write packet data to {Bus ID}.osdpcap file</param>
         /// <returns>An identifier that represents the connection</returns>
-        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval)
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing = false)
         {
-            var newBus = new Bus(connection, _replies, pollInterval, _logger);
+            var newBus = new Bus(connection, _replies, pollInterval, isTracing, _logger);
             
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
             
@@ -88,13 +89,15 @@ namespace OSDP.Net
 
             foreach (byte address in bus.ConfigureDeviceAddresses)
             {
-                OnConnectionStatusChanged(bus.Id, address, false);
+                OnConnectionStatusChanged(bus.Id, address, false, false);
             }
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
         {
-            if (sender is Bus bus) OnConnectionStatusChanged(bus.Id, eventArgs.Address, eventArgs.IsConnected);
+            if (sender is Bus bus)
+                OnConnectionStatusChanged(bus.Id, eventArgs.Address, eventArgs.IsConnected,
+                    eventArgs.IsSecureSessionEstablished);
         }
 
         /// <summary>
@@ -553,7 +556,7 @@ namespace OSDP.Net
                 
                 foreach (byte address in bus.ConfigureDeviceAddresses)
                 {
-                    OnConnectionStatusChanged(bus.Id, address, false);
+                    OnConnectionStatusChanged(bus.Id, address, false, false);
                 }
             }
             _buses.Clear();
@@ -609,10 +612,12 @@ namespace OSDP.Net
             }
         }
 
-        private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected)
+        private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected,
+            bool isSecureChannelEstablished)
         {
             var handler = ConnectionStatusChanged;
-            handler?.Invoke(this, new ConnectionStatusEventArgs(connectionId, address, isConnected));
+            handler?.Invoke(this,
+                new ConnectionStatusEventArgs(connectionId, address, isConnected, isSecureChannelEstablished));
         }
 
         internal virtual void OnReplyReceived(Reply reply)
@@ -785,16 +790,20 @@ namespace OSDP.Net
 
         public class ConnectionStatusEventArgs : EventArgs
         {
-            public ConnectionStatusEventArgs(Guid connectionId, byte address, bool isConnected)
+            public ConnectionStatusEventArgs(Guid connectionId, byte address, bool isConnected,
+                bool isSecureChannelEstablished)
             {
                 ConnectionId = connectionId;
                 Address = address;
                 IsConnected = isConnected;
+                IsSecureChannelEstablished = isSecureChannelEstablished;
             }
 
             public Guid ConnectionId { get; }
             public byte Address { get; }
             public bool IsConnected { get; }
+
+            public bool IsSecureChannelEstablished { get; }
         }
 
         public class LocalStatusReportReplyEventArgs : EventArgs

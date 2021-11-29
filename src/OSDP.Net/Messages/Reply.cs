@@ -19,25 +19,26 @@ namespace OSDP.Net.Messages
 
         protected Reply(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, Device device)
         {
-            Address = (byte) (data[1] & AddressMask);
-            Sequence = (byte) (data[4] & 0x03);
+            Address = (byte)(data[1] & AddressMask);
+            Sequence = (byte)(data[4] & 0x03);
             bool isUsingCrc = Convert.ToBoolean(data[4] & 0x04);
-            ushort replyMessageFooterSize = (ushort) (isUsingCrc ? 2 : 1);
+            ushort replyMessageFooterSize = (ushort)(isUsingCrc ? 2 : 1);
             bool isSecureControlBlockPresent = Convert.ToBoolean(data[4] & 0x08);
-            byte secureBlockSize = (byte) (isSecureControlBlockPresent ? data[5] : 0);
-            SecurityBlockType = (byte) (isSecureControlBlockPresent ? data[6] : 0);
+            byte secureBlockSize = (byte)(isSecureControlBlockPresent ? data[5] : 0);
+            SecurityBlockType = (byte)(isSecureControlBlockPresent ? data[6] : 0);
             int messageLength = data.Length - (isUsingCrc ? 6 : 5);
             if (isSecureControlBlockPresent)
             {
                 SecureBlockData = data.Slice(ReplyMessageHeaderSize + 2, secureBlockSize - 2).ToArray();
                 Mac = data.Slice(messageLength, MacSize).ToArray();
             }
-            Type = (ReplyType) data[ReplyTypeIndex + secureBlockSize];
+
+            Type = (ReplyType)data[ReplyTypeIndex + secureBlockSize];
 
             ExtractReplyData = data.Slice(ReplyMessageHeaderSize + secureBlockSize, data.Length -
                 ReplyMessageHeaderSize - secureBlockSize - replyMessageFooterSize -
                 (IsSecureMessage ? MacSize : 0)).ToArray();
-            if (SecurityBlockType == (byte) OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity)
+            if (SecurityBlockType == (byte)OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity)
             {
                 ExtractReplyData = DecryptData(device).ToArray();
             }
@@ -61,16 +62,20 @@ namespace OSDP.Net.Messages
 
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {
-            (byte) OSDP.Net.Messages.SecurityBlockType.CommandMessageWithNoDataSecurity,
-            (byte) OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity,
-            (byte) OSDP.Net.Messages.SecurityBlockType.CommandMessageWithDataSecurity,
-            (byte) OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity,
+            (byte)OSDP.Net.Messages.SecurityBlockType.CommandMessageWithNoDataSecurity,
+            (byte)OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity,
+            (byte)OSDP.Net.Messages.SecurityBlockType.CommandMessageWithDataSecurity,
+            (byte)OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity,
         };
 
         public ReplyType Type { get; }
         public byte[] ExtractReplyData { get; }
         public IEnumerable<byte> MessageForMacGeneration { get; }
-        public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType);
+
+        public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType) && IsDataSecure;
+
+        private bool IsDataSecure => ExtractReplyData == null || ExtractReplyData.Length == 0 || SecurityBlockType ==
+            (byte)OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity;
 
         protected abstract byte ReplyCode { get; }
 
@@ -81,11 +86,11 @@ namespace OSDP.Net.Messages
         public static Reply Parse(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, Device device)
         {
             var reply = new UnknownReply(data, connectionId, issuingCommand, device);
-            
+
             return reply;
         }
 
-        public bool SecureCryptogramHasBeenAccepted() => Convert.ToBoolean(SecureBlockData.First());
+        public bool SecureCryptogramHasBeenAccepted() => Convert.ToByte(SecureBlockData.First()) > 0x00;
         public bool MatchIssuingCommand(Command command) => command.Equals(_issuingCommand);
         public bool IsValidMac(ReadOnlySpan<byte> mac) => mac.Slice(0, MacSize).SequenceEqual(Mac.ToArray());
 
@@ -100,17 +105,17 @@ namespace OSDP.Net.Messages
                 control.ControlByte
             };
 
-            if ( control.HasSecurityControlBlock )
+            if (control.HasSecurityControlBlock)
             {
                 commandBuffer.AddRange(SecurityControlBlock());
             }
 
             commandBuffer.Add(ReplyCode);
-            
+
             commandBuffer.AddRange(Data().ToArray());
 
             commandBuffer.Add(0x0);
-            
+
             if (control.UseCrc)
             {
                 commandBuffer.Add(0x0);
@@ -126,7 +131,7 @@ namespace OSDP.Net.Messages
             {
                 AddChecksum(commandBuffer.ToArray());
             }
-            
+
             return commandBuffer.ToArray();
         }
 

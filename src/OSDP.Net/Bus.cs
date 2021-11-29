@@ -2,7 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -24,24 +26,32 @@ namespace OSDP.Net
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
-        private readonly Dictionary<byte, bool> _lastConnectionStatus = new ();
+        private readonly bool _isTracing;
+        private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
+        private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
+        private readonly FileStream _tracerFile;
 
         private bool _isShuttingDown;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
+            bool isTracing = false,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
             _pollInterval = pollInterval;
-            _logger = logger;
-
+            _isTracing = isTracing;
             Id = Guid.NewGuid();
+            if (_isTracing)
+            {
+                _tracerFile = new FileStream($"{Id:D}.osdpcap", FileMode.OpenOrCreate);
+            }
+            _logger = logger;
         }
 
         private TimeSpan IdleLineDelay => TimeSpan.FromSeconds(1.0/_connection.BaudRate * 16.0);
@@ -133,7 +143,8 @@ namespace OSDP.Net
         public async Task StartPollingAsync()
         {
             DateTime lastMessageSentTime = DateTime.MinValue;
-
+            using var delayTime = new AutoResetEvent(false);
+            
             while (!_isShuttingDown)
             {
                 if (!_connection.IsOpen)
@@ -151,7 +162,7 @@ namespace OSDP.Net
                             UpdateConnectionStatus(device);
                         }
 
-                        await Task.Delay(TimeSpan.FromSeconds(5));
+                        delayTime.WaitOne(TimeSpan.FromSeconds(5));
 
                         continue;
                     }
@@ -160,8 +171,7 @@ namespace OSDP.Net
                 if (IsPolling)
                 {
                     TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
-                    await Task.Delay(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero)
-                        .ConfigureAwait(false);
+                    delayTime.WaitOne(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
                     
                     if (!_configuredDevices.Any())
                     {
@@ -172,7 +182,7 @@ namespace OSDP.Net
                 else
                 {
                     // Keep CPU usage down while waiting for next command
-                    await Task.Delay(TimeSpan.FromMilliseconds(10));
+                    delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
                 }
 
                 foreach (var device in _configuredDevices.ToArray())
@@ -217,10 +227,12 @@ namespace OSDP.Net
                         reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
 
                         // Prevent plain text message replies when secure channel has been established
-                        // The busy reply type is a special case which is allowed to be sent as insecure message on a secure channel
-                        if (reply.Type != ReplyType.Busy && device.UseSecureChannel && device.IsSecurityEstablished && !reply.IsSecureMessage)
+                        // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
+                        if (reply.Type != ReplyType.Busy && reply.Type != ReplyType.Nak && device.UseSecureChannel &&
+                            device.IsSecurityEstablished && !reply.IsSecureMessage)
                         {
-                            _logger?.LogWarning("An plain text message was received when the secure channel had been established");
+                            _logger?.LogWarning(
+                                "A plain text message was received when the secure channel had been established");
                             device.CreateNewRandomNumber();
                             ResetDevice(device);
                             continue;
@@ -260,7 +272,7 @@ namespace OSDP.Net
                         continue;
                     }
 
-                    await Task.Delay(IdleLineDelay).ConfigureAwait(false);
+                    delayTime.WaitOne(IdleLineDelay);
                 }
             }
         }
@@ -272,17 +284,27 @@ namespace OSDP.Net
 
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
 
+        /// <summary>
+        /// Determine if the connection status needs to be updated
+        /// </summary>
+        /// <param name="device"></param>
+        /// <returns>Return true if the connection status changed</returns>
         private bool UpdateConnectionStatus(Device device)
         {
             bool isConnected = device.IsConnected;
+            bool isSecureChannelEstablished = device.IsSecurityEstablished;
 
-            if (_lastConnectionStatus.ContainsKey(device.Address) &&
-                _lastConnectionStatus[device.Address] == isConnected) return false;
-            
+            if (_lastOnlineConnectionStatus.ContainsKey(device.Address) &&
+                _lastOnlineConnectionStatus[device.Address] == isConnected &&
+                _lastSecureConnectionStatus.ContainsKey(device.Address) &&
+                _lastSecureConnectionStatus[device.Address] == isSecureChannelEstablished) return false;
+
             var handler = ConnectionStatusChanged;
-            handler?.Invoke(this, new ConnectionStatusEventArgs(device.Address, isConnected));
-                
-            _lastConnectionStatus[device.Address] = isConnected;
+            handler?.Invoke(this,
+                new ConnectionStatusEventArgs(device.Address, isConnected, device.IsSecurityEstablished));
+
+            _lastOnlineConnectionStatus[device.Address] = isConnected;
+            _lastSecureConnectionStatus[device.Address] = isSecureChannelEstablished;
 
             return true;
         }
@@ -318,7 +340,7 @@ namespace OSDP.Net
             if (reply.Type == ReplyType.Nak &&
                 (device.UseSecureChannel && (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
                  reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet) ||
-                 reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber))
+                 reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber && reply.Sequence > 0))
             {
                 if (reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber || reply.Sequence > 0) ResetDevice(device);
             }
@@ -387,7 +409,21 @@ namespace OSDP.Net
                 throw;
             }
 
-            // _logger?.LogInformation($"Raw write data: {BitConverter.ToString(commandData)}", Id, command.Address);
+            if (_isTracing)
+            {
+                var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
+                long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
+                await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
+                {
+                    timeSec = unixTime.TotalSeconds.ToString("F0"),
+                    timeNano = timeNano.ToString("000000000"),
+                    io = "output",
+                    data = BitConverter.ToString(commandData)
+                });
+                // Write newline
+                _tracerFile.WriteByte(0x0A);
+                _tracerFile.Flush();
+            }
 
             var buffer = new byte[commandData.Length + 1];
             buffer[0] = DriverByte;
@@ -412,8 +448,21 @@ namespace OSDP.Net
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
 
-            // _logger?.LogInformation($"Raw reply data: {BitConverter.ToString(replyBuffer.ToArray())}", Id,
-            //      command.Address);
+            if (_isTracing)
+            {
+                var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
+                long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
+                await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
+                {
+                    timeSec = unixTime.TotalSeconds.ToString("F0"),
+                    timeNano = timeNano.ToString("000000000"),
+                    io = "input",
+                    data = BitConverter.ToString(replyBuffer.ToArray())
+                });
+                // Write newline
+                _tracerFile.WriteByte(0x0A);
+                _tracerFile.Flush();
+            }
 
             return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }
@@ -513,14 +562,18 @@ namespace OSDP.Net
 
         public class ConnectionStatusEventArgs
         {
-            public ConnectionStatusEventArgs(byte address, bool isConnected)
+            public ConnectionStatusEventArgs(byte address, bool isConnected, bool isSecureSessionEstablished)
             {
                 Address = address;
                 IsConnected = isConnected;
+                IsSecureSessionEstablished = isSecureSessionEstablished;
             }
 
             public byte Address { get; }
+
             public bool IsConnected { get; }
+
+            public bool IsSecureSessionEstablished { get; }
         }
     }
 }

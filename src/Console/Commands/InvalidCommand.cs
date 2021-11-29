@@ -4,16 +4,16 @@ using OSDP.Net.Messages;
 namespace Console.Commands
 {
     /// <summary>
-    /// Change the CRC on a poll command
+    /// 
     /// </summary>
-    public class InvalidCrcPollCommand : Command
+    public class InvalidCommand : Command
     {
-        public InvalidCrcPollCommand(byte address)
+        public InvalidCommand(byte address)
         {
             Address = address;
         }
 
-        protected override byte CommandCode => 0x60;
+        protected override byte CommandCode => 0x59;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
@@ -26,7 +26,6 @@ namespace Console.Commands
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-            commandBuffer[^1] = (byte)(commandBuffer[^1] + 1);
         }
 
         protected override ReadOnlySpan<byte> Data()
