@@ -19,7 +19,7 @@ namespace SmartCardSample
         private static async Task Main()
         {
             var builder = new ConfigurationBuilder()
-                .AddJsonFile($"appsettings.json", true, true);
+                .AddJsonFile("appsettings.json", true, true);
             var config = builder.Build();
             var osdpSection = config.GetSection("OSDP");
             string portName = osdpSection["PortName"];
