@@ -22,16 +22,10 @@ variables:
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Install .NET 5 SDK'
+  displayName: 'Install .NET 6 SDK'
   inputs:
     packageType: 'sdk'
-    version: '5.x'
-
-- task: NuGetCommand@2
-  inputs:
-    command: 'restore'
-    restoreSolution: '**/*.sln'
-    feedsToUse: 'select'
+    version: '6.x'
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet build'
