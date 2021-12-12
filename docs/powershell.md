@@ -2,7 +2,7 @@
 
 You don't have to be a developer to make use of the OSDP.Net library. Commands can be scripted using PowerShell Core. 
 
-OSDP.ps1
+**OSDP.ps1**
 ```shell
 # Install Nuget packages and assemblies if needed
 if (([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object FullName -like '*Microsoft.Extensions.Logging.Abstractions*') -eq $null)
