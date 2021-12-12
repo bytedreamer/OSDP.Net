@@ -67,6 +67,7 @@ This will need to be entered when starting the connection.
 Be sure to save configuration before exiting.
 
 ## Documentation 
+* [PowerShell Support](docs/powershell.md)
 * [Supported Commands and Replies](docs/supported_commands.md)
 
 ## Contributing

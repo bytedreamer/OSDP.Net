@@ -415,7 +415,7 @@ namespace OSDP.Net
                 long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
                 await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
                 {
-                    timeSec = unixTime.TotalSeconds.ToString("F0"),
+                    timeSec = Math.Floor(unixTime.TotalSeconds).ToString("F0"),
                     timeNano = timeNano.ToString("000000000"),
                     io = "output",
                     data = BitConverter.ToString(commandData)
@@ -454,7 +454,7 @@ namespace OSDP.Net
                 long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
                 await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
                 {
-                    timeSec = unixTime.TotalSeconds.ToString("F0"),
+                    timeSec = Math.Floor(unixTime.TotalSeconds).ToString("F0"),
                     timeNano = timeNano.ToString("000000000"),
                     io = "input",
                     data = BitConverter.ToString(replyBuffer.ToArray())
