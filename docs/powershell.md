@@ -101,4 +101,4 @@ The sample code file above has been tested on Windows 10. Here are the steps to 
 
 ## Documentation of Commands
 
-The documentation of the commands is the same for developers. It can be found [here](supported_commands.md).
+The documentation of the OSDP commands is the same as for developers. It can be found [here](supported_commands.md).
