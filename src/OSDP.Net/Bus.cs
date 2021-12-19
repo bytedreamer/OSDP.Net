@@ -172,10 +172,10 @@ namespace OSDP.Net
                 {
                     TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
                     delayTime.WaitOne(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
+                    lastMessageSentTime = DateTime.UtcNow;
                     
                     if (!_configuredDevices.Any())
                     {
-                        lastMessageSentTime = DateTime.UtcNow;
                         continue;
                     }
                 }
@@ -205,8 +205,6 @@ namespace OSDP.Net
                         continue;
                     }
                     
-                    lastMessageSentTime = DateTime.UtcNow;
-
                     Reply reply;
                     
                     try
@@ -249,6 +247,10 @@ namespace OSDP.Net
                             case true when device.UseSecureChannel:
                                 device.CreateNewRandomNumber();
                                 break;
+                            default:
+                                _logger?.LogWarning($"Retrying command {command}");
+                                device.RetryCommand(command);
+                                break;
                         }
 
                         continue;
@@ -257,8 +259,10 @@ namespace OSDP.Net
                     {
                         if (!_isShuttingDown)
                         {
-                            _logger?.LogError(exception, $"Error while sending command {command} to address {command.Address}");
+                            _logger?.LogError(exception,
+                                $"Error while sending command {command} to address {command.Address}");
                         }
+
                         continue;
                     }
 
@@ -431,6 +435,11 @@ namespace OSDP.Net
             
             await _connection.WriteAsync(buffer).ConfigureAwait(false);
 
+            return await ReceiveReply(command, device);
+        }
+
+        private async Task<Reply> ReceiveReply(Command command, Device device)
+        {
             var replyBuffer = new Collection<byte>();
 
             if (!await WaitForStartOfMessage(replyBuffer).ConfigureAwait(false))
@@ -438,7 +447,7 @@ namespace OSDP.Net
                 throw new TimeoutException("Timeout waiting for reply message");
             }
 
-            if (!await WaitForMessageLength(replyBuffer).ConfigureAwait(false))             
+            if (!await WaitForMessageLength(replyBuffer).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message length");
             }

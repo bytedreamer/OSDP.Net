@@ -8,6 +8,8 @@ namespace OSDP.Net
 {
     internal class Device : IComparable<Device>
     {
+        private const int RetryAmount = 3;
+
         private static readonly byte[] DefaultKey = {
             0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
         };
@@ -16,8 +18,11 @@ namespace OSDP.Net
 
         private readonly SecureChannel _secureChannel = new();
         private readonly bool _useSecureChannel;
+        private int _counter = RetryAmount;
 
         private DateTime _lastValidReply = DateTime.MinValue;
+
+        private Command _retryCommand;
 
         public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey)
         {
@@ -69,6 +74,13 @@ namespace OSDP.Net
         /// <returns>The next command always if polling, could be null if not polling</returns>
         public Command GetNextCommandData(bool isPolling)
         {
+            if (_retryCommand != null)
+            {
+                var saveCommand = _retryCommand;
+                _retryCommand = null;
+                return saveCommand;
+            }
+            
             if (isPolling)
             {
                 if (UseSecureChannel && !_secureChannel.IsInitialized)
@@ -99,6 +111,23 @@ namespace OSDP.Net
         public void SendCommand(Command command)
         {
             _commands.Enqueue(command);
+        }
+
+        /// <summary>
+        /// Store command for retry
+        /// </summary>
+        /// <param name="command"></param>
+        public void RetryCommand(Command command)
+        {
+            if (_counter-- != 0)
+            {
+                _retryCommand = command;
+            }
+            else
+            {
+                _retryCommand = null;
+                _counter = RetryAmount;
+            }
         }
 
         public void ValidReplyHasBeenReceived(byte sequence)
