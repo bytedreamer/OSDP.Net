@@ -29,7 +29,7 @@ namespace OSDP.Net.Model.ReplyData
         /// The enter/'#' key is reported as ASCII return, 0x0D
         /// Special/function keys are reported as upper case ASCII:
         /// A or F1 = 0x41, B or F2 = 0x42, C or F3 = 0x43, D or F4 = 0x44
-        /// F1 & F2 = 0x45, F2 & F3 = 0x46, F3 & F4 = 0x47, F1 & F4 = 0x48
+        /// F1 &amp; F2 = 0x45, F2 &amp; F3 = 0x46, F3 &amp; F4 = 0x47, F1 &amp; F4 = 0x48
         /// </summary>
         public byte[] Data { get; private set; }
 
