@@ -248,7 +248,7 @@ namespace OSDP.Net
                                 device.CreateNewRandomNumber();
                                 break;
                             default:
-                                _logger?.LogWarning($"Retrying command {command}");
+                                _logger?.LogDebug($"Retrying command {command}");
                                 device.RetryCommand(command);
                                 break;
                         }
