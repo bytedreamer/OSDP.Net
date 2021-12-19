@@ -50,10 +50,11 @@ namespace OSDP.Net.Model.ReplyData
             {
                 build.AppendLine($"  Function: {Message.SplitCamelCase(capability.Function.ToString())}");
 
-                if (capability.Function == CapabilityFunction.ReceiveBufferSize ||
-                    capability.Function == CapabilityFunction.LargestCombinedMessageSize)
+                if (capability.Function is CapabilityFunction.ReceiveBufferSize
+                    or CapabilityFunction.LargestCombinedMessageSize)
                 {
-                    build.AppendLine($"      Size: {Message.ConvertBytesToUnsignedShort(new[] {capability.Compliance, capability.NumberOf})}");
+                    build.AppendLine(
+                        $"      Size: {Message.ConvertBytesToUnsignedShort(new[] { capability.Compliance, capability.NumberOf })}");
                 }
                 else
                 {
