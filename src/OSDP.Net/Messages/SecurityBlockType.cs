@@ -1,6 +1,6 @@
 namespace OSDP.Net.Messages
 {
-    public enum SecurityBlockType
+    internal enum SecurityBlockType
     {
         BeginNewSecureConnectionSequence = 0x11,
         SecureConnectionSequenceStep2 = 0x12,

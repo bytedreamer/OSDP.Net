@@ -6,10 +6,13 @@ using System.Text;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The manufacture specific data sent as a reply.
+    /// A manufacturer specific reply.
     /// </summary>
     public class ManufacturerSpecific
     {
+        /// <summary>
+        /// Prevents a default instance of the <see cref="ManufacturerSpecific"/> class from being created.
+        /// </summary>
         private ManufacturerSpecific()
         {
         }

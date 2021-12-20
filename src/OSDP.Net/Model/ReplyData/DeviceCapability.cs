@@ -28,7 +28,9 @@ namespace OSDP.Net.Model.ReplyData
         {
             return new DeviceCapability
             {
-                Function = data[0] <= 14 ? (CapabilityFunction) data[0] : CapabilityFunction.Unknown,
+                Function = typeof(CapabilityFunction).IsEnumDefined((int)data[0])
+                    ? (CapabilityFunction)data[0]
+                    : CapabilityFunction.Unknown,
                 Compliance = data[1],
                 NumberOf = data[2]
             };

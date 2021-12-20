@@ -62,7 +62,9 @@ namespace OSDP.Net.Model.CommandData
     public enum ToneCode
     {
         [Obsolete("This no tone code is obsolete.", false)]
+#pragma warning disable CS1591
         None = 0x00,
+#pragma warning restore CS1591
 
         /// <summary>
         /// Turn off the tone

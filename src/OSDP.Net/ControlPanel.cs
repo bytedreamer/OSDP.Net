@@ -725,57 +725,66 @@ namespace OSDP.Net
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
 
         /// <summary>
-        /// Occurs when NAK reply received.
+        /// Occurs when a negative reply is received.
         /// </summary>
         public event EventHandler<NakReplyEventArgs> NakReplyReceived;
 
         /// <summary>
-        /// Occurs when local status report reply received.
+        /// Occurs when local status report reply is received.
         /// </summary>
         public event EventHandler<LocalStatusReportReplyEventArgs> LocalStatusReportReplyReceived;
 
         /// <summary>
-        /// Occurs when input status report reply received.
+        /// Occurs when input status report reply is received.
         /// </summary>
         public event EventHandler<InputStatusReportReplyEventArgs> InputStatusReportReplyReceived;
 
         /// <summary>
-        /// Occurs when output status report reply received.
+        /// Occurs when output status report reply is received.
         /// </summary>
         public event EventHandler<OutputStatusReportReplyEventArgs> OutputStatusReportReplyReceived;
 
         /// <summary>
-        /// Occurs when reader status report reply received.
+        /// Occurs when reader status report reply is received.
         /// </summary>
         public event EventHandler<ReaderStatusReportReplyEventArgs> ReaderStatusReportReplyReceived;
 
         /// <summary>
-        /// Occurs when raw card data reply received.
+        /// Occurs when raw card data reply is received.
         /// </summary>
         public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
 
         /// <summary>
-        /// Occurs when manufacturer specific reply received.
+        /// Occurs when manufacturer specific reply is received.
         /// </summary>
         public event EventHandler<ManufacturerSpecificReplyEventArgs> ManufacturerSpecificReplyReceived;
 
         /// <summary>
-        /// Occurs when extended read reply received.
+        /// Occurs when extended read reply is received.
         /// </summary>
         public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
 
         /// <summary>
-        /// Occurs when key pad data reply received.
+        /// Occurs when key pad data reply is received.
         /// </summary>
         public event EventHandler<KeypadReplyEventArgs> KeypadReplyReceived;
 
         /// <summary>
-        /// Occurs when piv data reply received.
+        /// Occurs when piv data reply is received.
         /// </summary>
         private event EventHandler<PIVDataReplyEventArgs> PIVDataReplyReceived;
 
+        /// <summary>
+        /// A negative reply that has been received.
+        /// </summary>
         public class NakReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="NakReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="nak">A negative reply that has been received.</param>
             public NakReplyEventArgs(Guid connectionId, byte address, Nak nak)
             {
                 ConnectionId = connectionId;
@@ -783,13 +792,32 @@ namespace OSDP.Net
                 Nak = nak;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
+            /// <summary>
+            /// A negative reply that has been received.
+            /// </summary>
             public Nak Nak { get; }
         }
 
+        /// <summary>
+        /// A connection status has been changed.
+        /// </summary>
         public class ConnectionStatusEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ConnectionStatusEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="isConnected">Is the device currently connected.</param>
+            /// <param name="isSecureChannelEstablished">Is the secure channel currently established.</param>
             public ConnectionStatusEventArgs(Guid connectionId, byte address, bool isConnected,
                 bool isSecureChannelEstablished)
             {
@@ -799,15 +827,35 @@ namespace OSDP.Net
                 IsSecureChannelEstablished = isSecureChannelEstablished;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
+            /// <summary>
+            /// Is the device currently connected.
+            /// </summary>
             public bool IsConnected { get; }
-
+            /// <summary>
+            /// Is the secure channel currently established
+            /// </summary>
             public bool IsSecureChannelEstablished { get; }
         }
 
+        /// <summary>
+        /// The local status report reply has been received.
+        /// </summary>
         public class LocalStatusReportReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="LocalStatusReportReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="localStatus">A local status report reply.</param>
             public LocalStatusReportReplyEventArgs(Guid connectionId, byte address, LocalStatus localStatus)
             {
                 ConnectionId = connectionId;
@@ -815,13 +863,31 @@ namespace OSDP.Net
                 LocalStatus = localStatus;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
+            /// <summary>
+            /// A local status report reply.
+            /// </summary>
             public LocalStatus LocalStatus { get; }
         }
 
+        /// <summary>
+        /// The input status report reply has been received.
+        /// </summary>
         public class InputStatusReportReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="LocalStatusReportReplyEventArgs" /> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="inputStatus">A input status report reply.</param>
             public InputStatusReportReplyEventArgs(Guid connectionId, byte address, InputStatus inputStatus)
             {
                 ConnectionId = connectionId;
@@ -829,13 +895,31 @@ namespace OSDP.Net
                 InputStatus = inputStatus;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
+            /// <summary>
+            /// A input status report reply.
+            /// </summary>
             public InputStatus InputStatus { get; }
         }
 
+        /// <summary>
+        /// The output status report reply has been received.
+        /// </summary>
         public class OutputStatusReportReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="OutputStatusReportReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="outputStatus">A output status report reply.</param>
             public OutputStatusReportReplyEventArgs(Guid connectionId, byte address, OutputStatus outputStatus)
             {
                 ConnectionId = connectionId;
@@ -843,13 +927,31 @@ namespace OSDP.Net
                 OutputStatus = outputStatus;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
+            /// <summary>
+            /// A output status report reply.
+            /// </summary>
             public OutputStatus OutputStatus { get; }
         }
 
+        /// <summary>
+        /// The reader status report reply has been received.
+        /// </summary>
         public class ReaderStatusReportReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ReaderStatusReportReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="readerStatus">A reader status report reply.</param>
             public ReaderStatusReportReplyEventArgs(Guid connectionId, byte address, ReaderStatus readerStatus)
             {
                 ConnectionId = connectionId;
@@ -857,13 +959,31 @@ namespace OSDP.Net
                 ReaderStatus = readerStatus;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
+            /// <summary>
+            /// A reader status report reply.
+            /// </summary>
             public ReaderStatus ReaderStatus { get; }
         }
 
+        /// <summary>
+        /// The raw card data reply has been received.
+        /// </summary>
         public class RawCardDataReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="RawCardDataReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="rawCardData">A raw card data reply.</param>
             public RawCardDataReplyEventArgs(Guid connectionId, byte address, RawCardData rawCardData)
             {
                 ConnectionId = connectionId;
@@ -871,13 +991,31 @@ namespace OSDP.Net
                 RawCardData = rawCardData;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
+            /// <summary>
+            /// A raw card data reply.
+            /// </summary>
             public RawCardData RawCardData { get; }
         }
 
+        /// <summary>
+        /// The manufacture specific reply has been received.
+        /// </summary>
         public class ManufacturerSpecificReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ManufacturerSpecificReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="manufacturerSpecific">A manufacturer specific reply.</param>
             public ManufacturerSpecificReplyEventArgs(Guid connectionId, byte address, ManufacturerSpecific manufacturerSpecific)
             {
                 ConnectionId = connectionId;
@@ -885,15 +1023,31 @@ namespace OSDP.Net
                 ManufacturerSpecific = manufacturerSpecific;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
-
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
-
+            /// <summary>
+            /// A manufacturer specific reply.
+            /// </summary>
             public ManufacturerSpecific ManufacturerSpecific { get; }
         }
 
+        /// <summary>
+        /// The extended read reply has been received.
+        /// </summary>
         public class ExtendedReadReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ExtendedReadReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="extendedRead">A extended read reply.</param>
             public ExtendedReadReplyEventArgs(Guid connectionId, byte address, ExtendedRead extendedRead)
             {
                 ConnectionId = connectionId;
@@ -901,15 +1055,31 @@ namespace OSDP.Net
                 ExtendedRead = extendedRead;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
-
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
-
+            /// <summary>
+            /// A extended read reply.
+            /// </summary>
             public ExtendedRead ExtendedRead { get; }
         }
 
+        /// <summary>
+        /// The PIV data reply has been received.
+        /// </summary>
         private class PIVDataReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PIVDataReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="pivData">A PIV data reply.</param>
             public PIVDataReplyEventArgs(Guid connectionId, byte address, PIVData pivData)
             {
                 ConnectionId = connectionId;
@@ -917,15 +1087,31 @@ namespace OSDP.Net
                 PIVData = pivData;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
-
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
-
+            /// <summary>
+            /// A PIV data reply.
+            /// </summary>
             public PIVData PIVData { get; }
         }
 
+        /// <summary>
+        /// The keypad reply has been received.
+        /// </summary>
         public class KeypadReplyEventArgs : EventArgs
         {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="KeypadReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="keypadData">A keypad reply.</param>
             public KeypadReplyEventArgs(Guid connectionId, byte address, KeypadData keypadData)
             {
                 ConnectionId = connectionId;
@@ -933,10 +1119,17 @@ namespace OSDP.Net
                 KeypadData = keypadData;
             }
 
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
             public Guid ConnectionId { get; }
-
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
             public byte Address { get; }
-
+            /// <summary>
+            /// A keypad reply..
+            /// </summary>
             public KeypadData KeypadData { get; }
         }
 
@@ -970,7 +1163,7 @@ namespace OSDP.Net
             public int CurrentOffset { get; }
 
             /// <summary>
-            /// Contains Nak reply data if returned
+            /// Contains Nak reply if returned
             /// </summary>
             public Nak Nak { get; }
         }

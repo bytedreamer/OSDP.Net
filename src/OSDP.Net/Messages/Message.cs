@@ -6,9 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace OSDP.Net.Messages
 {
+    /// <summary>
+    /// A base message class for sending or replying.
+    /// </summary>
     public abstract class Message
     {
-        public const byte StartOfMessage = 0x53;
+        internal const byte StartOfMessage = 0x53;
 
         private static ReadOnlySpan<ushort> CrcTable => new ushort[]
         {
@@ -34,8 +37,15 @@ namespace OSDP.Net.Messages
             0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
         };
 
+        /// <summary>
+        /// Address assigned to the device.
+        /// </summary>
         public byte Address { get; protected set; }
 
+        /// <summary>
+        /// The data.
+        /// </summary>
+        /// <returns>The data</returns>
         protected abstract ReadOnlySpan<byte> Data();
 
         internal static byte[] ConvertShortToBytes(ushort value)
@@ -63,6 +73,11 @@ namespace OSDP.Net.Messages
                 : BinaryPrimitives.ReadInt16BigEndian(data);
         }
 
+        /// <summary>
+        /// Calculates the CRC from the packet data.
+        /// </summary>
+        /// <param name="packet">The packet data.</param>
+        /// <returns>The calculated CRC.</returns>
         protected static ushort CalculateCrc(ReadOnlySpan<byte> packet)
         {
             ushort crc = 0x1D0F;
@@ -74,11 +89,21 @@ namespace OSDP.Net.Messages
             return crc;
         }
 
+        /// <summary>
+        /// Calculates the checksum from the packet data.
+        /// </summary>
+        /// <param name="packet">The packet data.</param>
+        /// <returns>The calculated checksum.</returns>
         protected static byte CalculateChecksum(byte[] packet)
         {
             return (byte) (0x100 - packet.Aggregate(0, (source, element) => source + element) & 0xff);
         }
 
+        /// <summary>
+        /// Calculates the length and adds it to the packet.
+        /// </summary>
+        /// <param name="packet">The packet.</param>
+        /// <param name="additionalLength">Additional length to add to the calculation.</param>
         protected static void AddPacketLength(Span<byte> packet, ushort additionalLength = 0)
         {
             var packetLength = ConvertShortToBytes((ushort)(packet.Length + additionalLength)).ToArray();
@@ -86,6 +111,10 @@ namespace OSDP.Net.Messages
             packet[3] = packetLength[1];
         }
 
+        /// <summary>
+        /// Adds the CRC to the packet.
+        /// </summary>
+        /// <param name="packet">The packet.</param>
         protected static void AddCrc(Span<byte> packet)
         {
             ushort crc = CalculateCrc(packet.Slice(0, packet.Length - 2));
@@ -94,6 +123,10 @@ namespace OSDP.Net.Messages
             packet[packet.Length - 1] = crcBytes[1];
         }
 
+        /// <summary>
+        /// Adds the checksum to the packet.
+        /// </summary>
+        /// <param name="packet">The packet.</param>
         protected static void AddChecksum(IList<byte> packet)
         {
             packet[packet.Count - 1] = CalculateChecksum(packet.Take(packet.Count - 1).ToArray());

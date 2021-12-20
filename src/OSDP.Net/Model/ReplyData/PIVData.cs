@@ -5,18 +5,33 @@ using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
+    /// <summary>
+    /// A PIV data reply.
+    /// </summary>
     public class PIVData
     {
         private PIVData()
         {
         }
 
+        /// <summary>
+        /// The length of the whole message.
+        /// </summary>
         public ushort WholeMessageLength { get; private set; }
 
+        /// <summary>
+        /// The offset.
+        /// </summary>
         public ushort Offset { get; private set; }
 
+        /// <summary>
+        /// The length of fragment.
+        /// </summary>
         public ushort LengthOfFragment { get; private set; }
 
+        /// <summary>
+        /// The data.
+        /// </summary>
         public byte[] Data { get; private set; }
 
         internal static PIVData ParseData(ReadOnlySpan<byte> data)
@@ -38,6 +53,7 @@ namespace OSDP.Net.Model.ReplyData
             return pivData;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var build = new StringBuilder();

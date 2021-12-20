@@ -1,6 +1,6 @@
 namespace OSDP.Net.Messages
 {
-    public class Control
+    internal class Control
     {
         private readonly bool _hasSecurityControlBlock;
 

@@ -1,5 +1,8 @@
 namespace OSDP.Net.Model.CommandData
 {
+    /// <summary>
+    /// Output Control Code
+    /// </summary>
     public enum OutputControlCode
     {
         /// <summary>NOP – do not alter this output.</summary>

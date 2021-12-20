@@ -4,7 +4,7 @@ using System.Text;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// Keypad data entered on PD
+    /// A keypad reply.
     /// </summary>
     public class KeypadData
     {
@@ -21,15 +21,46 @@ namespace OSDP.Net.Model.ReplyData
         public ushort DigitCount { get; private set; }
 
         /// <summary>
-        /// Data returned from keypad
-        /// 
-        /// The key encoding uses the following data representation:
-        /// Digits 0 through 9 are reported as ASCII characters 0x30 through 0x39
-        /// The clear/delete/'*' key is reported as ASCII DELETE, 0x7F
-        /// The enter/'#' key is reported as ASCII return, 0x0D
-        /// Special/function keys are reported as upper case ASCII:
-        /// A or F1 = 0x41, B or F2 = 0x42, C or F3 = 0x43, D or F4 = 0x44
-        /// F1 & F2 = 0x45, F2 & F3 = 0x46, F3 & F4 = 0x47, F1 & F4 = 0x48
+        /// <para>Data returned from keypad</para>
+        /// <para>The key encoding uses the following data representation:</para>
+        /// <list type="bullet">
+        ///     <item>
+        ///         <description>Digits 0 through 9 are reported as ASCII characters 0x30 through 0x39</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>The clear/delete/'*' key is reported as ASCII DELETE, 0x7F</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>The enter/'#' key is reported as ASCII return, 0x0D</description>
+        ///     </item>
+        /// </list>
+        /// <para>Special/function keys are reported as upper case ASCII:</para>
+        /// <list type="bullet">
+        ///     <item>
+        ///         <description>A or F1 = 0x41</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>B or F2 = 0x42</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>C or F3 = 0x43</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>D or F4 = 0x44</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>F1 and F2 = 0x45</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>F2 and F3 = 0x46</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>F3 and F4 = 0x47</description>
+        ///     </item>
+        ///     <item>
+        ///         <description>F1 and F4 = 0x48</description>
+        ///     </item>
+        /// </list>
         /// </summary>
         public byte[] Data { get; private set; }
 
