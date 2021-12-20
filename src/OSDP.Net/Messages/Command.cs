@@ -5,12 +5,26 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("OSDP.Net.Tests")]
 namespace OSDP.Net.Messages
 {
+    /// <summary>
+    /// A command sent to the PD.
+    /// </summary>
     public abstract class Command : Message
     {
+        /// <summary>
+        /// The command code.
+        /// </summary>
         protected abstract byte CommandCode { get; }
 
+        /// <summary>
+        /// The security control block.
+        /// </summary>
+        /// <returns>The data of security control block.</returns>
         protected abstract ReadOnlySpan<byte> SecurityControlBlock();
 
+        /// <summary>
+        /// Customize the command buffer.
+        /// </summary>
+        /// <param name="commandBuffer">The command buffer.</param>
         protected abstract void CustomCommandUpdate(Span<byte> commandBuffer);
 
         internal byte[] BuildCommand(Device device)

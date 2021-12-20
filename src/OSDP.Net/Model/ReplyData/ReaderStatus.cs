@@ -7,7 +7,7 @@ using OSDP.Net.Messages;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The reader status report sent as a reply.
+    /// A reader status report reply.
     /// </summary>
     public class ReaderStatus
     {

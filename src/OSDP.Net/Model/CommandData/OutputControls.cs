@@ -7,6 +7,10 @@ namespace OSDP.Net.Model.CommandData
     /// </summary>
     public class OutputControls
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OutputControls"/> class.
+        /// </summary>
+        /// <param name="controls">The controls.</param>
         public OutputControls(IEnumerable<OutputControl> controls)
         {
             Controls = controls;

@@ -183,6 +183,7 @@ namespace OSDP.Net.Model.CommandData
     /// </summary>
     public enum LedColor
     {
+#pragma warning disable CS1591
         Black = 0,
         Red = 1,
         Green =  2,
@@ -191,5 +192,6 @@ namespace OSDP.Net.Model.CommandData
         Magenta = 5,
         Cyan = 6,
         White = 7
+#pragma warning restore CS1591
     }
 }

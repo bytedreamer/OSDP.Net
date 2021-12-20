@@ -1,6 +1,6 @@
 namespace OSDP.Net.Messages
 {
-    public enum ReplyType
+    internal enum ReplyType
     {
         Ack = 0x40,
         Nak = 0x41,

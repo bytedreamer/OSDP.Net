@@ -6,10 +6,13 @@ using System.Text;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The output status report sent as a reply.
+    /// A output status report reply.
     /// </summary>
     public class OutputStatus
     {
+        /// <summary>
+        /// Prevents a default instance of the <see cref="OutputStatus"/> class from being created.
+        /// </summary>
         private OutputStatus()
         {
         }

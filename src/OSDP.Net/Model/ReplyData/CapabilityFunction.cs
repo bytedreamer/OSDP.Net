@@ -104,7 +104,9 @@ namespace OSDP.Net.Model.ReplyData
         ReaderTextOutput = 6,
 
         [Obsolete("This capability function is obsolete.", false)]
+#pragma warning disable CS1591
         TimeKeeping = 7,
+#pragma warning restore CS1591
 
         /// <summary>
         ///   <para>Check character support for the PD.</para>

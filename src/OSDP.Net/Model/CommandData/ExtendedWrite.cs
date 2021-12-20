@@ -96,6 +96,10 @@ namespace OSDP.Net.Model.CommandData
             return new ExtendedWrite(1, 4, new [] {readerNumber});
         }
 
+        /// <summary>
+        /// Builds the data.
+        /// </summary>
+        /// <returns>The data.</returns>
         public ReadOnlySpan<byte> BuildData()
         {
             var data = new List<byte> {Mode, PCommand};

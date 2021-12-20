@@ -21,6 +21,10 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public IEnumerable<ReaderLedControl> Controls { get; }
 
+        /// <summary>
+        /// Builds the data.
+        /// </summary>
+        /// <returns>The Data</returns>
         public IEnumerable<byte> BuildData()
         {
             var data = new List<byte>();

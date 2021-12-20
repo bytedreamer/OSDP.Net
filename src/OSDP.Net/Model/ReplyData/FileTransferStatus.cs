@@ -10,33 +10,69 @@ namespace OSDP.Net.Model.ReplyData
     /// </summary>
     public class FileTransferStatus
     {
+        /// <summary>
+        /// Control Flags
+        /// </summary>
         [Flags]
-        public enum ControlFlags
+        internal enum ControlFlags
         {
             Interleave = 0x1,
             LeaveSecureChannel = 0x2,
             PollResponseAvailable = 0x4
         }
 
+        /// <summary>
+        /// Status Detail
+        /// </summary>
         public enum StatusDetail
         {
+            /// <summary>
+            /// The error is unknown
+            /// </summary>
             UnknownError = -4,
+            /// <summary>
+            /// The file data unacceptable (malformed).
+            /// </summary>
             FileDataUnacceptable = -3,
+            /// <summary>
+            /// Unrecognized file contents.
+            /// </summary>
             UnrecognizedFileContents = -2,
+            /// <summary>
+            /// Abort file transfer.
+            /// </summary>
             AbortFileTransfer = -1,
+            /// <summary>
+            /// OK to proceed.
+            /// </summary>
             OkToProceed = 0,
+            /// <summary>
+            /// The File contents processed.
+            /// </summary>
             FileContentsProcessed = 1,
+            /// <summary>
+            /// Rebooting now, expect full communications reset.
+            /// </summary>
             RebootingNow = 2,
+            /// <summary>
+            /// PD is finishing file transfer.
+            /// </summary>
             FinishingFileTransfer = 3,
+            /// <summary>
+            /// The status is unknown
+            /// </summary>
             UnknownStatus = 4
         }
 
+        /// <summary>
+        /// Prevents a default instance of the <see cref="FileTransferStatus"/> class from being created.
+        /// </summary>
         private FileTransferStatus()
         {
         }
 
         /// <summary>Gets the control flags.</summary>
-        public ControlFlags Action { get; private set; }
+        internal ControlFlags Action { get; private set; }
 
         /// <summary>Gets the request ACU time delay in milliseconds before next osdp_FILETRANSFER command.</summary>
         public ushort RequestedDelay { get;private set;  }

@@ -4,10 +4,13 @@ using System.Text;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The local status report sent as a reply.
+    /// A local status report reply.
     /// </summary>
     public class LocalStatus
     {
+        /// <summary>
+        /// Prevents a default instance of the <see cref="LocalStatus"/> class from being created.
+        /// </summary>
         private LocalStatus()
         {
         }
@@ -24,6 +27,10 @@ namespace OSDP.Net.Model.ReplyData
         /// <value><c>true</c> if power failure; otherwise, <c>false</c>.</value>
         public bool PowerFailure { get; private set; }
 
+        /// <summary>Parses the data.</summary>
+        /// <param name="data">The data.</param>
+        /// <returns>A local status report reply.</returns>
+        /// <exception cref="System.Exception">Invalid size for the data</exception>
         internal static LocalStatus ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();

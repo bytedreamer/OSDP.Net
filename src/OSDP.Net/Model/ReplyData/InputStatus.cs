@@ -6,7 +6,7 @@ using System.Text;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// The input status report sent as a reply.
+    /// A input status report reply.
     /// </summary>
     public class InputStatus
     {
@@ -19,6 +19,11 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<bool> InputStatuses { get; private set; }
 
+        /// <summary>
+        /// Parses the data.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <returns>A input status report reply.</returns>
         internal static InputStatus ParseData(ReadOnlySpan<byte> data)
         {
             return new InputStatus {InputStatuses = data.ToArray().Select(Convert.ToBoolean)};
