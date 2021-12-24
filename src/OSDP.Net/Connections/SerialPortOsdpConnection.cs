@@ -45,26 +45,13 @@ namespace OSDP.Net.Connections
         public async Task WriteAsync(byte[] buffer)
         {
             await _serialPort.BaseStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+            await _serialPort.BaseStream.FlushAsync();
         }
 
         /// <inheritdoc />
         public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
-            var task = _serialPort.BaseStream.ReadAsync(buffer,0, buffer.Length, token);
-            try
-            {
-                if (await Task.WhenAny(task, Task.Delay(-1, token)) == task)
-                {
-                    return await task.ConfigureAwait(false);
-                }
-
-                throw new OperationCanceledException();
-            }
-            catch
-            {
-                _serialPort.DiscardInBuffer();
-                throw;
-            }
+            return await _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
         }
     }
 }
