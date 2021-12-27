@@ -478,7 +478,12 @@ namespace Console
                         return;
                     }
 
+
                     _scrollView.Frame = new Rect(1, 0, _window.Frame.Width - 3, _window.Frame.Height - 2);
+                    foreach (var view in _scrollView.Subviews)
+                    {
+                        view.Dispose();
+                    }
                     _scrollView.RemoveAll();
 
                     int index = 0;
@@ -492,13 +497,13 @@ namespace Console
                         if (outputMessage.Contains("| WARN |") || outputMessage.Contains("NAK"))
                         {
                             label.ColorScheme = new ColorScheme
-                                {Normal = Terminal.Gui.Attribute.Make(Color.Black, Color.BrightYellow)};
+                                { Normal = Terminal.Gui.Attribute.Make(Color.Black, Color.BrightYellow) };
                         }
 
                         if (outputMessage.Contains("| ERROR |"))
                         {
                             label.ColorScheme = new ColorScheme
-                                {Normal = Terminal.Gui.Attribute.Make(Color.White, Color.BrightRed)};
+                                { Normal = Terminal.Gui.Attribute.Make(Color.White, Color.BrightRed) };
                         }
 
                         _scrollView.Add(label);
