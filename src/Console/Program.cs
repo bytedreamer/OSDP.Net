@@ -103,6 +103,7 @@ namespace Console
                 new MenuBarItem("_Commands", new[]
                 {
                     new MenuItem("Communication Configuration", "", SendCommunicationConfiguration), 
+                    new MenuItem("Biometric Match", "", SendBiometricMatchCommand), 
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, _controlPanel.DeviceCapabilities)),
                     new MenuItem("Encryption Key Set", "", SendEncryptionKeySetCommand),
@@ -207,6 +208,11 @@ namespace Console
             {
                 DisplayReceivedReply($"Received keypad data reply for address {args.Address}",
                     args.KeypadData.ToString());
+            };
+            _controlPanel.BiometricMatchReplyReceived += (_, args) =>
+            {
+                DisplayReceivedReply($"Received biometric match reply for address {args.Address}",
+                    args.BiometricMatchResult.ToString());
             };
         }
 
@@ -477,7 +483,6 @@ namespace Console
                     {
                         return;
                     }
-
 
                     _scrollView.Frame = new Rect(1, 0, _window.Frame.Width - 3, _window.Frame.Height - 2);
                     foreach (var view in _scrollView.Subviews)
@@ -1005,6 +1010,51 @@ namespace Console
                 readerAddressTextField,
                 new Label(1, 3, "Repeat Times:"),
                 repeatTimesTextField);
+            readerAddressTextField.SetFocus();
+            
+            Application.Run(dialog);
+        }
+
+        private static void SendBiometricMatchCommand()
+        {
+            var readerAddressTextField = new TextField(20, 1, 20, "0");
+
+            void SendBiometricMatchButtonClicked()
+            {
+                if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    return;
+                }
+                
+                var openDialog = new OpenDialog("Biometric Match", "Select a template to match");
+                openDialog.DirectoryPath = ustring.Make(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+                Application.Run(openDialog);
+
+                string path = openDialog.FilePath.ToString() ?? string.Empty;
+                if (!File.Exists(path))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "No file selected!", "OK");
+                    return;
+                }
+
+                SendCommand("Biometric Match Command", _connectionId,
+                    new BiometricTemplateData(readerNumber, BiometricType.NotSpecified, BiometricFormat.FingerPrintTemplate,
+                        50, File.ReadAllBytes(path)),
+                    _controlPanel.ScanAndMatchBiometricTemplate, (_, _) => { });
+
+                Application.RequestStop();
+            }
+
+            var sendButton = new Button("Send", true);
+            sendButton.Clicked += SendBiometricMatchButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += () => Application.RequestStop();
+
+            var dialog = new Dialog("Biometric Match Command", 60, 10, cancelButton, sendButton);
+            dialog.Add(new Label(1, 1, "Reader Number:"),
+                readerAddressTextField);
             readerAddressTextField.SetFocus();
             
             Application.Run(dialog);

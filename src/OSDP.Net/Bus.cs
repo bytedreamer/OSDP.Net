@@ -65,7 +65,7 @@ namespace OSDP.Net
 
         private TimeSpan IdleLineDelay(int numberOfBytes)
         {
-            return TimeSpan.FromSeconds((1.0 / _connection.BaudRate) * (2.0 * numberOfBytes));
+            return TimeSpan.FromSeconds((1.0 / _connection.BaudRate) * (8.0 * numberOfBytes));
         }
 
         /// <summary>
@@ -424,7 +424,7 @@ namespace OSDP.Net
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
             
             await _connection.WriteAsync(buffer).ConfigureAwait(false);
-            
+           
             if (_isTracing)
             {
                 var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
@@ -440,6 +440,9 @@ namespace OSDP.Net
                 _tracerFile.WriteByte(0x0A);
                 _tracerFile.Flush();
             }
+            
+            using var delayTime = new AutoResetEvent(false);
+            delayTime.WaitOne(IdleLineDelay(buffer.Length));
 
             return await ReceiveReply(command, device);
         }

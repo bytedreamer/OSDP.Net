@@ -505,6 +505,22 @@ namespace OSDP.Net
         }
 
         /// <summary>
+        /// Send a request to the PD to perform a biometric scan and match it to the provided template.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="biometricTemplateData">Command data to send a request to the PD to perform a biometric scan and match.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<bool> ScanAndMatchBiometricTemplate(Guid connectionId, byte address,
+            BiometricTemplateData biometricTemplateData)
+        {
+            var reply = await SendCommand(connectionId,
+                new BiometricMatchCommand(address, biometricTemplateData)).ConfigureAwait(false);
+
+            return reply.Type == ReplyType.Ack;
+        }
+
+        /// <summary>
         /// Is the PD online
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device</param>
@@ -714,6 +730,15 @@ namespace OSDP.Net
                             KeypadData.ParseData(reply.ExtractReplyData)));
                     break;
                 }
+                
+                case ReplyType.BiometricMatchResult:
+                {
+                    var handler = BiometricMatchReplyReceived;
+                    handler?.Invoke(this,
+                        new BiometricMatchReplyEventArgs(reply.ConnectionId, reply.Address,
+                            BiometricMatchResult.ParseData(reply.ExtractReplyData)));
+                    break;
+                }
             }
         }
 
@@ -770,6 +795,11 @@ namespace OSDP.Net
         public event EventHandler<KeypadReplyEventArgs> KeypadReplyReceived;
 
         /// <summary>
+        /// Occurs when biometric match reply is received.
+        /// </summary>
+        public event EventHandler<BiometricMatchReplyEventArgs> BiometricMatchReplyReceived;
+
+        /// <summary>
         /// Occurs when piv data reply is received.
         /// </summary>
         private event EventHandler<PIVDataReplyEventArgs> PIVDataReplyReceived;
@@ -796,10 +826,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A negative reply that has been received.
             /// </summary>
@@ -831,14 +863,17 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// Is the device currently connected.
             /// </summary>
             public bool IsConnected { get; }
+
             /// <summary>
             /// Is the secure channel currently established
             /// </summary>
@@ -867,10 +902,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A local status report reply.
             /// </summary>
@@ -899,10 +936,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A input status report reply.
             /// </summary>
@@ -931,10 +970,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A output status report reply.
             /// </summary>
@@ -963,10 +1004,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A reader status report reply.
             /// </summary>
@@ -995,10 +1038,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A raw card data reply.
             /// </summary>
@@ -1027,10 +1072,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A manufacturer specific reply.
             /// </summary>
@@ -1059,10 +1106,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A extended read reply.
             /// </summary>
@@ -1091,10 +1140,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A PIV data reply.
             /// </summary>
@@ -1123,14 +1174,51 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A keypad reply..
             /// </summary>
             public KeypadData KeypadData { get; }
+        }
+
+        /// <summary>
+        /// A biometric match reply has been received.
+        /// </summary>
+        public class BiometricMatchReplyEventArgs : EventArgs
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BiometricMatchReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="biometricMatchResult">A biometric match reply.</param>
+            public BiometricMatchReplyEventArgs(Guid connectionId, byte address,
+                BiometricMatchResult biometricMatchResult)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                BiometricMatchResult = biometricMatchResult;
+            }
+
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
+            public Guid ConnectionId { get; }
+
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
+            public byte Address { get; }
+
+            /// <summary>
+            /// A biometric match result reply..
+            /// </summary>
+            public BiometricMatchResult BiometricMatchResult { get; }
         }
 
         /// <summary>

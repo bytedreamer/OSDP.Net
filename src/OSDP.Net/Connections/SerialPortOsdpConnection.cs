@@ -45,7 +45,6 @@ namespace OSDP.Net.Connections
         public async Task WriteAsync(byte[] buffer)
         {
             await _serialPort.BaseStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
-            await _serialPort.BaseStream.FlushAsync();
         }
 
         /// <inheritdoc />
