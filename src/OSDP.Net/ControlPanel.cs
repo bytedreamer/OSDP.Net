@@ -521,6 +521,50 @@ namespace OSDP.Net
         }
 
         /// <summary>
+        /// Inform the PD the maximum size that the ACU can receive.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="maximumReceiveSize">The maximum size that the ACU can receive.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<bool> ACUReceivedSize(Guid connectionId, byte address, ushort maximumReceiveSize)
+        {
+            var reply = await SendCommand(connectionId,
+                new ACUReceiveSizeCommand(address, maximumReceiveSize)).ConfigureAwait(false);
+
+            return reply.Type == ReplyType.Ack;
+        }
+
+        /// <summary>
+        /// Instructs the PD to maintain communication with the credential for a specified time.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="keepAliveTimeInMilliseconds">The length of time to maintain communication with credential.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<bool> KeepReaderActive(Guid connectionId, byte address, ushort keepAliveTimeInMilliseconds)
+        {
+            var reply = await SendCommand(connectionId,
+                new KeepReaderActiveCommand(address, keepAliveTimeInMilliseconds)).ConfigureAwait(false);
+
+            return reply.Type == ReplyType.Ack;
+        }
+
+        /// <summary>
+        /// Instructs the PD to abort the current operation.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<bool> AbortCurrentOperation(Guid connectionId, byte address)
+        {
+            var reply = await SendCommand(connectionId, new AbortCurrentOperationCommand(address))
+                .ConfigureAwait(false);
+
+            return reply.Type == ReplyType.Ack;
+        }
+
+        /// <summary>
         /// Is the PD online
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device</param>
