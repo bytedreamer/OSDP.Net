@@ -6,11 +6,11 @@ using OSDP.Net.Messages;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// A PIV data reply.
+    /// A multi-part message data fragment reply.
     /// </summary>
-    public class PIVData
+    internal class DataFragmentResponse
     {
-        private PIVData()
+        private DataFragmentResponse()
         {
         }
 
@@ -34,15 +34,15 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public byte[] Data { get; private set; }
 
-        internal static PIVData ParseData(ReadOnlySpan<byte> data)
+        internal static DataFragmentResponse ParseData(ReadOnlySpan<byte> data)
         {
             if (data.Length < 6)
             {
                 // throw new Exception("Invalid size for the data");
-                return new PIVData {Data = new byte[] { }};
+                return new DataFragmentResponse {Data = new byte[] { }};
             }
 
-            var pivData = new PIVData
+            var fragmentResponse = new DataFragmentResponse
             {
                 WholeMessageLength = Message.ConvertBytesToUnsignedShort(data.Slice(0, 2)),
                 Offset = Message.ConvertBytesToUnsignedShort(data.Slice(2, 2)),
@@ -50,7 +50,7 @@ namespace OSDP.Net.Model.ReplyData
                 Data = data.Slice(6, data.Length - 6).ToArray()
             };
 
-            return pivData;
+            return fragmentResponse;
         }
 
         /// <inheritdoc />

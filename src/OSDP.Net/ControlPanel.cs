@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -238,12 +239,12 @@ namespace OSDP.Net
             DateTime endTime = DateTime.UtcNow + timeout;
             byte[] data = null;
 
-            void Handler(object sender, PIVDataReplyEventArgs args)
+            void Handler(object sender, MultiPartMessageDataReplyEventArgs args)
             {
                 // Only process matching replies
                 if (args.ConnectionId != connectionId || args.Address != address) return;
 
-                var pivData = args.PIVData;
+                var pivData = args.DataFragmentResponse;
                 data ??= new byte[pivData.WholeMessageLength];
 
                 complete = Message.BuildMultiPartMessageData(pivData.WholeMessageLength, pivData.Offset,
@@ -448,7 +449,7 @@ namespace OSDP.Net
 
                 var reply = await SendCommand(connectionId,
                         new FileTransferCommand(address,
-                            new FileTransfer(fileType, totalSize, offset, updatedFragmentSize,
+                            new FileTransferFragment(fileType, totalSize, offset, updatedFragmentSize,
                                 fileData.Skip(offset).Take(updatedFragmentSize).ToArray())), cancellationToken)
                     .ConfigureAwait(false);
 
@@ -575,6 +576,107 @@ namespace OSDP.Net
             finally
             {
                 BiometricMatchReplyReceived -= Handler;
+            }
+        }
+
+        /// <summary>
+        /// Instruct the PD to perform a challenge/response sequence.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="algorithm"></param>
+        /// <param name="key"></param>
+        /// <param name="challenge"></param>
+        /// <param name="fragmentSize">Size of the fragment sent with each packet</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<byte[]> AuthenticationChallenge(Guid connectionId, byte address,
+            byte algorithm, byte key, byte[] challenge, ushort fragmentSize, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            var requestLock = GetRequestLock(connectionId, address);
+
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            {
+                throw new TimeoutException("Timeout waiting for another request to complete.");
+            }
+
+            try
+            {
+                return await WaitForChallengeResponse(connectionId, address, algorithm, key, challenge, fragmentSize,
+                    timeout, cancellationToken);
+            }
+            finally
+            {
+                requestLock.Release();
+            }
+        }
+
+        private async Task<byte[]> WaitForChallengeResponse(Guid connectionId, byte address, byte algorithm, byte key,
+            byte[] challenge, ushort fragmentSize, TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            bool complete = false;
+            DateTime endTime = DateTime.UtcNow + timeout;
+            var requestData = new List<byte> { algorithm, key };
+            requestData.AddRange(challenge);
+            byte[] responseData = null;
+
+            void Handler(object sender, MultiPartMessageDataReplyEventArgs args)
+            {
+                // Only process matching replies
+                if (args.ConnectionId != connectionId || args.Address != address) return;
+
+                var dataFragmentResponse = args.DataFragmentResponse;
+                responseData ??= new byte[dataFragmentResponse.WholeMessageLength];
+
+                complete = Message.BuildMultiPartMessageData(dataFragmentResponse.WholeMessageLength, dataFragmentResponse.Offset,
+                    dataFragmentResponse.LengthOfFragment, dataFragmentResponse.Data, responseData);
+            }
+
+            AuthenticationChallengeResponseReceived += Handler;
+            
+            int totalSize = requestData.Count;
+            int offset = 0;
+            bool continueTransfer = true;
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested && continueTransfer)
+                {
+                    var reply = await SendCommand(connectionId,
+                            new AuthenticationChallengeCommand(address,
+                                new AuthenticationChallengeFragment(totalSize, offset, fragmentSize,
+                                    requestData.Skip(offset).Take((ushort)Math.Min(fragmentSize, totalSize - offset))
+                                        .ToArray())), cancellationToken)
+                        .ConfigureAwait(false);
+
+                    offset += fragmentSize;
+
+                    // End transfer is Nak reply is received
+                    if (reply.Type == ReplyType.Nak) throw new Exception("Unable to complete challenge request");
+
+                    // Determine if we should continue on successful status
+                    continueTransfer = offset < totalSize;
+                }
+
+                while (DateTime.UtcNow <= endTime)
+                {
+                    if (complete)
+                    {
+                        return responseData;
+                    }
+
+                    // Delay for default poll interval
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                }
+
+                throw new TimeoutException("Timeout waiting to receive challenge response.");
+            }
+            finally
+            {
+                AuthenticationChallengeResponseReceived -= Handler;
             }
         }
 
@@ -819,8 +921,17 @@ namespace OSDP.Net
                 {
                     var handler = PIVDataReplyReceived;
                     handler?.Invoke(this,
-                        new PIVDataReplyEventArgs(reply.ConnectionId, reply.Address,
-                            PIVData.ParseData(reply.ExtractReplyData)));   
+                        new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Address,
+                            DataFragmentResponse.ParseData(reply.ExtractReplyData)));   
+                    break;
+                }
+                
+                case ReplyType.ResponseToChallenge:
+                {
+                    var handler = AuthenticationChallengeResponseReceived;
+                    handler?.Invoke(this,
+                        new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Address,
+                            DataFragmentResponse.ParseData(reply.ExtractReplyData)));   
                     break;
                 }
 
@@ -904,7 +1015,12 @@ namespace OSDP.Net
         /// <summary>
         /// Occurs when piv data reply is received.
         /// </summary>
-        private event EventHandler<PIVDataReplyEventArgs> PIVDataReplyReceived;
+        private event EventHandler<MultiPartMessageDataReplyEventArgs> PIVDataReplyReceived;
+
+        /// <summary>
+        /// Occurs when authentication challenge response is received.
+        /// </summary>
+        private event EventHandler<MultiPartMessageDataReplyEventArgs> AuthenticationChallengeResponseReceived;
 
         /// <summary>
         /// A negative reply that has been received.
@@ -1221,21 +1337,21 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// The PIV data reply has been received.
+        /// The multi-part message reply has been received.
         /// </summary>
-        private class PIVDataReplyEventArgs : EventArgs
+        private class MultiPartMessageDataReplyEventArgs : EventArgs
         {
             /// <summary>
-            /// Initializes a new instance of the <see cref="PIVDataReplyEventArgs"/> class.
+            /// Initializes a new instance of the <see cref="MultiPartMessageDataReplyEventArgs"/> class.
             /// </summary>
             /// <param name="connectionId">Identify the connection for communicating to the device.</param>
             /// <param name="address">Address assigned to the device.</param>
-            /// <param name="pivData">A PIV data reply.</param>
-            public PIVDataReplyEventArgs(Guid connectionId, byte address, PIVData pivData)
+            /// <param name="dataFragmentResponse">A PIV data reply.</param>
+            public MultiPartMessageDataReplyEventArgs(Guid connectionId, byte address, DataFragmentResponse dataFragmentResponse)
             {
                 ConnectionId = connectionId;
                 Address = address;
-                PIVData = pivData;
+                DataFragmentResponse = dataFragmentResponse;
             }
 
             /// <summary>
@@ -1251,7 +1367,7 @@ namespace OSDP.Net
             /// <summary>
             /// A PIV data reply.
             /// </summary>
-            public PIVData PIVData { get; }
+            public DataFragmentResponse DataFragmentResponse { get; }
         }
 
         /// <summary>

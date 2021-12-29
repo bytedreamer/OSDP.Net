@@ -13,7 +13,7 @@ namespace OSDP.Net.Tests.Messages
         public string FileTransferCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
             var fileTransferCommand = new FileTransferCommand(address,
-                new FileTransfer(3, 1000, 10, 5, new byte[] {0x01, 0x02, 0x03, 0x04, 0x05}));
+                new FileTransferFragment(3, 1000, 10, 5, new byte[] {0x01, 0x02, 0x03, 0x04, 0x05}));
             return BitConverter.ToString(
                 fileTransferCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
         }

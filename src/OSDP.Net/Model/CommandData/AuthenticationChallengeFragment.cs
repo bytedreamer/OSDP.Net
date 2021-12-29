@@ -1,35 +1,28 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
-    /// Command data to send a data fragment of a file to a PD.
+    /// Command to instruct PD to perform a cryptographic challenge/response sequence
     /// </summary>
-    internal class FileTransfer
+    internal class AuthenticationChallengeFragment
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="FileTransfer"/> class.
+        /// Initializes a new instance of the <see cref="FileTransferFragment"/> class.
         /// </summary>
-        /// <param name="type">File transfer type</param>
         /// <param name="totalSize">File size as little-endian format</param>
         /// <param name="offset">Offset of the current message</param>
         /// <param name="fragmentSize">Size of the fragment</param>
-        /// <param name="dataFragment">File transfer fragment data</param>
-        public FileTransfer(byte type, int totalSize, int offset, ushort fragmentSize, byte[] dataFragment)
+        /// <param name="dataFragment">Authentication challenge fragment data</param>
+        public AuthenticationChallengeFragment(int totalSize, int offset, ushort fragmentSize, byte[] dataFragment)
         {
-            Type = type;
             TotalSize = totalSize;
             Offset = offset;
             FragmentSize = fragmentSize;
             DataFragment = dataFragment;
         }
-
-        /// <summary>
-        /// Get the file transfer type
-        /// </summary>
-        public byte Type { get; }
 
         /// <summary>
         /// Get the file size as little-endian format
@@ -47,13 +40,13 @@ namespace OSDP.Net.Model.CommandData
         public ushort FragmentSize { get; }
 
         /// <summary>
-        /// Get the file transfer fragment data
+        /// Get the authentication challenge fragment data
         /// </summary>
         public byte[] DataFragment { get; }
 
         internal ReadOnlySpan<byte> BuildData()
         {
-            var data = new List<byte> {Type};
+            var data = new List<byte>();
             data.AddRange(Message.ConvertIntToBytes(TotalSize));
             data.AddRange(Message.ConvertIntToBytes(Offset));
             data.AddRange(Message.ConvertShortToBytes(FragmentSize));
