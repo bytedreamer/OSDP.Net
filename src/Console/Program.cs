@@ -209,11 +209,6 @@ namespace Console
                 DisplayReceivedReply($"Received keypad data reply for address {args.Address}",
                     args.KeypadData.ToString());
             };
-            _controlPanel.BiometricMatchReplyReceived += (_, args) =>
-            {
-                DisplayReceivedReply($"Received biometric match reply for address {args.Address}",
-                    args.BiometricMatchResult.ToString());
-            };
         }
 
         private static void StartSerialConnection()
@@ -1039,9 +1034,9 @@ namespace Console
                     return;
                 }
 
-                SendCommand("Biometric Match Command", _connectionId,
+                SendCommand("Biometric Match Command", _connectionId, 
                     new BiometricTemplateData(readerNumber, BiometricType.NotSpecified, BiometricFormat.FingerPrintTemplate,
-                        50, File.ReadAllBytes(path)),
+                        50, File.ReadAllBytes(path)), TimeSpan.FromSeconds(30),
                     _controlPanel.ScanAndMatchBiometricTemplate, (_, _) => { });
 
                 Application.RequestStop();
@@ -1232,6 +1227,61 @@ namespace Console
                     try
                     {
                         var result = await sendCommandFunction(connectionId, address, commandData);
+                        AddLogMessage(
+                            $"{title} for address {address}{Environment.NewLine}{result}{Environment.NewLine}{new string('*', 30)}");
+                        handleResult(address, result);
+                    }
+                    catch (Exception exception)
+                    {
+                        Application.MainLoop.Invoke(() =>
+                        {
+                            MessageBox.ErrorQuery(40, 10, $"Error on address {address}", exception.Message,
+                                "OK");
+                        });
+                    }
+                });
+            }
+
+            var sendButton = new Button("Send", true);
+            sendButton.Clicked += SendCommandButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += () => Application.RequestStop();
+
+            var dialog = new Dialog(title, 60, 13, cancelButton, sendButton);
+            dialog.Add(deviceSelectionView);
+            sendButton.SetFocus();
+            
+            Application.Run(dialog);
+        }
+
+        private static void SendCommand<T1, T2, T3>(string title, Guid connectionId, T2 commandData, T3 timeOut,
+            Func<Guid, byte, T2, T3, CancellationToken, Task<T1>> sendCommandFunction, Action<byte, T1> handleResult, bool requireSecurity = false)
+        {
+            if (_connectionId == Guid.Empty)
+            {
+                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
+                return;
+            }
+            
+            var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
+
+            void SendCommandButtonClicked()
+            {
+                var selectedDevice = orderedDevices[deviceRadioGroup.SelectedItem];
+                byte address = selectedDevice.Address;
+                Application.RequestStop();
+
+                if (requireSecurity && !selectedDevice.UseSecureChannel)
+                {
+                    MessageBox.ErrorQuery(60, 10, "Warning", "Requires secure channel to process this command.", "OK");
+                    return;
+                }
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        var result = await sendCommandFunction(connectionId, address, commandData, timeOut, CancellationToken.None);
                         AddLogMessage(
                             $"{title} for address {address}{Environment.NewLine}{result}{Environment.NewLine}{new string('*', 30)}");
                         handleResult(address, result);

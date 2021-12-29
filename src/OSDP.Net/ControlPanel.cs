@@ -18,9 +18,9 @@ namespace OSDP.Net
     {
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new ConcurrentDictionary<Guid, Bus>();
         private readonly ILogger<ControlPanel> _logger;
-        private readonly ConcurrentDictionary<int, SemaphoreSlim> _pivDataLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
+        private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
 
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
@@ -194,17 +194,17 @@ namespace OSDP.Net
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <param name="getPIVData">Describe the PIV data to retrieve.</param>
-        /// <param name="timeout">A TimeSpan that represents the number of milliseconds to wait until waiting for the other PIV data requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns>A response with the PIV data requested.</returns>
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            var pivDataLock = GetPIVDataLock(connectionId, address);
+            var requestLock = GetRequestLock(connectionId, address);
             
-            if (!await pivDataLock.WaitAsync(timeout, cancellationToken))
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
             {
-                throw new TimeoutException("Timeout waiting for another PIV data request to complete.");
+                throw new TimeoutException("Timeout waiting for another request to complete.");
             }
             
             try
@@ -213,22 +213,22 @@ namespace OSDP.Net
             }
             finally
             {
-                pivDataLock.Release();
+                requestLock.Release();
             }
         }
 
-        private SemaphoreSlim GetPIVDataLock(Guid connectionId, byte address)
+        private SemaphoreSlim GetRequestLock(Guid connectionId, byte address)
         {
             int hash = new { connectionId, address }.GetHashCode();
             
-            if (_pivDataLocks.TryGetValue(hash, out var pivDataLock))
+            if (_requestLocks.TryGetValue(hash, out var reqeustLock))
             {
-                return pivDataLock;
+                return reqeustLock;
             }
 
-            var newPIVDataLock = new SemaphoreSlim(1, 1);
-            _pivDataLocks[hash] = newPIVDataLock;
-            return newPIVDataLock;
+            var newRequestLock = new SemaphoreSlim(1, 1);
+            _requestLocks[hash] = newRequestLock;
+            return newRequestLock;
         }
 
         private async Task<byte[]> WaitForPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
@@ -510,14 +510,72 @@ namespace OSDP.Net
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <param name="biometricTemplateData">Command data to send a request to the PD to perform a biometric scan and match.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
-        public async Task<bool> ScanAndMatchBiometricTemplate(Guid connectionId, byte address,
-            BiometricTemplateData biometricTemplateData)
+        public async Task<BiometricMatchResult> ScanAndMatchBiometricTemplate(Guid connectionId, byte address,
+            BiometricTemplateData biometricTemplateData, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
         {
-            var reply = await SendCommand(connectionId,
-                new BiometricMatchCommand(address, biometricTemplateData)).ConfigureAwait(false);
+            var requestLock = GetRequestLock(connectionId, address);
+            
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            {
+                throw new TimeoutException("Timeout waiting for another request to complete.");
+            }
+            
+            try
+            {
+                return await WaitForBiometricMatch(connectionId, address, biometricTemplateData, timeout, cancellationToken);
+            }
+            finally
+            {
+                requestLock.Release();
+            }
+        }
 
-            return reply.Type == ReplyType.Ack;
+        private async Task<BiometricMatchResult> WaitForBiometricMatch(Guid connectionId, byte address, BiometricTemplateData biometricTemplateData, TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            bool complete = false;
+            BiometricMatchResult result = null;
+
+            void Handler(object sender, BiometricMatchReplyEventArgs args)
+            {
+                // Only process matching replies
+                if (args.ConnectionId != connectionId || args.Address != address) return;
+
+                complete = true;
+
+                result = args.BiometricMatchResult;
+            }
+
+            BiometricMatchReplyReceived += Handler;
+
+            try
+            {
+                await SendCommand(connectionId,
+                    new BiometricMatchCommand(address, biometricTemplateData), cancellationToken).ConfigureAwait(false);
+                
+                DateTime endTime = DateTime.UtcNow + timeout;
+                
+                while (DateTime.UtcNow <= endTime)
+                {
+                    if (complete)
+                    {
+                        return result;
+                    }
+
+                    // Delay for default poll interval
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                }
+
+                throw new TimeoutException("Timeout waiting to for biometric match.");
+            }
+            finally
+            {
+                BiometricMatchReplyReceived -= Handler;
+            }
         }
 
         /// <summary>
@@ -621,11 +679,11 @@ namespace OSDP.Net
             }
             _buses.Clear();
 
-            foreach (var pivDataLock in _pivDataLocks.Values)
+            foreach (var pivDataLock in _requestLocks.Values)
             {
                 pivDataLock.Dispose();
             }
-            _pivDataLocks.Clear();
+            _requestLocks.Clear();
         }
 
         /// <summary>
@@ -841,7 +899,7 @@ namespace OSDP.Net
         /// <summary>
         /// Occurs when biometric match reply is received.
         /// </summary>
-        public event EventHandler<BiometricMatchReplyEventArgs> BiometricMatchReplyReceived;
+        private event EventHandler<BiometricMatchReplyEventArgs> BiometricMatchReplyReceived;
 
         /// <summary>
         /// Occurs when piv data reply is received.
@@ -1233,7 +1291,7 @@ namespace OSDP.Net
         /// <summary>
         /// A biometric match reply has been received.
         /// </summary>
-        public class BiometricMatchReplyEventArgs : EventArgs
+        private class BiometricMatchReplyEventArgs : EventArgs
         {
             /// <summary>
             /// Initializes a new instance of the <see cref="BiometricMatchReplyEventArgs"/> class.
