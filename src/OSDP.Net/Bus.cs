@@ -54,8 +54,6 @@ namespace OSDP.Net
             _logger = logger;
         }
 
-        private TimeSpan IdleLineDelay => TimeSpan.FromSeconds(1.0/_connection.BaudRate * 16.0);
-
         private bool IsPolling => _pollInterval > TimeSpan.Zero;
 
         /// <summary>
@@ -64,6 +62,11 @@ namespace OSDP.Net
         public Guid Id { get; }
 
         public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.Select(device => device.Address);
+
+        private TimeSpan IdleLineDelay(int numberOfBytes)
+        {
+            return TimeSpan.FromSeconds((1.0 / _connection.BaudRate) * (8.0 * numberOfBytes));
+        }
 
         /// <summary>
         /// Closes down the connection
@@ -162,8 +165,6 @@ namespace OSDP.Net
                             UpdateConnectionStatus(device);
                         }
 
-                        delayTime.WaitOne(TimeSpan.FromSeconds(5));
-
                         continue;
                     }
                 }
@@ -193,7 +194,7 @@ namespace OSDP.Net
                         device.MessageControl.ResetSequence();
                     }
 
-                    // Requested delay for multi-messages
+                    // Requested delay for multi-messages and resets
                     if (device.RequestDelay > DateTime.UtcNow)
                     {
                         continue;
@@ -213,6 +214,10 @@ namespace OSDP.Net
                         if (IsPolling && UpdateConnectionStatus(device) && !device.IsConnected)
                         {
                             ResetDevice(device);
+                        }
+                        else if(!device.IsConnected)
+                        {
+                            device.RequestDelay = DateTime.UtcNow + TimeSpan.FromSeconds(1);
                         }
                     }
                     catch (Exception exception)
@@ -244,9 +249,6 @@ namespace OSDP.Net
                             case true when device.IsSecurityEstablished && !IsOnline(command.Address):
                                 ResetDevice(device);
                                 break;
-                            case true when device.UseSecureChannel:
-                                device.CreateNewRandomNumber();
-                                break;
                             default:
                                 _logger?.LogDebug($"Retrying command {command}");
                                 device.RetryCommand(command);
@@ -276,7 +278,7 @@ namespace OSDP.Net
                         continue;
                     }
 
-                    delayTime.WaitOne(IdleLineDelay);
+                    delayTime.WaitOne(IdleLineDelay(2));
                 }
             }
         }
@@ -325,8 +327,6 @@ namespace OSDP.Net
                 var mac = device.GenerateMac(reply.MessageForMacGeneration.ToArray(), false);
                 if (!reply.IsValidMac(mac))
                 {
-                    // Appears that some legacy readers need a few seconds before attempting to reset
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
                     ResetDevice(device);
                     return;
                 }
@@ -340,14 +340,19 @@ namespace OSDP.Net
             {
                 return;
             }
-            
-            if (reply.Type == ReplyType.Nak &&
-                (device.UseSecureChannel && (reply.ExtractReplyData.First() == (byte) ErrorCode.DoesNotSupportSecurityBlock ||
-                 reply.ExtractReplyData.First() == (byte) ErrorCode.CommunicationSecurityNotMet) ||
-                 reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber && reply.Sequence > 0))
+
+            if (reply.Type == ReplyType.Nak)
             {
-                if (reply.ExtractReplyData.First() == (byte) ErrorCode.UnexpectedSequenceNumber || reply.Sequence > 0) ResetDevice(device);
+                var errorCode = (ErrorCode)reply.ExtractReplyData.First();
+                if (device.UseSecureChannel &&
+                    errorCode is ErrorCode.DoesNotSupportSecurityBlock or ErrorCode.CommunicationSecurityNotMet
+                        or ErrorCode.UnableToProcessCommand ||
+                    errorCode == ErrorCode.UnexpectedSequenceNumber && reply.Sequence > 0)
+                {
+                    ResetDevice(device);
+                }
             }
+
 
             switch (reply.Type)
             {
@@ -397,6 +402,7 @@ namespace OSDP.Net
 
         private void ResetDevice(Device device)
         {
+            device.RequestDelay = DateTime.UtcNow + TimeSpan.FromSeconds(1);
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
@@ -413,6 +419,12 @@ namespace OSDP.Net
                 throw;
             }
 
+            var buffer = new byte[commandData.Length + 1];
+            buffer[0] = DriverByte;
+            Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
+            
+            await _connection.WriteAsync(buffer).ConfigureAwait(false);
+           
             if (_isTracing)
             {
                 var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
@@ -428,12 +440,9 @@ namespace OSDP.Net
                 _tracerFile.WriteByte(0x0A);
                 _tracerFile.Flush();
             }
-
-            var buffer = new byte[commandData.Length + 1];
-            buffer[0] = DriverByte;
-            Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
             
-            await _connection.WriteAsync(buffer).ConfigureAwait(false);
+            using var delayTime = new AutoResetEvent(false);
+            delayTime.WaitOne(IdleLineDelay(buffer.Length));
 
             return await ReceiveReply(command, device);
         }
@@ -442,7 +451,7 @@ namespace OSDP.Net
         {
             var replyBuffer = new Collection<byte>();
 
-            if (!await WaitForStartOfMessage(replyBuffer).ConfigureAwait(false))
+            if (!await WaitForStartOfMessage(replyBuffer, device.IsSendingMultiMessage).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message");
             }
@@ -488,7 +497,9 @@ namespace OSDP.Net
                 int maxReadBufferLength = _connection.BaudRate / 60;
                 int remainingLength = replyLength - replyBuffer.Count;
                 byte[] readBuffer = new byte[Math.Min(maxReadBufferLength, remainingLength)];
-                int bytesRead = await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout).ConfigureAwait(false);
+                int bytesRead =
+                    await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout +  IdleLineDelay(replyLength))
+                        .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
@@ -510,7 +521,9 @@ namespace OSDP.Net
             while (replyBuffer.Count < 4)
             {
                 byte[] readBuffer = new byte[4];
-                int bytesRead = await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout).ConfigureAwait(false);
+                int bytesRead =
+                    await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout)
+                        .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
                     for (byte index = 0; index < bytesRead; index++)
@@ -527,12 +540,14 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<bool> WaitForStartOfMessage(ICollection<byte> replyBuffer)
+        private async Task<bool> WaitForStartOfMessage(ICollection<byte> replyBuffer, bool waitLonger)
         {
             while (true)
             {
                 byte[] readBuffer = new byte[1];
-                int bytesRead = await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout).ConfigureAwait(false);
+                int bytesRead = await TimeOutReadAsync(readBuffer,
+                        _connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero))
+                    .ConfigureAwait(false);
                 if (bytesRead == 0)
                 {
                     return false;

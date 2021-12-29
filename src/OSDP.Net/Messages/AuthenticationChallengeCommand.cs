@@ -1,19 +1,19 @@
-using System;
+﻿using System;
 using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages
 {
-    internal class FileTransferCommand : Command
+    internal class AuthenticationChallengeCommand : Command
     {
-        private readonly FileTransferFragment _fileTransferFragment;
+        private readonly AuthenticationChallengeFragment _authenticationChallengeFragment;
 
-        public FileTransferCommand(byte address, FileTransferFragment fileTransferFragment)
+        public AuthenticationChallengeCommand(byte address, AuthenticationChallengeFragment authenticationChallengeFragment)
         {
+            _authenticationChallengeFragment = authenticationChallengeFragment;
             Address = address;
-            _fileTransferFragment = fileTransferFragment;
         }
 
-        protected override byte CommandCode => 0x7C;
+        protected override byte CommandCode => 0xA5;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
@@ -26,12 +26,11 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _fileTransferFragment.BuildData().ToArray();
+            return _authenticationChallengeFragment.BuildData();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-
         }
     }
 }

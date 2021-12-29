@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,9 +19,9 @@ namespace OSDP.Net
     {
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new ConcurrentDictionary<Guid, Bus>();
         private readonly ILogger<ControlPanel> _logger;
-        private readonly ConcurrentDictionary<int, SemaphoreSlim> _pivDataLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
         private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
+        private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
 
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
@@ -194,17 +195,17 @@ namespace OSDP.Net
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <param name="getPIVData">Describe the PIV data to retrieve.</param>
-        /// <param name="timeout">A TimeSpan that represents the number of milliseconds to wait until waiting for the other PIV data requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns>A response with the PIV data requested.</returns>
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            var pivDataLock = GetPIVDataLock(connectionId, address);
+            var requestLock = GetRequestLock(connectionId, address);
             
-            if (!await pivDataLock.WaitAsync(timeout, cancellationToken))
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
             {
-                throw new TimeoutException("Timeout waiting for another PIV data request to complete.");
+                throw new TimeoutException("Timeout waiting for another request to complete.");
             }
             
             try
@@ -213,22 +214,22 @@ namespace OSDP.Net
             }
             finally
             {
-                pivDataLock.Release();
+                requestLock.Release();
             }
         }
 
-        private SemaphoreSlim GetPIVDataLock(Guid connectionId, byte address)
+        private SemaphoreSlim GetRequestLock(Guid connectionId, byte address)
         {
             int hash = new { connectionId, address }.GetHashCode();
             
-            if (_pivDataLocks.TryGetValue(hash, out var pivDataLock))
+            if (_requestLocks.TryGetValue(hash, out var reqeustLock))
             {
-                return pivDataLock;
+                return reqeustLock;
             }
 
-            var newPIVDataLock = new SemaphoreSlim(1, 1);
-            _pivDataLocks[hash] = newPIVDataLock;
-            return newPIVDataLock;
+            var newRequestLock = new SemaphoreSlim(1, 1);
+            _requestLocks[hash] = newRequestLock;
+            return newRequestLock;
         }
 
         private async Task<byte[]> WaitForPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
@@ -238,12 +239,12 @@ namespace OSDP.Net
             DateTime endTime = DateTime.UtcNow + timeout;
             byte[] data = null;
 
-            void Handler(object sender, PIVDataReplyEventArgs args)
+            void Handler(object sender, MultiPartMessageDataReplyEventArgs args)
             {
                 // Only process matching replies
                 if (args.ConnectionId != connectionId || args.Address != address) return;
 
-                var pivData = args.PIVData;
+                var pivData = args.DataFragmentResponse;
                 data ??= new byte[pivData.WholeMessageLength];
 
                 complete = Message.BuildMultiPartMessageData(pivData.WholeMessageLength, pivData.Offset,
@@ -448,7 +449,7 @@ namespace OSDP.Net
 
                 var reply = await SendCommand(connectionId,
                         new FileTransferCommand(address,
-                            new FileTransfer(fileType, totalSize, offset, updatedFragmentSize,
+                            new FileTransferFragment(fileType, totalSize, offset, updatedFragmentSize,
                                 fileData.Skip(offset).Take(updatedFragmentSize).ToArray())), cancellationToken)
                     .ConfigureAwait(false);
 
@@ -502,6 +503,225 @@ namespace OSDP.Net
                     fragmentSize = 0;
                 }
             }
+        }
+
+        /// <summary>
+        /// Send a request to the PD to perform a biometric scan and match it to the provided template.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="biometricTemplateData">Command data to send a request to the PD to perform a biometric scan and match.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<BiometricMatchResult> ScanAndMatchBiometricTemplate(Guid connectionId, byte address,
+            BiometricTemplateData biometricTemplateData, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            var requestLock = GetRequestLock(connectionId, address);
+            
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            {
+                throw new TimeoutException("Timeout waiting for another request to complete.");
+            }
+            
+            try
+            {
+                return await WaitForBiometricMatch(connectionId, address, biometricTemplateData, timeout, cancellationToken);
+            }
+            finally
+            {
+                requestLock.Release();
+            }
+        }
+
+        private async Task<BiometricMatchResult> WaitForBiometricMatch(Guid connectionId, byte address, BiometricTemplateData biometricTemplateData, TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            bool complete = false;
+            BiometricMatchResult result = null;
+
+            void Handler(object sender, BiometricMatchReplyEventArgs args)
+            {
+                // Only process matching replies
+                if (args.ConnectionId != connectionId || args.Address != address) return;
+
+                complete = true;
+
+                result = args.BiometricMatchResult;
+            }
+
+            BiometricMatchReplyReceived += Handler;
+
+            try
+            {
+                await SendCommand(connectionId,
+                    new BiometricMatchCommand(address, biometricTemplateData), cancellationToken).ConfigureAwait(false);
+                
+                DateTime endTime = DateTime.UtcNow + timeout;
+                
+                while (DateTime.UtcNow <= endTime)
+                {
+                    if (complete)
+                    {
+                        return result;
+                    }
+
+                    // Delay for default poll interval
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                }
+
+                throw new TimeoutException("Timeout waiting to for biometric match.");
+            }
+            finally
+            {
+                BiometricMatchReplyReceived -= Handler;
+            }
+        }
+
+        /// <summary>
+        /// Instruct the PD to perform a challenge/response sequence.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="algorithm"></param>
+        /// <param name="key"></param>
+        /// <param name="challenge"></param>
+        /// <param name="fragmentSize">Size of the fragment sent with each packet</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<byte[]> AuthenticationChallenge(Guid connectionId, byte address,
+            byte algorithm, byte key, byte[] challenge, ushort fragmentSize, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            var requestLock = GetRequestLock(connectionId, address);
+
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            {
+                throw new TimeoutException("Timeout waiting for another request to complete.");
+            }
+
+            try
+            {
+                return await WaitForChallengeResponse(connectionId, address, algorithm, key, challenge, fragmentSize,
+                    timeout, cancellationToken);
+            }
+            finally
+            {
+                requestLock.Release();
+            }
+        }
+
+        private async Task<byte[]> WaitForChallengeResponse(Guid connectionId, byte address, byte algorithm, byte key,
+            byte[] challenge, ushort fragmentSize, TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            bool complete = false;
+            DateTime endTime = DateTime.UtcNow + timeout;
+            var requestData = new List<byte> { algorithm, key };
+            requestData.AddRange(challenge);
+            byte[] responseData = null;
+
+            void Handler(object sender, MultiPartMessageDataReplyEventArgs args)
+            {
+                // Only process matching replies
+                if (args.ConnectionId != connectionId || args.Address != address) return;
+
+                var dataFragmentResponse = args.DataFragmentResponse;
+                responseData ??= new byte[dataFragmentResponse.WholeMessageLength];
+
+                complete = Message.BuildMultiPartMessageData(dataFragmentResponse.WholeMessageLength, dataFragmentResponse.Offset,
+                    dataFragmentResponse.LengthOfFragment, dataFragmentResponse.Data, responseData);
+            }
+
+            AuthenticationChallengeResponseReceived += Handler;
+            
+            int totalSize = requestData.Count;
+            int offset = 0;
+            bool continueTransfer = true;
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested && continueTransfer)
+                {
+                    var reply = await SendCommand(connectionId,
+                            new AuthenticationChallengeCommand(address,
+                                new AuthenticationChallengeFragment(totalSize, offset, fragmentSize,
+                                    requestData.Skip(offset).Take((ushort)Math.Min(fragmentSize, totalSize - offset))
+                                        .ToArray())), cancellationToken)
+                        .ConfigureAwait(false);
+
+                    offset += fragmentSize;
+
+                    // End transfer is Nak reply is received
+                    if (reply.Type == ReplyType.Nak) throw new Exception("Unable to complete challenge request");
+
+                    // Determine if we should continue on successful status
+                    continueTransfer = offset < totalSize;
+                }
+
+                while (DateTime.UtcNow <= endTime)
+                {
+                    if (complete)
+                    {
+                        return responseData;
+                    }
+
+                    // Delay for default poll interval
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                }
+
+                throw new TimeoutException("Timeout waiting to receive challenge response.");
+            }
+            finally
+            {
+                AuthenticationChallengeResponseReceived -= Handler;
+            }
+        }
+
+        /// <summary>
+        /// Inform the PD the maximum size that the ACU can receive.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="maximumReceiveSize">The maximum size that the ACU can receive.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<bool> ACUReceivedSize(Guid connectionId, byte address, ushort maximumReceiveSize)
+        {
+            var reply = await SendCommand(connectionId,
+                new ACUReceiveSizeCommand(address, maximumReceiveSize)).ConfigureAwait(false);
+
+            return reply.Type == ReplyType.Ack;
+        }
+
+        /// <summary>
+        /// Instructs the PD to maintain communication with the credential for a specified time.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="keepAliveTimeInMilliseconds">The length of time to maintain communication with credential.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<bool> KeepReaderActive(Guid connectionId, byte address, ushort keepAliveTimeInMilliseconds)
+        {
+            var reply = await SendCommand(connectionId,
+                new KeepReaderActiveCommand(address, keepAliveTimeInMilliseconds)).ConfigureAwait(false);
+
+            return reply.Type == ReplyType.Ack;
+        }
+
+        /// <summary>
+        /// Instructs the PD to abort the current operation.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        public async Task<bool> AbortCurrentOperation(Guid connectionId, byte address)
+        {
+            var reply = await SendCommand(connectionId, new AbortCurrentOperationCommand(address))
+                .ConfigureAwait(false);
+
+            return reply.Type == ReplyType.Ack;
         }
 
         /// <summary>
@@ -561,11 +781,11 @@ namespace OSDP.Net
             }
             _buses.Clear();
 
-            foreach (var pivDataLock in _pivDataLocks.Values)
+            foreach (var pivDataLock in _requestLocks.Values)
             {
                 pivDataLock.Dispose();
             }
-            _pivDataLocks.Clear();
+            _requestLocks.Clear();
         }
 
         /// <summary>
@@ -701,8 +921,17 @@ namespace OSDP.Net
                 {
                     var handler = PIVDataReplyReceived;
                     handler?.Invoke(this,
-                        new PIVDataReplyEventArgs(reply.ConnectionId, reply.Address,
-                            PIVData.ParseData(reply.ExtractReplyData)));   
+                        new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Address,
+                            DataFragmentResponse.ParseData(reply.ExtractReplyData)));   
+                    break;
+                }
+                
+                case ReplyType.ResponseToChallenge:
+                {
+                    var handler = AuthenticationChallengeResponseReceived;
+                    handler?.Invoke(this,
+                        new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Address,
+                            DataFragmentResponse.ParseData(reply.ExtractReplyData)));   
                     break;
                 }
 
@@ -712,6 +941,15 @@ namespace OSDP.Net
                     handler?.Invoke(this,
                         new KeypadReplyEventArgs(reply.ConnectionId, reply.Address,
                             KeypadData.ParseData(reply.ExtractReplyData)));
+                    break;
+                }
+                
+                case ReplyType.BiometricMatchResult:
+                {
+                    var handler = BiometricMatchReplyReceived;
+                    handler?.Invoke(this,
+                        new BiometricMatchReplyEventArgs(reply.ConnectionId, reply.Address,
+                            BiometricMatchResult.ParseData(reply.ExtractReplyData)));
                     break;
                 }
             }
@@ -770,9 +1008,19 @@ namespace OSDP.Net
         public event EventHandler<KeypadReplyEventArgs> KeypadReplyReceived;
 
         /// <summary>
+        /// Occurs when biometric match reply is received.
+        /// </summary>
+        private event EventHandler<BiometricMatchReplyEventArgs> BiometricMatchReplyReceived;
+
+        /// <summary>
         /// Occurs when piv data reply is received.
         /// </summary>
-        private event EventHandler<PIVDataReplyEventArgs> PIVDataReplyReceived;
+        private event EventHandler<MultiPartMessageDataReplyEventArgs> PIVDataReplyReceived;
+
+        /// <summary>
+        /// Occurs when authentication challenge response is received.
+        /// </summary>
+        private event EventHandler<MultiPartMessageDataReplyEventArgs> AuthenticationChallengeResponseReceived;
 
         /// <summary>
         /// A negative reply that has been received.
@@ -796,10 +1044,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A negative reply that has been received.
             /// </summary>
@@ -831,14 +1081,17 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// Is the device currently connected.
             /// </summary>
             public bool IsConnected { get; }
+
             /// <summary>
             /// Is the secure channel currently established
             /// </summary>
@@ -867,10 +1120,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A local status report reply.
             /// </summary>
@@ -899,10 +1154,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A input status report reply.
             /// </summary>
@@ -931,10 +1188,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A output status report reply.
             /// </summary>
@@ -963,10 +1222,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A reader status report reply.
             /// </summary>
@@ -995,10 +1256,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A raw card data reply.
             /// </summary>
@@ -1027,10 +1290,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A manufacturer specific reply.
             /// </summary>
@@ -1059,10 +1324,12 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A extended read reply.
             /// </summary>
@@ -1070,35 +1337,37 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// The PIV data reply has been received.
+        /// The multi-part message reply has been received.
         /// </summary>
-        private class PIVDataReplyEventArgs : EventArgs
+        private class MultiPartMessageDataReplyEventArgs : EventArgs
         {
             /// <summary>
-            /// Initializes a new instance of the <see cref="PIVDataReplyEventArgs"/> class.
+            /// Initializes a new instance of the <see cref="MultiPartMessageDataReplyEventArgs"/> class.
             /// </summary>
             /// <param name="connectionId">Identify the connection for communicating to the device.</param>
             /// <param name="address">Address assigned to the device.</param>
-            /// <param name="pivData">A PIV data reply.</param>
-            public PIVDataReplyEventArgs(Guid connectionId, byte address, PIVData pivData)
+            /// <param name="dataFragmentResponse">A PIV data reply.</param>
+            public MultiPartMessageDataReplyEventArgs(Guid connectionId, byte address, DataFragmentResponse dataFragmentResponse)
             {
                 ConnectionId = connectionId;
                 Address = address;
-                PIVData = pivData;
+                DataFragmentResponse = dataFragmentResponse;
             }
 
             /// <summary>
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A PIV data reply.
             /// </summary>
-            public PIVData PIVData { get; }
+            public DataFragmentResponse DataFragmentResponse { get; }
         }
 
         /// <summary>
@@ -1123,14 +1392,51 @@ namespace OSDP.Net
             /// Identify the connection for communicating to the device.
             /// </summary>
             public Guid ConnectionId { get; }
+
             /// <summary>
             /// Address assigned to the device.
             /// </summary>
             public byte Address { get; }
+
             /// <summary>
             /// A keypad reply..
             /// </summary>
             public KeypadData KeypadData { get; }
+        }
+
+        /// <summary>
+        /// A biometric match reply has been received.
+        /// </summary>
+        private class BiometricMatchReplyEventArgs : EventArgs
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BiometricMatchReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="biometricMatchResult">A biometric match reply.</param>
+            public BiometricMatchReplyEventArgs(Guid connectionId, byte address,
+                BiometricMatchResult biometricMatchResult)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                BiometricMatchResult = biometricMatchResult;
+            }
+
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
+            public Guid ConnectionId { get; }
+
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
+            public byte Address { get; }
+
+            /// <summary>
+            /// A biometric match result reply..
+            /// </summary>
+            public BiometricMatchResult BiometricMatchResult { get; }
         }
 
         /// <summary>

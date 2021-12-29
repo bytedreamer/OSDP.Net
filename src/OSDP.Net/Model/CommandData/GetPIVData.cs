@@ -3,7 +3,7 @@
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
-    /// Command to get the PIV data
+    /// Command data to get the PIV data
     /// </summary>
     public class GetPIVData
     {

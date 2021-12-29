@@ -103,6 +103,7 @@ namespace Console
                 new MenuBarItem("_Commands", new[]
                 {
                     new MenuItem("Communication Configuration", "", SendCommunicationConfiguration), 
+                    new MenuItem("Biometric Match", "", SendBiometricMatchCommand), 
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, _controlPanel.DeviceCapabilities)),
                     new MenuItem("Encryption Key Set", "", SendEncryptionKeySetCommand),
@@ -479,6 +480,10 @@ namespace Console
                     }
 
                     _scrollView.Frame = new Rect(1, 0, _window.Frame.Width - 3, _window.Frame.Height - 2);
+                    foreach (var view in _scrollView.Subviews)
+                    {
+                        view.Dispose();
+                    }
                     _scrollView.RemoveAll();
 
                     int index = 0;
@@ -492,13 +497,13 @@ namespace Console
                         if (outputMessage.Contains("| WARN |") || outputMessage.Contains("NAK"))
                         {
                             label.ColorScheme = new ColorScheme
-                                {Normal = Terminal.Gui.Attribute.Make(Color.Black, Color.BrightYellow)};
+                                { Normal = Terminal.Gui.Attribute.Make(Color.Black, Color.BrightYellow) };
                         }
 
                         if (outputMessage.Contains("| ERROR |"))
                         {
                             label.ColorScheme = new ColorScheme
-                                {Normal = Terminal.Gui.Attribute.Make(Color.White, Color.BrightRed)};
+                                { Normal = Terminal.Gui.Attribute.Make(Color.White, Color.BrightRed) };
                         }
 
                         _scrollView.Add(label);
@@ -1005,6 +1010,51 @@ namespace Console
             Application.Run(dialog);
         }
 
+        private static void SendBiometricMatchCommand()
+        {
+            var readerAddressTextField = new TextField(20, 1, 20, "0");
+
+            void SendBiometricMatchButtonClicked()
+            {
+                if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    return;
+                }
+                
+                var openDialog = new OpenDialog("Biometric Match", "Select a template to match");
+                openDialog.DirectoryPath = ustring.Make(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+                Application.Run(openDialog);
+
+                string path = openDialog.FilePath.ToString() ?? string.Empty;
+                if (!File.Exists(path))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "No file selected!", "OK");
+                    return;
+                }
+
+                SendCommand("Biometric Match Command", _connectionId, 
+                    new BiometricTemplateData(readerNumber, BiometricType.NotSpecified, BiometricFormat.FingerPrintTemplate,
+                        50, File.ReadAllBytes(path)), TimeSpan.FromSeconds(30),
+                    _controlPanel.ScanAndMatchBiometricTemplate, (_, _) => { });
+
+                Application.RequestStop();
+            }
+
+            var sendButton = new Button("Send", true);
+            sendButton.Clicked += SendBiometricMatchButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += () => Application.RequestStop();
+
+            var dialog = new Dialog("Biometric Match Command", 60, 10, cancelButton, sendButton);
+            dialog.Add(new Label(1, 1, "Reader Number:"),
+                readerAddressTextField);
+            readerAddressTextField.SetFocus();
+            
+            Application.Run(dialog);
+        }
+
         private static void SendReaderTextOutputCommand()
         {
             var readerAddressTextField = new TextField(20, 1, 20, "0");
@@ -1177,6 +1227,61 @@ namespace Console
                     try
                     {
                         var result = await sendCommandFunction(connectionId, address, commandData);
+                        AddLogMessage(
+                            $"{title} for address {address}{Environment.NewLine}{result}{Environment.NewLine}{new string('*', 30)}");
+                        handleResult(address, result);
+                    }
+                    catch (Exception exception)
+                    {
+                        Application.MainLoop.Invoke(() =>
+                        {
+                            MessageBox.ErrorQuery(40, 10, $"Error on address {address}", exception.Message,
+                                "OK");
+                        });
+                    }
+                });
+            }
+
+            var sendButton = new Button("Send", true);
+            sendButton.Clicked += SendCommandButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += () => Application.RequestStop();
+
+            var dialog = new Dialog(title, 60, 13, cancelButton, sendButton);
+            dialog.Add(deviceSelectionView);
+            sendButton.SetFocus();
+            
+            Application.Run(dialog);
+        }
+
+        private static void SendCommand<T1, T2, T3>(string title, Guid connectionId, T2 commandData, T3 timeOut,
+            Func<Guid, byte, T2, T3, CancellationToken, Task<T1>> sendCommandFunction, Action<byte, T1> handleResult, bool requireSecurity = false)
+        {
+            if (_connectionId == Guid.Empty)
+            {
+                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
+                return;
+            }
+            
+            var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
+
+            void SendCommandButtonClicked()
+            {
+                var selectedDevice = orderedDevices[deviceRadioGroup.SelectedItem];
+                byte address = selectedDevice.Address;
+                Application.RequestStop();
+
+                if (requireSecurity && !selectedDevice.UseSecureChannel)
+                {
+                    MessageBox.ErrorQuery(60, 10, "Warning", "Requires secure channel to process this command.", "OK");
+                    return;
+                }
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        var result = await sendCommandFunction(connectionId, address, commandData, timeOut, CancellationToken.None);
                         AddLogMessage(
                             $"{title} for address {address}{Environment.NewLine}{result}{Environment.NewLine}{new string('*', 30)}");
                         handleResult(address, result);

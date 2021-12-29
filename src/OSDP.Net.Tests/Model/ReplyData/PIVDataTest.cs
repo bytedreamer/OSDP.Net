@@ -20,7 +20,7 @@ namespace OSDP.Net.Tests.Model.ReplyData
             data.AddRange(new byte[] {0x00, 0x01, 0x02, 0x03, 0x04});
 
             // Act
-            var pivData = PIVData.ParseData(data.ToArray());
+            var pivData = DataFragmentResponse.ParseData(data.ToArray());
 
             // Assert
             Assert.AreEqual(20, pivData.WholeMessageLength);
@@ -41,7 +41,7 @@ namespace OSDP.Net.Tests.Model.ReplyData
             data.AddRange(new byte[] { });
 
             // Act
-            var pivData = PIVData.ParseData(data.ToArray());
+            var pivData = DataFragmentResponse.ParseData(data.ToArray());
 
             // Assert
             Assert.AreEqual(20, pivData.WholeMessageLength);

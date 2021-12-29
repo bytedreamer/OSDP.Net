@@ -21,6 +21,7 @@ namespace OSDP.Net.Messages
         Busy = 0x79,
         FileTransferStatus = 0x7A,
         PIVData = 0x80,
+        ResponseToChallenge = 0x82,
         ManufactureSpecific = 0x90,
         ExtendedRead = 0xB1
     }

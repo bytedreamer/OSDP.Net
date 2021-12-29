@@ -119,7 +119,7 @@ namespace OSDP.Net
         /// <param name="command"></param>
         public void RetryCommand(Command command)
         {
-            if (_counter-- <= 0)
+            if (_counter-- > 0)
             {
                 _retryCommand = command;
             }
