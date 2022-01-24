@@ -266,7 +266,7 @@ namespace OSDP.Net
                     }
 
                     // Delay for default poll interval
-                    await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
                 }
 
                 throw new TimeoutException("Timeout waiting to receive PIV data.");

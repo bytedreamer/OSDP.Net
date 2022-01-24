@@ -65,7 +65,7 @@ namespace OSDP.Net
 
         private TimeSpan IdleLineDelay(int numberOfBytes)
         {
-            return TimeSpan.FromSeconds((1.0 / _connection.BaudRate) * (8.0 * numberOfBytes));
+            return TimeSpan.FromSeconds((1.0 / _connection.BaudRate) * (10.0 * numberOfBytes));
         }
 
         /// <summary>
@@ -164,6 +164,8 @@ namespace OSDP.Net
                             ResetDevice(device);
                             UpdateConnectionStatus(device);
                         }
+                        
+                        delayTime.WaitOne(TimeSpan.FromSeconds(5));
 
                         continue;
                     }
@@ -494,11 +496,11 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < replyLength)
             {
-                int maxReadBufferLength = _connection.BaudRate / 60;
+                int maxReadBufferLength = _connection.BaudRate / 40;
                 int remainingLength = replyLength - replyBuffer.Count;
                 byte[] readBuffer = new byte[Math.Min(maxReadBufferLength, remainingLength)];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout +  IdleLineDelay(replyLength))
+                    await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout +  IdleLineDelay(readBuffer.Length))
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
