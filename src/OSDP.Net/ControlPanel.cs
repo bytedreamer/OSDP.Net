@@ -92,6 +92,7 @@ namespace OSDP.Net
             {
                 OnConnectionStatusChanged(bus.Id, address, false, false);
             }
+            bus.Dispose();
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
@@ -778,6 +779,7 @@ namespace OSDP.Net
                 {
                     OnConnectionStatusChanged(bus.Id, address, false, false);
                 }
+                bus.Dispose();
             }
             _buses.Clear();
 

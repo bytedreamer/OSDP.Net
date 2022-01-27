@@ -18,7 +18,7 @@ namespace OSDP.Net
     /// <summary>
     /// A group of OSDP devices sharing communications
     /// </summary>
-    internal class Bus
+    internal class Bus : IDisposable
     {
         private const byte DriverByte = 0xFF;
 
@@ -33,9 +33,9 @@ namespace OSDP.Net
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
-        private readonly FileStream _tracerFile;
 
         private bool _isShuttingDown;
+        private FileStream _tracerFile;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
             bool isTracing = false,
@@ -62,6 +62,12 @@ namespace OSDP.Net
         public Guid Id { get; }
 
         public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.Select(device => device.Address);
+
+        public void Dispose()
+        {
+            _replies?.Dispose();
+            _tracerFile?.Dispose();
+        }
 
         private TimeSpan IdleLineDelay(int numberOfBytes)
         {
@@ -428,6 +434,11 @@ namespace OSDP.Net
            
             if (_isTracing)
             {
+                if (_tracerFile.CanWrite)
+                {
+                    _tracerFile = new FileStream($"{Id:D}.osdpcap", FileMode.OpenOrCreate);
+                }
+                
                 var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
                 long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
                 await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
