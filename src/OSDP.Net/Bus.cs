@@ -355,7 +355,6 @@ namespace OSDP.Net
                 }
             }
 
-
             switch (reply.Type)
             {
                 case ReplyType.CrypticData:

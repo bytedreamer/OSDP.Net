@@ -1133,8 +1133,8 @@ namespace Console
                         updatedDevice.UseSecureChannel = true;
                         updatedDevice.SecureChannelKey = key;
 
-                        //_controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
-                         //   updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
+                        _controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
+                            updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
                     }, true);
 
                 Application.RequestStop();
