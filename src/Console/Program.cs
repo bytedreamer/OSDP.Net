@@ -555,7 +555,7 @@ namespace Console
 
             void AddDeviceButtonClicked()
             {
-                if (!byte.TryParse(addressTextField.Text.ToString(), out var address))
+                if (!byte.TryParse(addressTextField.Text.ToString(), out var address) || address > 127)
                 {
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid address entered!", "OK");
                     return;

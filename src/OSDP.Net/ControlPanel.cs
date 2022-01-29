@@ -223,9 +223,9 @@ namespace OSDP.Net
         {
             int hash = new { connectionId, address }.GetHashCode();
             
-            if (_requestLocks.TryGetValue(hash, out var reqeustLock))
+            if (_requestLocks.TryGetValue(hash, out var requestLock))
             {
-                return reqeustLock;
+                return requestLock;
             }
 
             var newRequestLock = new SemaphoreSlim(1, 1);
@@ -827,7 +827,7 @@ namespace OSDP.Net
 
             ReplyReceived += EventHandler;
 
-            if (_buses.TryGetValue(connectionId, out Bus bus))
+            if (_buses.TryGetValue(connectionId, out var bus))
             {
                 bus.SendCommand(command);
             }
@@ -893,6 +893,11 @@ namespace OSDP.Net
             if (!_buses.TryGetValue(connectionId, out Bus foundBus))
             {
                 throw new ArgumentException("Connection could not be found", nameof(connectionId));
+            }
+
+            if (address > 127)
+            {
+                throw new ArgumentOutOfRangeException(nameof(address), "Address is out of range, it must between 0 and 127.");
             }
 
             foundBus.AddDevice(address, useCrc, useSecureChannel, useSecureChannel ? secureChannelKey : null);
