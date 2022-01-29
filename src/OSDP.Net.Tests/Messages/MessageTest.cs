@@ -24,5 +24,27 @@ namespace OSDP.Net.Tests.Messages
             // Assert
             Assert.AreEqual(new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, completeData.ToArray());
         }
+
+        [Test]
+        public void CalculateMaximumMessageSize_Clear()
+        {
+            // Arrange
+            // Act
+            ushort actual = Message.CalculateMaximumMessageSize(128);
+
+            // Assert
+            Assert.AreEqual(120, actual);
+        }
+
+        [Test]
+        public void CalculateMaximumMessageSize_Encrypted()
+        {
+            // Arrange
+            // Act
+            ushort actual = Message.CalculateMaximumMessageSize(129, true);
+
+            // Assert
+            Assert.AreEqual(112, actual);
+        }
     }
 }

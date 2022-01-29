@@ -481,7 +481,8 @@ namespace OSDP.Net
                     // Set fragment size if requested
                     if (fileTransferStatus is { UpdateMessageMaximum: > 0 })
                     {
-                        fragmentSize = fileTransferStatus.UpdateMessageMaximum;
+                        fragmentSize = Message.CalculateMaximumMessageSize(fileTransferStatus.UpdateMessageMaximum,
+                            reply.IsSecureMessage);
                     }
                 }
 
