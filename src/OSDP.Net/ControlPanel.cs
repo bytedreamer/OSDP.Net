@@ -507,6 +507,83 @@ namespace OSDP.Net
         }
 
         /// <summary>
+        /// Send a request to the PD to read from a biometric scan and send back the data template.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="biometricReadData">Command data to send a request to the PD to send template data from a biometric scan.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
+        /// <returns>Results from matching the biometric scan.</returns>
+        public async Task<BiometricReadResult> ScanAndSendBiometricData(Guid connectionId, byte address,
+            BiometricReadData biometricReadData, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            var requestLock = GetRequestLock(connectionId, address);
+
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            {
+                throw new TimeoutException("Timeout waiting for another request to complete.");
+            }
+
+            try
+            {
+                return await WaitForBiometricRead(connectionId, address, biometricReadData, timeout,
+                    cancellationToken);
+            }
+            finally
+            {
+                requestLock.Release();
+            }
+        }
+
+        private async Task<BiometricReadResult> WaitForBiometricRead(Guid connectionId, byte address,
+            BiometricReadData biometricReadData, TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            bool complete = false;
+            BiometricReadResult result = null;
+
+            void Handler(object sender, BiometricReadResultsReplyEventArgs args)
+            {
+                // Only process matching replies
+                if (args.ConnectionId != connectionId || args.Address != address) return;
+
+                complete = true;
+
+                result = args.BiometricReadResult;
+            }
+
+            BiometricReadResultsReplyReceived += Handler;
+
+            try
+            {
+                await SendCommand(connectionId,
+                    new BiometricReadDataCommand(address, biometricReadData), cancellationToken).ConfigureAwait(false);
+
+                DateTime endTime = DateTime.UtcNow + timeout;
+
+                while (DateTime.UtcNow <= endTime)
+                {
+                    if (complete)
+                    {
+                        return result;
+                    }
+
+                    // Delay for default poll interval
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                }
+
+                throw new TimeoutException("Timeout waiting to for biometric read data.");
+            }
+            finally
+            {
+                BiometricReadResultsReplyReceived -= Handler;
+            }
+        }
+
+
+        /// <summary>
         /// Send a request to the PD to perform a biometric scan and match it to the provided template.
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
@@ -514,7 +591,7 @@ namespace OSDP.Net
         /// <param name="biometricTemplateData">Command data to send a request to the PD to perform a biometric scan and match.</param>
         /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
-        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        /// <returns>Results from matching the biometric scan.</returns>
         public async Task<BiometricMatchResult> ScanAndMatchBiometricTemplate(Guid connectionId, byte address,
             BiometricTemplateData biometricTemplateData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
@@ -946,6 +1023,15 @@ namespace OSDP.Net
                     break;
                 }
                 
+                case ReplyType.BiometricData:
+                {
+                    var handler = BiometricReadResultsReplyReceived;
+                    handler?.Invoke(this,
+                        new BiometricReadResultsReplyEventArgs(reply.ConnectionId, reply.Address,
+                            BiometricReadResult.ParseData(reply.ExtractReplyData)));
+                    break;
+                }
+                
                 case ReplyType.BiometricMatchResult:
                 {
                     var handler = BiometricMatchReplyReceived;
@@ -1008,6 +1094,11 @@ namespace OSDP.Net
         /// Occurs when key pad data reply is received.
         /// </summary>
         public event EventHandler<KeypadReplyEventArgs> KeypadReplyReceived;
+
+        /// <summary>
+        /// Occurs when biometric read results reply is received.
+        /// </summary>
+        private event EventHandler<BiometricReadResultsReplyEventArgs> BiometricReadResultsReplyReceived;
 
         /// <summary>
         /// Occurs when biometric match reply is received.
@@ -1404,6 +1495,41 @@ namespace OSDP.Net
             /// A keypad reply..
             /// </summary>
             public KeypadData KeypadData { get; }
+        }
+
+        /// <summary>
+        /// A biometric match reply has been received.
+        /// </summary>
+        private class BiometricReadResultsReplyEventArgs : EventArgs
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BiometricReadResultsReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="biometricReadResult">A biometric read results reply.</param>
+            public BiometricReadResultsReplyEventArgs(Guid connectionId, byte address,
+                BiometricReadResult biometricReadResult)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                BiometricReadResult = biometricReadResult;
+            }
+
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
+            public Guid ConnectionId { get; }
+
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
+            public byte Address { get; }
+
+            /// <summary>
+            /// A biometric read result reply.
+            /// </summary>
+            public BiometricReadResult BiometricReadResult { get; }
         }
 
         /// <summary>

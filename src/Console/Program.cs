@@ -103,6 +103,7 @@ namespace Console
                 new MenuBarItem("_Commands", new[]
                 {
                     new MenuItem("Communication Configuration", "", SendCommunicationConfiguration), 
+                    new MenuItem("Biometric Read", "", SendBiometricReadCommand), 
                     new MenuItem("Biometric Match", "", SendBiometricMatchCommand), 
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, _controlPanel.DeviceCapabilities)),
@@ -1005,6 +1006,39 @@ namespace Console
                 readerAddressTextField,
                 new Label(1, 3, "Repeat Times:"),
                 repeatTimesTextField);
+            readerAddressTextField.SetFocus();
+            
+            Application.Run(dialog);
+        }
+
+        private static void SendBiometricReadCommand()
+        {
+            var readerAddressTextField = new TextField(20, 1, 20, "0");
+
+            void SendBiometricReadButtonClicked()
+            {
+                if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    return;
+                }
+
+                SendCommand("Biometric Read Command", _connectionId, 
+                    new BiometricReadData(readerNumber, BiometricType.NotSpecified, BiometricFormat.FingerPrintTemplate, 50), TimeSpan.FromSeconds(30),
+                    _controlPanel.ScanAndSendBiometricData, (_, _) => { });
+
+                Application.RequestStop();
+            }
+
+            var sendButton = new Button("Send", true);
+            sendButton.Clicked += SendBiometricReadButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += () => Application.RequestStop();
+
+            var dialog = new Dialog("Biometric Read Command", 60, 10, cancelButton, sendButton);
+            dialog.Add(new Label(1, 1, "Reader Number:"),
+                readerAddressTextField);
             readerAddressTextField.SetFocus();
             
             Application.Run(dialog);

@@ -1,29 +1,26 @@
 using System.Collections.Generic;
-using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
-    /// Command data to send a request to the PD to perform a biometric scan and return data.
+    /// Command data to send a request to the PD to perform a biometric scan and match.
     /// </summary>
-    public class BiometricTemplateData
+    public class BiometricReadData
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="BiometricTemplateData"/> class.
+        /// Initializes a new instance of the <see cref="BiometricReadData"/> class.
         /// </summary>
         /// <param name="readerNumber">The reader number starting at 0.</param>
         /// <param name="type">The type/body part to scan.</param>
         /// <param name="format">The format of the attached template.</param>
-        /// <param name="qualityThreshold">The threshold required for accepting biometric match.</param>
-        /// <param name="templateData">The biometric template data.</param>
-        public BiometricTemplateData(byte readerNumber, BiometricType type, BiometricFormat format,
-            byte qualityThreshold, byte[] templateData)
+        /// <param name="quality">.</param>
+        public BiometricReadData(byte readerNumber, BiometricType type, BiometricFormat format,
+            byte quality)
         {
             ReaderNumber = readerNumber;
             Type = type;
             Format = format;
-            QualityThreshold = qualityThreshold;
-            TemplateData = templateData;
+            Quality = quality;
         }
 
         /// <summary>
@@ -42,27 +39,19 @@ namespace OSDP.Net.Model.CommandData
         public BiometricFormat Format { get; }
 
         /// <summary>
-        /// Gets the threshold required for accepting biometric match.
+        /// Gets the ?.
         /// </summary>
-        public byte QualityThreshold { get; }
-
-        /// <summary>
-        ///  Gets the biometric template data.
-        /// </summary>
-        public byte[] TemplateData { get; }
+        public byte Quality { get; }
 
         internal IEnumerable<byte> BuildData()
         {
-            var data = new List<byte>
+            return new []
             {
                 ReaderNumber,
                 (byte)Type,
                 (byte)Format,
-                QualityThreshold
+                Quality
             };
-            data.AddRange(Message.ConvertShortToBytes((ushort)TemplateData.Length));
-            data.AddRange(TemplateData);
-            return data;
         }
     }
 }
