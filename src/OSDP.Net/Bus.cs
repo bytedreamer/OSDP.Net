@@ -65,7 +65,6 @@ namespace OSDP.Net
 
         public void Dispose()
         {
-            _replies?.Dispose();
             _tracerFile?.Dispose();
         }
 
