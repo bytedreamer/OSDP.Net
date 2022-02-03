@@ -59,7 +59,7 @@ namespace OSDP.Net
         /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
         /// <param name="isTracing">Write packet data to {Bus ID}.osdpcap file</param>
         /// <returns>An identifier that represents the connection</returns>
-        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing = false) =>
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing) =>
             StartConnection(connection, pollInterval, isTracing ? OSDPFileCapTracer.Trace : _ => { });
 
         /// <summary>
