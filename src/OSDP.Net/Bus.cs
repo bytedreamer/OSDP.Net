@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Tracing;
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace OSDP.Net
@@ -26,31 +27,26 @@ namespace OSDP.Net
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
-        private readonly bool _isTracing;
         private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
         private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
+        private readonly ITracer _tracer;
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
 
         private bool _isShuttingDown;
-        private FileStream _tracerFile;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
-            bool isTracing = false,
+            ITracer tracer,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
             _pollInterval = pollInterval;
-            _isTracing = isTracing;
+            _tracer = tracer;
             Id = Guid.NewGuid();
-            if (_isTracing)
-            {
-                _tracerFile = new FileStream($"{Id:D}.osdpcap", FileMode.OpenOrCreate);
-            }
             _logger = logger;
         }
 
@@ -65,7 +61,7 @@ namespace OSDP.Net
 
         public void Dispose()
         {
-            _tracerFile?.Dispose();
+            _tracer.Dispose();
         }
 
         private TimeSpan IdleLineDelay(int numberOfBytes)
@@ -430,27 +426,8 @@ namespace OSDP.Net
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
             
             await _connection.WriteAsync(buffer).ConfigureAwait(false);
-           
-            if (_isTracing)
-            {
-                if (_tracerFile.CanWrite)
-                {
-                    _tracerFile = new FileStream($"{Id:D}.osdpcap", FileMode.OpenOrCreate);
-                }
-                
-                var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
-                long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
-                await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
-                {
-                    timeSec = Math.Floor(unixTime.TotalSeconds).ToString("F0"),
-                    timeNano = timeNano.ToString("000000000"),
-                    io = "output",
-                    data = BitConverter.ToString(commandData)
-                });
-                // Write newline
-                _tracerFile.WriteByte(0x0A);
-                _tracerFile.Flush();
-            }
+
+            _tracer.Trace(new TraceEntry(TraceDirection.Out, Id, commandData));
             
             using var delayTime = new AutoResetEvent(false);
             delayTime.WaitOne(IdleLineDelay(buffer.Length));
@@ -477,21 +454,7 @@ namespace OSDP.Net
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
 
-            if (_isTracing)
-            {
-                var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
-                long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
-                await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
-                {
-                    timeSec = Math.Floor(unixTime.TotalSeconds).ToString("F0"),
-                    timeNano = timeNano.ToString("000000000"),
-                    io = "input",
-                    data = BitConverter.ToString(replyBuffer.ToArray())
-                });
-                // Write newline
-                _tracerFile.WriteByte(0x0A);
-                _tracerFile.Flush();
-            }
+            _tracer.Trace(new TraceEntry(TraceDirection.In, Id, replyBuffer.ToArray()));
 
             return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }
