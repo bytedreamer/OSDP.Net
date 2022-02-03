@@ -9,6 +9,7 @@ using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Tracing;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
@@ -72,6 +73,14 @@ namespace OSDP.Net
             }, TaskCreationOptions.LongRunning);
 
             return newBus.Id;
+        }
+
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval) =>
+            StartConnection(connection, pollInterval, DummyTracer.Default);
+
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, ITracer tracer)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
