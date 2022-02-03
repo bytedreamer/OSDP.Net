@@ -60,12 +60,25 @@ namespace OSDP.Net
         /// <param name="isTracing">Write packet data to {Bus ID}.osdpcap file</param>
         /// <returns>An identifier that represents the connection</returns>
         public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing = false) =>
-            StartConnection(connection, pollInterval, isTracing ? new OSDPFileCapTracer() : DummyTracer.Default);
+            StartConnection(connection, pollInterval, isTracing ? OSDPFileCapTracer.Trace : _ => { });
 
+        /// <summary>
+        /// Start polling on the defined connection.
+        /// </summary>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <returns>An identifier that represents the connection</returns>
         public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval) =>
-            StartConnection(connection, pollInterval, DummyTracer.Default);
+            StartConnection(connection, pollInterval, _ => { });
 
-        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, ITracer tracer)
+        /// <summary>
+        /// Start polling on the defined connection.
+        /// </summary>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <param name="tracer">Delegate that will receive detailed trace information</param>
+        /// <returns>An identifier that represents the connection</returns>
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
         {
             var newBus = new Bus(
                 connection,

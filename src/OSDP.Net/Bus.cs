@@ -31,14 +31,14 @@ namespace OSDP.Net
         private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
-        private readonly ITracer _tracer;
+        private readonly Action<TraceEntry> _tracer;
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
 
         private bool _isShuttingDown;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
-            ITracer tracer,
+            Action<TraceEntry> tracer,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
         {
@@ -61,7 +61,6 @@ namespace OSDP.Net
 
         public void Dispose()
         {
-            _tracer.Dispose();
         }
 
         private TimeSpan IdleLineDelay(int numberOfBytes)
@@ -427,7 +426,7 @@ namespace OSDP.Net
             
             await _connection.WriteAsync(buffer).ConfigureAwait(false);
 
-            _tracer.Trace(new TraceEntry(TraceDirection.Out, Id, commandData));
+            _tracer(new TraceEntry(TraceDirection.Out, Id, commandData));
             
             using var delayTime = new AutoResetEvent(false);
             delayTime.WaitOne(IdleLineDelay(buffer.Length));
@@ -454,9 +453,10 @@ namespace OSDP.Net
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
 
-            _tracer.Trace(new TraceEntry(TraceDirection.In, Id, replyBuffer.ToArray()));
+            var replyBufferArr = replyBuffer.ToArray();
+            _tracer(new TraceEntry(TraceDirection.In, Id, replyBufferArr));
 
-            return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
+            return Reply.Parse(replyBufferArr, Id, command, device);
         }
 
         private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
