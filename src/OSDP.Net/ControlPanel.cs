@@ -9,6 +9,7 @@ using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Tracing;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
@@ -58,12 +59,36 @@ namespace OSDP.Net
         /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
         /// <param name="isTracing">Write packet data to {Bus ID}.osdpcap file</param>
         /// <returns>An identifier that represents the connection</returns>
-        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing = false)
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing) =>
+            StartConnection(connection, pollInterval, isTracing ? OSDPFileCapTracer.Trace : _ => { });
+
+        /// <summary>
+        /// Start polling on the defined connection.
+        /// </summary>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <returns>An identifier that represents the connection</returns>
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval) =>
+            StartConnection(connection, pollInterval, _ => { });
+
+        /// <summary>
+        /// Start polling on the defined connection.
+        /// </summary>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <param name="tracer">Delegate that will receive detailed trace information</param>
+        /// <returns>An identifier that represents the connection</returns>
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
         {
-            var newBus = new Bus(connection, _replies, pollInterval, isTracing, _logger);
-            
+            var newBus = new Bus(
+                connection,
+                _replies,
+                pollInterval,
+                tracer,
+                _logger);
+
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
-            
+
             _buses[newBus.Id] = newBus;
 
             Task.Factory.StartNew(async () =>
