@@ -15,8 +15,8 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   major: 2
-  minor: 0
-  patch: 19
+  minor: 1
+  patch: 0
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
