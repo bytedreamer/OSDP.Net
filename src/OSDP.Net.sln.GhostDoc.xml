@@ -55,7 +55,7 @@
     </SelectedProjects>
   </HelpConfiguration>
   <HelpConfiguration name="OSDP.Net">
-    <OutputPath>..\docs\html</OutputPath>
+    <OutputPath>..\docs\www</OutputPath>
     <CleanupOutputPath>false</CleanupOutputPath>
     <HelpFileName />
     <HelpFileNamingMethod>MemberName</HelpFileNamingMethod>

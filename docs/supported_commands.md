@@ -15,20 +15,20 @@
 | osdp_BUZ          | 0x6A | Yes | Reader Buzzer Control Command | [ReaderBuzzerControl](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ReaderBuzzerControl.htm) |
 | osdp_TEXT         | 0x6B | Yes | Text Output Command | [ReaderTextOutput](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ReaderTextOutput.htm) |
 | osdp_COMSET       | 0x6E | Yes | PD Communication Configuration Command | [CommunicationConfiguration](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.CommunicationConfiguration.htm) |
-| osdp_BIOREAD      | 0x73 | No  | Scan and Send Biometric Data | |
-| osdp_BIOMATCH     | 0x74 | No  | Scan and Match Biometric Template | |
+| osdp_BIOREAD      | 0x73 | Yes | Scan and Send Biometric Data | [ScanAndSendBiometricData](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ScanAndSendBiometricData.htm) |
+| osdp_BIOMATCH     | 0x74 | Yes | Scan and Match Biometric Template | [ScanAndSendBiometricTemplate](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ScanAndMatchBiometricTemplate.htm)  |
 | osdp_KEYSET       | 0x75 | Yes | Encryption Key Set Command | [EncryptionKeySet](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.EncryptionKeySet.htm) |
 | osdp_CHLNG        | 0x76 | Yes | Challenge and Secure Session Initialization Rq. | None |
 | osdp_SCRYPT       | 0x77 | Yes | Server Cryptogram | None |
-| osdp_ACURXSIZE    | 0x7B | No  | Max ACU receive size | |
+| osdp_ACURXSIZE    | 0x7B | Yes | Max ACU receive size | [MaxAcuReceiveSize](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ACUReceivedSize.htm) |
 | osdp_FILETRANSFER | 0x7C | Yes | Send data file to PD | [FileTransfer](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.FileTransfer.htm) |
 | osdp_MFG          | 0x80 | Yes | Manufacturer Specific Command | [ManufacturerSpecificCommand](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ManufacturerSpecificCommand.htm) |
 | osdp_XWR          | 0XA1 | Yes | Extended write data | [ExtendedWriteData](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ExtendedWriteData.htm) |
-| osdp_ABORT        | 0XA2 | No  | Abort PD operation | |
-| osdp_PIVDATA      | 0XA3 | Yes | Get PIV Data | [GetPIVData ](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.GetPIVData.htm) |
+| osdp_ABORT        | 0XA2 | Yes | Abort PD operation | [AbortPdOperation](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.AbortCurrentOperation.htm) |
+| osdp_PIVDATA      | 0XA3 | Yes | Get PIV Data | [GetPIVData](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.GetPIVData.htm) |
 | osdp_GENAUTH      | 0XA4 | No  | Request Authenticate | |
 | osdp_CRAUTH       | 0XA5 | No  | Request Crypto Response | |
-| osdp_KEEPACTIVE   | 0XA7 | No  | PD read activation | |
+| osdp_KEEPACTIVE   | 0XA7 | Yes | PD read activation | [KeeprReaderActive](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.KeepReaderActive.htm) |
 
 ## Replies
 | Name | Value | Support | Description | Documentation |
@@ -43,10 +43,10 @@
 | osdp_RSTATR     | 0x4B | Yes | Reader Status Report | |
 | osdp_RAW        | 0x50 | Yes | Reader Data � Raw bit image of card data | |
 | osdp_FMT        | 0x51 | No  | Reader Data � Formatted character stream | |
-| osdp_KEYPPAD    | 0x53 | No  | Keypad Data | |
+| osdp_KEYPPAD    | 0x53 | Yes | Keypad Data | |
 | osdp_COM        | 0x54 | Yes | PD Communications Configuration Report | |
-| osdp_BIOREADR   | 0x57 | No  | Biometric Data | |
-| osdp_BIOMATCHR  | 0x58 | No  | Biometric Match Result | |
+| osdp_BIOREADR   | 0x57 | Yes | Biometric Data | |
+| osdp_BIOMATCHR  | 0x58 | Yes | Biometric Match Result | |
 | osdp_CCRYPT     | 0x76 | Yes | Client's ID, Random Number, and Cryptogram | None |
 | osdp_RMAC_I     | 0x78 | Yes | Initial R-MAC | None |
 | osdp_BUSY       | 0x79 | Yes | PD is Busy reply | None |
