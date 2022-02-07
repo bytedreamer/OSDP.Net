@@ -47,10 +47,7 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
         /// <returns>An identifier that represents the connection</returns>
-        public Guid StartConnection(IOsdpConnection connection)
-        {
-            return StartConnection(connection, Bus.DefaultPollInterval);
-        }
+        public Guid StartConnection(IOsdpConnection connection) => StartConnection(connection, Bus.DefaultPollInterval);
 
         /// <summary>
         /// Start polling on the defined connection.

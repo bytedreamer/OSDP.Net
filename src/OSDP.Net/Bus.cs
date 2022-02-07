@@ -29,9 +29,9 @@ namespace OSDP.Net
         private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
-        private readonly Action<TraceEntry> _tracer;
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
+        private readonly Action<TraceEntry> _tracer;
 
         private bool _isShuttingDown;
 
@@ -300,17 +300,27 @@ namespace OSDP.Net
             bool isConnected = device.IsConnected;
             bool isSecureChannelEstablished = device.IsSecurityEstablished;
 
-            if (_lastOnlineConnectionStatus.ContainsKey(device.Address) &&
-                _lastOnlineConnectionStatus[device.Address] == isConnected &&
-                _lastSecureConnectionStatus.ContainsKey(device.Address) &&
-                _lastSecureConnectionStatus[device.Address] == isSecureChannelEstablished) return false;
+            // Default to false when initializing status checks
+            if (!_lastOnlineConnectionStatus.ContainsKey(device.Address))
+            {
+                _lastOnlineConnectionStatus[device.Address] = false;
 
-            var handler = ConnectionStatusChanged;
-            handler?.Invoke(this,
-                new ConnectionStatusEventArgs(device.Address, isConnected, device.IsSecurityEstablished));
+            }
+            if (!_lastSecureConnectionStatus.ContainsKey(device.Address))
+            {
+                _lastSecureConnectionStatus[device.Address] = false;
+            }
+            bool onlineConnectionChanged = _lastOnlineConnectionStatus[device.Address] != isConnected;
+            bool secureChannelStatusChanged = _lastSecureConnectionStatus[device.Address] != isSecureChannelEstablished;
+
+            if (!onlineConnectionChanged && !secureChannelStatusChanged) return false;
 
             _lastOnlineConnectionStatus[device.Address] = isConnected;
             _lastSecureConnectionStatus[device.Address] = isSecureChannelEstablished;
+            
+            var handler = ConnectionStatusChanged;
+            handler?.Invoke(this,
+                new ConnectionStatusEventArgs(device.Address, isConnected, device.IsSecurityEstablished));
 
             return true;
         }
@@ -450,11 +460,10 @@ namespace OSDP.Net
             {
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
+            
+            _tracer(new TraceEntry(TraceDirection.In, Id, replyBuffer.ToArray()));
 
-            var replyBufferArr = replyBuffer.ToArray();
-            _tracer(new TraceEntry(TraceDirection.In, Id, replyBufferArr));
-
-            return Reply.Parse(replyBufferArr, Id, command, device);
+            return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }
 
         private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
