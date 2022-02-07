@@ -83,15 +83,15 @@ namespace OSDP.Net
             
             if (isPolling)
             {
+                if (MessageControl.Sequence == 0)
+                {
+                    return new PollCommand(Address);
+                }
+                
                 if (UseSecureChannel && !_secureChannel.IsInitialized)
                 {
                     return new SecurityInitializationRequestCommand(Address,
                         _secureChannel.ServerRandomNumber().ToArray(), IsDefaultKey);
-                }
-
-                if (MessageControl.Sequence == 0)
-                {
-                    return new PollCommand(Address);
                 }
 
                 if (UseSecureChannel && !_secureChannel.IsEstablished)
