@@ -103,6 +103,7 @@ namespace Console
                 new MenuBarItem("_Commands", new[]
                 {
                     new MenuItem("Communication Configuration", "", SendCommunicationConfiguration), 
+                    new MenuItem("Biometric Read", "", SendBiometricReadCommand), 
                     new MenuItem("Biometric Match", "", SendBiometricMatchCommand), 
                     new MenuItem("_Device Capabilities", "",
                         () => SendCommand("Device capabilities", _connectionId, _controlPanel.DeviceCapabilities)),
@@ -554,7 +555,7 @@ namespace Console
 
             void AddDeviceButtonClicked()
             {
-                if (!byte.TryParse(addressTextField.Text.ToString(), out var address))
+                if (!byte.TryParse(addressTextField.Text.ToString(), out var address) || address > 127)
                 {
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid address entered!", "OK");
                     return;
@@ -1010,16 +1011,98 @@ namespace Console
             Application.Run(dialog);
         }
 
+        private static void SendBiometricReadCommand()
+        {
+            var readerAddressTextField = new TextField(20, 1, 20, "0");
+            var typeTextField = new TextField(20, 3, 20, "0");
+            var formatTextField = new TextField(20, 5, 20, "2");
+            var qualityTextField = new TextField(20, 7, 20, "50");
+            
+            void SendBiometricReadButtonClicked()
+            {
+                if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    return;
+                }
+                if (!byte.TryParse(typeTextField.Text.ToString(), out byte type))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid Bio type number entered!", "OK");
+                    return;
+                }
+                if (!byte.TryParse(formatTextField.Text.ToString(), out byte format))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid format number entered!", "OK");
+                    return;
+                }
+                if (!byte.TryParse(qualityTextField.Text.ToString(), out byte quality))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid quality number entered!", "OK");
+                    return;
+                }
+
+                SendCommand("Biometric Read Command", _connectionId, 
+                    new BiometricReadData(readerNumber, (BiometricType)type, (BiometricFormat)format, quality), TimeSpan.FromSeconds(30),
+                    // ReSharper disable once AsyncVoidLambda
+                    _controlPanel.ScanAndSendBiometricData, async (_, result) =>
+                    {
+                        DisplayReceivedReply($"Received Bio Read", result.ToString());
+                        
+                        if (result.TemplateData.Length > 0)
+                        {
+                            await File.WriteAllBytesAsync("BioReadTemplate", result.TemplateData);
+                        }
+                    });
+
+                Application.RequestStop();
+            }
+
+            var sendButton = new Button("Send", true);
+            sendButton.Clicked += SendBiometricReadButtonClicked;
+            var cancelButton = new Button("Cancel");
+            cancelButton.Clicked += () => Application.RequestStop();
+
+            var dialog = new Dialog("Biometric Read Command", 60, 12, cancelButton, sendButton);
+            dialog.Add(new Label(1, 1, "Reader Number:"),
+                readerAddressTextField);
+            dialog.Add(new Label(1, 3, "Bio Type:"),
+                typeTextField);
+            dialog.Add(new Label(1, 5, "Bio Format:"),
+                formatTextField);
+            dialog.Add(new Label(1, 7, "Quality:"),
+                qualityTextField);
+            readerAddressTextField.SetFocus();
+            
+            Application.Run(dialog);
+        }
+
         private static void SendBiometricMatchCommand()
         {
             var readerAddressTextField = new TextField(20, 1, 20, "0");
+            var typeTextField = new TextField(20, 3, 20, "0");
+            var formatTextField = new TextField(20, 5, 20, "2");
+            var qualityThresholdTextField = new TextField(20, 7, 20, "50");
 
             void SendBiometricMatchButtonClicked()
             {
                 if (!byte.TryParse(readerAddressTextField.Text.ToString(), out byte readerNumber))
                 {
-
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid reader number entered!", "OK");
+                    return;
+                }
+                if (!byte.TryParse(typeTextField.Text.ToString(), out byte type))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid Bio type number entered!", "OK");
+                    return;
+                }
+                if (!byte.TryParse(formatTextField.Text.ToString(), out byte format))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid format number entered!", "OK");
+                    return;
+                }
+                if (!byte.TryParse(qualityThresholdTextField.Text.ToString(), out byte qualityThreshold))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid quality threshold number entered!", "OK");
                     return;
                 }
                 
@@ -1035,8 +1118,8 @@ namespace Console
                 }
 
                 SendCommand("Biometric Match Command", _connectionId, 
-                    new BiometricTemplateData(readerNumber, BiometricType.NotSpecified, BiometricFormat.FingerPrintTemplate,
-                        50, File.ReadAllBytes(path)), TimeSpan.FromSeconds(30),
+                    new BiometricTemplateData(readerNumber, (BiometricType)type, (BiometricFormat)format,
+                        qualityThreshold, File.ReadAllBytes(path)), TimeSpan.FromSeconds(30),
                     _controlPanel.ScanAndMatchBiometricTemplate, (_, _) => { });
 
                 Application.RequestStop();
@@ -1047,9 +1130,15 @@ namespace Console
             var cancelButton = new Button("Cancel");
             cancelButton.Clicked += () => Application.RequestStop();
 
-            var dialog = new Dialog("Biometric Match Command", 60, 10, cancelButton, sendButton);
+            var dialog = new Dialog("Biometric Match Command", 60, 12, cancelButton, sendButton);
             dialog.Add(new Label(1, 1, "Reader Number:"),
                 readerAddressTextField);
+            dialog.Add(new Label(1, 3, "Bio Type:"),
+                typeTextField);
+            dialog.Add(new Label(1, 5, "Bio Format:"),
+                formatTextField);
+            dialog.Add(new Label(1, 7, "Quality Threshold:"),
+                qualityThresholdTextField);
             readerAddressTextField.SetFocus();
             
             Application.Run(dialog);
@@ -1133,8 +1222,8 @@ namespace Console
                         updatedDevice.UseSecureChannel = true;
                         updatedDevice.SecureChannelKey = key;
 
-                        //_controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
-                         //   updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
+                        _controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,
+                            updatedDevice.UseSecureChannel, updatedDevice.SecureChannelKey);
                     }, true);
 
                 Application.RequestStop();

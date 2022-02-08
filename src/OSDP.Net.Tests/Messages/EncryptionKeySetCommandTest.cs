@@ -18,7 +18,9 @@ namespace OSDP.Net.Tests.Messages
                     {
                         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
                     }));
-            return BitConverter.ToString(encryptionKeySetCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
+            var device = new Device(0, useCrc, useSecureChannel, null);
+            device.MessageControl.IncrementSequence(1);
+            return BitConverter.ToString(encryptionKeySetCommand.BuildCommand(device));
         }
 
         public class EncryptionKeySetCommandTestClass
@@ -28,11 +30,11 @@ namespace OSDP.Net.Tests.Messages
                 get
                 {
                     yield return new TestCaseData((byte) 0x0, true, true).Returns(
-                        "53-00-1C-00-0C-02-17-75-01-10-00-01-02-03-04-05-06-07-00-01-02-03-04-05-06-07-48-29");
+                        "53-00-1C-00-0E-02-17-75-01-10-00-01-02-03-04-05-06-07-00-01-02-03-04-05-06-07-F8-F2");
                     yield return new TestCaseData((byte) 0x0, true, false).Returns(
-                        "53-00-1A-00-04-75-01-10-00-01-02-03-04-05-06-07-00-01-02-03-04-05-06-07-A9-C8");
+                        "53-00-1A-00-06-75-01-10-00-01-02-03-04-05-06-07-00-01-02-03-04-05-06-07-CF-A3");
                     yield return new TestCaseData((byte) 0x0, false, false).Returns(
-                        "53-00-19-00-00-75-01-10-00-01-02-03-04-05-06-07-00-01-02-03-04-05-06-07-D6");
+                        "53-00-19-00-02-75-01-10-00-01-02-03-04-05-06-07-00-01-02-03-04-05-06-07-D4");
                 }
             }
         }

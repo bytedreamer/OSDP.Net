@@ -180,5 +180,13 @@ namespace OSDP.Net.Messages
 
             return wholeMessageSize == offset + lengthOfFragment;
         }
+
+        internal static ushort CalculateMaximumMessageSize(ushort dataSize, bool isEncrypted = false, ushort cryptoLength = 16)
+        {
+            const ushort clearTextDifference = 8;
+            const ushort encryptedDifference = 16;
+
+            return (ushort)(dataSize - (isEncrypted ? encryptedDifference + (dataSize % cryptoLength) : clearTextDifference));
+        }
     }
 }

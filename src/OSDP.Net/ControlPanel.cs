@@ -9,6 +9,7 @@ using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Tracing;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
@@ -46,10 +47,7 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
         /// <returns>An identifier that represents the connection</returns>
-        public Guid StartConnection(IOsdpConnection connection)
-        {
-            return StartConnection(connection, Bus.DefaultPollInterval);
-        }
+        public Guid StartConnection(IOsdpConnection connection) => StartConnection(connection, Bus.DefaultPollInterval);
 
         /// <summary>
         /// Start polling on the defined connection.
@@ -58,12 +56,36 @@ namespace OSDP.Net
         /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
         /// <param name="isTracing">Write packet data to {Bus ID}.osdpcap file</param>
         /// <returns>An identifier that represents the connection</returns>
-        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing = false)
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, bool isTracing) =>
+            StartConnection(connection, pollInterval, isTracing ? OSDPFileCapTracer.Trace : _ => { });
+
+        /// <summary>
+        /// Start polling on the defined connection.
+        /// </summary>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <returns>An identifier that represents the connection</returns>
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval) =>
+            StartConnection(connection, pollInterval, _ => { });
+
+        /// <summary>
+        /// Start polling on the defined connection.
+        /// </summary>
+        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
+        /// <param name="tracer">Delegate that will receive detailed trace information</param>
+        /// <returns>An identifier that represents the connection</returns>
+        public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
         {
-            var newBus = new Bus(connection, _replies, pollInterval, isTracing, _logger);
-            
+            var newBus = new Bus(
+                connection,
+                _replies,
+                pollInterval,
+                tracer,
+                _logger);
+
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
-            
+
             _buses[newBus.Id] = newBus;
 
             Task.Factory.StartNew(async () =>
@@ -92,6 +114,7 @@ namespace OSDP.Net
             {
                 OnConnectionStatusChanged(bus.Id, address, false, false);
             }
+            bus.Dispose();
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
@@ -222,9 +245,9 @@ namespace OSDP.Net
         {
             int hash = new { connectionId, address }.GetHashCode();
             
-            if (_requestLocks.TryGetValue(hash, out var reqeustLock))
+            if (_requestLocks.TryGetValue(hash, out var requestLock))
             {
-                return reqeustLock;
+                return requestLock;
             }
 
             var newRequestLock = new SemaphoreSlim(1, 1);
@@ -480,7 +503,8 @@ namespace OSDP.Net
                     // Set fragment size if requested
                     if (fileTransferStatus is { UpdateMessageMaximum: > 0 })
                     {
-                        fragmentSize = fileTransferStatus.UpdateMessageMaximum;
+                        fragmentSize = Message.CalculateMaximumMessageSize(fileTransferStatus.UpdateMessageMaximum,
+                            reply.IsSecureMessage);
                     }
                 }
 
@@ -506,6 +530,83 @@ namespace OSDP.Net
         }
 
         /// <summary>
+        /// Send a request to the PD to read from a biometric scan and send back the data template.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="biometricReadData">Command data to send a request to the PD to send template data from a biometric scan.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
+        /// <returns>Results from matching the biometric scan.</returns>
+        public async Task<BiometricReadResult> ScanAndSendBiometricData(Guid connectionId, byte address,
+            BiometricReadData biometricReadData, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            var requestLock = GetRequestLock(connectionId, address);
+
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            {
+                throw new TimeoutException("Timeout waiting for another request to complete.");
+            }
+
+            try
+            {
+                return await WaitForBiometricRead(connectionId, address, biometricReadData, timeout,
+                    cancellationToken);
+            }
+            finally
+            {
+                requestLock.Release();
+            }
+        }
+
+        private async Task<BiometricReadResult> WaitForBiometricRead(Guid connectionId, byte address,
+            BiometricReadData biometricReadData, TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            bool complete = false;
+            BiometricReadResult result = null;
+
+            void Handler(object sender, BiometricReadResultsReplyEventArgs args)
+            {
+                // Only process matching replies
+                if (args.ConnectionId != connectionId || args.Address != address) return;
+
+                complete = true;
+
+                result = args.BiometricReadResult;
+            }
+
+            BiometricReadResultsReplyReceived += Handler;
+
+            try
+            {
+                await SendCommand(connectionId,
+                    new BiometricReadDataCommand(address, biometricReadData), cancellationToken).ConfigureAwait(false);
+
+                DateTime endTime = DateTime.UtcNow + timeout;
+
+                while (DateTime.UtcNow <= endTime)
+                {
+                    if (complete)
+                    {
+                        return result;
+                    }
+
+                    // Delay for default poll interval
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                }
+
+                throw new TimeoutException("Timeout waiting to for biometric read data.");
+            }
+            finally
+            {
+                BiometricReadResultsReplyReceived -= Handler;
+            }
+        }
+
+
+        /// <summary>
         /// Send a request to the PD to perform a biometric scan and match it to the provided template.
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
@@ -513,7 +614,7 @@ namespace OSDP.Net
         /// <param name="biometricTemplateData">Command data to send a request to the PD to perform a biometric scan and match.</param>
         /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
-        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        /// <returns>Results from matching the biometric scan.</returns>
         public async Task<BiometricMatchResult> ScanAndMatchBiometricTemplate(Guid connectionId, byte address,
             BiometricTemplateData biometricTemplateData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
@@ -749,7 +850,7 @@ namespace OSDP.Net
 
             ReplyReceived += EventHandler;
 
-            if (_buses.TryGetValue(connectionId, out Bus bus))
+            if (_buses.TryGetValue(connectionId, out var bus))
             {
                 bus.SendCommand(command);
             }
@@ -778,6 +879,7 @@ namespace OSDP.Net
                 {
                     OnConnectionStatusChanged(bus.Id, address, false, false);
                 }
+                bus.Dispose();
             }
             _buses.Clear();
 
@@ -814,6 +916,11 @@ namespace OSDP.Net
             if (!_buses.TryGetValue(connectionId, out Bus foundBus))
             {
                 throw new ArgumentException("Connection could not be found", nameof(connectionId));
+            }
+
+            if (address > 127)
+            {
+                throw new ArgumentOutOfRangeException(nameof(address), "Address is out of range, it must between 0 and 127.");
             }
 
             foundBus.AddDevice(address, useCrc, useSecureChannel, useSecureChannel ? secureChannelKey : null);
@@ -944,6 +1051,15 @@ namespace OSDP.Net
                     break;
                 }
                 
+                case ReplyType.BiometricData:
+                {
+                    var handler = BiometricReadResultsReplyReceived;
+                    handler?.Invoke(this,
+                        new BiometricReadResultsReplyEventArgs(reply.ConnectionId, reply.Address,
+                            BiometricReadResult.ParseData(reply.ExtractReplyData)));
+                    break;
+                }
+                
                 case ReplyType.BiometricMatchResult:
                 {
                     var handler = BiometricMatchReplyReceived;
@@ -1006,6 +1122,11 @@ namespace OSDP.Net
         /// Occurs when key pad data reply is received.
         /// </summary>
         public event EventHandler<KeypadReplyEventArgs> KeypadReplyReceived;
+
+        /// <summary>
+        /// Occurs when biometric read results reply is received.
+        /// </summary>
+        private event EventHandler<BiometricReadResultsReplyEventArgs> BiometricReadResultsReplyReceived;
 
         /// <summary>
         /// Occurs when biometric match reply is received.
@@ -1402,6 +1523,41 @@ namespace OSDP.Net
             /// A keypad reply..
             /// </summary>
             public KeypadData KeypadData { get; }
+        }
+
+        /// <summary>
+        /// A biometric match reply has been received.
+        /// </summary>
+        private class BiometricReadResultsReplyEventArgs : EventArgs
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BiometricReadResultsReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="biometricReadResult">A biometric read results reply.</param>
+            public BiometricReadResultsReplyEventArgs(Guid connectionId, byte address,
+                BiometricReadResult biometricReadResult)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                BiometricReadResult = biometricReadResult;
+            }
+
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
+            public Guid ConnectionId { get; }
+
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
+            public byte Address { get; }
+
+            /// <summary>
+            /// A biometric read result reply.
+            /// </summary>
+            public BiometricReadResult BiometricReadResult { get; }
         }
 
         /// <summary>

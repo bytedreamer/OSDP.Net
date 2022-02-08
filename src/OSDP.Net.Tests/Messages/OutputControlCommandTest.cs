@@ -18,8 +18,10 @@ namespace OSDP.Net.Tests.Messages
                     new OutputControl(0, OutputControlCode.PermanentStateOffAllowTimedOperation, 100),
                     new OutputControl(1, OutputControlCode.TemporaryStateOffResumePermanentState, 120),
                 }));
+            var device = new Device(0, useCrc, useSecureChannel, null);
+            device.MessageControl.IncrementSequence(1);
             return BitConverter.ToString(
-                outputControlCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
+                outputControlCommand.BuildCommand(device));
         }
 
         public class OutputControlCommandTestClass
@@ -29,11 +31,11 @@ namespace OSDP.Net.Tests.Messages
                 get
                 {
                     yield return new TestCaseData((byte) 0x0, true, true).Returns(
-                        "53-00-12-00-0C-02-17-68-00-03-64-00-01-06-78-00-57-19");
+                        "53-00-12-00-0E-02-17-68-00-03-64-00-01-06-78-00-BD-1F");
                     yield return new TestCaseData((byte) 0x0, true, false).Returns(
-                        "53-00-10-00-04-68-00-03-64-00-01-06-78-00-81-85");
+                        "53-00-10-00-06-68-00-03-64-00-01-06-78-00-0B-5B");
                     yield return new TestCaseData((byte) 0x0, false, false).Returns(
-                        "53-00-0F-00-00-68-00-03-64-00-01-06-78-00-50");
+                        "53-00-0F-00-02-68-00-03-64-00-01-06-78-00-4E");
                 }
             }
         }

@@ -1,16 +1,15 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Tracing;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace OSDP.Net
@@ -18,7 +17,7 @@ namespace OSDP.Net
     /// <summary>
     /// A group of OSDP devices sharing communications
     /// </summary>
-    internal class Bus
+    internal class Bus : IDisposable
     {
         private const byte DriverByte = 0xFF;
 
@@ -26,31 +25,26 @@ namespace OSDP.Net
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly IOsdpConnection _connection;
-        private readonly bool _isTracing;
         private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
         private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
-        private readonly FileStream _tracerFile;
+        private readonly Action<TraceEntry> _tracer;
 
         private bool _isShuttingDown;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
-            bool isTracing = false,
+            Action<TraceEntry> tracer,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
             _pollInterval = pollInterval;
-            _isTracing = isTracing;
+            _tracer = tracer;
             Id = Guid.NewGuid();
-            if (_isTracing)
-            {
-                _tracerFile = new FileStream($"{Id:D}.osdpcap", FileMode.OpenOrCreate);
-            }
             _logger = logger;
         }
 
@@ -62,6 +56,10 @@ namespace OSDP.Net
         public Guid Id { get; }
 
         public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.Select(device => device.Address);
+
+        public void Dispose()
+        {
+        }
 
         private TimeSpan IdleLineDelay(int numberOfBytes)
         {
@@ -302,17 +300,27 @@ namespace OSDP.Net
             bool isConnected = device.IsConnected;
             bool isSecureChannelEstablished = device.IsSecurityEstablished;
 
-            if (_lastOnlineConnectionStatus.ContainsKey(device.Address) &&
-                _lastOnlineConnectionStatus[device.Address] == isConnected &&
-                _lastSecureConnectionStatus.ContainsKey(device.Address) &&
-                _lastSecureConnectionStatus[device.Address] == isSecureChannelEstablished) return false;
+            // Default to false when initializing status checks
+            if (!_lastOnlineConnectionStatus.ContainsKey(device.Address))
+            {
+                _lastOnlineConnectionStatus[device.Address] = false;
 
-            var handler = ConnectionStatusChanged;
-            handler?.Invoke(this,
-                new ConnectionStatusEventArgs(device.Address, isConnected, device.IsSecurityEstablished));
+            }
+            if (!_lastSecureConnectionStatus.ContainsKey(device.Address))
+            {
+                _lastSecureConnectionStatus[device.Address] = false;
+            }
+            bool onlineConnectionChanged = _lastOnlineConnectionStatus[device.Address] != isConnected;
+            bool secureChannelStatusChanged = _lastSecureConnectionStatus[device.Address] != isSecureChannelEstablished;
+
+            if (!onlineConnectionChanged && !secureChannelStatusChanged) return false;
 
             _lastOnlineConnectionStatus[device.Address] = isConnected;
             _lastSecureConnectionStatus[device.Address] = isSecureChannelEstablished;
+            
+            var handler = ConnectionStatusChanged;
+            handler?.Invoke(this,
+                new ConnectionStatusEventArgs(device.Address, isConnected, device.IsSecurityEstablished));
 
             return true;
         }
@@ -354,7 +362,6 @@ namespace OSDP.Net
                     ResetDevice(device);
                 }
             }
-
 
             switch (reply.Type)
             {
@@ -426,22 +433,8 @@ namespace OSDP.Net
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
             
             await _connection.WriteAsync(buffer).ConfigureAwait(false);
-           
-            if (_isTracing)
-            {
-                var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
-                long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
-                await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
-                {
-                    timeSec = Math.Floor(unixTime.TotalSeconds).ToString("F0"),
-                    timeNano = timeNano.ToString("000000000"),
-                    io = "output",
-                    data = BitConverter.ToString(commandData)
-                });
-                // Write newline
-                _tracerFile.WriteByte(0x0A);
-                _tracerFile.Flush();
-            }
+
+            _tracer(new TraceEntry(TraceDirection.Out, Id, commandData));
             
             using var delayTime = new AutoResetEvent(false);
             delayTime.WaitOne(IdleLineDelay(buffer.Length));
@@ -467,22 +460,8 @@ namespace OSDP.Net
             {
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
-
-            if (_isTracing)
-            {
-                var unixTime = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1));
-                long timeNano = (unixTime.Ticks - (long)Math.Floor(unixTime.TotalSeconds) * TimeSpan.TicksPerSecond) * 100L;
-                await JsonSerializer.SerializeAsync(_tracerFile, new OSDPCap
-                {
-                    timeSec = Math.Floor(unixTime.TotalSeconds).ToString("F0"),
-                    timeNano = timeNano.ToString("000000000"),
-                    io = "input",
-                    data = BitConverter.ToString(replyBuffer.ToArray())
-                });
-                // Write newline
-                _tracerFile.WriteByte(0x0A);
-                _tracerFile.Flush();
-            }
+            
+            _tracer(new TraceEntry(TraceDirection.In, Id, replyBuffer.ToArray()));
 
             return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }

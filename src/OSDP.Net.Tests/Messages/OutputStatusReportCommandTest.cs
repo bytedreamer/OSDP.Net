@@ -12,8 +12,10 @@ namespace OSDP.Net.Tests.Messages
         public string BuildCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
             var outputStatusReportCommand = new OutputStatusReportCommand(address);
+            var device = new Device(0, useCrc, useSecureChannel, null);
+            device.MessageControl.IncrementSequence(1);
             return BitConverter.ToString(
-                outputStatusReportCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
+                outputStatusReportCommand.BuildCommand(device));
         }
 
         public class OutputStatusReportCommandTestClass
@@ -23,11 +25,11 @@ namespace OSDP.Net.Tests.Messages
                 get
                 {
                     yield return new TestCaseData((byte) 0x0, true, true).Returns(
-                        "53-00-0A-00-0C-02-15-66-9E-B5");
+                        "53-00-0A-00-0E-02-15-66-F6-58");
                     yield return new TestCaseData((byte) 0x0, true, false).Returns(
-                        "53-00-08-00-04-66-2D-CA");
+                        "53-00-08-00-06-66-4F-AC");
                     yield return new TestCaseData((byte) 0x0, false, false).Returns(
-                        "53-00-07-00-00-66-40");
+                        "53-00-07-00-02-66-3E");
                 }
             }
         }

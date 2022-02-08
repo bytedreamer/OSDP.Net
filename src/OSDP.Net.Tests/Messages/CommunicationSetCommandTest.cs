@@ -14,7 +14,9 @@ namespace OSDP.Net.Tests.Messages
         {
             var communicationSetCommand = new CommunicationSetCommand(address, 
                 new CommunicationConfiguration(1, 9600));
-            return BitConverter.ToString(communicationSetCommand.BuildCommand(new Device(0, useCrc, useSecureChannel, null)));
+            var device = new Device(0, useCrc, useSecureChannel, null);
+            device.MessageControl.IncrementSequence(1);
+            return BitConverter.ToString(communicationSetCommand.BuildCommand(device));
         }
 
         public class CommunicationSetCommandTestClass
@@ -24,11 +26,11 @@ namespace OSDP.Net.Tests.Messages
                 get
                 {
                     yield return new TestCaseData((byte) 0x0, true, true).Returns(
-                        "53-00-0F-00-0C-02-17-6E-01-80-25-00-00-5C-97");
+                        "53-00-0F-00-0E-02-17-6E-01-80-25-00-00-3B-51");
                     yield return new TestCaseData((byte) 0x0, true, false).Returns(
-                        "53-00-0D-00-04-6E-01-80-25-00-00-0F-1B");
+                        "53-00-0D-00-06-6E-01-80-25-00-00-EC-7B");
                     yield return new TestCaseData((byte) 0x0, false, false).Returns(
-                        "53-00-0C-00-00-6E-01-80-25-00-00-8D");
+                        "53-00-0C-00-02-6E-01-80-25-00-00-8B");
                 }
             }
         }
