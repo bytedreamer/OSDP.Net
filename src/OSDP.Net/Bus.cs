@@ -555,8 +555,6 @@ namespace OSDP.Net
             }
             catch
             {
-                if (!_isShuttingDown) throw;
-
                 return 0;
             }
         }
