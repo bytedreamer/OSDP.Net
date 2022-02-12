@@ -16,15 +16,15 @@
 | osdp_TEXT         | 0x6B | Yes | Text Output Command | [ReaderTextOutput](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ReaderTextOutput.htm) |
 | osdp_COMSET       | 0x6E | Yes | PD Communication Configuration Command | [CommunicationConfiguration](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.CommunicationConfiguration.htm) |
 | osdp_BIOREAD      | 0x73 | Yes | Scan and Send Biometric Data | [ScanAndSendBiometricData](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ScanAndSendBiometricData.htm) |
-| osdp_BIOMATCH     | 0x74 | Yes | Scan and Match Biometric Template | [ScanAndSendBiometricTemplate](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ScanAndMatchBiometricTemplate.htm)  |
+| osdp_BIOMATCH     | 0x74 | Yes | Scan and Match Biometric Template | [ScanAndMatchBiometricTemplate](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ScanAndMatchBiometricTemplate.htm)  |
 | osdp_KEYSET       | 0x75 | Yes | Encryption Key Set Command | [EncryptionKeySet](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.EncryptionKeySet.htm) |
 | osdp_CHLNG        | 0x76 | Yes | Challenge and Secure Session Initialization Rq. | None |
 | osdp_SCRYPT       | 0x77 | Yes | Server Cryptogram | None |
-| osdp_ACURXSIZE    | 0x7B | Yes | Max ACU receive size | [MaxAcuReceiveSize](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ACUReceivedSize.htm) |
+| osdp_ACURXSIZE    | 0x7B | Yes | Max ACU receive size | [ACUReceivedSize](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ACUReceivedSize.htm) |
 | osdp_FILETRANSFER | 0x7C | Yes | Send data file to PD | [FileTransfer](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.FileTransfer.htm) |
 | osdp_MFG          | 0x80 | Yes | Manufacturer Specific Command | [ManufacturerSpecificCommand](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ManufacturerSpecificCommand.htm) |
 | osdp_XWR          | 0XA1 | Yes | Extended write data | [ExtendedWriteData](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.ExtendedWriteData.htm) |
-| osdp_ABORT        | 0XA2 | Yes | Abort PD operation | [AbortPdOperation](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.AbortCurrentOperation.htm) |
+| osdp_ABORT        | 0XA2 | Yes | Abort PD operation | [AbortCurrentOperation](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.AbortCurrentOperation.htm) |
 | osdp_PIVDATA      | 0XA3 | Yes | Get PIV Data | [GetPIVData](https://z-bitco.com/downloads/OSDP.Net/docs/html/M-OSDP.Net.ControlPanel.GetPIVData.htm) |
 | osdp_GENAUTH      | 0XA4 | No  | Request Authenticate | |
 | osdp_CRAUTH       | 0XA5 | No  | Request Crypto Response | |
