@@ -25,17 +25,17 @@ public struct TraceEntry
     /// <summary>
     /// The direction in which the data is sent.
     /// </summary>
-    public TraceDirection Direction { get; private set; }
+    public TraceDirection Direction { get; }
 
     /// <summary>
     /// The connection sending/receiving the data.
     /// </summary>
-    public Guid ConnectionId { get; private set; }
+    public Guid ConnectionId { get; }
 
     /// <summary>
     /// The data that is sent/received
     /// </summary>
-    public byte[] Data { get; private set; }
+    public byte[] Data { get; }
 
     internal TraceEntry(TraceDirection direction, Guid connectionId, byte[] data)
     {
