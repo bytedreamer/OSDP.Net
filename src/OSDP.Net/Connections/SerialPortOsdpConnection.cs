@@ -50,7 +50,14 @@ namespace OSDP.Net.Connections
         /// <inheritdoc />
         public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
-            return await _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+            var task = _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length, token);
+
+            if (await Task.WhenAny(task, Task.Delay(-1, token)) == task)
+            {
+                return await task.ConfigureAwait(false);
+            }
+
+            throw new TimeoutException();
         }
     }
 }
