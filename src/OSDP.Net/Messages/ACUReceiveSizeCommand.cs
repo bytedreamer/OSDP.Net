@@ -16,7 +16,7 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return Message.ConvertShortToBytes(_maximumReceiveBuffer);
+            return ConvertShortToBytes(_maximumReceiveBuffer);
         }
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()

@@ -26,6 +26,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{A57B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartCardSample", "..\samples\SmartCardSample\SmartCardSample.csproj", "{912369BE-4F7C-45EC-B269-2578BA87D4B3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PivDataReader", "PivDataReader\PivDataReader.csproj", "{644974EE-458D-4A66-87EC-481EE3DF7B2A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,8 +89,21 @@ Global
 		{912369BE-4F7C-45EC-B269-2578BA87D4B3}.Release|x64.Build.0 = Release|Any CPU
 		{912369BE-4F7C-45EC-B269-2578BA87D4B3}.Release|x86.ActiveCfg = Release|Any CPU
 		{912369BE-4F7C-45EC-B269-2578BA87D4B3}.Release|x86.Build.0 = Release|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Debug|x64.Build.0 = Debug|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Debug|x86.Build.0 = Debug|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Release|x64.ActiveCfg = Release|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Release|x64.Build.0 = Release|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Release|x86.ActiveCfg = Release|Any CPU
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{912369BE-4F7C-45EC-B269-2578BA87D4B3} = {A57B307A-A240-4F4F-A3A8-A078093B2809}
+		{644974EE-458D-4A66-87EC-481EE3DF7B2A} = {A57B307A-A240-4F4F-A3A8-A078093B2809}
 	EndGlobalSection
 EndGlobal
