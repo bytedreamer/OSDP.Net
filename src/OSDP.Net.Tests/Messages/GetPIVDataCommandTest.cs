@@ -24,14 +24,14 @@ namespace OSDP.Net.Tests.Messages
             {
                 get
                 {
-                    var data = new GetPIVData(ObjectId.CardholderUniqueIdentifier, 0, 0);
+                    var data = new GetPIVData(new byte[]{0x5F, 0xC1, 0x02}, 0, 0);
 
                     yield return new TestCaseData((byte) 0x0, true, true, data).Returns(
-                        "53-00-0F-00-0E-02-17-A3-5F-C1-02-00-00-AC-60");
+                        "53-00-10-00-0E-02-17-A3-5F-C1-02-00-00-00-15-E4");
                     yield return new TestCaseData((byte) 0x0, true, false, data).Returns(
-                        "53-00-0D-00-06-A3-5F-C1-02-00-00-7B-4A");
+                        "53-00-0E-00-06-A3-5F-C1-02-00-00-00-41-23");
                     yield return new TestCaseData((byte) 0x0, false, false, data).Returns(
-                        "53-00-0C-00-02-A3-5F-C1-02-00-00-DA");
+                        "53-00-0D-00-02-A3-5F-C1-02-00-00-00-D9");
                 }
             }
         }
