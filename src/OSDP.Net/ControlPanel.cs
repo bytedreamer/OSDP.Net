@@ -439,10 +439,10 @@ namespace OSDP.Net
         /// <param name="fragmentSize">Initial size of the fragment sent with each packet</param>
         /// <param name="callback">Track the status of the file transfer</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
-        public void FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
+        public Task FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
             Action<FileTransferStatus> callback, CancellationToken cancellationToken = default)
         {
-            Task.Factory.StartNew(async () =>
+            return Task.Run(async () =>
             {
                 _buses[connectionId].SetSendingMultiMessage(address, true);
                 try
@@ -455,7 +455,7 @@ namespace OSDP.Net
                     _buses[connectionId].SetSendingMultiMessage(address, false);
                     _buses[connectionId].SetSendingMultiMessageNoSecureChannel(address, false);
                 }
-            }, TaskCreationOptions.LongRunning);
+            });
         }
 
         private async Task SendFileTransferCommands(Guid connectionId, byte address, byte fileType, byte[] fileData,
