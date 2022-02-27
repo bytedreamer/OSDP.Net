@@ -18,11 +18,11 @@ namespace OSDP.Net
     /// <summary>The OSDP control panel used to communicate to Peripheral Devices (PDs) as an Access Control Unit (ACU). If multiple connections are needed, add them to the control panel. Avoid creating multiple control panel objects.</summary>
     public class ControlPanel
     {
-        private readonly ConcurrentDictionary<Guid, Bus> _buses = new ConcurrentDictionary<Guid, Bus>();
+        private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
-        private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
+        private readonly BlockingCollection<Reply> _replies = new();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
-        private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
+        private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
 
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
