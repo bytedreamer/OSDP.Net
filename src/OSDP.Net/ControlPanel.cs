@@ -18,11 +18,11 @@ namespace OSDP.Net
     /// <summary>The OSDP control panel used to communicate to Peripheral Devices (PDs) as an Access Control Unit (ACU). If multiple connections are needed, add them to the control panel. Avoid creating multiple control panel objects.</summary>
     public class ControlPanel
     {
-        private readonly ConcurrentDictionary<Guid, Bus> _buses = new ConcurrentDictionary<Guid, Bus>();
+        private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
-        private readonly BlockingCollection<Reply> _replies = new BlockingCollection<Reply>();
+        private readonly BlockingCollection<Reply> _replies = new();
         private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
-        private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
+        private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
 
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
@@ -439,10 +439,10 @@ namespace OSDP.Net
         /// <param name="fragmentSize">Initial size of the fragment sent with each packet</param>
         /// <param name="callback">Track the status of the file transfer</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
-        public void FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
+        public Task FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
             Action<FileTransferStatus> callback, CancellationToken cancellationToken = default)
         {
-            Task.Factory.StartNew(async () =>
+            return Task.Run(async () =>
             {
                 _buses[connectionId].SetSendingMultiMessage(address, true);
                 try
@@ -455,7 +455,7 @@ namespace OSDP.Net
                     _buses[connectionId].SetSendingMultiMessage(address, false);
                     _buses[connectionId].SetSendingMultiMessageNoSecureChannel(address, false);
                 }
-            }, TaskCreationOptions.LongRunning);
+            });
         }
 
         private async Task SendFileTransferCommands(Guid connectionId, byte address, byte fileType, byte[] fileData,

@@ -15,6 +15,8 @@ namespace OSDP.Net.Messages
         /// </summary>
         protected abstract byte CommandCode { get; }
 
+        internal byte Type => CommandCode;
+
         /// <summary>
         /// The security control block.
         /// </summary>
