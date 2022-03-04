@@ -215,7 +215,7 @@ namespace OSDP.Net
                         {
                             ResetDevice(device);
                         }
-                        else if(!device.IsConnected)
+                        else if(IsPolling && !device.IsConnected)
                         {
                             device.RequestDelay = DateTime.UtcNow + TimeSpan.FromSeconds(1);
                         }
