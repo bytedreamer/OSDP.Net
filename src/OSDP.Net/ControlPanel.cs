@@ -439,7 +439,9 @@ namespace OSDP.Net
         /// <param name="fragmentSize">Initial size of the fragment sent with each packet</param>
         /// <param name="callback">Track the status of the file transfer</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
-        public Task FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
+        /// <exception cref="FileTransferException">File transfer has failed because the PD has returned an error.</exception>
+        /// <returns>The final successful (=positive) status code from the PD.</returns>
+        public Task<Model.ReplyData.FileTransferStatus.StatusDetail> FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
             Action<FileTransferStatus> callback, CancellationToken cancellationToken = default)
         {
             return Task.Run(async () =>
@@ -447,7 +449,7 @@ namespace OSDP.Net
                 _buses[connectionId].SetSendingMultiMessage(address, true);
                 try
                 {
-                    await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
+                    return await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
                         cancellationToken);
                 }
                 finally
@@ -458,73 +460,84 @@ namespace OSDP.Net
             });
         }
 
-        private async Task SendFileTransferCommands(Guid connectionId, byte address, byte fileType, byte[] fileData,
+        private async Task<Model.ReplyData.FileTransferStatus.StatusDetail> SendFileTransferCommands(Guid connectionId, byte address, byte fileType, byte[] fileData,
             ushort fragmentSize, Action<FileTransferStatus> callback, CancellationToken cancellationToken)
         {
             int totalSize = fileData.Length;
             int offset = 0;
-            bool continueTransfer = true;
 
-            while (!cancellationToken.IsCancellationRequested && continueTransfer)
+            // Keep going until
+            // * operation's cancelled
+            // * an error occurs
+            // * transfer's completed
+            while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Get the fragment size if it doesn't exceed the total size
-                ushort updatedFragmentSize = (ushort)Math.Min(fragmentSize, totalSize - offset);
+                var nextFragmentSize = (ushort)Math.Min(fragmentSize, totalSize - offset);
 
                 var reply = await SendCommand(connectionId,
                         new FileTransferCommand(address,
-                            new FileTransferFragment(fileType, totalSize, offset, updatedFragmentSize,
-                                fileData.Skip(offset).Take(updatedFragmentSize).ToArray())), cancellationToken)
+                            new FileTransferFragment(fileType, totalSize, offset, nextFragmentSize, fileData.Skip(offset).Take(nextFragmentSize).ToArray())),
+                        cancellationToken)
                     .ConfigureAwait(false);
 
                 // Update offset
-                offset += updatedFragmentSize;
+                offset += nextFragmentSize;
 
                 // Parse the fileTransfer status
-                var fileTransferStatus = reply.Type == ReplyType.FileTransferStatus
+                var fileTransferStatusReply = reply.Type == ReplyType.FileTransferStatus
                     ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
                     : null;
 
-                if (fileTransferStatus != null)
+                // Check reply to see if PD has requested some change in com procedures.
+                if (fileTransferStatusReply != null)
                 {
                     // Leave secure channel if needed
-                    if ((fileTransferStatus.Action & Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel) ==
+                    if ((fileTransferStatusReply.Action & Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel) ==
                         Model.ReplyData.FileTransferStatus.ControlFlags.LeaveSecureChannel)
                     {
                         _buses[connectionId].SetSendingMultiMessageNoSecureChannel(address, true);
                     }
 
                     // Set request delay if specified
-                    if (fileTransferStatus is { RequestedDelay: > 0 })
+                    if (fileTransferStatusReply is { RequestedDelay: > 0 })
                     {
                         _buses[connectionId].SetRequestDelay(address,
-                            DateTime.UtcNow.AddMilliseconds(fileTransferStatus.RequestedDelay));
+                            DateTime.UtcNow.AddMilliseconds(fileTransferStatusReply.RequestedDelay));
                     }
 
                     // Set fragment size if requested
-                    if (fileTransferStatus is { UpdateMessageMaximum: > 0 })
+                    if (fileTransferStatusReply is { UpdateMessageMaximum: > 0 })
                     {
-                        fragmentSize = Message.CalculateMaximumMessageSize(fileTransferStatus.UpdateMessageMaximum,
+                        fragmentSize = Message.CalculateMaximumMessageSize(fileTransferStatusReply.UpdateMessageMaximum,
                             reply.IsSecureMessage);
                     }
                 }
 
-                callback(new FileTransferStatus(
-                    fileTransferStatus?.Detail ?? Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError, offset,
-                    reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null));
+                var status = new FileTransferStatus(
+                    fileTransferStatusReply?.Detail ?? Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError,
+                    offset,
+                    reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null);
 
-                // End transfer is Nak reply is received
-                if (reply.Type == ReplyType.Nak || (fileTransferStatus?.Detail ??
-                                                    Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError) < 0) return;
+                // Report status to progress listeners
+                callback(status);
 
-                // Determine if we should continue on successful status
-                if (fileTransferStatus is not
-                    { Detail: Model.ReplyData.FileTransferStatus.StatusDetail.FinishingFileTransfer })
+                if(status.Status < 0)
                 {
-                    continueTransfer = offset < totalSize;
+                    // Abort transfer on error.
+                    throw new FileTransferException("File transfer failed", status);
                 }
-                else
+                else if(status.Status == Model.ReplyData.FileTransferStatus.StatusDetail.FinishingFileTransfer)
                 {
+                    // File transfer is completed, but PD wants us to keep sending "idling" filetransfer message (FtFragmentSize = 0) until we receive another status.
                     fragmentSize = 0;
+                }
+                else if(offset >= totalSize)
+                {
+                    // We're done. Return the last successful (=positive) status code.
+                    return status.Status;
                 }
             }
         }
@@ -1628,6 +1641,22 @@ namespace OSDP.Net
             /// Contains Nak reply if returned
             /// </summary>
             public Nak Nak { get; }
+        }
+
+        /// <summary>
+        /// An error has occurred during a file transfer operation.
+        /// </summary>
+        public class FileTransferException : Exception
+        {
+            /// <summary>
+            /// The last received status from the PD that indicates what error has occurred.
+            /// </summary>
+            public FileTransferStatus Status { get; }
+
+            internal FileTransferException(string msg, FileTransferStatus status) : base(msg)
+            {
+                Status = status;
+            }
         }
 
         private class ReplyEventArgs : EventArgs
