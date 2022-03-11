@@ -29,7 +29,7 @@ namespace OSDP.Net.Messages
             int messageLength = data.Length - (isUsingCrc ? 6 : 5);
             if (isSecureControlBlockPresent)
             {
-                SecureBlockData = data.Slice(ReplyMessageHeaderSize + 2, secureBlockSize - 2).ToArray();
+                SecureBlockData = data.Slice(ReplyMessageHeaderSize + 1, secureBlockSize - 2).ToArray();
                 Mac = data.Slice(messageLength, MacSize).ToArray();
             }
 
@@ -90,7 +90,7 @@ namespace OSDP.Net.Messages
             return reply;
         }
 
-        public bool SecureCryptogramHasBeenAccepted() => Convert.ToByte(SecureBlockData.First()) > 0x00;
+        public bool SecureCryptogramHasBeenAccepted() => Convert.ToByte(SecureBlockData.First()) == 0x01;
         public bool MatchIssuingCommand(Command command) => command.Equals(_issuingCommand);
         public bool IsValidMac(ReadOnlySpan<byte> mac) => mac.Slice(0, MacSize).SequenceEqual(Mac.ToArray());
 

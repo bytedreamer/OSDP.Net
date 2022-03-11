@@ -370,7 +370,10 @@ namespace OSDP.Net
                     device.InitializeSecureChannel(reply);
                     break;
                 case ReplyType.InitialRMac:
-                    device.ValidateSecureChannelEstablishment(reply);
+                    if (!device.ValidateSecureChannelEstablishment(reply))
+                    {
+                        _logger?.LogError($"Cryptogram not accepted by address {reply.Address}");
+                    }
                     break;
             }
 
