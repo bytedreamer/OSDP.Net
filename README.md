@@ -12,14 +12,14 @@ Further information can be found at [SIA OSDP Homepage](https://www.securityindu
 The OSDP.Net library provides a Nuget package to quickly add OSDP capablitity to a .NET Framework or Core project. 
 You can install it using the NuGet Package Console window:
 
-```
+```shell
 PM> Install-Package OSDP.Net
 ``` 
 
 A control panel can be created and started with a few lines. 
 Be sure to register events before start the connection.
 
-```csharp
+```c#
 var panel = new ControlPanel();
 panel.ConnectionStatusChanged += (sender, eventArgs) =>
 {
@@ -34,26 +34,33 @@ Guid connectionId = panel.StartConnection(new SerialPortOsdpConnection(portName,
 
 Once the connection has started, add Peripheral Devices (PD).
 
-```csharp
+```c#
 panel.AddDevice(connectionId, address, useCrc, useSecureChannel, secureChannelKey);
 ```
 
 The following code will install a PD with an unique Secure Channel key. The OSDP standard requires that setting the secure key can only occur while communications are secure.
 
-```csharp
+```c#
 panel.AddDevice(connectionId, address, useCrc, useSecureChannel); // connect using default SC key
 bool successfulSet = await panel.EncryptionKeySet(connectionId, address, new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, uniqueKey));
 ```
 
 The ControlPanel object can then be used to send command to the PD.
 
-```csharp
-panel.OutputControl(connectionId, address, new OutputControls(new[]
+```c#
+var returnReplyData = await panel.OutputControl(connectionId, address, new OutputControls(new[]
 {
     new OutputControl(outputNumber, activate
         ? OutputControlCode.PermanentStateOnAbortTimedOperation
         : OutputControlCode.PermanentStateOffAbortTimedOperation, 0)
 });
+```
+
+The reader number parameter found in some commands is used for devices with multiple readers attached. If the device has a single reader, a value of zero should be used.
+```c#
+byte defaultReaderNumber = 0;
+bool success = await ReaderBuzzerControl(connectionId, address, 
+    new ReaderBuzzerControl(defaultReaderNumber, ToneCode.Default, 2, 2, repeatNumber))
 ```
 
 ## Test Console
