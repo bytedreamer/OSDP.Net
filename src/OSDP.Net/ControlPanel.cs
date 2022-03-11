@@ -457,7 +457,7 @@ namespace OSDP.Net
                     _buses[connectionId].SetSendingMultiMessage(address, false);
                     _buses[connectionId].SetSendingMultiMessageNoSecureChannel(address, false);
                 }
-            });
+            }, cancellationToken);
         }
 
         private async Task<Model.ReplyData.FileTransferStatus.StatusDetail> SendFileTransferCommands(Guid connectionId, byte address, byte fileType, byte[] fileData,
@@ -524,20 +524,25 @@ namespace OSDP.Net
                 // Report status to progress listeners
                 callback(status);
 
-                if(status.Status < 0)
+                switch (status.Status)
                 {
                     // Abort transfer on error.
-                    throw new FileTransferException("File transfer failed", status);
-                }
-                else if(status.Status == Model.ReplyData.FileTransferStatus.StatusDetail.FinishingFileTransfer)
-                {
+                    case < 0:
+                        throw new FileTransferException("File transfer failed", status);
                     // File transfer is completed, but PD wants us to keep sending "idling" filetransfer message (FtFragmentSize = 0) until we receive another status.
-                    fragmentSize = 0;
-                }
-                else if(offset >= totalSize)
-                {
-                    // We're done. Return the last successful (=positive) status code.
-                    return status.Status;
+                    case Model.ReplyData.FileTransferStatus.StatusDetail.FinishingFileTransfer:
+                         fragmentSize = 0;
+                        break;
+                    default:
+                    {
+                        if(offset >= totalSize)
+                        {
+                            // We're done. Return the last successful (=positive) status code.
+                            return status.Status;
+                        }
+
+                        break;
+                    }
                 }
             }
         }
@@ -1648,15 +1653,15 @@ namespace OSDP.Net
         /// </summary>
         public class FileTransferException : Exception
         {
-            /// <summary>
-            /// The last received status from the PD that indicates what error has occurred.
-            /// </summary>
-            public FileTransferStatus Status { get; }
-
             internal FileTransferException(string msg, FileTransferStatus status) : base(msg)
             {
                 Status = status;
             }
+
+            /// <summary>
+            /// The last received status from the PD that indicates what error has occurred.
+            /// </summary>
+            public FileTransferStatus Status { get; }
         }
 
         private class ReplyEventArgs : EventArgs

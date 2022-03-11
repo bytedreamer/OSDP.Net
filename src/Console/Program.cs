@@ -760,7 +760,7 @@ namespace Console
 
                 _settings.LastFileTransferDirectory = path;
 
-                SendCommand("File Transfer", _connectionId, (connectionId, address) =>
+                SendCommand("File Transfer", _connectionId, async (connectionId, address) =>
                 {
                     var tokenSource = new CancellationTokenSource();
                     var cancelFileTransferButton = new Button("Cancel");
@@ -786,9 +786,9 @@ namespace Console
                         Application.Run(statusDialog);
                     });
 
-                    var data = File.ReadAllBytes(path);
+                    var data = await File.ReadAllBytesAsync(path);
                     int fileSize = data.Length;
-                    _controlPanel.FileTransfer(connectionId, address, type, data, messageSize,
+                    var result = await _controlPanel.FileTransfer(connectionId, address, type, data, messageSize,
                         status =>
                         {
                             Application.MainLoop.Invoke(() =>
@@ -805,7 +805,7 @@ namespace Console
                             });
                         }, tokenSource.Token);
 
-                    return Task.FromResult(true);
+                    return result > 0;
                 });
 
                 Application.RequestStop();
