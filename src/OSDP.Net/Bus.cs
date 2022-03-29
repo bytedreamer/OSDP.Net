@@ -435,7 +435,7 @@ namespace OSDP.Net
             var buffer = new byte[commandData.Length + 1];
             buffer[0] = DriverByte;
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
-            
+ 
             await _connection.WriteAsync(buffer).ConfigureAwait(false);
 
             _tracer(new TraceEntry(TraceDirection.Out, Id, commandData));

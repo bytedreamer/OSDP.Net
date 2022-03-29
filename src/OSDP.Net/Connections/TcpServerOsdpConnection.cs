@@ -31,7 +31,7 @@ namespace OSDP.Net.Connections
             get
             {
                 var tcpClient = _tcpClient;
-                return tcpClient != null && tcpClient.Connected;
+                return tcpClient is { Connected: true };
             }
         }
 
@@ -42,8 +42,11 @@ namespace OSDP.Net.Connections
         public void Open()
         {
             _listener.Start();
-            _tcpClient = _listener.AcceptTcpClient();
-            _tcpClient.LingerState = new LingerOption(true, 0);
+            var newTcpClient = _listener.AcceptTcpClient();
+
+            Close();
+
+            _tcpClient = newTcpClient;
         }
 
         /// <inheritdoc />
@@ -51,7 +54,7 @@ namespace OSDP.Net.Connections
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
-            tcpClient.GetStream().Close();
+            if (_tcpClient?.Connected ?? false) tcpClient?.GetStream().Close();
             tcpClient?.Close();
         }
 
