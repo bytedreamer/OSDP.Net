@@ -315,7 +315,7 @@ namespace Console
                 _settings.TcpServerConnectionSettings.BaudRate = baudRate;
                 _settings.TcpServerConnectionSettings.ReplyTimeout = replyTimeout;
 
-                StartConnection(new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.BaudRate = portNumber,
+                StartConnection(new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.PortNumber,
                         _settings.TcpServerConnectionSettings.BaudRate)
                     { ReplyTimeout = TimeSpan.FromMilliseconds(_settings.TcpServerConnectionSettings.ReplyTimeout) });
 

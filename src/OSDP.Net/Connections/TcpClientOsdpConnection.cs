@@ -64,6 +64,8 @@ namespace OSDP.Net.Connections
         /// <inheritdoc />
         public async Task WriteAsync(byte[] buffer)
         {
+            if (!IsOpen) Open();
+
             var tcpClient = _tcpClient;
 
             if (tcpClient != null)
