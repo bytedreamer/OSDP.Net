@@ -155,28 +155,6 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Command that implements extended write mode to facilitate communications with an ISO 7816-4 based credential to a PD.
-        /// </summary>
-        /// <summary>Request to get the capabilities of the PD.</summary>
-        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
-        /// <param name="address">Address assigned to the device.</param>
-        /// <param name="extendedWrite">The extended write data.</param>
-        /// <returns>Reply data that is returned after sending the command. There is the possibility of different replies can be returned from PD.</returns>
-        public async Task<ReturnReplyData<ExtendedRead>> ExtendedWriteData(Guid connectionId, byte address,
-            ExtendedWrite extendedWrite)
-        {
-            var reply = await SendCommand(connectionId,
-                new ExtendedWriteDataCommand(address, extendedWrite)).ConfigureAwait(false);
-
-            return new ReturnReplyData<ExtendedRead>
-            {
-                Ack = reply.Type == ReplyType.Ack,
-                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null,
-                ReplyData = reply.Type == ReplyType.ExtendedRead ? ExtendedRead.ParseData(reply.ExtractReplyData) : null
-            };
-        }
-
-        /// <summary>
         /// Request to get the local status of a PD.
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
@@ -1033,15 +1011,6 @@ namespace OSDP.Net
                     break;
                 }
                 
-                case ReplyType.ExtendedRead:
-                {
-                    var handler = ExtendedReadReplyReceived;
-                    handler?.Invoke(this,
-                        new ExtendedReadReplyEventArgs(reply.ConnectionId, reply.Address,
-                            ExtendedRead.ParseData(reply.ExtractReplyData)));
-                    break;
-                }
-                
                 case ReplyType.PIVData:
                 {
                     var handler = PIVDataReplyReceived;
@@ -1130,11 +1099,6 @@ namespace OSDP.Net
         /// Occurs when manufacturer specific reply is received.
         /// </summary>
         public event EventHandler<ManufacturerSpecificReplyEventArgs> ManufacturerSpecificReplyReceived;
-
-        /// <summary>
-        /// Occurs when extended read reply is received.
-        /// </summary>
-        public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
 
         /// <summary>
         /// Occurs when key pad data reply is received.
@@ -1439,40 +1403,6 @@ namespace OSDP.Net
             /// A manufacturer specific reply.
             /// </summary>
             public ManufacturerSpecific ManufacturerSpecific { get; }
-        }
-
-        /// <summary>
-        /// The extended read reply has been received.
-        /// </summary>
-        public class ExtendedReadReplyEventArgs : EventArgs
-        {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="ExtendedReadReplyEventArgs"/> class.
-            /// </summary>
-            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
-            /// <param name="address">Address assigned to the device.</param>
-            /// <param name="extendedRead">A extended read reply.</param>
-            public ExtendedReadReplyEventArgs(Guid connectionId, byte address, ExtendedRead extendedRead)
-            {
-                ConnectionId = connectionId;
-                Address = address;
-                ExtendedRead = extendedRead;
-            }
-
-            /// <summary>
-            /// Identify the connection for communicating to the device.
-            /// </summary>
-            public Guid ConnectionId { get; }
-
-            /// <summary>
-            /// Address assigned to the device.
-            /// </summary>
-            public byte Address { get; }
-
-            /// <summary>
-            /// A extended read reply.
-            /// </summary>
-            public ExtendedRead ExtendedRead { get; }
         }
 
         /// <summary>
