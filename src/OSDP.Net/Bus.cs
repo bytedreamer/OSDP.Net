@@ -34,6 +34,7 @@ namespace OSDP.Net
         private readonly Action<TraceEntry> _tracer;
 
         private bool _isShuttingDown;
+        private Task _pollingTask;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
             Action<TraceEntry> tracer,
@@ -69,10 +70,16 @@ namespace OSDP.Net
         /// <summary>
         /// Closes down the connection
         /// </summary>
-        public void Close()
+        public async Task Close()
         {
-            _isShuttingDown = true;
-            _connection.Close();
+            if (_pollingTask != null)
+            {
+                _isShuttingDown = true;
+                await _pollingTask;
+                _pollingTask = null;
+                // Polling task is complete. Now it is 100% safe to close the connection.
+                _connection.Close();
+            }
         }
 
         /// <summary>
@@ -141,7 +148,25 @@ namespace OSDP.Net
         /// Start polling the devices on the bus
         /// </summary>
         /// <returns></returns>
-        public async Task StartPollingAsync()
+        public void StartPolling()
+        {
+            if(_pollingTask == null)
+            { 
+                _isShuttingDown = false;
+                // This ensures that polling is started in a separate thread.
+                _pollingTask = Task.Factory.StartNew(
+                    async () => await StartPollingAsync(),
+                    CancellationToken.None,
+                    TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default);
+            }
+        }
+
+        /// <summary>
+        /// Poll the the devices on the bus
+        /// </summary>
+        /// <returns></returns>
+        private async Task StartPollingAsync()
         {
             DateTime lastMessageSentTime = DateTime.MinValue;
             using var delayTime = new AutoResetEvent(false);
