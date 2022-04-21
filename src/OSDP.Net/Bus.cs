@@ -242,7 +242,7 @@ namespace OSDP.Net
                             continue;
                         }
                     }
-                    catch (TimeoutException)
+                    catch (TimeoutException ex)
                     {
                         switch (IsPolling)
                         {
@@ -251,7 +251,7 @@ namespace OSDP.Net
                                 ResetDevice(device);
                                 break;
                             default:
-                                _logger?.LogDebug($"Retrying command {command}");
+                                _logger?.LogDebug($"Retrying command {command} on connection {Id} because \"{ex.Message}\".");
                                 device.RetryCommand(command);
                                 break;
                         }
@@ -263,7 +263,7 @@ namespace OSDP.Net
                         if (!_isShuttingDown)
                         {
                             _logger?.LogError(exception,
-                                $"Error while sending command {command} to address {command.Address}");
+                                $"Error while sending command {command} to address {command.Address}. Connection {Id}");
                         }
 
                         continue;
