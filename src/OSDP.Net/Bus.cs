@@ -153,12 +153,7 @@ namespace OSDP.Net
             if(_pollingTask == null)
             { 
                 _isShuttingDown = false;
-                // This ensures that polling is started in a separate thread.
-                _pollingTask = Task.Factory.StartNew(
-                    async () => await StartPollingAsync(),
-                    CancellationToken.None,
-                    TaskCreationOptions.LongRunning,
-                    TaskScheduler.Default);
+                _pollingTask = Task.Run(() => StartPollingAsync());
             }
         }
 
