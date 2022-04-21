@@ -242,7 +242,7 @@ namespace OSDP.Net
                             continue;
                         }
                     }
-                    catch (TimeoutException ex)
+                    catch (TimeoutException exception)
                     {
                         switch (IsPolling)
                         {
@@ -251,7 +251,7 @@ namespace OSDP.Net
                                 ResetDevice(device);
                                 break;
                             default:
-                                _logger?.LogDebug($"Retrying command {command} on connection {Id} because \"{ex.Message}\".");
+                                _logger?.LogDebug($"Retrying command {command} on connection {Id} because \"{exception.Message}\".");
                                 device.RetryCommand(command);
                                 break;
                         }
