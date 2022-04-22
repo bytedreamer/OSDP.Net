@@ -38,7 +38,7 @@ namespace OSDP.Net.Tests
             panel.AddDevice(id, 0, true, false);
 
             // Act
-            panel.Shutdown();
+            await panel.Shutdown();
 
             // Assert
             await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
@@ -64,6 +64,39 @@ namespace OSDP.Net.Tests
         }
 
         [Test]
+        public void StartConnectionWithSameConnectionTwiceTest()
+        {
+            // Arrange
+            var connection = new TestConnection();
+            var panel = new ControlPanel();
+            var id = panel.StartConnection(connection);
+
+            // Act/Assert
+            var ex = Assert.Throws<InvalidOperationException>(() => panel.StartConnection(connection), "");
+            Assert.That(ex.Message, Is.EqualTo(
+                $"The IOsdpConnection is already active in connection {id}. " +
+                    "That connection must be stopped before starting a new one."));
+        }
+
+        [Test]
+        public async Task StartConnectionRestartWithSameConnectionTest()
+        {
+            // Arrange
+            var connection = new TestConnection();
+            var panel = new ControlPanel();
+
+            // Act
+            var id1 = panel.StartConnection(connection);
+            await panel.StopConnection(id1);
+            var id2 = panel.StartConnection(connection);
+            await panel.StopConnection(id2);
+
+            // Assert
+            Assert.That(id1, Is.Not.EqualTo(id2));
+        }
+
+
+        [Test]
         public async Task StopConnectionTest()
         {
             // Arrange
@@ -74,7 +107,7 @@ namespace OSDP.Net.Tests
             panel.AddDevice(id, 0, true, false);
 
             // Act
-            panel.StopConnection(id);
+            await panel.StopConnection(id);
 
             // Assert
             await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
