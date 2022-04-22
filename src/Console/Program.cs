@@ -348,7 +348,7 @@ namespace Console
             var baudRateTextField = new TextField(25, 5, 25, _settings.TcpClientConnectionSettings.BaudRate.ToString());
             var replyTimeoutTextField = new TextField(25, 7, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
-            void StartConnectionButtonClicked()
+            async void StartConnectionButtonClicked()
             {
                 if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
                 {
@@ -376,7 +376,7 @@ namespace Console
                 _settings.TcpClientConnectionSettings.PortNumber = portNumber;
                 _settings.TcpClientConnectionSettings.ReplyTimeout = replyTimeout;
 
-                StartConnection(new TcpClientOsdpConnection(
+                await StartConnection(new TcpClientOsdpConnection(
                     _settings.TcpClientConnectionSettings.Host,
                     _settings.TcpClientConnectionSettings.PortNumber,
                     _settings.TcpClientConnectionSettings.BaudRate));

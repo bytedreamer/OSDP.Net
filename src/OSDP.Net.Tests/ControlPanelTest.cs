@@ -73,7 +73,7 @@ namespace OSDP.Net.Tests
 
             // Act/Assert
             var ex = Assert.Throws<InvalidOperationException>(() => panel.StartConnection(connection), "");
-            Assert.That(ex.Message, Is.EqualTo(
+            Assert.That(ex?.Message, Is.EqualTo(
                 $"The IOsdpConnection is already active in connection {id}. " +
                     "That connection must be stopped before starting a new one."));
         }
