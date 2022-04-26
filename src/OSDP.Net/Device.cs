@@ -136,6 +136,7 @@ namespace OSDP.Net
             
             // It's valid once sequences are above zero
             if (sequence > 0) _lastValidReply = DateTime.UtcNow;
+            
             // Reset retry counter
             _counter = RetryAmount;
         }

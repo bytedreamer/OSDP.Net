@@ -78,8 +78,7 @@ namespace OSDP.Net
         public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
         {
             var existingBusWithThisConnection = _buses.Values
-                .Where(b => b.Connection == connection)
-                .FirstOrDefault();
+                .FirstOrDefault(bus => bus.Connection == connection);
             if(existingBusWithThisConnection != null)
                 throw new InvalidOperationException(
                     $"The IOsdpConnection is already active in connection {existingBusWithThisConnection.Id}. " +
@@ -107,7 +106,7 @@ namespace OSDP.Net
         /// <param name="connectionId">The identifier that represents the connection.</param>
         public async Task StopConnection(Guid connectionId)
         {
-            if (!_buses.TryGetValue(connectionId, out Bus bus))
+            if (!_buses.TryRemove(connectionId, out Bus bus))
             {
                 return;
             }
@@ -120,7 +119,6 @@ namespace OSDP.Net
                 OnConnectionStatusChanged(bus.Id, address, false, false);
             }
             bus.Dispose();
-            _buses.TryRemove(connectionId, out bus);
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
