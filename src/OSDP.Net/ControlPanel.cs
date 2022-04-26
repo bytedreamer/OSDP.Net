@@ -77,6 +77,14 @@ namespace OSDP.Net
         /// <returns>An identifier that represents the connection</returns>
         public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
         {
+            var existingBusWithThisConnection = _buses.Values
+                .Where(b => b.Connection == connection)
+                .FirstOrDefault();
+            if(existingBusWithThisConnection != null)
+                throw new InvalidOperationException(
+                    $"The IOsdpConnection is already active in connection {existingBusWithThisConnection.Id}. " +
+                    "That connection must be stopped before starting a new one.");
+
             var newBus = new Bus(
                 connection,
                 _replies,
@@ -88,10 +96,7 @@ namespace OSDP.Net
 
             _buses[newBus.Id] = newBus;
 
-            Task.Factory.StartNew(async () =>
-            {
-                await newBus.StartPollingAsync().ConfigureAwait(false);
-            }, TaskCreationOptions.LongRunning);
+            newBus.StartPolling();
 
             return newBus.Id;
         }
@@ -100,21 +105,22 @@ namespace OSDP.Net
         /// Stop the bus for a specific connection.
         /// </summary>
         /// <param name="connectionId">The identifier that represents the connection.</param>
-        public void StopConnection(Guid connectionId)
+        public async Task StopConnection(Guid connectionId)
         {
-            if (!_buses.TryRemove(connectionId, out Bus bus))
+            if (!_buses.TryGetValue(connectionId, out Bus bus))
             {
                 return;
             }
 
             bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
-            bus.Close();
+            await bus.Close();
 
             foreach (byte address in bus.ConfigureDeviceAddresses)
             {
                 OnConnectionStatusChanged(bus.Id, address, false, false);
             }
             bus.Dispose();
+            _buses.TryRemove(connectionId, out bus);
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
@@ -864,12 +870,12 @@ namespace OSDP.Net
         /// <summary>
         /// Shutdown the control panel and stop all communication to PDs.
         /// </summary>
-        public void Shutdown()
+        public async Task Shutdown()
         {
             foreach (var bus in _buses.Values)
             {
                 bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
-                bus.Close();
+                await bus.Close();
                 
                 foreach (byte address in bus.ConfigureDeviceAddresses)
                 {
