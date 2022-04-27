@@ -92,10 +92,11 @@ namespace OSDP.Net.Tests
                 .Select(_ => Task.Run(() => panel.StartConnection(connection)))
                 .ToArray();
             try
-            { 
+            {
+                // ReSharper disable once CoVariantArrayConversion
                 Task.WaitAll(tasks);
             }
-            catch { }
+            catch { /* We handle errors later */ }
 
             // Assert
             Assert.That(tasks.Where(t => t.Status == TaskStatus.RanToCompletion).Count(), Is.EqualTo(1));
@@ -117,9 +118,10 @@ namespace OSDP.Net.Tests
                 .ToArray();
             try
             {
+                // ReSharper disable once CoVariantArrayConversion
                 Task.WaitAll(tasks);
             }
-            catch { }
+            catch { /* We handle errors later */ }
 
             // Assert
             Assert.That(tasks.Where(t => t.Status == TaskStatus.RanToCompletion).Count(), Is.EqualTo(100));
@@ -209,7 +211,7 @@ namespace OSDP.Net.Tests
 
             public int BaudRate => 9600;
 
-            public bool IsOpen { get; private set; } = false;
+            public bool IsOpen { get; private set; }
 
             public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(1);
 
