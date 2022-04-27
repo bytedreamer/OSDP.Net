@@ -71,33 +71,50 @@ namespace OSDP.Net
         /// <summary>
         /// Start polling on the defined connection.
         /// </summary>
-        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="connection">
+        /// This represents the type of connection used for communicating to PDs.
+        /// The connection instance may only be started once, otherwise an InvalidOperationException is thrown.
+        /// </param>
         /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
         /// <param name="tracer">Delegate that will receive detailed trace information</param>
         /// <returns>An identifier that represents the connection</returns>
+        /// <exception cref="InvalidOperationException">If the connection is already started.</exception>
         public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
         {
-            var existingBusWithThisConnection = _buses.Values
-                .FirstOrDefault(bus => bus.Connection == connection);
-            if(existingBusWithThisConnection != null)
-                throw new InvalidOperationException(
-                    $"The IOsdpConnection is already active in connection {existingBusWithThisConnection.Id}. " +
-                    "That connection must be stopped before starting a new one.");
-
-            var newBus = new Bus(
-                connection,
-                _replies,
-                pollInterval,
-                tracer,
-                _logger);
-
+            var newBus = CreateBus(connection, pollInterval, tracer);
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
-
-            _buses[newBus.Id] = newBus;
-
             newBus.StartPolling();
-
             return newBus.Id;
+        }
+
+        /// <summary>
+        /// Create a bus for a connection.
+        /// </summary>
+        /// <remarks>
+        /// This will serialize concurrent attempts to start simultaneous connections. Only the first will succeed.
+        /// </remarks>
+        private Bus CreateBus(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
+        {
+            // Lock while we check/create the bus. This is a very quick operation so the lock is not a performance problem.
+            lock (_buses)
+            {
+                var existingBusWithThisConnection = _buses.Values
+                    .FirstOrDefault(b => b.Connection == connection);
+                if (existingBusWithThisConnection != null)
+                    throw new InvalidOperationException(
+                        $"The IOsdpConnection is already active in connection {existingBusWithThisConnection.Id}. " +
+                        "That connection must be stopped before starting a new one.");
+
+                var newBus = new Bus(
+                    connection,
+                    _replies,
+                    pollInterval,
+                    tracer,
+                    _logger);
+
+                _buses[newBus.Id] = newBus;
+                return newBus;
+            }
         }
 
         /// <summary>
@@ -106,19 +123,24 @@ namespace OSDP.Net
         /// <param name="connectionId">The identifier that represents the connection.</param>
         public async Task StopConnection(Guid connectionId)
         {
-            if (!_buses.TryRemove(connectionId, out Bus bus))
+            if (!_buses.TryGetValue(connectionId, out Bus bus))
             {
                 return;
             }
+
+            // At this point, there might be multiple threads running concurrently trying to stop the connection.
+            // No worries, the method is reentrant. All threads will complete safely.
 
             bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
             await bus.Close();
 
             foreach (byte address in bus.ConfigureDeviceAddresses)
             {
+                // This will fire twice if two threads call StopConnection for the same connection simulatenously.
                 OnConnectionStatusChanged(bus.Id, address, false, false);
             }
             bus.Dispose();
+            _buses.TryRemove(connectionId, out bus);
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
