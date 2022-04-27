@@ -46,7 +46,7 @@ namespace Console
 
         private static Settings _settings;
 
-        private static void Main()
+        private static async Task Main()
         {
             XmlConfigurator.Configure(
                 LogManager.GetRepository(Assembly.GetAssembly(typeof(LogManager))),
@@ -96,7 +96,7 @@ namespace Console
                     new MenuItem("Stop Connections", "", () =>
                     {
                         _connectionId = Guid.Empty;
-                        _controlPanel.Shutdown();
+                        _ = _controlPanel.Shutdown();
                     })
                 }),
                 DevicesMenuBarItem,
@@ -155,7 +155,7 @@ namespace Console
 
             Application.Run();
 
-            _controlPanel.Shutdown();
+            await _controlPanel.Shutdown();
         }
 
         private static void RegisterEvents()
@@ -229,7 +229,7 @@ namespace Console
             var replyTimeoutTextField =
                 new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
-            void StartConnectionButtonClicked()
+            async void StartConnectionButtonClicked()
             {
                 if (string.IsNullOrEmpty(portNameComboBox.Text.ToString()))
                 {
@@ -255,7 +255,7 @@ namespace Console
                 _settings.SerialConnectionSettings.BaudRate = baudRate;
                 _settings.SerialConnectionSettings.ReplyTimeout = replyTimeout;
 
-                StartConnection(new SerialPortOsdpConnection(_settings.SerialConnectionSettings.PortName,
+                await StartConnection(new SerialPortOsdpConnection(_settings.SerialConnectionSettings.PortName,
                         _settings.SerialConnectionSettings.BaudRate)
                     { ReplyTimeout = TimeSpan.FromMilliseconds(_settings.SerialConnectionSettings.ReplyTimeout) });
 
@@ -288,7 +288,7 @@ namespace Console
             var replyTimeoutTextField =
                 new TextField(25, 5, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
-            void StartConnectionButtonClicked()
+            async void StartConnectionButtonClicked()
             {
                 if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
                 {
@@ -315,7 +315,7 @@ namespace Console
                 _settings.TcpServerConnectionSettings.BaudRate = baudRate;
                 _settings.TcpServerConnectionSettings.ReplyTimeout = replyTimeout;
 
-                StartConnection(new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.PortNumber,
+                await StartConnection(new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.PortNumber,
                         _settings.TcpServerConnectionSettings.BaudRate)
                     { ReplyTimeout = TimeSpan.FromMilliseconds(_settings.TcpServerConnectionSettings.ReplyTimeout) });
 
@@ -348,7 +348,7 @@ namespace Console
             var baudRateTextField = new TextField(25, 5, 25, _settings.TcpClientConnectionSettings.BaudRate.ToString());
             var replyTimeoutTextField = new TextField(25, 7, 25, _settings.SerialConnectionSettings.ReplyTimeout.ToString());
 
-            void StartConnectionButtonClicked()
+            async void StartConnectionButtonClicked()
             {
                 if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
                 {
@@ -376,7 +376,7 @@ namespace Console
                 _settings.TcpClientConnectionSettings.PortNumber = portNumber;
                 _settings.TcpClientConnectionSettings.ReplyTimeout = replyTimeout;
 
-                StartConnection(new TcpClientOsdpConnection(
+                await StartConnection(new TcpClientOsdpConnection(
                     _settings.TcpClientConnectionSettings.Host,
                     _settings.TcpClientConnectionSettings.PortNumber,
                     _settings.TcpClientConnectionSettings.BaudRate));
@@ -438,13 +438,13 @@ namespace Console
             Application.Run(dialog);
         }
 
-        private static void StartConnection(IOsdpConnection osdpConnection)
+        private static async Task StartConnection(IOsdpConnection osdpConnection)
         {
             LastNak.Clear();
 
             if (_connectionId != Guid.Empty)
             {
-                _controlPanel.Shutdown();
+                await _controlPanel.Shutdown();
             }
 
             _connectionId =

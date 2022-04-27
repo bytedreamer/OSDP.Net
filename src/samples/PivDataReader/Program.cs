@@ -96,7 +96,7 @@ internal class Program
             if (!exit) Console.Clear();
         }
 
-        panel.Shutdown();
+        await panel.Shutdown();
         
         async Task GetPivData()
         {

@@ -24,7 +24,6 @@ namespace OSDP.Net
         public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
-        private readonly IOsdpConnection _connection;
         private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
         private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
@@ -32,15 +31,17 @@ namespace OSDP.Net
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
         private readonly Action<TraceEntry> _tracer;
+        private readonly AutoResetEvent _commandAvailableEvent = new AutoResetEvent(false);
 
         private bool _isShuttingDown;
+        private Task _pollingTask;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
             Action<TraceEntry> tracer,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
         {
-            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            Connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _replies = replies ?? throw new ArgumentNullException(nameof(replies));
             _pollInterval = pollInterval;
             _tracer = tracer;
@@ -55,6 +56,11 @@ namespace OSDP.Net
         /// </summary>
         public Guid Id { get; }
 
+        /// <summary>
+        /// The connection used by the bus. Each connection may only belong to one bus.
+        /// </summary>
+        public IOsdpConnection Connection { get; private set; }
+
         public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.Select(device => device.Address);
 
         public void Dispose()
@@ -63,16 +69,20 @@ namespace OSDP.Net
 
         private TimeSpan IdleLineDelay(int numberOfBytes)
         {
-            return TimeSpan.FromSeconds((1.0 / _connection.BaudRate) * (10.0 * numberOfBytes));
+            return TimeSpan.FromSeconds((1.0 / Connection.BaudRate) * (10.0 * numberOfBytes));
         }
 
         /// <summary>
         /// Closes down the connection
         /// </summary>
-        public void Close()
+        public async Task Close()
         {
-            _isShuttingDown = true;
-            _connection.Close();
+            if (_pollingTask != null)
+            {
+                _isShuttingDown = true;
+                await _pollingTask;
+                _pollingTask = null;
+            }
         }
 
         /// <summary>
@@ -81,9 +91,9 @@ namespace OSDP.Net
         /// <param name="command">Details about the command</param>
         public void SendCommand(Command command)
         {
-            var foundDevice = _configuredDevices.First(device => device.Address == command.Address);
-            
+            var foundDevice = _configuredDevices.First(device => device.Address == command.Address);            
             foundDevice.SendCommand(command);
+            _commandAvailableEvent.Set();
         }
 
         /// <summary>
@@ -141,18 +151,31 @@ namespace OSDP.Net
         /// Start polling the devices on the bus
         /// </summary>
         /// <returns></returns>
-        public async Task StartPollingAsync()
+        public void StartPolling()
+        {
+            if(_pollingTask == null)
+            { 
+                _isShuttingDown = false;
+                _pollingTask = Task.Run(() => StartPollingAsync());
+            }
+        }
+
+        /// <summary>
+        /// Poll the the devices on the bus
+        /// </summary>
+        /// <returns></returns>
+        private async Task StartPollingAsync()
         {
             DateTime lastMessageSentTime = DateTime.MinValue;
             using var delayTime = new AutoResetEvent(false);
             
             while (!_isShuttingDown)
             {
-                if (!_connection.IsOpen)
+                if (!Connection.IsOpen)
                 {
                     try
                     {
-                        _connection.Open();
+                        Connection.Open();
                     }
                     catch (Exception exception)
                     {
@@ -183,7 +206,7 @@ namespace OSDP.Net
                 else
                 {
                     // Keep CPU usage down while waiting for next command
-                    delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
+                    _commandAvailableEvent.WaitOne(TimeSpan.FromMilliseconds(10));
                 }
 
                 foreach (var device in _configuredDevices.ToArray())
@@ -242,7 +265,7 @@ namespace OSDP.Net
                             continue;
                         }
                     }
-                    catch (TimeoutException)
+                    catch (TimeoutException exception)
                     {
                         switch (IsPolling)
                         {
@@ -251,7 +274,7 @@ namespace OSDP.Net
                                 ResetDevice(device);
                                 break;
                             default:
-                                _logger?.LogDebug($"Retrying command {command}");
+                                _logger?.LogDebug($"Retrying command {command} on connection {Id} because \"{exception.Message}\".");
                                 device.RetryCommand(command);
                                 break;
                         }
@@ -263,7 +286,7 @@ namespace OSDP.Net
                         if (!_isShuttingDown)
                         {
                             _logger?.LogError(exception,
-                                $"Error while sending command {command} to address {command.Address}");
+                                $"Error while sending command {command} to address {command.Address}. Connection {Id}");
                         }
 
                         continue;
@@ -281,6 +304,16 @@ namespace OSDP.Net
 
                     delayTime.WaitOne(IdleLineDelay(2));
                 }
+            }
+
+            // Polling task is complete. Time to close the connection.
+            try
+            { 
+                Connection.Close();
+            }
+            catch(Exception exception)
+            {
+                _logger?.LogError(exception, $"Error while closing connection {Id}.");
             }
         }
 
@@ -436,7 +469,7 @@ namespace OSDP.Net
             buffer[0] = DriverByte;
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
  
-            await _connection.WriteAsync(buffer).ConfigureAwait(false);
+            await Connection.WriteAsync(buffer).ConfigureAwait(false);
 
             _tracer(new TraceEntry(TraceDirection.Out, Id, commandData));
             
@@ -479,11 +512,11 @@ namespace OSDP.Net
         {
             while (replyBuffer.Count < replyLength)
             {
-                int maxReadBufferLength = _connection.BaudRate / 40;
+                int maxReadBufferLength = Connection.BaudRate / 40;
                 int remainingLength = replyLength - replyBuffer.Count;
                 byte[] readBuffer = new byte[Math.Min(maxReadBufferLength, remainingLength)];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout +  IdleLineDelay(readBuffer.Length))
+                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout +  IdleLineDelay(readBuffer.Length))
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
@@ -507,7 +540,7 @@ namespace OSDP.Net
             {
                 byte[] readBuffer = new byte[4];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, _connection.ReplyTimeout)
+                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout)
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
@@ -531,7 +564,7 @@ namespace OSDP.Net
             {
                 byte[] readBuffer = new byte[1];
                 int bytesRead = await TimeOutReadAsync(readBuffer,
-                        _connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero))
+                        Connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero))
                     .ConfigureAwait(false);
                 if (bytesRead == 0)
                 {
@@ -555,7 +588,7 @@ namespace OSDP.Net
             using var cancellationTokenSource = new CancellationTokenSource(timeout);
             try
             {
-                return await _connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
+                return await Connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
             }
             catch
             {

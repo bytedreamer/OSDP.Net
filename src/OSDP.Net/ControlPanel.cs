@@ -71,50 +71,76 @@ namespace OSDP.Net
         /// <summary>
         /// Start polling on the defined connection.
         /// </summary>
-        /// <param name="connection">This represents the type of connection used for communicating to PDs.</param>
+        /// <param name="connection">
+        /// This represents the type of connection used for communicating to PDs.
+        /// The connection instance may only be started once, otherwise an InvalidOperationException is thrown.
+        /// </param>
         /// <param name="pollInterval">The interval at which the devices will be polled, zero or less indicates no polling</param>
         /// <param name="tracer">Delegate that will receive detailed trace information</param>
         /// <returns>An identifier that represents the connection</returns>
+        /// <exception cref="InvalidOperationException">If the connection is already started.</exception>
         public Guid StartConnection(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
         {
-            var newBus = new Bus(
-                connection,
-                _replies,
-                pollInterval,
-                tracer,
-                _logger);
-
+            var newBus = CreateBus(connection, pollInterval, tracer);
             newBus.ConnectionStatusChanged += BusOnConnectionStatusChanged;
-
-            _buses[newBus.Id] = newBus;
-
-            Task.Factory.StartNew(async () =>
-            {
-                await newBus.StartPollingAsync().ConfigureAwait(false);
-            }, TaskCreationOptions.LongRunning);
-
+            newBus.StartPolling();
             return newBus.Id;
+        }
+
+        /// <summary>
+        /// Create a bus for a connection.
+        /// </summary>
+        /// <remarks>
+        /// This will serialize concurrent attempts to start simultaneous connections. Only the first will succeed.
+        /// </remarks>
+        private Bus CreateBus(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
+        {
+            // Lock while we check/create the bus. This is a very quick operation so the lock is not a performance problem.
+            lock (_buses)
+            {
+                var existingBusWithThisConnection = _buses.Values
+                    .FirstOrDefault(b => b.Connection == connection);
+                if (existingBusWithThisConnection != null)
+                    throw new InvalidOperationException(
+                        $"The IOsdpConnection is already active in connection {existingBusWithThisConnection.Id}. " +
+                        "That connection must be stopped before starting a new one.");
+
+                var newBus = new Bus(
+                    connection,
+                    _replies,
+                    pollInterval,
+                    tracer,
+                    _logger);
+
+                _buses[newBus.Id] = newBus;
+                return newBus;
+            }
         }
 
         /// <summary>
         /// Stop the bus for a specific connection.
         /// </summary>
         /// <param name="connectionId">The identifier that represents the connection.</param>
-        public void StopConnection(Guid connectionId)
+        public async Task StopConnection(Guid connectionId)
         {
-            if (!_buses.TryRemove(connectionId, out Bus bus))
+            if (!_buses.TryGetValue(connectionId, out Bus bus))
             {
                 return;
             }
 
+            // At this point, there might be multiple threads running concurrently trying to stop the connection.
+            // No worries, the method is reentrant. All threads will complete safely.
+
             bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
-            bus.Close();
+            await bus.Close();
 
             foreach (byte address in bus.ConfigureDeviceAddresses)
             {
+                // This will fire twice if two threads call StopConnection for the same connection simulatenously.
                 OnConnectionStatusChanged(bus.Id, address, false, false);
             }
             bus.Dispose();
+            _buses.TryRemove(connectionId, out bus);
         }
 
         private void BusOnConnectionStatusChanged(object sender, Bus.ConnectionStatusEventArgs eventArgs)
@@ -152,28 +178,6 @@ namespace OSDP.Net
         {
             return Model.ReplyData.DeviceCapabilities.ParseData((await SendCommand(connectionId,
                 new DeviceCapabilitiesCommand(address)).ConfigureAwait(false)).ExtractReplyData);
-        }
-
-        /// <summary>
-        /// Command that implements extended write mode to facilitate communications with an ISO 7816-4 based credential to a PD.
-        /// </summary>
-        /// <summary>Request to get the capabilities of the PD.</summary>
-        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
-        /// <param name="address">Address assigned to the device.</param>
-        /// <param name="extendedWrite">The extended write data.</param>
-        /// <returns>Reply data that is returned after sending the command. There is the possibility of different replies can be returned from PD.</returns>
-        public async Task<ReturnReplyData<ExtendedRead>> ExtendedWriteData(Guid connectionId, byte address,
-            ExtendedWrite extendedWrite)
-        {
-            var reply = await SendCommand(connectionId,
-                new ExtendedWriteDataCommand(address, extendedWrite)).ConfigureAwait(false);
-
-            return new ReturnReplyData<ExtendedRead>
-            {
-                Ack = reply.Type == ReplyType.Ack,
-                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null,
-                ReplyData = reply.Type == ReplyType.ExtendedRead ? ExtendedRead.ParseData(reply.ExtractReplyData) : null
-            };
         }
 
         /// <summary>
@@ -886,12 +890,12 @@ namespace OSDP.Net
         /// <summary>
         /// Shutdown the control panel and stop all communication to PDs.
         /// </summary>
-        public void Shutdown()
+        public async Task Shutdown()
         {
             foreach (var bus in _buses.Values)
             {
                 bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
-                bus.Close();
+                await bus.Close();
                 
                 foreach (byte address in bus.ConfigureDeviceAddresses)
                 {
@@ -1033,15 +1037,6 @@ namespace OSDP.Net
                     break;
                 }
                 
-                case ReplyType.ExtendedRead:
-                {
-                    var handler = ExtendedReadReplyReceived;
-                    handler?.Invoke(this,
-                        new ExtendedReadReplyEventArgs(reply.ConnectionId, reply.Address,
-                            ExtendedRead.ParseData(reply.ExtractReplyData)));
-                    break;
-                }
-                
                 case ReplyType.PIVData:
                 {
                     var handler = PIVDataReplyReceived;
@@ -1130,11 +1125,6 @@ namespace OSDP.Net
         /// Occurs when manufacturer specific reply is received.
         /// </summary>
         public event EventHandler<ManufacturerSpecificReplyEventArgs> ManufacturerSpecificReplyReceived;
-
-        /// <summary>
-        /// Occurs when extended read reply is received.
-        /// </summary>
-        public event EventHandler<ExtendedReadReplyEventArgs> ExtendedReadReplyReceived;
 
         /// <summary>
         /// Occurs when key pad data reply is received.
@@ -1439,40 +1429,6 @@ namespace OSDP.Net
             /// A manufacturer specific reply.
             /// </summary>
             public ManufacturerSpecific ManufacturerSpecific { get; }
-        }
-
-        /// <summary>
-        /// The extended read reply has been received.
-        /// </summary>
-        public class ExtendedReadReplyEventArgs : EventArgs
-        {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="ExtendedReadReplyEventArgs"/> class.
-            /// </summary>
-            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
-            /// <param name="address">Address assigned to the device.</param>
-            /// <param name="extendedRead">A extended read reply.</param>
-            public ExtendedReadReplyEventArgs(Guid connectionId, byte address, ExtendedRead extendedRead)
-            {
-                ConnectionId = connectionId;
-                Address = address;
-                ExtendedRead = extendedRead;
-            }
-
-            /// <summary>
-            /// Identify the connection for communicating to the device.
-            /// </summary>
-            public Guid ConnectionId { get; }
-
-            /// <summary>
-            /// Address assigned to the device.
-            /// </summary>
-            public byte Address { get; }
-
-            /// <summary>
-            /// A extended read reply.
-            /// </summary>
-            public ExtendedRead ExtendedRead { get; }
         }
 
         /// <summary>
