@@ -81,8 +81,6 @@ namespace OSDP.Net
                 _isShuttingDown = true;
                 await _pollingTask;
                 _pollingTask = null;
-                // Polling task is complete. Now it is 100% safe to close the connection.
-                Connection.Close();
             }
         }
 
@@ -305,6 +303,16 @@ namespace OSDP.Net
 
                     delayTime.WaitOne(IdleLineDelay(2));
                 }
+            }
+
+            // Polling task is complete. Time to close the connection.
+            try
+            { 
+                Connection.Close();
+            }
+            catch(Exception exception)
+            {
+                _logger?.LogError(exception, $"Error while closing connection {Id}.");
             }
         }
 
