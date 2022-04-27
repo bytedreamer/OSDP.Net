@@ -31,6 +31,7 @@ namespace OSDP.Net
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
         private readonly Action<TraceEntry> _tracer;
+        private readonly AutoResetEvent _commandAvailableEvent = new AutoResetEvent(false);
 
         private bool _isShuttingDown;
         private Task _pollingTask;
@@ -92,9 +93,9 @@ namespace OSDP.Net
         /// <param name="command">Details about the command</param>
         public void SendCommand(Command command)
         {
-            var foundDevice = _configuredDevices.First(device => device.Address == command.Address);
-            
+            var foundDevice = _configuredDevices.First(device => device.Address == command.Address);            
             foundDevice.SendCommand(command);
+            _commandAvailableEvent.Set();
         }
 
         /// <summary>
@@ -207,7 +208,7 @@ namespace OSDP.Net
                 else
                 {
                     // Keep CPU usage down while waiting for next command
-                    delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
+                    _commandAvailableEvent.WaitOne(TimeSpan.FromMilliseconds(10));
                 }
 
                 foreach (var device in _configuredDevices.ToArray())
