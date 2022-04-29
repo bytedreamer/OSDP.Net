@@ -66,6 +66,16 @@ bool success = await ReaderBuzzerControl(connectionId, address,
     new ReaderBuzzerControl(defaultReaderNumber, ToneCode.Default, 2, 2, repeatNumber))
 ```
 
+## Custom Communication Implementations
+
+OSDP.Net is able to plugin different methods of communications beyond what is included with the default package. 
+It simply requires the installation a new NuGet package. The code needs to be updated by using it's implementation of the IOsdpConnection interface when starting a connection for the ControlPanel.
+
+- **SerialPortStream**
+  - Author: Fredrik Hall 
+  - Links: [GitHub](https://github.com/hallsbyra/OSDP.Net.SerialPortStreamOsdpConnection) [Nuget](https://www.nuget.org/packages/OSDP.Net.SerialPortStreamOsdpConnection/)
+  - Notes: Requires compilation of native libraries for non-Windows platforms
+
 ## Test Console
 
 There is compiled version of the test console application for all the major platforms available for download. 
@@ -77,8 +87,8 @@ This will need to be entered when starting the connection.
 Be sure to save configuration before exiting.
 
 ## Documentation 
-* [PowerShell Support](docs/powershell.md)
-* [Supported Commands and Replies](docs/supported_commands.md)
+- [PowerShell Support](docs/powershell.md)
+- [Supported Commands and Replies](docs/supported_commands.md)
 
 ## Contributing
 
