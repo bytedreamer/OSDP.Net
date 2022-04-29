@@ -16,10 +16,10 @@ using Microsoft.Extensions.Logging;
 using NStack;
 using OSDP.Net;
 using OSDP.Net.Connections;
-using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using Terminal.Gui;
+using Command = OSDP.Net.Messages.Command;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.CommandData.ManufacturerSpecific;
 
