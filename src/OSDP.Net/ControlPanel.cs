@@ -448,9 +448,10 @@ namespace OSDP.Net
         public Task<Model.ReplyData.FileTransferStatus.StatusDetail> FileTransfer(Guid connectionId, byte address, byte fileType, byte[] fileData, ushort fragmentSize,
             Action<FileTransferStatus> callback, CancellationToken cancellationToken = default)
         {
+            var bus = _buses[connectionId];
             return Task.Run(async () =>
             {
-                _buses[connectionId].SetSendingMultiMessage(address, true);
+                bus.SetSendingMultiMessage(address, true);
                 try
                 {
                     return await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
@@ -458,8 +459,8 @@ namespace OSDP.Net
                 }
                 finally
                 {
-                    _buses[connectionId].SetSendingMultiMessage(address, false);
-                    _buses[connectionId].SetSendingMultiMessageNoSecureChannel(address, false);
+                    bus.SetSendingMultiMessage(address, false);
+                    bus.SetSendingMultiMessageNoSecureChannel(address, false);
                 }
             }, cancellationToken);
         }
