@@ -86,6 +86,8 @@ namespace Console
                         }
 
                         Application.RequestStop();
+                        
+                        Environment.Exit(Environment.ExitCode);
                     })
                 }),
                 new MenuBarItem("Co_nnections", new[]
