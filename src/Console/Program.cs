@@ -697,9 +697,18 @@ namespace Console
                     _controlPanel.CommunicationConfiguration,
                     (address, configuration) =>
                     {
+                        if (_settings.SerialConnectionSettings.BaudRate != configuration.BaudRate)
+                        {
+                            _settings.SerialConnectionSettings.BaudRate = configuration.BaudRate;
+                            Application.MainLoop.Invoke(() =>
+                            {
+                                MessageBox.Query(40, 10, "Info", $"The connection needs to started again with baud rate of {configuration.BaudRate}", "OK");
+                            });
+                        }
+                        
                         _controlPanel.RemoveDevice(_connectionId, address);
                         LastNak.TryRemove(address, out _);
-
+                        
                         var updatedDevice = _settings.Devices.First(device => device.Address == address);
                         updatedDevice.Address = configuration.Address;
                         _controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,

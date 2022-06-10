@@ -23,7 +23,7 @@
       <PackageReference Include="log4net" Version="2.0.14" />
       <PackageReference Include="Microsoft.NETCore.Platforms" Version="6.0.3" />
       <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" />
-      <PackageReference Include="Terminal.Gui" Version="1.5.0" />
+      <PackageReference Include="Terminal.Gui" Version="1.6.4" />
     </ItemGroup>
 
     <ItemGroup>
