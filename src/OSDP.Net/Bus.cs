@@ -520,7 +520,7 @@ namespace OSDP.Net
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
-                    for (byte index = 0; index < bytesRead; index++)
+                    for (int index = 0; index < bytesRead; index++)
                     {
                         replyBuffer.Add(readBuffer[index]);
                     }
@@ -544,7 +544,7 @@ namespace OSDP.Net
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
-                    for (byte index = 0; index < bytesRead; index++)
+                    for (int index = 0; index < bytesRead; index++)
                     {
                         replyBuffer.Add(readBuffer[index]);
                     }
