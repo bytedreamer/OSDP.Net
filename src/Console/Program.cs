@@ -80,7 +80,7 @@ namespace Console
                     new MenuItem("_About", "", () => MessageBox.Query(40, 6,"About",
                         $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}",0, "OK")),
                     new MenuItem("_Connection Settings", "", UpdateConnectionSettings),
-                    new MenuItem("_Load Configuration", "", () => LoadConfigurationSettings(_settings)),
+                    new MenuItem("_Load Configuration", "", () => LoadConfigurationSettings()),
                     new MenuItem("_Save Configuration", "", () => SaveConfigurationSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
@@ -552,7 +552,7 @@ namespace Console
             }
         }
 
-        private static void LoadConfigurationSettings(Settings connectionSettings)
+        private static void LoadConfigurationSettings()
         {
             var openDialog = new OpenDialog("Load Configuration", string.Empty, new List<string>{".config"});
             openDialog.DirectoryPath = ustring.Make(Path.GetDirectoryName(_lastFilePath));
