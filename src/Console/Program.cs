@@ -44,6 +44,7 @@ namespace Console
         private static MenuBar _menuBar;
         private static readonly ConcurrentDictionary<byte, ControlPanel.NakReplyEventArgs> LastNak = new ();
 
+        private static string _lastFilePath;
         private static Settings _settings;
 
         private static async Task Main()
@@ -51,6 +52,8 @@ namespace Console
             XmlConfigurator.Configure(
                 LogManager.GetRepository(Assembly.GetAssembly(typeof(LogManager))),
                 new FileInfo("log4net.config"));
+
+            _lastFilePath = Path.Combine(Environment.CurrentDirectory, "appsettings.config");
             
             var factory = new LoggerFactory();
             factory.AddLog4Net();
@@ -77,13 +80,11 @@ namespace Console
                     new MenuItem("_About", "", () => MessageBox.Query(40, 6,"About",
                         $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}",0, "OK")),
                     new MenuItem("_Connection Settings", "", UpdateConnectionSettings),
-                    new MenuItem("Save _Configuration", "", () => SaveConfigurationSettings(_settings)),
+                    new MenuItem("_Load Configuration", "", () => LoadConfigurationSettings()),
+                    new MenuItem("_Save Configuration", "", () => SaveConfigurationSettings(_settings)),
                     new MenuItem("_Quit", "", () =>
                     {
-                        if (MessageBox.Query(40, 6, "Quit", "Save configuration before exiting?", 1, "No", "Yes") == 1)
-                        {
-                            SaveConfigurationSettings(_settings);
-                        }
+                        SaveConfigurationSettings(_settings);
 
                         Application.RequestStop();
                         
@@ -530,14 +531,49 @@ namespace Console
 
         private static void SaveConfigurationSettings(Settings connectionSettings)
         {
+            var saveDialog = new SaveDialog("Save Configuration", string.Empty, new List<string>{".config"});
+            saveDialog.DirectoryPath = ustring.Make(Path.GetDirectoryName(_lastFilePath));
+            saveDialog.FilePath = ustring.Make(Path.GetFileName(_lastFilePath));
+            Application.Run(saveDialog);
+            
+            string savedFilePath = saveDialog.FilePath?.ToString() ?? string.Empty;
+            
+            if (string.IsNullOrWhiteSpace(savedFilePath) || saveDialog.Canceled) return;
+            
             try
             {
-                File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.config"),
-                    JsonSerializer.Serialize(connectionSettings));
+                File.WriteAllText(savedFilePath,JsonSerializer.Serialize(connectionSettings));
+                _lastFilePath = savedFilePath;
+                MessageBox.Query(40, 6, "Save Configuration", "Save completed successfully", "OK");
             }
-            catch
+            catch (Exception exception)
             {
-                // ignored
+                MessageBox.ErrorQuery(40, 8, "Error", exception.Message, "OK");
+            }
+        }
+
+        private static void LoadConfigurationSettings()
+        {
+            var openDialog = new OpenDialog("Load Configuration", string.Empty, new List<string>{".config"});
+            openDialog.DirectoryPath = ustring.Make(Path.GetDirectoryName(_lastFilePath));
+            openDialog.FilePath = ustring.Make(Path.GetFileName(_lastFilePath));
+            
+            Application.Run(openDialog);
+            
+            string openFilePath = openDialog.FilePath?.ToString() ?? string.Empty;
+            
+            if (openDialog.Canceled || !File.Exists(openFilePath)) return;
+            
+            try
+            {
+                string json = File.ReadAllText(openFilePath);
+                _settings = JsonSerializer.Deserialize<Settings>(json);
+                _lastFilePath = openFilePath;
+                MessageBox.Query(40, 6, "Load Configuration", "Load completed successfully", "OK");
+            }
+            catch (Exception exception)
+            {
+                MessageBox.ErrorQuery(40, 8, "Error", exception.Message, "OK");
             }
         }
 
