@@ -283,7 +283,8 @@ namespace OSDP.Net
             try
             {
                 await SendCommand(connectionId,
-                    new GetPIVDataCommand(address, getPIVData), cancellationToken).ConfigureAwait(false);
+                    new GetPIVDataCommand(address, getPIVData), cancellationToken, throwOnNak: false)
+                    .ConfigureAwait(false);
 
                 while (DateTime.UtcNow <= endTime)
                 {
@@ -485,7 +486,7 @@ namespace OSDP.Net
                 var reply = await SendCommand(connectionId,
                         new FileTransferCommand(address,
                             new FileTransferFragment(fileType, totalSize, offset, nextFragmentSize, fileData.Skip(offset).Take(nextFragmentSize).ToArray())),
-                        cancellationToken)
+                        cancellationToken, throwOnNak: false)
                     .ConfigureAwait(false);
 
                 // Update offset
@@ -605,7 +606,7 @@ namespace OSDP.Net
             try
             {
                 await SendCommand(connectionId,
-                    new BiometricReadDataCommand(address, biometricReadData), cancellationToken).ConfigureAwait(false);
+                    new BiometricReadDataCommand(address, biometricReadData), cancellationToken, throwOnNak: false).ConfigureAwait(false);
 
                 DateTime endTime = DateTime.UtcNow + timeout;
 
@@ -680,7 +681,8 @@ namespace OSDP.Net
             try
             {
                 await SendCommand(connectionId,
-                    new BiometricMatchCommand(address, biometricTemplateData), cancellationToken).ConfigureAwait(false);
+                    new BiometricMatchCommand(address, biometricTemplateData), 
+                    cancellationToken, throwOnNak: false).ConfigureAwait(false);
                 
                 DateTime endTime = DateTime.UtcNow + timeout;
                 
@@ -773,11 +775,12 @@ namespace OSDP.Net
                             new AuthenticationChallengeCommand(address,
                                 new AuthenticationChallengeFragment(totalSize, offset, fragmentSize,
                                     requestData.Skip(offset).Take((ushort)Math.Min(fragmentSize, totalSize - offset))
-                                        .ToArray())), cancellationToken)
+                                        .ToArray())), cancellationToken, throwOnNak: false)
                         .ConfigureAwait(false);
 
                     offset += fragmentSize;
 
+                    // TODO: Change this to a NackReplyException?
                     // End transfer is Nak reply is received
                     if (reply.Type == ReplyType.Nak) throw new Exception("Unable to complete challenge request");
 
@@ -860,19 +863,35 @@ namespace OSDP.Net
         }
 
         internal async Task<Reply> SendCommand(Guid connectionId, Command command,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, bool throwOnNak = true)
         {
             var source = new TaskCompletionSource<Reply>();
 
             void EventHandler(object sender, ReplyEventArgs replyEventArgs)
             {
-                if (!replyEventArgs.Reply.MatchIssuingCommand(command)) return;
+                var reply = replyEventArgs.Reply;
+
+                if (!reply.MatchIssuingCommand(command)) return;
+
+                // TODO: Review, is this thread safe? Seems delegates can be invoked from multiple
+                // threads but not necessarily changed
+                // -- DXM 2022-10-26
                 ReplyReceived -= EventHandler;
-                source.SetResult(replyEventArgs.Reply);
+
+                if (throwOnNak && replyEventArgs.Reply.Type == ReplyType.Nak)
+                {
+                    source.SetException(new NackReplyException(Nak.ParseData(reply.ExtractReplyData)));
+                }
+                else
+                {
+                    source.SetResult(reply);
+                }
             }
 
             ReplyReceived += EventHandler;
 
+            // TODO: If connectionId is invalid, this condition will silently move on and rather than
+            // failing, it will wait task that never started to come back or timeout, fix that?
             if (_buses.TryGetValue(connectionId, out var bus))
             {
                 bus.SendCommand(command);
@@ -972,10 +991,8 @@ namespace OSDP.Net
 
         internal virtual void OnReplyReceived(Reply reply)
         {
-            {
-                var handler = ReplyReceived;
-                handler?.Invoke(this, new ReplyEventArgs {Reply = reply});
-            }
+            // TODO: Any reason to have a 4-line scope block here with a local var?
+            ReplyReceived?.Invoke(this, new ReplyEventArgs { Reply = reply });
 
             switch (reply.Type)
             {
