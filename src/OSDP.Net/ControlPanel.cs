@@ -13,6 +13,9 @@ using OSDP.Net.Tracing;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
+
+
+
 namespace OSDP.Net
 {
     /// <summary>The OSDP control panel used to communicate to Peripheral Devices (PDs) as an Access Control Unit (ACU). If multiple connections are needed, add them to the control panel. Avoid creating multiple control panel objects.</summary>
@@ -21,7 +24,7 @@ namespace OSDP.Net
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new();
-        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
+        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(2);
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
 
 
@@ -873,11 +876,6 @@ namespace OSDP.Net
 
                 if (!reply.MatchIssuingCommand(command)) return;
 
-                // TODO: Review, is this thread safe? Seems delegates can be invoked from multiple
-                // threads but not necessarily changed
-                // -- DXM 2022-10-26
-                ReplyReceived -= EventHandler;
-
                 if (throwOnNak && replyEventArgs.Reply.Type == ReplyType.Nak)
                 {
                     source.SetException(new NackReplyException(Nak.ParseData(reply.ExtractReplyData)));
@@ -897,14 +895,16 @@ namespace OSDP.Net
                 bus.SendCommand(command);
             }
 
-            if (source.Task == await Task.WhenAny(source.Task, Task.Delay(_replyResponseTimeout, cancellationToken))
-                .ConfigureAwait(false))
-            {
-                return await source.Task;
-            }
-
+            var task = await Task.WhenAny(
+                source.Task, Task.Delay(_replyResponseTimeout, cancellationToken)).ConfigureAwait(false);
             ReplyReceived -= EventHandler;
-            throw new TimeoutException();
+
+            if (source.Task != task)
+            {
+                throw new TimeoutException();
+            }
+            
+            return await source.Task;
         }
 
         /// <summary>

@@ -1,11 +1,15 @@
 using System;
 using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
+using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tests.Utilities;
 
 namespace OSDP.Net.Tests
@@ -201,6 +205,65 @@ namespace OSDP.Net.Tests
                 TimeSpan.FromSeconds(3));
         }
 
+        [TestFixture]
+        public class IdRequestCommandTest
+        {
+            [Test]
+            public async Task ReturnsValidReportTest()
+            {
+                // TODO: This init code needs to be global for entire test lib, move it
+                var factory = new LoggerFactory();
+                factory.AddLog4Net();
+                // Is next line needed? How does log4net know to write log out to console?? Yet it seems to
+                //BasicConfigurator.Configure();
+
+                var panel = new ControlPanel(factory.CreateLogger<ControlPanel>());
+                var IdReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
+                var IdReportReplyBytes = new byte[] { 83, 128, 20, 0, 6, 69, 92, 38, 35, 25, 2, 0, 0, 233, 42, 3, 0, 0, 98, 25 };
+
+                var mockConnection = new MockConnection();
+                mockConnection.OnCommand(IdReportCommandBytes).Reply(IdReportReplyBytes);
+
+                Guid id = panel.StartConnection(mockConnection.Object);
+                panel.AddDevice(id, 0, true, false);
+
+                var response = await panel.IdReport(id, 0);
+
+                Assert.That(response.ToString(), Is.EqualTo(
+                    "     Vendor Code: 5C-26-23\r\n" +
+                    "    Model Number: 25\r\n" +
+                    "         Version: 2\r\n" +
+                    "   Serial Number: 00-00-E9-2A\r\n" +
+                    "Firmware Version: 3.0.0\r\n"
+                ));
+            }
+
+            [Test]
+            public void ThrowOnNakReplyTest()
+            {
+                // TODO: This init code needs to be global for entire test lib, move it
+                var factory = new LoggerFactory();
+                factory.AddLog4Net();
+                // Is next line needed? How does log4net know to write log out to console?? Yet it seems to
+                //BasicConfigurator.Configure();
+
+                var panel = new ControlPanel(factory.CreateLogger<ControlPanel>());
+                var IdReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
+                var NakReplyBytes = new byte[] { 83, 128, 9, 0, 7, 65, 3, 53, 221 };
+
+                var mockConnection = new MockConnection();
+                mockConnection.OnCommand(IdReportCommandBytes).Reply(NakReplyBytes);
+
+                Guid id = panel.StartConnection(mockConnection.Object);
+                panel.AddDevice(id, 0, true, false);
+
+                var exception = Assert.ThrowsAsync<NackReplyException>(async () => await panel.IdReport(id, 0));
+
+                Assert.That(exception.Reply.ErrorCode, Is.EqualTo(ErrorCode.UnknownCommandCode));
+            }
+
+        }
+
         class TestConnection : IOsdpConnection
         {
             private readonly MemoryStream _stream = new MemoryStream();
@@ -245,6 +308,63 @@ namespace OSDP.Net.Tests
             {
                 return await _stream.ReadAsync(buffer, 0, buffer.Length, token);
             }
+        }
+
+        class MockConnection : Mock<IOsdpConnection>
+        {
+            static readonly byte[][] PollCommandBytes = new byte[][] {
+                new byte[] { 255, 83, 0, 8, 0, 4, 96, 235, 170 },
+                // TODO: This presently ain't the most stable test. The problem is that bits 0-1 of
+                // byte[5] happen to be a sequence number. Here that number is 1, but due to multithreading
+                // and timing that number could also be 2 or 3 (most likely not 0, that seems to be 
+                // special cased). What this means is that every command we expect, we need to expect it
+                // in triplicate and then for each one CRC (last 2 bytes) must be recalculated
+                //new byte[] { 255, 83, 0, 8, 0, 5, 96, 218, 153 }
+            };
+            static readonly byte[] AckReplyBytes = new byte[] { 83, 128, 8, 0, 5, 64, 104, 159 };
+
+            public MockConnection() : base(MockBehavior.Strict)
+            {
+                var readStream = _incomingData.Reader.AsStream(true);
+
+                Setup(x => x.IsOpen).Returns(true);
+                Setup(x => x.BaudRate).Returns(9600);
+                Setup(x => x.ReplyTimeout).Returns(TimeSpan.FromSeconds(999999));
+                Setup(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
+                    .Returns(async (byte[] buffer, CancellationToken cancellationToken) => 
+                        await readStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)
+                    );
+
+                // Setup handling for a polling command which always gets issued when connection is alive
+                // Here we'll just reply with a generic ACK to signal to ACU that the command was successfully
+                // handled.
+                OnCommand(PollCommandBytes[0]).Reply(AckReplyBytes);
+            }
+
+            public ExpectedCommand OnCommand(byte[] commandBytes) => new(this, commandBytes);
+
+            public class ExpectedCommand
+            {
+                public ExpectedCommand(MockConnection parent, byte[] commandBytes)
+                {
+                    _parent = parent;
+                    _commandBytes = commandBytes;
+                }
+
+                public void Reply(byte[] replyBytes)
+                {
+                    _parent.Setup(x => x.WriteAsync(It.Is<byte[]>(
+                            a => a.SequenceEqual(_commandBytes)
+                        ))).Returns(
+                            async (byte[] buffer) => await _parent._incomingData.Writer.WriteAsync(replyBytes)
+                        );
+                }
+
+                private readonly MockConnection _parent;
+                private readonly byte[] _commandBytes;
+            }
+
+            private readonly Pipe _incomingData = new();
         }
     }
 }
