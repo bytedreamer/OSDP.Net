@@ -115,7 +115,7 @@ namespace OSDP.Net.Messages
         /// Adds the CRC to the packet.
         /// </summary>
         /// <param name="packet">The packet.</param>
-        protected static void AddCrc(Span<byte> packet)
+        protected internal static void AddCrc(Span<byte> packet)
         {
             ushort crc = CalculateCrc(packet.Slice(0, packet.Length - 2));
             var crcBytes = ConvertShortToBytes(crc).ToArray();

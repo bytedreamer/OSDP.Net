@@ -14,19 +14,19 @@ using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfi
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
 
-
-
 namespace OSDP.Net
 {
-    /// <summary>The OSDP control panel used to communicate to Peripheral Devices (PDs) as an Access Control Unit (ACU). If multiple connections are needed, add them to the control panel. Avoid creating multiple control panel objects.</summary>
+    /// <summary>
+    /// The OSDP control panel used to communicate to Peripheral Devices (PDs) as an Access Control Unit (ACU).
+    /// If multiple connections are needed, add them to the control panel. Avoid creating multiple control panel objects.
+    /// </summary>
     public class ControlPanel
     {
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new();
-        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(2);
+        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
-
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
         /// <param name="logger">The logger definition used for logging.</param>
@@ -336,7 +336,6 @@ namespace OSDP.Net
             return new ReturnReplyData<ManufacturerSpecific>
             {
                 Ack = reply.Type == ReplyType.Ack,
-                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null,
                 ReplyData = reply.Type == ReplyType.ManufactureSpecific ? ManufacturerSpecific.ParseData(reply.ExtractReplyData) : null
             };
         }
@@ -356,7 +355,6 @@ namespace OSDP.Net
             return new ReturnReplyData<OutputStatus>
             {
                 Ack = reply.Type == ReplyType.Ack,
-                Nak = reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null,
                 ReplyData = reply.Type == ReplyType.OutputStatusReport ? Model.ReplyData.OutputStatus.ParseData(reply.ExtractReplyData) : null
             };
         }
@@ -778,14 +776,10 @@ namespace OSDP.Net
                             new AuthenticationChallengeCommand(address,
                                 new AuthenticationChallengeFragment(totalSize, offset, fragmentSize,
                                     requestData.Skip(offset).Take((ushort)Math.Min(fragmentSize, totalSize - offset))
-                                        .ToArray())), cancellationToken, throwOnNak: false)
+                                        .ToArray())), cancellationToken)
                         .ConfigureAwait(false);
 
                     offset += fragmentSize;
-
-                    // TODO: Change this to a NackReplyException?
-                    // End transfer is Nak reply is received
-                    if (reply.Type == ReplyType.Nak) throw new Exception("Unable to complete challenge request");
 
                     // Determine if we should continue on successful status
                     continueTransfer = offset < totalSize;
@@ -873,7 +867,6 @@ namespace OSDP.Net
             void EventHandler(object sender, ReplyEventArgs replyEventArgs)
             {
                 var reply = replyEventArgs.Reply;
-
                 if (!reply.MatchIssuingCommand(command)) return;
 
                 if (throwOnNak && replyEventArgs.Reply.Type == ReplyType.Nak)
@@ -886,25 +879,31 @@ namespace OSDP.Net
                 }
             }
 
+            if (!_buses.TryGetValue(connectionId, out var bus))
+            {
+                throw new ArgumentException("Connection could not be found", nameof(connectionId));
+            }
+
             ReplyReceived += EventHandler;
 
-            // TODO: If connectionId is invalid, this condition will silently move on and rather than
-            // failing, it will wait task that never started to come back or timeout, fix that?
-            if (_buses.TryGetValue(connectionId, out var bus))
+            try
             {
                 bus.SendCommand(command);
+
+                var task = await Task.WhenAny(
+                    source.Task, Task.Delay(_replyResponseTimeout, cancellationToken)).ConfigureAwait(false);
+
+                if (source.Task != task)
+                {
+                    throw new TimeoutException();
+                }
+
+                return await source.Task;
             }
-
-            var task = await Task.WhenAny(
-                source.Task, Task.Delay(_replyResponseTimeout, cancellationToken)).ConfigureAwait(false);
-            ReplyReceived -= EventHandler;
-
-            if (source.Task != task)
+            finally
             {
-                throw new TimeoutException();
+                ReplyReceived -= EventHandler;
             }
-            
-            return await source.Task;
         }
 
         /// <summary>
@@ -991,114 +990,71 @@ namespace OSDP.Net
 
         internal virtual void OnReplyReceived(Reply reply)
         {
-            // TODO: Any reason to have a 4-line scope block here with a local var?
             ReplyReceived?.Invoke(this, new ReplyEventArgs { Reply = reply });
 
             switch (reply.Type)
             {
                 case ReplyType.Nak:
-                {
-                    var handler = NakReplyReceived;
-                    handler?.Invoke(this,
+                    NakReplyReceived?.Invoke(this,
                         new NakReplyEventArgs(reply.ConnectionId, reply.Address,
                             Nak.ParseData(reply.ExtractReplyData)));
                     break;
-                }
                 case ReplyType.LocalStatusReport:
-                {
-                    var handler = LocalStatusReportReplyReceived;
-                    handler?.Invoke(this,
+                    LocalStatusReportReplyReceived?.Invoke(this,
                         new LocalStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
                             Model.ReplyData.LocalStatus.ParseData(reply.ExtractReplyData)));
                     break;
-                }
                 case ReplyType.InputStatusReport:
-                {
-                    var handler = InputStatusReportReplyReceived;
-                    handler?.Invoke(this,
+                    InputStatusReportReplyReceived?.Invoke(this,
                         new InputStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
                             Model.ReplyData.InputStatus.ParseData(reply.ExtractReplyData)));
                     break;
-                }
                 case ReplyType.OutputStatusReport:
-                {
-                    var handler = OutputStatusReportReplyReceived;
-                    handler?.Invoke(this,
+                    OutputStatusReportReplyReceived?.Invoke(this,
                         new OutputStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
                             Model.ReplyData.OutputStatus.ParseData(reply.ExtractReplyData)));
                     break;
-                }
                 case ReplyType.ReaderStatusReport:
-                {
-                    var handler = ReaderStatusReportReplyReceived;
-                    handler?.Invoke(this,
+                    ReaderStatusReportReplyReceived?.Invoke(this,
                         new ReaderStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
                             Model.ReplyData.ReaderStatus.ParseData(reply.ExtractReplyData)));
                     break;
-                }
-
                 case ReplyType.RawReaderData:
-                {
-                    var handler = RawCardDataReplyReceived;
-                    handler?.Invoke(this,
+                    RawCardDataReplyReceived?.Invoke(this,
                         new RawCardDataReplyEventArgs(reply.ConnectionId, reply.Address,
                             RawCardData.ParseData(reply.ExtractReplyData)));
                     break;
-                }
-
                 case ReplyType.ManufactureSpecific:
-                {
-                    var handler = ManufacturerSpecificReplyReceived;
-                    handler?.Invoke(this,
+                    ManufacturerSpecificReplyReceived?.Invoke(this,
                         new ManufacturerSpecificReplyEventArgs(reply.ConnectionId, reply.Address,
                             ManufacturerSpecific.ParseData(reply.ExtractReplyData)));
                     break;
-                }
-                
                 case ReplyType.PIVData:
-                {
-                    var handler = PIVDataReplyReceived;
-                    handler?.Invoke(this,
+                    PIVDataReplyReceived?.Invoke(this,
                         new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Address,
-                            DataFragmentResponse.ParseData(reply.ExtractReplyData)));   
+                            DataFragmentResponse.ParseData(reply.ExtractReplyData)));
                     break;
-                }
-                
                 case ReplyType.ResponseToChallenge:
-                {
-                    var handler = AuthenticationChallengeResponseReceived;
-                    handler?.Invoke(this,
+                    AuthenticationChallengeResponseReceived?.Invoke(this,
                         new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Address,
                             DataFragmentResponse.ParseData(reply.ExtractReplyData)));   
                     break;
-                }
-
                 case ReplyType.KeypadData:
-                {
-                    var handler = KeypadReplyReceived;
-                    handler?.Invoke(this,
+                    KeypadReplyReceived?.Invoke(this,
                         new KeypadReplyEventArgs(reply.ConnectionId, reply.Address,
                             KeypadData.ParseData(reply.ExtractReplyData)));
                     break;
-                }
-                
                 case ReplyType.BiometricData:
-                {
-                    var handler = BiometricReadResultsReplyReceived;
-                    handler?.Invoke(this,
+                    BiometricReadResultsReplyReceived?.Invoke(this,
                         new BiometricReadResultsReplyEventArgs(reply.ConnectionId, reply.Address,
                             BiometricReadResult.ParseData(reply.ExtractReplyData)));
                     break;
-                }
-                
                 case ReplyType.BiometricMatchResult:
-                {
                     var handler = BiometricMatchReplyReceived;
-                    handler?.Invoke(this,
+                    BiometricMatchReplyReceived?.Invoke(this,
                         new BiometricMatchReplyEventArgs(reply.ConnectionId, reply.Address,
                             BiometricMatchResult.ParseData(reply.ExtractReplyData)));
                     break;
-                }
             }
         }
 
