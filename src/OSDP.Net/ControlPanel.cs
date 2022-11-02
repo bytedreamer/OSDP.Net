@@ -9,6 +9,7 @@ using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.PanelCommands.DeviceDiscover;
 using OSDP.Net.Tracing;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
@@ -22,6 +23,8 @@ namespace OSDP.Net
     /// </summary>
     public class ControlPanel
     {
+        private const byte BroadcastAddress = 0x7f;
+
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new();
@@ -978,6 +981,77 @@ namespace OSDP.Net
             {
                 bus.RemoveDevice(address);
             }
+        }
+
+        public Task<DiscoveryResult> DiscoverDevice(IOsdpConnection connection) => 
+            DiscoverDevice(new IOsdpConnection[] { connection });
+
+        public async Task<DiscoveryResult> DiscoverDevice(IEnumerable<IOsdpConnection> connections)
+        {
+            DiscoveryResult result = new();
+            Guid connId = Guid.Empty;
+
+            async Task<DeviceIdentification> TryIdReport(byte address)
+            {
+                try
+                {
+                    return await IdReport(connId, address);
+                }
+                catch (TimeoutException)
+                {
+                    return null;
+                }
+            }
+
+            async Task<bool> FindConnectionWithActiveDevice()
+            {
+                foreach (IOsdpConnection connection in connections)
+                {
+                    connId = StartConnection(connection);
+
+                    AddDevice(connId, BroadcastAddress, true, false);
+
+                    if (await TryIdReport(BroadcastAddress) != null)
+                    {
+                        RemoveDevice(connId, BroadcastAddress);
+                        result.Connection = connection;
+                        return true;
+                    }
+
+                    await StopConnection(connId);
+                }
+
+                return false;
+            }
+
+            async Task<bool> FindDeviceAddress()
+            {
+                for (byte addr = 0; addr < BroadcastAddress; addr++)
+                {
+                    // TODO: would we want any other flags for CRC here? (or the other one?)
+                    AddDevice(connId, addr, true, false);
+                    result.Id = await TryIdReport(addr);
+                    if (result.Id != null)
+                    {
+                        result.Address = addr;
+                        return true;
+                    }
+                    RemoveDevice(connId, addr);
+                }
+                return false;
+            }
+
+            if (!await FindConnectionWithActiveDevice()) return null;
+
+            if (!await FindDeviceAddress())
+            {
+                throw new DeviceDiscoveryException(
+                    $"Unable to determine address of device that responded to a broadcast on baud rate {result.Connection.BaudRate}");
+            }
+
+            result.Capabilities = await DeviceCapabilities(connId, result.Address);
+
+            return result;
         }
 
         private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected,

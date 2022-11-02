@@ -20,6 +20,11 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
 
+        public DeviceCapability Get(CapabilityFunction funcCode) =>
+            Capabilities.FirstOrDefault((cap) => cap.Function == funcCode);
+
+        public T Get<T>(CapabilityFunction funcCode) where T : DeviceCapability => (T)Get(funcCode);
+
         internal static DeviceCapabilities ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();
@@ -41,6 +46,7 @@ namespace OSDP.Net.Model.ReplyData
 
             return deviceCapabilities;
         }
+
 
         /// <inheritdoc />
         public override string ToString()

@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
@@ -5,7 +9,7 @@ namespace OSDP.Net.Model.ReplyData
     /// </summary>
     public class DeviceCapability
     {
-        private DeviceCapability()
+        private protected DeviceCapability()
         {
         }
 
@@ -26,14 +30,34 @@ namespace OSDP.Net.Model.ReplyData
 
         internal static DeviceCapability ParseData(byte[] data)
         {
-            return new DeviceCapability
+            var func = typeof(CapabilityFunction).IsEnumDefined((int)data[0]) 
+                ? (CapabilityFunction)data[0]
+                : CapabilityFunction.Unknown;
+
+            if (!_capFactories.TryGetValue(func, out var creator))
             {
-                Function = typeof(CapabilityFunction).IsEnumDefined((int)data[0])
-                    ? (CapabilityFunction)data[0]
-                    : CapabilityFunction.Unknown,
-                Compliance = data[1],
-                NumberOf = data[2]
-            };
+                creator = () => new DeviceCapability();
+            }
+
+            var cap = creator();
+            cap.Function = func;
+            cap.Compliance = data[1];
+            cap.NumberOf = data[2];
+            return cap;
         }
+
+        private static Dictionary<CapabilityFunction, Func<DeviceCapability>> _capFactories = new ()
+            {
+                {CapabilityFunction.CommunicationSecurity, () => new CommSecurityDeviceCap() }
+            };
+    }
+
+    public class CommSecurityDeviceCap : DeviceCapability
+    {
+        internal CommSecurityDeviceCap() { }
+
+        public bool SupportsAES128 { get => (Compliance & 0x01) != 0; }
+
+        public bool UsesDefaultKey { get => (NumberOf & 0x01) != 0; }
     }
 }

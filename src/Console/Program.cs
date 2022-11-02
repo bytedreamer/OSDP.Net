@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading;
@@ -27,6 +28,7 @@ namespace Console
 {
     internal static class Program
     {
+        private static ILogger<ControlPanel> _panelLogger = null;
         private static ControlPanel _controlPanel;
         private static readonly Queue<string> Messages = new ();
         private static readonly object MessageLock = new ();
@@ -35,7 +37,8 @@ namespace Console
             new ("_Devices", new[]
             {
                 new MenuItem("_Add", string.Empty, AddDevice),
-                new MenuItem("_Remove", string.Empty, RemoveDevice)
+                new MenuItem("_Remove", string.Empty, RemoveDevice),
+                new MenuItem("_Discover", string.Empty, DiscoverDevice),
             });
 
         private static Guid _connectionId = Guid.Empty;
@@ -57,8 +60,9 @@ namespace Console
             
             var factory = new LoggerFactory();
             factory.AddLog4Net();
-            
-            _controlPanel = new ControlPanel(factory.CreateLogger<ControlPanel>());
+            _panelLogger = factory.CreateLogger<ControlPanel>();
+
+            _controlPanel = new ControlPanel(_panelLogger);
 
             _settings = GetConnectionSettings();
 
@@ -355,7 +359,6 @@ namespace Console
             {
                 if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
                 {
-
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid port number entered!", "OK");
                     return;
                 }
@@ -703,6 +706,60 @@ namespace Console
             dialog.Add(scrollView);
             removeButton.SetFocus();
             
+            Application.Run(dialog);
+        }
+
+        private static void DiscoverDevice()
+        {
+            var CloseDialog = () => Application.RequestStop();
+
+            async void OnClickDiscover() 
+            {
+                CloseDialog();
+
+                // TODO: Do we need to support other connection types here?
+                // TODO: Will there be a conflict if the global panel is already talking to the
+                //   same serial port?
+
+                // We do not want to use the global control panel instance because it is hooked up to a bunch
+                // of event handlers in the console. However for discovery method, we are going to cycle through
+                // a bunch of devices and connections and all those events will generate too much noise in
+                // the output
+                var panel = new ControlPanel(_panelLogger);
+
+                try
+                {
+                    // TODO: How does user specify different COM port?
+                    var result = await panel.DiscoverDevice(
+                        SerialPortOsdpConnection.EnumBaudRates("COM3"));
+
+                    if (result != null)
+                    {
+                        DisplayReceivedReply("Device discovered successfully",result.ToString());
+                    } 
+                    else
+                    {
+                        DisplayReceivedReply("Device was not found", string.Empty);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.ErrorQuery(40, 10, "Exception in Device Discovery", exception.Message, "OK");
+                    DisplayReceivedReply("Device was not found", exception.ToString());
+                }
+                finally
+                {
+                    await panel.Shutdown();
+                }
+            }
+
+            var cancelButton = new Button("Cancel");
+            var discoverButton = new Button("Discover", true);
+            cancelButton.Clicked += CloseDialog;
+            discoverButton.Clicked += OnClickDiscover;
+
+            var dialog = new Dialog("Discover Device", 60, 10, cancelButton, discoverButton);
+            discoverButton.SetFocus();
             Application.Run(dialog);
         }
 

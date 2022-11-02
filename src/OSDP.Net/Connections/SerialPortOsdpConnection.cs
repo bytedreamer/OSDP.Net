@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO.Ports;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,6 +21,14 @@ namespace OSDP.Net.Connections
         {
             _serialPort.PortName = portName ?? throw new ArgumentNullException(nameof(portName));
             _serialPort.BaudRate = baudRate;
+        }
+
+        public static IEnumerable<SerialPortOsdpConnection> EnumBaudRates(string portName)
+        {
+            // TODO: Allow the caller to specify a different reply timeout
+
+            var rates = new[] { 9600, 19200, 38400, 57600, 115200, 230400 };
+            return rates.AsEnumerable().Select((rate) => new SerialPortOsdpConnection(portName, rate));
         }
 
         /// <inheritdoc />
