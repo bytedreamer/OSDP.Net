@@ -212,11 +212,11 @@ namespace OSDP.Net.Tests
             public async Task ReturnsValidReportTest()
             {
                 var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
-                var IdReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
-                var IdReportReplyBytes = new byte[] { 83, 128, 20, 0, 6, 69, 92, 38, 35, 25, 2, 0, 0, 233, 42, 3, 0, 0, 98, 25 };
+                var idReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
+                var idReportReplyBytes = new byte[] { 83, 128, 20, 0, 6, 69, 92, 38, 35, 25, 2, 0, 0, 233, 42, 3, 0, 0, 98, 25 };
 
                 var mockConnection = new MockConnection();
-                mockConnection.OnCommand(IdReportCommandBytes).Reply(IdReportReplyBytes);
+                mockConnection.OnCommand(idReportCommandBytes).Reply(idReportReplyBytes);
 
                 Guid id = panel.StartConnection(mockConnection.Object);
                 panel.AddDevice(id, 0, true, false);
@@ -236,18 +236,18 @@ namespace OSDP.Net.Tests
             public void ThrowOnNakReplyTest()
             {
                 var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
-                var IdReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
-                var NakReplyBytes = new byte[] { 83, 128, 9, 0, 7, 65, 3, 53, 221 };
+                var idReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
+                var nakReplyBytes = new byte[] { 83, 128, 9, 0, 7, 65, 3, 53, 221 };
 
                 var mockConnection = new MockConnection();
-                mockConnection.OnCommand(IdReportCommandBytes).Reply(NakReplyBytes);
+                mockConnection.OnCommand(idReportCommandBytes).Reply(nakReplyBytes);
 
                 Guid id = panel.StartConnection(mockConnection.Object);
                 panel.AddDevice(id, 0, true, false);
 
                 var exception = Assert.ThrowsAsync<NackReplyException>(async () => await panel.IdReport(id, 0));
 
-                Assert.That(exception.Reply.ErrorCode, Is.EqualTo(ErrorCode.UnknownCommandCode));
+                Assert.That(exception?.Reply.ErrorCode, Is.EqualTo(ErrorCode.UnknownCommandCode));
             }
 
         }
@@ -348,7 +348,7 @@ namespace OSDP.Net.Tests
                         _parent.Setup(x => x.WriteAsync(It.Is<byte[]>(
                                 a => a.SequenceEqual(command)
                             ))).Returns(
-                                async (byte[] buffer) => await _parent._incomingData.Writer.WriteAsync(reply)
+                                async (byte[] _) => await _parent._incomingData.Writer.WriteAsync(reply)
                             );
                     }
                 }
