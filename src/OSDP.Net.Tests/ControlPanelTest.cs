@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
@@ -211,13 +212,7 @@ namespace OSDP.Net.Tests
             [Test]
             public async Task ReturnsValidReportTest()
             {
-                // TODO: This init code needs to be global for entire test lib, move it
-                var factory = new LoggerFactory();
-                factory.AddLog4Net();
-                // Is next line needed? How does log4net know to write log out to console?? Yet it seems to
-                //BasicConfigurator.Configure();
-
-                var panel = new ControlPanel(factory.CreateLogger<ControlPanel>());
+                var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
                 var IdReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
                 var IdReportReplyBytes = new byte[] { 83, 128, 20, 0, 6, 69, 92, 38, 35, 25, 2, 0, 0, 233, 42, 3, 0, 0, 98, 25 };
 
@@ -241,13 +236,7 @@ namespace OSDP.Net.Tests
             [Test]
             public void ThrowOnNakReplyTest()
             {
-                // TODO: This init code needs to be global for entire test lib, move it
-                var factory = new LoggerFactory();
-                factory.AddLog4Net();
-                // Is next line needed? How does log4net know to write log out to console?? Yet it seems to
-                //BasicConfigurator.Configure();
-
-                var panel = new ControlPanel(factory.CreateLogger<ControlPanel>());
+                var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
                 var IdReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
                 var NakReplyBytes = new byte[] { 83, 128, 9, 0, 7, 65, 3, 53, 221 };
 
@@ -312,15 +301,7 @@ namespace OSDP.Net.Tests
 
         class MockConnection : Mock<IOsdpConnection>
         {
-            static readonly byte[][] PollCommandBytes = new byte[][] {
-                new byte[] { 255, 83, 0, 8, 0, 4, 96, 235, 170 },
-                // TODO: This presently ain't the most stable test. The problem is that bits 0-1 of
-                // byte[5] happen to be a sequence number. Here that number is 1, but due to multithreading
-                // and timing that number could also be 2 or 3 (most likely not 0, that seems to be 
-                // special cased). What this means is that every command we expect, we need to expect it
-                // in triplicate and then for each one CRC (last 2 bytes) must be recalculated
-                //new byte[] { 255, 83, 0, 8, 0, 5, 96, 218, 153 }
-            };
+            static readonly byte[] PollCommandBytes = new byte[] { 255, 83, 0, 8, 0, 4, 96, 235, 170 };
             static readonly byte[] AckReplyBytes = new byte[] { 83, 128, 8, 0, 5, 64, 104, 159 };
 
             public MockConnection() : base(MockBehavior.Strict)
@@ -338,7 +319,7 @@ namespace OSDP.Net.Tests
                 // Setup handling for a polling command which always gets issued when connection is alive
                 // Here we'll just reply with a generic ACK to signal to ACU that the command was successfully
                 // handled.
-                OnCommand(PollCommandBytes[0]).Reply(AckReplyBytes);
+                OnCommand(PollCommandBytes).Reply(AckReplyBytes);
             }
 
             public ExpectedCommand OnCommand(byte[] commandBytes) => new(this, commandBytes);
@@ -353,11 +334,39 @@ namespace OSDP.Net.Tests
 
                 public void Reply(byte[] replyBytes)
                 {
-                    _parent.Setup(x => x.WriteAsync(It.Is<byte[]>(
-                            a => a.SequenceEqual(_commandBytes)
-                        ))).Returns(
-                            async (byte[] buffer) => await _parent._incomingData.Writer.WriteAsync(replyBytes)
-                        );
+                    for (byte seq = 0; seq < 4; seq++)
+                    {
+                        // Make local copies because we'll be mutating them to update the sequence number
+                        var command = (byte[])_commandBytes.Clone();
+                        var reply = (byte[])replyBytes.Clone();
+
+                        // We are doing the span magic here because unlike replies, commands seem to have
+                        // at index [0] a "driver byte", the intention of which is somewhat unclear at the
+                        // moment
+                        ResetMsgSeqNumber(command.AsSpan().Slice(1), seq);
+                        ResetMsgSeqNumber(reply.AsSpan(), seq);
+
+                        _parent.Setup(x => x.WriteAsync(It.Is<byte[]>(
+                                a => a.SequenceEqual(command)
+                            ))).Returns(
+                                async (byte[] buffer) => await _parent._incomingData.Writer.WriteAsync(reply)
+                            );
+                    }
+                }
+
+                private static void ResetMsgSeqNumber(Span<byte> msg, byte seq)
+                {
+                    Debug.Assert(seq < 4);
+
+                    // The way we use OSDP Protocol, we have a common message format for all commands and
+                    // their replies:
+                    //   1. Bits 0-1 of byte [5] contain the sequence number of the message
+                    //   2. Last two bytes contain CRC of the message.
+                    // Therefore what we do here is an in-place update of the sequence number and then
+                    // recalculate the last two bytes
+                    msg[4] &= 0xfc;
+                    msg[4] |= seq;
+                    Message.AddCrc(msg);
                 }
 
                 private readonly MockConnection _parent;

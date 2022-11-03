@@ -478,6 +478,9 @@ namespace OSDP.Net
             var buffer = new byte[commandData.Length + 1];
 
             // TODO: What's a driver byte? add a comment for context?
+            // -- DXM 2022-11-01 Spoke with JH regarding this and apparenly we don't seem to know/remember
+            // what is the driver byte here fore. Leaving the comment as a reminder to someday(tm) come back
+            // to this and dig up why it was added
             buffer[0] = DriverByte;
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
  
