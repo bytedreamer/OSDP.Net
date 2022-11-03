@@ -102,7 +102,7 @@ namespace OSDP.Net.Tests
                 // ReSharper disable once CoVariantArrayConversion
                 Task.WaitAll(tasks);
             }
-            catch (Exception ex) { /* We handle errors later */ }
+            catch { /* We handle errors later */ }
 
             // Assert
             Assert.That(tasks.Where(t => t.Status == TaskStatus.RanToCompletion).Count(), Is.EqualTo(1));
