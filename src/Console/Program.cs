@@ -17,8 +17,10 @@ using Microsoft.Extensions.Logging;
 using NStack;
 using OSDP.Net;
 using OSDP.Net.Connections;
+using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.PanelCommands.DeviceDiscover;
 using Terminal.Gui;
 using Command = OSDP.Net.Messages.Command;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
@@ -33,12 +35,14 @@ namespace Console
         private static readonly Queue<string> Messages = new ();
         private static readonly object MessageLock = new ();
 
+        private static readonly MenuItem DiscoverMenuItem =
+            new MenuItem("_Discover", string.Empty, DiscoverDevice);
         private static readonly MenuBarItem DevicesMenuBarItem =
             new ("_Devices", new[]
             {
                 new MenuItem("_Add", string.Empty, AddDevice),
                 new MenuItem("_Remove", string.Empty, RemoveDevice),
-                new MenuItem("_Discover", string.Empty, DiscoverDevice),
+                DiscoverMenuItem,
             });
 
         private static Guid _connectionId = Guid.Empty;
@@ -227,9 +231,9 @@ namespace Console
             // Select default port name
             if (portNames.Length > 0)
             {
-                portNameComboBox.Text = portNames.Contains(_settings.SerialConnectionSettings.PortName)
-                    ? _settings.SerialConnectionSettings.PortName
-                    : portNames[0];
+                portNameComboBox.SelectedItem = Math.Max(
+                    Array.FindIndex(portNames, (x) => 
+                    String.Equals(x, _settings.SerialConnectionSettings.PortName)), 0);
             }
                 
             var baudRateTextField = new TextField(25, 3, 25, _settings.SerialConnectionSettings.BaudRate.ToString());
@@ -496,10 +500,9 @@ namespace Console
                     int index = 0;
                     foreach (string outputMessage in Messages.Reverse())
                     {
-                        var label = new Label(0, index,
-                            outputMessage.Substring(0, outputMessage.Length - 1));
+                        var label = new Label(0, index, outputMessage.TrimEnd());
 
-                        index += outputMessage.Length - outputMessage.Replace(Environment.NewLine, string.Empty).Length;
+                        index += Math.Max(1, (outputMessage.Length - outputMessage.Replace(Environment.NewLine, string.Empty).Length) / Environment.NewLine.Length);
 
                         if (outputMessage.Contains("| WARN |") || outputMessage.Contains("NAK"))
                         {
@@ -713,6 +716,39 @@ namespace Console
         {
             var CloseDialog = () => Application.RequestStop();
 
+            void OnProgress(DiscoveryResult current)
+            {
+                string additionalInfo = "";
+
+                switch(current.Status)
+                {
+                    case DiscoveryStatus.BroadcastOnConnection:
+                        additionalInfo = $"{Environment.NewLine}    Connection baud rate {current.Connection.BaudRate}...";
+                        break;
+                    case DiscoveryStatus.ConnectionWithDeviceFound:
+                        additionalInfo = $"{Environment.NewLine}    Connection baud rate {current.Connection.BaudRate}";
+                        break;
+                    case DiscoveryStatus.LookingForDeviceAtAddress:
+                        additionalInfo = $"{Environment.NewLine}    Address {current.Address}...";
+                        break;
+                }
+
+                AddLogMessage($"Device Discovery Progress: {current.Status.ToString()}{additionalInfo}{Environment.NewLine}");
+            }
+
+            void CancelDiscover()
+            {
+                // TODO: When we have a cancelHandle, this is where we would call it
+
+                CompleteDiscover();
+            }
+
+            void CompleteDiscover()
+            {
+                DiscoverMenuItem.Title = "_Discover";
+                DiscoverMenuItem.Action = DiscoverDevice;
+            }
+
             async void OnClickDiscover() 
             {
                 CloseDialog();
@@ -729,9 +765,13 @@ namespace Console
 
                 try
                 {
+                    DiscoverMenuItem.Title = "Cancel _Discover";
+                    DiscoverMenuItem.Action = CancelDiscover;
+
                     // TODO: How does user specify different COM port?
                     var result = await panel.DiscoverDevice(
-                        SerialPortOsdpConnection.EnumBaudRates("COM3"));
+                        SerialPortOsdpConnection.EnumBaudRates("COM3"),
+                        new DiscoveryOptions() { ProgressCallback = OnProgress });
 
                     if (result != null)
                     {
@@ -750,6 +790,7 @@ namespace Console
                 finally
                 {
                     await panel.Shutdown();
+                    CompleteDiscover();
                 }
             }
 

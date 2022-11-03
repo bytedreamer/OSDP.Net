@@ -58,5 +58,25 @@ namespace OSDP.Net.Tests.Model.ReplyData
             Assert.That(commSecCap.SupportsAES128, Is.EqualTo(true));
             Assert.That(commSecCap.UsesDefaultKey, Is.EqualTo(true));
         }
+
+        [Test]
+        public void ToStringTest()
+        {
+            var actual = DeviceCapabilities.ParseData(RawCapsFromDennisBrivoKeypad.AsSpan().Slice(18, 9));
+            var expectedText =
+                "  Function: Communication Security\r\n" +
+                "Supports AES-128: True\r\n" +
+                "Uses Default Key: True\r\n" + 
+                "\r\n" + 
+                "  Function: Receive Buffer Size\r\n" +
+                "      Size: 450\r\n" +
+                "\r\n" +
+                "  Function: Biometrics\r\n" +
+                "Compliance: 0\r\n" +
+                " Number Of: 0\r\n" +
+                "\r\n";
+
+            Assert.That(actual.ToString(), Is.EqualTo(expectedText).NoClip);
+        }
     }
 }

@@ -54,20 +54,7 @@ namespace OSDP.Net.Model.ReplyData
             var build = new StringBuilder();
             foreach (var capability in Capabilities)
             {
-                build.AppendLine($"  Function: {Helpers.SplitCamelCase(capability.Function.ToString())}");
-
-                if (capability.Function is CapabilityFunction.ReceiveBufferSize
-                    or CapabilityFunction.LargestCombinedMessageSize)
-                {
-                    build.AppendLine(
-                        $"      Size: {Message.ConvertBytesToUnsignedShort(new[] { capability.Compliance, capability.NumberOf })}");
-                }
-                else
-                {
-                    build.AppendLine($"Compliance: {capability.Compliance}");
-                    build.AppendLine($" Number Of: {capability.NumberOf}");
-                }
-
+                build.Append(capability.ToString());
                 build.AppendLine(string.Empty);
             }
 

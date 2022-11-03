@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,7 +29,7 @@ namespace OSDP.Net
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new();
-        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
+        private TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
@@ -983,19 +984,26 @@ namespace OSDP.Net
             }
         }
 
-        public Task<DiscoveryResult> DiscoverDevice(IOsdpConnection connection) => 
-            DiscoverDevice(new IOsdpConnection[] { connection });
+        public Task<DiscoveryResult> DiscoverDevice(IOsdpConnection connection, DiscoveryOptions opts = null) => 
+            DiscoverDevice(new IOsdpConnection[] { connection }, opts);
 
-        public async Task<DiscoveryResult> DiscoverDevice(IEnumerable<IOsdpConnection> connections)
+        public async Task<DiscoveryResult> DiscoverDevice(IEnumerable<IOsdpConnection> connections, DiscoveryOptions opts = null)
         {
+            var options = opts ?? new DiscoveryOptions();
             DiscoveryResult result = new();
             Guid connId = Guid.Empty;
+
+            void UpdateStatus(DiscoveryStatus status)
+            {
+                result.Status = status;
+                options.ProgressCallback?.Invoke(result);
+            }
 
             async Task<DeviceIdentification> TryIdReport(byte address)
             {
                 try
                 {
-                    return await IdReport(connId, address);
+                    return await IdReport(connId, address).ConfigureAwait(false);
                 }
                 catch (TimeoutException)
                 {
@@ -1007,20 +1015,33 @@ namespace OSDP.Net
             {
                 foreach (IOsdpConnection connection in connections)
                 {
-                    connId = StartConnection(connection);
+                    // WARNING: We are specifying zero timespan here so that Polling is
+                    // DISABLED on this entire connection. If we don't do this, it seems
+                    // non-existent devices will attempt to start polling and those commands
+                    // ends up getting "stuck" so that even when we get to the valid device
+                    // we'll end up timing out and not finding it :(
+                    // Polling on "other" devices should be doing this, but there's something
+                    // funky in there. If the device we are looking for happens to be at addr
+                    // 0, everything will work but anything else doesn't unless we disable
+                    // polling
+                    connId = StartConnection(connection, TimeSpan.Zero);
 
                     AddDevice(connId, BroadcastAddress, true, false);
 
-                    if (await TryIdReport(BroadcastAddress) != null)
+                    result.Connection = connection;
+                    UpdateStatus(DiscoveryStatus.BroadcastOnConnection);
+
+                    if (await TryIdReport(BroadcastAddress).ConfigureAwait(false) != null)
                     {
                         RemoveDevice(connId, BroadcastAddress);
-                        result.Connection = connection;
+                        UpdateStatus(DiscoveryStatus.ConnectionWithDeviceFound);
                         return true;
                     }
 
-                    await StopConnection(connId);
+                    await StopConnection(connId).ConfigureAwait(false);
                 }
 
+                result.Connection = null;
                 return false;
             }
 
@@ -1030,28 +1051,67 @@ namespace OSDP.Net
                 {
                     // TODO: would we want any other flags for CRC here? (or the other one?)
                     AddDevice(connId, addr, true, false);
-                    result.Id = await TryIdReport(addr);
+                    
+                    result.Address = addr;
+                    UpdateStatus(DiscoveryStatus.LookingForDeviceAtAddress);
+                    result.Id = await TryIdReport(addr).ConfigureAwait(false);
+
                     if (result.Id != null)
                     {
-                        result.Address = addr;
+                        UpdateStatus(DiscoveryStatus.DeviceIdentified);
                         return true;
                     }
+
                     RemoveDevice(connId, addr);
                 }
+
+                // Since we didn't find a valid device, for an unexpected reason
+                // let's just leave the address at broadcast
+                result.Address = BroadcastAddress;
                 return false;
             }
 
-            if (!await FindConnectionWithActiveDevice()) return null;
+            UpdateStatus(DiscoveryStatus.Started);
 
-            if (!await FindDeviceAddress())
+            // While we are doing discovery, we want to override default behavior which allows
+            // underlying wire protocols to retry things if something goes wrong. In the
+            // interests for time while cycling through every possible address, we are going to
+            // not be as gracious
+            var origResponseTimeout = _replyResponseTimeout;
+            _replyResponseTimeout = options.ResponseTimeout;
+
+            try
             {
-                throw new DeviceDiscoveryException(
-                    $"Unable to determine address of device that responded to a broadcast on baud rate {result.Connection.BaudRate}");
+                if (!await FindConnectionWithActiveDevice().ConfigureAwait(false))
+                {
+                    UpdateStatus(DiscoveryStatus.DeviceNotFound);
+                    return null;
+                }
+
+                if (!await FindDeviceAddress().ConfigureAwait(false))
+                {
+                    throw new DeviceDiscoveryException(
+                        $"Unable to determine address of device that responded to a broadcast on baud rate {result.Connection.BaudRate}");
+                }
+
+                UpdateStatus(DiscoveryStatus.QueryingDeviceCapabilities);
+
+                result.Capabilities = await DeviceCapabilities(connId, result.Address).ConfigureAwait(false);
+                UpdateStatus(DiscoveryStatus.CapabilitiesDiscovered);
+
+                UpdateStatus(DiscoveryStatus.Succeeded);
+                return result;
             }
-
-            result.Capabilities = await DeviceCapabilities(connId, result.Address);
-
-            return result;
+            catch (Exception exception)
+            {
+                result.Error = exception;
+                UpdateStatus(DiscoveryStatus.Error);
+                throw;
+            }
+            finally
+            {
+                _replyResponseTimeout = origResponseTimeout;
+            }
         }
 
         private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected,

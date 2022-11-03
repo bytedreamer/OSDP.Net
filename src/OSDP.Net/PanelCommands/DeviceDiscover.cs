@@ -1,6 +1,7 @@
 ﻿
 using OSDP.Net.Connections;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Tracing;
 using System;
 using System.Text;
 
@@ -11,8 +12,36 @@ namespace OSDP.Net.PanelCommands.DeviceDiscover
         public DeviceDiscoveryException(string message) : base(message) { }
     }
 
+    public enum DiscoveryStatus
+    {
+        Started,
+        BroadcastOnConnection,
+        ConnectionWithDeviceFound,
+        LookingForDeviceAtAddress,
+        DeviceIdentified,
+        QueryingDeviceCapabilities,
+        CapabilitiesDiscovered,
+        Succeeded,
+        DeviceNotFound,
+        Error,
+        Cancelled
+    }
+
+    public delegate void DiscoveryProgress(DiscoveryResult current);
+
+    public class DiscoveryOptions
+    {
+        public DiscoveryProgress ProgressCallback { get; set; }
+
+        public TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromMilliseconds(500);
+
+        public Action<TraceEntry> Tracer { get; set; }
+    }
+
     public class DiscoveryResult
     {
+        public DiscoveryStatus Status { get; internal set; }
+
         public IOsdpConnection Connection { get; internal set; }
 
         public byte Address { get; internal set; }
@@ -20,6 +49,8 @@ namespace OSDP.Net.PanelCommands.DeviceDiscover
         public DeviceIdentification Id { get; internal set; }
         
         public DeviceCapabilities Capabilities { get; internal set; }
+
+        public Exception Error { get; internal set; }
 
         public override string ToString()
         {
@@ -29,10 +60,10 @@ namespace OSDP.Net.PanelCommands.DeviceDiscover
             sb.AppendLine($"      Address: {Address}");
             sb.AppendLine("Identification:");
             sb.Append("        ");
-            sb.AppendLine(Id.ToString().Trim().Replace("\n", "\n        "));
+            sb.AppendLine(Id.ToString().TrimEnd().Replace("\n", "\n        "));
             sb.AppendLine("  Capabilities:");
             sb.Append("        ");
-            sb.AppendLine(Capabilities.ToString().Trim().Replace("\n", "\n        "));
+            sb.AppendLine(Capabilities.ToString().TrimEnd().Replace("\n", "\n        "));
 
             return sb.ToString();
         }
