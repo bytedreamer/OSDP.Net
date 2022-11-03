@@ -21,10 +21,10 @@ namespace OSDP.Net.Tests
         public async Task DeviceGoesOnlineTest()
         {
             // Arrange
-            var connection = new TestConnection();
-
+            var mockConnection = new MockConnection();
+            
             var panel = new ControlPanel();
-            Guid id = panel.StartConnection(connection);
+            Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
 
             // Act
@@ -37,18 +37,20 @@ namespace OSDP.Net.Tests
         public async Task ShutdownTest()
         {
             // Arrange
-            var connection = new TestConnection();
+            var mockConnection = new MockConnection();
+            mockConnection.Object.Open();
+            
             var panel = new ControlPanel();
-            Guid id = panel.StartConnection(connection);
+            Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
 
             // Act
             await panel.Shutdown();
 
             // Assert
-            await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
+            await TaskEx.WaitUntil(() => mockConnection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
                 TimeSpan.FromSeconds(3));
-            await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledClose == 1, TimeSpan.FromMilliseconds(100),
+            await TaskEx.WaitUntil(() => mockConnection.NumberOfTimesCalledClose == 1, TimeSpan.FromMilliseconds(100),
                 TimeSpan.FromSeconds(3));
         }
 
@@ -56,15 +58,15 @@ namespace OSDP.Net.Tests
         public async Task StartConnectionTest()
         {
             // Arrange
-            var connection = new TestConnection();
+            var mockConnection = new MockConnection();
             var panel = new ControlPanel();
 
             // Act
-            Guid id = panel.StartConnection(connection);
+            Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
 
             // Assert
-            await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
+            await TaskEx.WaitUntil(() => mockConnection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
                 TimeSpan.FromSeconds(3));
         }
 
@@ -72,12 +74,12 @@ namespace OSDP.Net.Tests
         public void StartConnectionWithSameConnectionTwiceTest()
         {
             // Arrange
-            var connection = new TestConnection();
+            var mockConnection = new MockConnection();
             var panel = new ControlPanel();
-            var id = panel.StartConnection(connection);
+            var id = panel.StartConnection(mockConnection.Object);
 
             // Act/Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => panel.StartConnection(connection), "");
+            var ex = Assert.Throws<InvalidOperationException>(() => panel.StartConnection(mockConnection.Object), "");
             Assert.That(ex?.Message, Is.EqualTo(
                 $"The IOsdpConnection is already active in connection {id}. " +
                     "That connection must be stopped before starting a new one."));
@@ -100,7 +102,7 @@ namespace OSDP.Net.Tests
                 // ReSharper disable once CoVariantArrayConversion
                 Task.WaitAll(tasks);
             }
-            catch { /* We handle errors later */ }
+            catch (Exception ex) { /* We handle errors later */ }
 
             // Assert
             Assert.That(tasks.Where(t => t.Status == TaskStatus.RanToCompletion).Count(), Is.EqualTo(1));
@@ -171,13 +173,13 @@ namespace OSDP.Net.Tests
         public async Task StartConnectionRestartWithSameConnectionTest()
         {
             // Arrange
-            var connection = new TestConnection();
+            var mockConnection = new MockConnection();
             var panel = new ControlPanel();
 
             // Act
-            var id1 = panel.StartConnection(connection);
+            var id1 = panel.StartConnection(mockConnection.Object);
             await panel.StopConnection(id1);
-            var id2 = panel.StartConnection(connection);
+            var id2 = panel.StartConnection(mockConnection.Object);
             await panel.StopConnection(id2);
 
             // Assert
@@ -315,6 +317,9 @@ namespace OSDP.Net.Tests
                         await readStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)
                     );
 
+                Setup(x => x.Open()).Callback(() => NumberOfTimesCalledOpen++);
+                Setup(x => x.Open()).Callback(() => NumberOfTimesCalledClose++);
+
                 // Setup handling for a polling command which always gets issued when connection is alive
                 // Here we'll just reply with a generic ACK to signal to ACU that the command was successfully
                 // handled.
@@ -322,6 +327,16 @@ namespace OSDP.Net.Tests
             }
 
             public ExpectedCommand OnCommand(byte[] commandBytes) => new(this, commandBytes);
+            
+            /// <summary>
+            /// Number of times the Open method is called
+            /// </summary>
+            public int NumberOfTimesCalledOpen { get; private set; }
+            
+            /// <summary>
+            /// Number of times the Close method is called
+            /// </summary>
+            public int NumberOfTimesCalledClose { get; private set; }
 
             public class ExpectedCommand
             {
