@@ -10,11 +10,6 @@ namespace OSDP.Net
     public class OSDPNetException : Exception 
     {
         /// <summary>
-        /// Initializes a new instance of OSDP.Net.OSDPNetException
-        /// </summary>
-        public OSDPNetException() : base() { }
-
-        /// <summary>
         /// Initializes a new instance of OSDP.Net.OSDPNetException with a specified
         /// error message
         /// </summary>
@@ -26,7 +21,7 @@ namespace OSDP.Net
     /// Represent a failure condition where PD indicates that it didn't accept the 
     /// command by replying with osdp_NAK packet
     /// </summary>
-    public class NackReplyException : OSDPNetException
+    public sealed class NackReplyException : OSDPNetException
     {
         /// <summary>
         /// Parsed osdp_NAK packet data
@@ -40,7 +35,12 @@ namespace OSDP.Net
         /// <param name="message">Optional message to be included with the exception</param>
         public NackReplyException(Nak replyData, string message = null) : base(message)
         {
+            Message =
+                $"Received NAK error '{Helpers.SplitCamelCase(replyData.ErrorCode.ToString())}'.{(string.IsNullOrEmpty(Message) ? string.Empty : $" {Message}")}";
             Reply = replyData;
         }
+
+        /// <inheritdoc />
+        public override string Message { get; }
     }
 }

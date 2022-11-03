@@ -55,7 +55,7 @@ namespace OSDP.Net.Model.ReplyData
         public override string ToString()
         {
             var build = new StringBuilder();
-            build.AppendLine($"Error: {Message.SplitCamelCase(ErrorCode.ToString())}");
+            build.AppendLine($"Error: {Helpers.SplitCamelCase(ErrorCode.ToString())}");
             build.AppendLine($" Data: {BitConverter.ToString(ExtraData.ToArray())}");
             return build.ToString();
         }
@@ -75,7 +75,7 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         BadChecksumOrCrc = 0x1,
         /// <summary>
-        /// Unknown Command Code – Command not implemented by PD
+        /// Unknown Command Code ï¿½ Command not implemented by PD
         /// </summary>
         InvalidCommandLength = 0x2,
         /// <summary>
