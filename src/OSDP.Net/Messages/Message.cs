@@ -2,7 +2,6 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace OSDP.Net.Messages
 {
@@ -115,7 +114,7 @@ namespace OSDP.Net.Messages
         /// Adds the CRC to the packet.
         /// </summary>
         /// <param name="packet">The packet.</param>
-        protected static void AddCrc(Span<byte> packet)
+        protected internal static void AddCrc(Span<byte> packet)
         {
             ushort crc = CalculateCrc(packet.Slice(0, packet.Length - 2));
             var crcBytes = ConvertShortToBytes(crc).ToArray();
@@ -158,19 +157,6 @@ namespace OSDP.Net.Messages
             }
 
             return byteArray;
-        }
-
-        internal static string SplitCamelCase(string str)
-        {
-            return Regex.Replace(
-                Regex.Replace(
-                    str,
-                    @"(\P{Ll})(\P{Ll}\p{Ll})",
-                    "$1 $2"
-                ),
-                @"(\p{Ll})(\P{Ll})",
-                "$1 $2"
-            );
         }
 
         internal static bool BuildMultiPartMessageData(ushort wholeMessageSize, ushort offset, ushort lengthOfFragment,

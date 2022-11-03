@@ -156,7 +156,17 @@ namespace OSDP.Net
             if(_pollingTask == null)
             { 
                 _isShuttingDown = false;
-                _pollingTask = Task.Run(() => StartPollingAsync());
+                _pollingTask = Task.Run(async () => {
+                    try
+                    {
+                        await PollingLoop();
+                    }
+                    catch(Exception exception)
+                    {
+                        // TODO: If you get here, what's the recovery? Is there one?
+                        _logger?.LogError(exception, $"Unexpected exception in polling loop. Conn:{Id}.");
+                    }
+                });
             }
         }
 
@@ -164,7 +174,7 @@ namespace OSDP.Net
         /// Poll the the devices on the bus
         /// </summary>
         /// <returns></returns>
-        private async Task StartPollingAsync()
+        private async Task PollingLoop()
         {
             DateTime lastMessageSentTime = DateTime.MinValue;
             using var delayTime = new AutoResetEvent(false);
@@ -466,6 +476,11 @@ namespace OSDP.Net
             }
 
             var buffer = new byte[commandData.Length + 1];
+
+            // TODO: What's a driver byte? add a comment for context?
+            // -- DXM 2022-11-01 Spoke with JH regarding this and apparenly we don't seem to know/remember
+            // what is the driver byte here fore. Leaving the comment as a reminder to someday(tm) come back
+            // to this and dig up why it was added
             buffer[0] = DriverByte;
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
  

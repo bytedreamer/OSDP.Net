@@ -48,7 +48,7 @@ namespace OSDP.Net.Model.ReplyData
             var build = new StringBuilder();
             foreach (var capability in Capabilities)
             {
-                build.AppendLine($"  Function: {Message.SplitCamelCase(capability.Function.ToString())}");
+                build.AppendLine($"  Function: {Helpers.SplitCamelCase(capability.Function.ToString())}");
 
                 if (capability.Function is CapabilityFunction.ReceiveBufferSize
                     or CapabilityFunction.LargestCombinedMessageSize)

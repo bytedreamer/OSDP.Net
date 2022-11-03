@@ -70,7 +70,7 @@ namespace OSDP.Net.Model.ReplyData
         {
             var build = new StringBuilder();
             build.AppendLine($"Reader Number: {ReaderNumber}");
-            build.AppendLine($"  Format Code: {Message.SplitCamelCase(FormatCode.ToString())}");
+            build.AppendLine($"  Format Code: {Helpers.SplitCamelCase(FormatCode.ToString())}");
             build.AppendLine($"    Bit Count: {BitCount}");
             build.AppendLine($"         Data: {FormatData(Data)}");
             return build.ToString();
