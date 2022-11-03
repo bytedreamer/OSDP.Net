@@ -772,7 +772,7 @@ namespace OSDP.Net
             {
                 while (!cancellationToken.IsCancellationRequested && continueTransfer)
                 {
-                    var reply = await SendCommand(connectionId,
+                    await SendCommand(connectionId,
                             new AuthenticationChallengeCommand(address,
                                 new AuthenticationChallengeFragment(totalSize, offset, fragmentSize,
                                     requestData.Skip(offset).Take((ushort)Math.Min(fragmentSize, totalSize - offset))
@@ -1050,7 +1050,6 @@ namespace OSDP.Net
                             BiometricReadResult.ParseData(reply.ExtractReplyData)));
                     break;
                 case ReplyType.BiometricMatchResult:
-                    var handler = BiometricMatchReplyReceived;
                     BiometricMatchReplyReceived?.Invoke(this,
                         new BiometricMatchReplyEventArgs(reply.ConnectionId, reply.Address,
                             BiometricMatchResult.ParseData(reply.ExtractReplyData)));
