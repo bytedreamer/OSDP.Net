@@ -30,7 +30,7 @@ namespace OSDP.Net.Tests
             // Act
             // Assert
             await TaskEx.WaitUntil(() => panel.IsOnline(id, 0), TimeSpan.FromMilliseconds(100),
-                TimeSpan.FromSeconds(1));
+                TimeSpan.FromSeconds(3));
         }
 
         [Test]
