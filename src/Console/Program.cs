@@ -225,16 +225,7 @@ namespace Console
 
         private static void StartSerialConnection()
         {
-            var portNames = SerialPort.GetPortNames();
-            var portNameComboBox = new ComboBox(new Rect(15, 1, 35, 5), portNames);
-
-            // Select default port name
-            if (portNames.Length > 0)
-            {
-                portNameComboBox.SelectedItem = Math.Max(
-                    Array.FindIndex(portNames, (x) => 
-                    String.Equals(x, _settings.SerialConnectionSettings.PortName)), 0);
-            }
+            var portNameComboBox = CreatePortNameComboBox(15, 1);
                 
             var baudRateTextField = new TextField(25, 3, 25, _settings.SerialConnectionSettings.BaudRate.ToString());
             var replyTimeoutTextField =
@@ -468,6 +459,22 @@ namespace Console
             }
         }
 
+        private static ComboBox CreatePortNameComboBox(int x, int y)
+        {
+            var portNames = SerialPort.GetPortNames();
+            var portNameComboBox = new ComboBox(new Rect(x, y, 35, 5), portNames);
+
+            // Select default port name
+            if (portNames.Length > 0)
+            {
+                portNameComboBox.SelectedItem = Math.Max(
+                    Array.FindIndex(portNames, (x) =>
+                    String.Equals(x, _settings.SerialConnectionSettings.PortName)), 0);
+            }
+
+            return portNameComboBox;
+        }
+
         private static void DisplayReceivedReply(string title, string message)
         {
             AddLogMessage($"{title}{Environment.NewLine}{message}{Environment.NewLine}{new string('*', 30)}");
@@ -485,7 +492,13 @@ namespace Console
                         Messages.Dequeue();
                     }
 
-                    while (!_window.HasFocus)
+                    // Not sure why this is here but it is. When the window is not focused, the client area will not
+                    // get updated but when we return to the window it will also not be updated. And... if the user
+                    // clicks on the menubar, that is also considered to be "outside" of the window. For now to make
+                    // output updates work when user is navigating submenus, just adding _menuBar check here
+                    // -- DXM 2022-11-03
+                    // p.s. this was a while loop???
+                    if (!_window.HasFocus && _menuBar.HasFocus)
                     {
                         return;
                     }
@@ -501,8 +514,7 @@ namespace Console
                     foreach (string outputMessage in Messages.Reverse())
                     {
                         var label = new Label(0, index, outputMessage.TrimEnd());
-
-                        index += Math.Max(1, (outputMessage.Length - outputMessage.Replace(Environment.NewLine, string.Empty).Length) / Environment.NewLine.Length);
+                        index += label.Bounds.Height;
 
                         if (outputMessage.Contains("| WARN |") || outputMessage.Contains("NAK"))
                         {
@@ -714,6 +726,11 @@ namespace Console
 
         private static void DiscoverDevice()
         {
+            var cancelTokenSrc = new CancellationTokenSource();
+            var portNameComboBox = CreatePortNameComboBox(15, 1);
+            var pingTimeoutTextField =
+                new TextField(25, 3, 25, "1000");
+
             var CloseDialog = () => Application.RequestStop();
 
             void OnProgress(DiscoveryResult current)
@@ -722,6 +739,10 @@ namespace Console
 
                 switch(current.Status)
                 {
+                    case DiscoveryStatus.Started:
+                        DisplayReceivedReply("Device Discovery Started", String.Empty);
+                        // NOTE Unlike other statuses, for this one we are intentionally not dropping down
+                        return;
                     case DiscoveryStatus.BroadcastOnConnection:
                         additionalInfo = $"{Environment.NewLine}    Connection baud rate {current.Connection.BaudRate}...";
                         break;
@@ -738,9 +759,9 @@ namespace Console
 
             void CancelDiscover()
             {
-                // TODO: When we have a cancelHandle, this is where we would call it
-
-                CompleteDiscover();
+                cancelTokenSrc?.Cancel();
+                cancelTokenSrc?.Dispose();
+                cancelTokenSrc = null;
             }
 
             void CompleteDiscover()
@@ -751,6 +772,19 @@ namespace Console
 
             async void OnClickDiscover() 
             {
+                if (string.IsNullOrEmpty(portNameComboBox.Text.ToString()))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "No port name entered!", "OK");
+                    return;
+                }
+
+                if (!int.TryParse(pingTimeoutTextField.Text.ToString(), out var pingTimeout))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
                 CloseDialog();
 
                 // TODO: Do we need to support other connection types here?
@@ -768,24 +802,31 @@ namespace Console
                     DiscoverMenuItem.Title = "Cancel _Discover";
                     DiscoverMenuItem.Action = CancelDiscover;
 
-                    // TODO: How does user specify different COM port?
                     var result = await panel.DiscoverDevice(
-                        SerialPortOsdpConnection.EnumBaudRates("COM3"),
-                        new DiscoveryOptions() { ProgressCallback = OnProgress });
+                        SerialPortOsdpConnection.EnumBaudRates(portNameComboBox.Text.ToString()),
+                        new DiscoveryOptions() { 
+                            ProgressCallback = OnProgress,
+                            ResponseTimeout = TimeSpan.FromMilliseconds(pingTimeout),
+                            CancellationToken = cancelTokenSrc.Token,
+                        }.WithDefaultTracer(_settings.IsTracing));
 
                     if (result != null)
                     {
-                        DisplayReceivedReply("Device discovered successfully",result.ToString());
+                        AddLogMessage($"Device discovered successfully:{Environment.NewLine}{result.ToString()}");
                     } 
                     else
                     {
-                        DisplayReceivedReply("Device was not found", string.Empty);
+                        AddLogMessage("Device was not found");
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    AddLogMessage("Device discovery cancelled");
                 }
                 catch (Exception exception)
                 {
                     MessageBox.ErrorQuery(40, 10, "Exception in Device Discovery", exception.Message, "OK");
-                    DisplayReceivedReply("Device was not found", exception.ToString());
+                    AddLogMessage($"Device Discovery Error:{Environment.NewLine}{exception.ToString()}");
                 }
                 finally
                 {
@@ -799,7 +840,11 @@ namespace Console
             cancelButton.Clicked += CloseDialog;
             discoverButton.Clicked += OnClickDiscover;
 
-            var dialog = new Dialog("Discover Device", 60, 10, cancelButton, discoverButton);
+            var dialog = new Dialog("Discover Device", 60, 8, cancelButton, discoverButton);
+            dialog.Add(new Label(1, 1, "Port:"),
+                portNameComboBox,
+                new Label(1, 3, "Ping Timeout(ms):"),
+                pingTimeoutTextField);
             discoverButton.SetFocus();
             Application.Run(dialog);
         }

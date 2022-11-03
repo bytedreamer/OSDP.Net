@@ -167,14 +167,19 @@ namespace OSDP.Net
             await SendCommand(connectionId, command).ConfigureAwait(false);
         }
 
+        public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address) => 
+            await IdReport(connectionId, address, default).ConfigureAwait(false);
+
         /// <summary>Request to get an ID Report from the PD.</summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <returns>ID report reply data that was requested.</returns>
-        public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
+        public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address, CancellationToken cancellationToken)
         {
-            return DeviceIdentification.ParseData((await SendCommand(connectionId,
-                new IdReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
+            return DeviceIdentification.ParseData((await SendCommand(
+                connectionId,
+                new IdReportCommand(address),
+                cancellationToken).ConfigureAwait(false)).ExtractReplyData);
         }
 
         /// <summary>Request to get the capabilities of the PD.</summary>
@@ -899,7 +904,9 @@ namespace OSDP.Net
 
                 if (source.Task != task)
                 {
-                    throw new TimeoutException();
+                    throw task.IsCanceled 
+                        ? new OperationCanceledException(cancellationToken)
+                        : new TimeoutException();
                 }
 
                 return await source.Task;
@@ -1003,7 +1010,7 @@ namespace OSDP.Net
             {
                 try
                 {
-                    return await IdReport(connId, address).ConfigureAwait(false);
+                    return await IdReport(connId, address, options.CancellationToken).ConfigureAwait(false);
                 }
                 catch (TimeoutException)
                 {
@@ -1024,7 +1031,7 @@ namespace OSDP.Net
                     // funky in there. If the device we are looking for happens to be at addr
                     // 0, everything will work but anything else doesn't unless we disable
                     // polling
-                    connId = StartConnection(connection, TimeSpan.Zero);
+                    connId = StartConnection(connection, TimeSpan.Zero, opts.Tracer ?? (_ => {}));
 
                     AddDevice(connId, BroadcastAddress, true, false);
 
@@ -1105,7 +1112,8 @@ namespace OSDP.Net
             catch (Exception exception)
             {
                 result.Error = exception;
-                UpdateStatus(DiscoveryStatus.Error);
+                UpdateStatus(exception is OperationCanceledException 
+                    ? DiscoveryStatus.Cancelled : DiscoveryStatus.Error);
                 throw;
             }
             finally

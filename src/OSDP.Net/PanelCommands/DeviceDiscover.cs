@@ -4,6 +4,7 @@ using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tracing;
 using System;
 using System.Text;
+using System.Threading;
 
 namespace OSDP.Net.PanelCommands.DeviceDiscover
 {
@@ -31,11 +32,19 @@ namespace OSDP.Net.PanelCommands.DeviceDiscover
 
     public class DiscoveryOptions
     {
-        public DiscoveryProgress ProgressCallback { get; set; }
+        public DiscoveryProgress ProgressCallback { get; set; } = null;
 
         public TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromMilliseconds(500);
 
-        public Action<TraceEntry> Tracer { get; set; }
+        public Action<TraceEntry> Tracer { get; set; } = null;
+
+        public CancellationToken CancellationToken { get; set; } = default;
+
+        public DiscoveryOptions WithDefaultTracer(bool setDefault=true)
+        {
+            if (setDefault) Tracer = OSDPFileCapTracer.Trace;
+            return this;
+        }
     }
 
     public class DiscoveryResult
