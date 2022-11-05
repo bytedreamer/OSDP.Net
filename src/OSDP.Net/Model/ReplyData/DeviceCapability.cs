@@ -34,7 +34,7 @@ namespace OSDP.Net.Model.ReplyData
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"  Function: {Message.SplitCamelCase(Function.ToString())}");
+            sb.AppendLine($"  Function: {Helpers.SplitCamelCase(Function.ToString())}");
             sb.AppendLine($"Compliance: {Compliance}");
             sb.AppendLine($" Number Of: {NumberOf}");
             return sb.ToString();
@@ -75,7 +75,7 @@ namespace OSDP.Net.Model.ReplyData
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"  Function: {Message.SplitCamelCase(Function.ToString())}");
+            sb.AppendLine($"  Function: {Helpers.SplitCamelCase(Function.ToString())}");
             sb.AppendLine($"      Size: {Message.ConvertBytesToUnsignedShort(new[] { Compliance, NumberOf })}");
             return sb.ToString();
         }
@@ -110,7 +110,7 @@ namespace OSDP.Net.Model.ReplyData
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"  Function: {Message.SplitCamelCase(Function.ToString())}");
+            sb.AppendLine($"  Function: {Helpers.SplitCamelCase(Function.ToString())}");
             sb.AppendLine($"Supports AES-128: {SupportsAES128}");
             sb.AppendLine($"Uses Default Key: {UsesDefaultKey}");
             return sb.ToString();
