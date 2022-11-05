@@ -23,6 +23,12 @@ namespace OSDP.Net.Connections
             _serialPort.BaudRate = baudRate;
         }
 
+        /// <summary>
+        /// Enumerates all valid baud rates for a given COM port
+        /// </summary>
+        /// <param name="portName">Name of the port</param>
+        /// <returns>An enumerable that will lazily generate SerialPortOsdpConnection instances for all
+        /// valid baud rates in the increasing order</returns>
         public static IEnumerable<SerialPortOsdpConnection> EnumBaudRates(string portName)
         {
             // TODO: Allow the caller to specify a different reply timeout

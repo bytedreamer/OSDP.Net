@@ -7,7 +7,7 @@ using System.Text;
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
-    /// Individual capability data for a PD
+    /// Generic capability data for a PD
     /// </summary>
     public class DeviceCapability
     {
@@ -66,8 +66,12 @@ namespace OSDP.Net.Model.ReplyData
             };
     }
 
+    /// <summary>
+    /// Common base for the device capabilities that identify byte sizes
+    /// </summary>
     public abstract class MsgSizeDeviceCap : DeviceCapability
     {
+        /// <inheritdoc/>
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -77,14 +81,29 @@ namespace OSDP.Net.Model.ReplyData
         }
     }
 
+    /// <summary>
+    /// Receive Buffer Size PD capability
+    /// </summary>
     public class RcvBuffSizeDeviceCap : MsgSizeDeviceCap { };
 
+    /// <summary>
+    /// Largest Combined Message Size PD capability
+    /// </summary>
     public class LargestCombMsgSizeDeviceCap : MsgSizeDeviceCap { };
 
+    /// <summary>
+    /// Communication Security PD capability
+    /// </summary>
     public class CommSecurityDeviceCap : DeviceCapability
     {
+        /// <summary>
+        /// Flag indicating whether or not PD support AES-128
+        /// </summary>
         public bool SupportsAES128 { get => (Compliance & 0x01) != 0; }
 
+        /// <summary>
+        /// Flag indicating whether or not PD is using a default encryption key
+        /// </summary>
         public bool UsesDefaultKey { get => (NumberOf & 0x01) != 0; }
 
         /// <inheritdoc/>

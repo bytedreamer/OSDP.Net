@@ -510,6 +510,11 @@ namespace Console
                     }
                     _scrollView.RemoveAll();
 
+                    // This is one hell of an approach in this function. Every time we add a line, we nuke entire view
+                    // and add a bunch of labels. Is it possible to use something like a TextView set to read-only here
+                    // instead?
+                    // -- DXM 2022-11-03
+
                     int index = 0;
                     foreach (string outputMessage in Messages.Reverse())
                     {

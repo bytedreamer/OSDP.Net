@@ -167,12 +167,17 @@ namespace OSDP.Net
             await SendCommand(connectionId, command).ConfigureAwait(false);
         }
 
+        /// <summary>Request to get an ID Report from the PD.</summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <returns>ID report reply data that was requested.</returns>
         public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address) => 
             await IdReport(connectionId, address, default).ConfigureAwait(false);
 
         /// <summary>Request to get an ID Report from the PD.</summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns>ID report reply data that was requested.</returns>
         public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address, CancellationToken cancellationToken)
         {
@@ -991,9 +996,30 @@ namespace OSDP.Net
             }
         }
 
+        /// <summary>
+        /// Attempts a device discovery on a given connection.
+        /// </summary>
+        /// <param name="connection">Connection instance on which to perform the discovery</param>
+        /// <param name="opts">Can be passed in for additional options for the discovery</param>
+        /// <returns>
+        /// If successful, an instance of DiscoveryResult which identifies the device along with
+        /// providing its capabilities. Otherwise, will return null.
+        /// </returns>
         public Task<DiscoveryResult> DiscoverDevice(IOsdpConnection connection, DiscoveryOptions opts = null) => 
             DiscoverDevice(new IOsdpConnection[] { connection }, opts);
 
+        /// <summary>
+        /// Attempts a device discovery on a given connection.
+        /// </summary>
+        /// <param name="connections">
+        /// Enumerable instance which returns one or more connection on which the method will attempt
+        /// to find the device
+        /// </param>
+        /// <param name="opts">Can be passed in for additional options for the discovery</param>
+        /// <returns>
+        /// If successful, an instance of DiscoveryResult which identifies the device along with
+        /// providing its capabilities. Otherwise, will return null.
+        /// </returns>
         public async Task<DiscoveryResult> DiscoverDevice(IEnumerable<IOsdpConnection> connections, DiscoveryOptions opts = null)
         {
             var options = opts ?? new DiscoveryOptions();

@@ -20,9 +20,20 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
 
+        /// <summary>
+        /// Gets a specific PD capability
+        /// </summary>
+        /// <param name="funcCode">Function code of the capability to get</param>
+        /// <returns>
+        /// Either a <see cref="DeviceCapability"/> instance or null if one wasn't found for a given function code.
+        /// </returns>
         public DeviceCapability Get(CapabilityFunction funcCode) =>
             Capabilities.FirstOrDefault((cap) => cap.Function == funcCode);
 
+        /// <inheritdoc cref="DeviceCapabilities.Get(CapabilityFunction)"/>
+        /// <summary>
+        /// Strongly timed version of the more generic Get method
+        /// </summary>
         public T Get<T>(CapabilityFunction funcCode) where T : DeviceCapability => (T)Get(funcCode);
 
         internal static DeviceCapabilities ParseData(ReadOnlySpan<byte> data)
