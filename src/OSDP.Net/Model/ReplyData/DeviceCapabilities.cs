@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -65,8 +64,7 @@ namespace OSDP.Net.Model.ReplyData
             var build = new StringBuilder();
             foreach (var capability in Capabilities)
             {
-                build.Append(capability.ToString());
-                build.AppendLine(string.Empty);
+                build.AppendLine(capability.ToString());
             }
 
             return build.ToString();

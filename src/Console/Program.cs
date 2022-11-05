@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading;
@@ -17,7 +16,6 @@ using Microsoft.Extensions.Logging;
 using NStack;
 using OSDP.Net;
 using OSDP.Net.Connections;
-using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.PanelCommands.DeviceDiscover;
@@ -30,7 +28,7 @@ namespace Console
 {
     internal static class Program
     {
-        private static ILogger<ControlPanel> _panelLogger = null;
+        private static ILogger<ControlPanel> _panelLogger;
         private static ControlPanel _controlPanel;
         private static readonly Queue<string> Messages = new ();
         private static readonly object MessageLock = new ();
@@ -468,8 +466,8 @@ namespace Console
             if (portNames.Length > 0)
             {
                 portNameComboBox.SelectedItem = Math.Max(
-                    Array.FindIndex(portNames, (x) =>
-                    String.Equals(x, _settings.SerialConnectionSettings.PortName)), 0);
+                    Array.FindIndex(portNames, (port) =>
+                    String.Equals(port, _settings.SerialConnectionSettings.PortName)), 0);
             }
 
             return portNameComboBox;
@@ -736,7 +734,7 @@ namespace Console
             var pingTimeoutTextField =
                 new TextField(25, 3, 25, "1000");
 
-            var CloseDialog = () => Application.RequestStop();
+            void CloseDialog() => Application.RequestStop();
 
             void OnProgress(DiscoveryResult current)
             {
@@ -759,7 +757,7 @@ namespace Console
                         break;
                 }
 
-                AddLogMessage($"Device Discovery Progress: {current.Status.ToString()}{additionalInfo}{Environment.NewLine}");
+                AddLogMessage($"Device Discovery Progress: {current.Status}{additionalInfo}{Environment.NewLine}");
             }
 
             void CancelDiscover()
@@ -817,7 +815,7 @@ namespace Console
 
                     if (result != null)
                     {
-                        AddLogMessage($"Device discovered successfully:{Environment.NewLine}{result.ToString()}");
+                        AddLogMessage($"Device discovered successfully:{Environment.NewLine}{result}");
                     } 
                     else
                     {
@@ -831,7 +829,7 @@ namespace Console
                 catch (Exception exception)
                 {
                     MessageBox.ErrorQuery(40, 10, "Exception in Device Discovery", exception.Message, "OK");
-                    AddLogMessage($"Device Discovery Error:{Environment.NewLine}{exception.ToString()}");
+                    AddLogMessage($"Device Discovery Error:{Environment.NewLine}{exception}");
                 }
                 finally
                 {

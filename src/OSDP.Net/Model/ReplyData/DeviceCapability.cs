@@ -1,7 +1,6 @@
 using OSDP.Net.Messages;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Text;
 
 namespace OSDP.Net.Model.ReplyData
@@ -99,7 +98,7 @@ namespace OSDP.Net.Model.ReplyData
         /// <summary>
         /// Flag indicating whether or not PD support AES-128
         /// </summary>
-        public bool SupportsAES128 { get => (Compliance & 0x01) != 0; }
+        public bool SupportsAes128 { get => (Compliance & 0x01) != 0; }
 
         /// <summary>
         /// Flag indicating whether or not PD is using a default encryption key
@@ -111,7 +110,7 @@ namespace OSDP.Net.Model.ReplyData
         {
             var sb = new StringBuilder();
             sb.AppendLine($"  Function: {Helpers.SplitCamelCase(Function.ToString())}");
-            sb.AppendLine($"Supports AES-128: {SupportsAES128}");
+            sb.AppendLine($"Supports AES-128: {SupportsAes128}");
             sb.AppendLine($"Uses Default Key: {UsesDefaultKey}");
             return sb.ToString();
         }

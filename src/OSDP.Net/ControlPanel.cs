@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1006,7 +1005,7 @@ namespace OSDP.Net
         /// providing its capabilities. Otherwise, will return null.
         /// </returns>
         public Task<DiscoveryResult> DiscoverDevice(IOsdpConnection connection, DiscoveryOptions opts = null) => 
-            DiscoverDevice(new IOsdpConnection[] { connection }, opts);
+            DiscoverDevice(new [] { connection }, opts);
 
         /// <summary>
         /// Attempts a device discovery on a given connection.
@@ -1036,6 +1035,7 @@ namespace OSDP.Net
             {
                 try
                 {
+                    // Reshaper disable once AccessToModifiedClosure
                     return await IdReport(connId, address, options.CancellationToken).ConfigureAwait(false);
                 }
                 catch (TimeoutException)
@@ -1057,7 +1057,7 @@ namespace OSDP.Net
                     // funky in there. If the device we are looking for happens to be at addr
                     // 0, everything will work but anything else doesn't unless we disable
                     // polling
-                    connId = StartConnection(connection, TimeSpan.Zero, opts.Tracer ?? (_ => {}));
+                    connId = StartConnection(connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
 
                     AddDevice(connId, BroadcastAddress, true, false);
 
