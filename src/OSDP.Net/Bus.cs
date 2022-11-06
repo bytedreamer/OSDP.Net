@@ -477,10 +477,9 @@ namespace OSDP.Net
 
             var buffer = new byte[commandData.Length + 1];
 
-            // TODO: What's a driver byte? add a comment for context?
-            // -- DXM 2022-11-01 Spoke with JH regarding this and apparenly we don't seem to know/remember
-            // what is the driver byte here fore. Leaving the comment as a reminder to someday(tm) come back
-            // to this and dig up why it was added
+            // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
+            // accomplished by sending a character with all bits set to 1. The driver byte is required by
+            // converters and multiplexers to sense when line is idle.
             buffer[0] = DriverByte;
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
  
