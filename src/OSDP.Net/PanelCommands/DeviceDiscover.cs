@@ -41,8 +41,8 @@ namespace OSDP.Net.PanelCommands
             Started,
 
             /// <summary>
-            /// About to send an osdp_POLL to broadcast address (0x7f) to see if a device
-            /// will respond on the connection being tested
+            /// About to send an osdp_POLL to configuration address (0x7f) to see if a device
+            /// will respond on a baud rate for the connection being tested
             /// </summary>
             BroadcastOnConnection,
 

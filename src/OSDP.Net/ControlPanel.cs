@@ -23,7 +23,7 @@ namespace OSDP.Net
     /// </summary>
     public class ControlPanel
     {
-        private const byte BroadcastAddress = 0x7f;
+        private const byte ConfigurationAddress = 0x7f;
 
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
@@ -142,7 +142,7 @@ namespace OSDP.Net
 
             foreach (byte address in bus.ConfigureDeviceAddresses)
             {
-                // This will fire twice if two threads call StopConnection for the same connection simulatenously.
+                // This will fire twice if two threads call StopConnection for the same connection simultaneously.
                 OnConnectionStatusChanged(bus.Id, address, false, false);
             }
             bus.Dispose();
@@ -549,7 +549,7 @@ namespace OSDP.Net
                     // Abort transfer on error.
                     case < 0:
                         throw new FileTransferException("File transfer failed", status);
-                    // File transfer is completed, but PD wants us to keep sending "idling" filetransfer message (FtFragmentSize = 0) until we receive another status.
+                    // File transfer is completed, but PD wants us to keep sending "idling" file transfer message (FtFragmentSize = 0) until we receive another status.
                     case Model.ReplyData.FileTransferStatus.StatusDetail.FinishingFileTransfer:
                          fragmentSize = 0;
                         break;
@@ -1014,16 +1014,16 @@ namespace OSDP.Net
         /// Enumerable instance which returns one or more connection on which the method will attempt
         /// to find the device
         /// </param>
-        /// <param name="opts">Can be passed in for additional options for the discovery</param>
+        /// <param name="options">Can be passed in for additional options for the discovery</param>
         /// <returns>
         /// If successful, an instance of DiscoveryResult which identifies the device along with
         /// providing its capabilities. Otherwise, will return null.
         /// </returns>
-        public async Task<DiscoveryResult> DiscoverDevice(IEnumerable<IOsdpConnection> connections, DiscoveryOptions opts = null)
+        public async Task<DiscoveryResult> DiscoverDevice(IEnumerable<IOsdpConnection> connections, DiscoveryOptions options = null)
         {
-            var options = opts ?? new DiscoveryOptions();
+            options ??= new DiscoveryOptions();
             DiscoveryResult result = new();
-            Guid connId = Guid.Empty;
+            Guid connectionId = Guid.Empty;
 
             void UpdateStatus(DiscoveryStatus status)
             {
@@ -1035,8 +1035,8 @@ namespace OSDP.Net
             {
                 try
                 {
-                    // Reshaper disable once AccessToModifiedClosure
-                    return await IdReport(connId, address, options.CancellationToken).ConfigureAwait(false);
+                    // ReSharper disable once AccessToModifiedClosure
+                    return await IdReport(connectionId, address, options.CancellationToken).ConfigureAwait(false);
                 }
                 catch (TimeoutException)
                 {
@@ -1057,21 +1057,21 @@ namespace OSDP.Net
                     // funky in there. If the device we are looking for happens to be at addr
                     // 0, everything will work but anything else doesn't unless we disable
                     // polling
-                    connId = StartConnection(connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
+                    connectionId = StartConnection(connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
 
-                    AddDevice(connId, BroadcastAddress, true, false);
+                    AddDevice(connectionId, ConfigurationAddress, true, false);
 
                     result.Connection = connection;
                     UpdateStatus(DiscoveryStatus.BroadcastOnConnection);
 
-                    if (await TryIdReport(BroadcastAddress).ConfigureAwait(false) != null)
+                    if (await TryIdReport(ConfigurationAddress).ConfigureAwait(false) != null)
                     {
-                        RemoveDevice(connId, BroadcastAddress);
+                        RemoveDevice(connectionId, ConfigurationAddress);
                         UpdateStatus(DiscoveryStatus.ConnectionWithDeviceFound);
                         return true;
                     }
 
-                    await StopConnection(connId).ConfigureAwait(false);
+                    await StopConnection(connectionId).ConfigureAwait(false);
                 }
 
                 result.Connection = null;
@@ -1080,10 +1080,10 @@ namespace OSDP.Net
 
             async Task<bool> FindDeviceAddress()
             {
-                for (byte addr = 0; addr < BroadcastAddress; addr++)
+                for (byte addr = 0; addr < ConfigurationAddress; addr++)
                 {
                     // TODO: would we want any other flags for CRC here? (or the other one?)
-                    AddDevice(connId, addr, true, false);
+                    AddDevice(connectionId, addr, true, false);
                     
                     result.Address = addr;
                     UpdateStatus(DiscoveryStatus.LookingForDeviceAtAddress);
@@ -1095,12 +1095,12 @@ namespace OSDP.Net
                         return true;
                     }
 
-                    RemoveDevice(connId, addr);
+                    RemoveDevice(connectionId, addr);
                 }
 
                 // Since we didn't find a valid device, for an unexpected reason
                 // let's just leave the address at broadcast
-                result.Address = BroadcastAddress;
+                result.Address = ConfigurationAddress;
                 return false;
             }
 
@@ -1129,7 +1129,7 @@ namespace OSDP.Net
 
                 UpdateStatus(DiscoveryStatus.QueryingDeviceCapabilities);
 
-                result.Capabilities = await DeviceCapabilities(connId, result.Address).ConfigureAwait(false);
+                result.Capabilities = await DeviceCapabilities(connectionId, result.Address).ConfigureAwait(false);
                 UpdateStatus(DiscoveryStatus.CapabilitiesDiscovered);
 
                 UpdateStatus(DiscoveryStatus.Succeeded);
