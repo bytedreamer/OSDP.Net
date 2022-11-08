@@ -29,6 +29,21 @@ namespace OSDP.Net.PanelCommands
         }
 
         /// <summary>
+        /// This exception will be thrown if a caller attempts to perform device discovery on a
+        /// control panel that already has open connections. Having open connections is 
+        /// disallowed because the discovery itself will have to open/close the connections on the
+        /// serial ports being tested and there cannot be more than one open handle to the same port
+        /// </summary>
+        public class ControlPanelInUseException : DeviceDiscoveryException
+        {
+            /// <summary>
+            /// Instantiates a new instance of ControlPanelInUseException
+            /// </summary>
+            public ControlPanelInUseException() 
+                : base("To perform device discovery control panel cannot have any open connections") { }
+        }
+
+        /// <summary>
         /// Represents current state of the device discovery process. As the device discovery
         /// unfolds, this status value indicates which fields of the <see cref="DiscoveryResult"/>
         /// instance have been filled in.
@@ -42,9 +57,9 @@ namespace OSDP.Net.PanelCommands
 
             /// <summary>
             /// About to send an osdp_POLL to configuration address (0x7f) to see if a device
-            /// will respond on a baud rate for the connection being tested
+            /// will respond on a connection instance being tested
             /// </summary>
-            BroadcastOnConnection,
+            LookingForDeviceOnConnection,
 
             /// <summary>
             /// Received a valid reply too osdp_POLL indicating that the right connection
@@ -124,6 +139,14 @@ namespace OSDP.Net.PanelCommands
             public TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromMilliseconds(500);
 
             /// <summary>
+            /// When discovery is enumerating multiple possible connections, this option specifies the 
+            /// time interval to wait between the close of a connection and opening of a subsequent one.
+            /// This might be necessary when testing multiple baud rates on a single serial COM port
+            /// as the port might still be marked "in use" right after we release our handle to it.
+            /// </summary>
+            public TimeSpan ReconnectDelay { get; set; } = TimeSpan.Zero;
+
+            /// <summary>
             /// Tracer instance to use to report network commands/replies as issued by the 
             /// device discovery
             /// </summary>
@@ -163,7 +186,7 @@ namespace OSDP.Net.PanelCommands
             public DiscoveryStatus Status { get; internal set; }
 
             /// <summary>
-            /// When Status is <see cref="DiscoveryStatus.BroadcastOnConnection"/> this property identifies
+            /// When Status is <see cref="DiscoveryStatus.LookingForDeviceOnConnection"/> this property identifies
             /// connection being tested even if ultimately no device will be discovered on it. After 
             /// <see cref="DiscoveryStatus.ConnectionWithDeviceFound"/> status, this property identifies
             /// connection with a valid device

@@ -23,16 +23,21 @@ namespace OSDP.Net.Connections
         }
 
         /// <summary>
-        /// Enumerates all valid baud rates for a given COM port
+        /// A helper method that returns a lazily instantiated set of SerialPortOsdpConnection
+        /// instances, each one configured for a different baud rate. The primary use case for this
+        /// method is in conjunction with <see cref="ControlPanel.DiscoverDevice(IEnumerable{IOsdpConnection}, PanelCommands.DeviceDiscover.DiscoveryOptions)"/>
+        /// which expects a set of connections to test for a device.
         /// </summary>
         /// <param name="portName">Name of the port</param>
-        /// <returns>An enumerable that will lazily generate SerialPortOsdpConnection instances for all
-        /// valid baud rates in the increasing order</returns>
-        public static IEnumerable<SerialPortOsdpConnection> EnumBaudRates(string portName)
+        /// <param name="rates">
+        /// Optional parameter identifying a set of baud rates to enumerate over. If not specified,
+        /// the list from OSDP spec (9600, 19200, 38400, 57600, 115200, 23040) will be used by default
+        /// </param>
+        /// <returns>An enumerable that will lazily generate SerialPortOsdpConnection instances for a 
+        /// given set of baud rates (see description of "rates" parameter)</returns>
+        public static IEnumerable<SerialPortOsdpConnection> EnumBaudRates(string portName, int[] rates=null)
         {
-            // TODO: Allow the caller to specify a different reply timeout
-
-            var rates = new[] { 9600, 19200, 38400, 57600, 115200, 230400 };
+            rates ??= new[] { 9600, 19200, 38400, 57600, 115200, 230400 };
             return rates.AsEnumerable().Select((rate) => new SerialPortOsdpConnection(portName, rate));
         }
 

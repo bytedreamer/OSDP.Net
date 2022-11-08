@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -998,21 +999,11 @@ namespace OSDP.Net
         /// <summary>
         /// Attempts a device discovery on a given connection.
         /// </summary>
-        /// <param name="connection">Connection instance on which to perform the discovery</param>
-        /// <param name="opts">Can be passed in for additional options for the discovery</param>
-        /// <returns>
-        /// If successful, an instance of DiscoveryResult which identifies the device along with
-        /// providing its capabilities. Otherwise, will return null.
-        /// </returns>
-        public Task<DiscoveryResult> DiscoverDevice(IOsdpConnection connection, DiscoveryOptions opts = null) => 
-            DiscoverDevice(new [] { connection }, opts);
-
-        /// <summary>
-        /// Attempts a device discovery on a given connection.
-        /// </summary>
         /// <param name="connections">
-        /// Enumerable instance which returns one or more connection on which the method will attempt
-        /// to find the device
+        /// Enumerable instance which returns a set of connections (e.g. each having a different baud rate)
+        /// on which the method will attempt to find the device. This enumerable can be considered a 
+        /// factory that returns a different instance (and possibly instantiates it only when) when the
+        /// discovery process invokes <see cref="IEnumerator.MoveNext"/>
         /// </param>
         /// <param name="options">Can be passed in for additional options for the discovery</param>
         /// <returns>
@@ -1046,8 +1037,17 @@ namespace OSDP.Net
 
             async Task<bool> FindConnectionWithActiveDevice()
             {
+                bool isFirst = true;
+
                 foreach (IOsdpConnection connection in connections)
                 {
+                    if (!isFirst)
+                    {
+                        await Task.Delay(options.ReconnectDelay, options.CancellationToken);
+                    }
+                    isFirst = false;
+
+
                     // WARNING: We are specifying zero timespan here so that Polling is
                     // DISABLED on this entire connection. If we don't do this, it seems
                     // non-existent devices will attempt to start polling and those commands
@@ -1062,7 +1062,7 @@ namespace OSDP.Net
                     AddDevice(connectionId, ConfigurationAddress, true, false);
 
                     result.Connection = connection;
-                    UpdateStatus(DiscoveryStatus.BroadcastOnConnection);
+                    UpdateStatus(DiscoveryStatus.LookingForDeviceOnConnection);
 
                     if (await TryIdReport(ConfigurationAddress).ConfigureAwait(false) != null)
                     {
@@ -1082,7 +1082,6 @@ namespace OSDP.Net
             {
                 for (byte addr = 0; addr < ConfigurationAddress; addr++)
                 {
-                    // TODO: would we want any other flags for CRC here? (or the other one?)
                     AddDevice(connectionId, addr, true, false);
                     
                     result.Address = addr;
@@ -1115,6 +1114,11 @@ namespace OSDP.Net
 
             try
             {
+                if (!_buses.IsEmpty)
+                {
+                    throw new ControlPanelInUseException();
+                }
+
                 if (!await FindConnectionWithActiveDevice().ConfigureAwait(false))
                 {
                     UpdateStatus(DiscoveryStatus.DeviceNotFound);
@@ -1144,6 +1148,7 @@ namespace OSDP.Net
             }
             finally
             {
+                await StopConnection(connectionId).ConfigureAwait(false);
                 _replyResponseTimeout = origResponseTimeout;
             }
         }

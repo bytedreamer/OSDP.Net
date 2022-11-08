@@ -163,7 +163,6 @@ namespace OSDP.Net
                     }
                     catch(Exception exception)
                     {
-                        // TODO: If you get here, what's the recovery? Is there one?
                         _logger?.LogError(exception, $"Unexpected exception in polling loop. Conn:{Id}.");
                     }
                 });

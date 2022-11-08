@@ -172,7 +172,7 @@ namespace Console
             _controlPanel.ConnectionStatusChanged += (_, args) =>
             {
                 DisplayReceivedReply(
-                    $"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
+                    $"Device '{_settings.Devices.SingleOrDefault(device => device.Address == args.Address, new DeviceSetting() { Name="[Unknown]"}).Name}' " +
                     $"at address {args.Address} is now " +
                     $"{(args.IsConnected ? (args.IsSecureChannelEstablished ? "connected with secure channel" : "connected with clear text") : "disconnected")}",
                     string.Empty);
@@ -731,8 +731,8 @@ namespace Console
         {
             var cancelTokenSrc = new CancellationTokenSource();
             var portNameComboBox = CreatePortNameComboBox(15, 1);
-            var pingTimeoutTextField =
-                new TextField(25, 3, 25, "1000");
+            var pingTimeoutTextField = new TextField(25, 3, 25, "1000");
+            var reconnectDelayTextField = new TextField(25, 5, 25, "0");
 
             void CloseDialog() => Application.RequestStop();
 
@@ -746,7 +746,7 @@ namespace Console
                         DisplayReceivedReply("Device Discovery Started", String.Empty);
                         // NOTE Unlike other statuses, for this one we are intentionally not dropping down
                         return;
-                    case DiscoveryStatus.BroadcastOnConnection:
+                    case DiscoveryStatus.LookingForDeviceOnConnection:
                         additionalInfo = $"{Environment.NewLine}    Connection baud rate {current.Connection.BaudRate}...";
                         break;
                     case DiscoveryStatus.ConnectionWithDeviceFound:
@@ -788,29 +788,27 @@ namespace Console
                     return;
                 }
 
+                if (!int.TryParse(reconnectDelayTextField.Text.ToString(), out var reconnectDelay))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
                 CloseDialog();
-
-                // TODO: Do we need to support other connection types here?
-                // TODO: Will there be a conflict if the global panel is already talking to the
-                //   same serial port?
-
-                // We do not want to use the global control panel instance because it is hooked up to a bunch
-                // of event handlers in the console. However for discovery method, we are going to cycle through
-                // a bunch of devices and connections and all those events will generate too much noise in
-                // the output
-                var panel = new ControlPanel(_panelLogger);
 
                 try
                 {
                     DiscoverMenuItem.Title = "Cancel _Discover";
                     DiscoverMenuItem.Action = CancelDiscover;
 
-                    var result = await panel.DiscoverDevice(
+                    var result = await _controlPanel.DiscoverDevice(
                         SerialPortOsdpConnection.EnumBaudRates(portNameComboBox.Text.ToString()),
                         new DiscoveryOptions() { 
                             ProgressCallback = OnProgress,
                             ResponseTimeout = TimeSpan.FromMilliseconds(pingTimeout),
                             CancellationToken = cancelTokenSrc.Token,
+                            ReconnectDelay = TimeSpan.FromMilliseconds(reconnectDelay),
                         }.WithDefaultTracer(_settings.IsTracing));
 
                     if (result != null)
@@ -833,7 +831,6 @@ namespace Console
                 }
                 finally
                 {
-                    await panel.Shutdown();
                     CompleteDiscover();
                 }
             }
@@ -843,11 +840,14 @@ namespace Console
             cancelButton.Clicked += CloseDialog;
             discoverButton.Clicked += OnClickDiscover;
 
-            var dialog = new Dialog("Discover Device", 60, 8, cancelButton, discoverButton);
+            var dialog = new Dialog("Discover Device", 60, 11, cancelButton, discoverButton);
             dialog.Add(new Label(1, 1, "Port:"),
                 portNameComboBox,
                 new Label(1, 3, "Ping Timeout(ms):"),
-                pingTimeoutTextField);
+                pingTimeoutTextField,
+                new Label(1, 5, "Reconnect Delay(ms):"),
+                reconnectDelayTextField
+            );
             discoverButton.SetFocus();
             Application.Run(dialog);
         }
