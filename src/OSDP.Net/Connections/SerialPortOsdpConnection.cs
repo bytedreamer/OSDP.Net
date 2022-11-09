@@ -10,7 +10,9 @@ namespace OSDP.Net.Connections
     /// <summary>Connect using a serial port.</summary>
     public class SerialPortOsdpConnection : IOsdpConnection
     {
-        private readonly SerialPort _serialPort = new();
+        private readonly string _portName;
+        private readonly int _baudRate;
+        private SerialPort _serialPort;
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.Connections.SerialPortOsdpConnection" /> class.</summary>
         /// <param name="portName">Name of the port.</param>
@@ -18,8 +20,8 @@ namespace OSDP.Net.Connections
         /// <exception cref="T:System.ArgumentNullException">portName</exception>
         public SerialPortOsdpConnection(string portName, int baudRate)
         {
-            _serialPort.PortName = portName ?? throw new ArgumentNullException(nameof(portName));
-            _serialPort.BaudRate = baudRate;
+            _portName = portName ?? throw new ArgumentNullException(nameof(portName));
+            _baudRate = baudRate;
         }
 
         /// <summary>
@@ -42,10 +44,10 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public int BaudRate => _serialPort.BaudRate;
+        public int BaudRate => _baudRate;
 
         /// <inheritdoc />
-        public bool IsOpen => _serialPort.IsOpen;
+        public bool IsOpen => _serialPort != null && _serialPort.IsOpen;
 
         /// <inheritdoc />
         public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
@@ -53,13 +55,18 @@ namespace OSDP.Net.Connections
         /// <inheritdoc />
         public void Open()
         {
+            if (_serialPort != null) return;
+            _serialPort = new(_portName, _baudRate);
             _serialPort.Open();
         }
 
         /// <inheritdoc />
         public void Close()
         {
+            if (_serialPort == null) return;
             _serialPort.Close();
+            _serialPort.Dispose();
+            _serialPort = null;
         }
 
         /// <inheritdoc />

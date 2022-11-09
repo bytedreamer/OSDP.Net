@@ -42,8 +42,6 @@ namespace OSDP.Net
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    // _logger?.LogDebug($"Received a reply {reply}");
-                    
                     OnReplyReceived(reply);
                 }
             }, TaskCreationOptions.LongRunning);
@@ -1047,7 +1045,6 @@ namespace OSDP.Net
                     }
                     isFirst = false;
 
-
                     // WARNING: We are specifying zero timespan here so that Polling is
                     // DISABLED on this entire connection. If we don't do this, it seems
                     // non-existent devices will attempt to start polling and those commands
@@ -1103,6 +1100,39 @@ namespace OSDP.Net
                 return false;
             }
 
+            async Task CheckForDefaultSecurityKey()
+            {
+                var waitForConnectSource = new TaskCompletionSource<bool>();
+
+                void HandleStatusChange(object sender, ConnectionStatusEventArgs args)
+                {
+                    if (args.Address == result.Address && args.IsConnected) 
+                    {
+                        waitForConnectSource.SetResult(true);
+                    }
+                }
+
+                ConnectionStatusChanged += HandleStatusChange;
+
+                try
+                {
+                    // Right now control panel API doesn't indicate connection errors due invalid credentials, even
+                    // though internally the bus knows it got an error response from the device. Until underlying APIs give
+                    // us that data, the best we can do here is wait for a successful connection and timeout when one 
+                    // isn't established
+                    connectionId = StartConnection(result.Connection, Bus.DefaultPollInterval, options.Tracer ?? (_ => { }));
+                    AddDevice(connectionId, result.Address, true, true);
+
+                    var res = await Task.WhenAny(
+                        waitForConnectSource.Task, Task.Delay(TimeSpan.FromSeconds(8), options.CancellationToken));
+                    result.UsesDefaultSecurityKey = (res == waitForConnectSource.Task);
+                }
+                finally
+                {
+                    ConnectionStatusChanged -= HandleStatusChange;
+                }
+            }
+
             UpdateStatus(DiscoveryStatus.Started);
 
             // While we are doing discovery, we want to override default behavior which allows
@@ -1131,10 +1161,15 @@ namespace OSDP.Net
                         $"Unable to determine address of device that responded to a broadcast on baud rate {result.Connection.BaudRate}");
                 }
 
-                UpdateStatus(DiscoveryStatus.QueryingDeviceCapabilities);
-
                 result.Capabilities = await DeviceCapabilities(connectionId, result.Address).ConfigureAwait(false);
                 UpdateStatus(DiscoveryStatus.CapabilitiesDiscovered);
+
+                // Connection above was opened intentionally with no polling (see above comments). Now we
+                // need to open a new connection with polling before doing the next step
+                await StopConnection(connectionId).ConfigureAwait(false);
+                connectionId = Guid.Empty;
+
+                await CheckForDefaultSecurityKey().ConfigureAwait(false);
 
                 UpdateStatus(DiscoveryStatus.Succeeded);
                 return result;
@@ -1148,7 +1183,7 @@ namespace OSDP.Net
             }
             finally
             {
-                await StopConnection(connectionId).ConfigureAwait(false);
+                if (connectionId != Guid.Empty) await StopConnection(connectionId).ConfigureAwait(false);
                 _replyResponseTimeout = origResponseTimeout;
             }
         }
@@ -1156,8 +1191,7 @@ namespace OSDP.Net
         private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected,
             bool isSecureChannelEstablished)
         {
-            var handler = ConnectionStatusChanged;
-            handler?.Invoke(this,
+            ConnectionStatusChanged?.Invoke(this,
                 new ConnectionStatusEventArgs(connectionId, address, isConnected, isSecureChannelEstablished));
         }
 

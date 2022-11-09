@@ -80,11 +80,6 @@ namespace OSDP.Net.PanelCommands
             DeviceIdentified,
 
             /// <summary>
-            /// About to send an osdp_CAP command to query for device capabilities
-            /// </summary>
-            QueryingDeviceCapabilities,
-
-            /// <summary>
             /// Received a valid reply to osdp_CAM command
             /// </summary>
             CapabilitiesDiscovered,
@@ -214,6 +209,13 @@ namespace OSDP.Net.PanelCommands
             public DeviceCapabilities Capabilities { get; internal set; }
 
             /// <summary>
+            /// A flag that indicates whether or not discovered device responds to the default security key
+            /// The security key will only be tested if a) PD returns a "Communication Security" capability and
+            /// b) that capability indicates that it supports AES128. Otherwise, this value will remain false.
+            /// </summary>
+            public bool UsesDefaultSecurityKey { get; set; }
+
+            /// <summary>
             /// When status is set to <see cref="DiscoveryStatus.Error"/> or <see cref="DiscoveryStatus.Cancelled"/>
             /// this property will be set to the exception instance that terminated the device discovery
             /// </summary>
@@ -232,6 +234,7 @@ namespace OSDP.Net.PanelCommands
                 sb.AppendLine("  Capabilities:");
                 sb.Append("        ");
                 sb.AppendLine(Capabilities.ToString().TrimEnd().Replace("\n", "\n        "));
+                sb.AppendLine($"Responds to Default Security Key: {(UsesDefaultSecurityKey ? "Yes" : "No")}");
 
                 return sb.ToString();
             }
