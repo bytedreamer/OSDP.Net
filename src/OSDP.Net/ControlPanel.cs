@@ -1064,8 +1064,10 @@ namespace OSDP.Net
                     result.Connection = connection;
                     UpdateStatus(DiscoveryStatus.LookingForDeviceOnConnection);
 
-                    if (await TryIdReport(ConfigurationAddress).ConfigureAwait(false) != null)
+                    var deviceIdentification = await TryIdReport(ConfigurationAddress).ConfigureAwait(false);
+                    if (deviceIdentification != null)
                     {
+                        result.Id = deviceIdentification;
                         RemoveDevice(connectionId, ConfigurationAddress);
                         UpdateStatus(DiscoveryStatus.ConnectionWithDeviceFound);
                         return true;
@@ -1080,25 +1082,26 @@ namespace OSDP.Net
 
             async Task<bool> FindDeviceAddress()
             {
-                for (byte addr = 0; addr < ConfigurationAddress; addr++)
+                for (byte address = 0; address < ConfigurationAddress; address++)
                 {
-                    AddDevice(connectionId, addr, true, false);
+                    AddDevice(connectionId, address, true, false);
                     
-                    result.Address = addr;
+                    result.Address = address;
                     UpdateStatus(DiscoveryStatus.LookingForDeviceAtAddress);
-                    result.Id = await TryIdReport(addr).ConfigureAwait(false);
+                    var deviceIdentification = await TryIdReport(address).ConfigureAwait(false);
 
-                    if (result.Id != null)
+                    if (deviceIdentification != null)
                     {
+                        result.Id = deviceIdentification;
                         UpdateStatus(DiscoveryStatus.DeviceIdentified);
                         return true;
                     }
 
-                    RemoveDevice(connectionId, addr);
+                    RemoveDevice(connectionId, address);
                 }
 
                 // Since we didn't find a valid device, for an unexpected reason
-                // let's just leave the address at broadcast
+                // let's just leave the at the configuration address
                 result.Address = ConfigurationAddress;
                 return false;
             }
