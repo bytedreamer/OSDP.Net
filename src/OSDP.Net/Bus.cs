@@ -397,7 +397,7 @@ namespace OSDP.Net
             if (reply.Type == ReplyType.Nak)
             {
                 var errorCode = (ErrorCode)reply.ExtractReplyData.First();
-                if (device.UseSecureChannel &&
+                if (device.IsSecurityEstablished &&
                     errorCode is ErrorCode.DoesNotSupportSecurityBlock or ErrorCode.CommunicationSecurityNotMet
                         or ErrorCode.UnableToProcessCommand ||
                     errorCode == ErrorCode.UnexpectedSequenceNumber && reply.Sequence > 0)
