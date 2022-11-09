@@ -1014,6 +1014,10 @@ namespace OSDP.Net
             DiscoveryResult result = new();
             Guid connectionId = Guid.Empty;
 
+            // ReSharper disable AccessToModifiedClosure
+            // Disable the warning which doesn't apply to us as we are accumulating/modifying results of the discovery
+            // in the above variables which are closed over. We are good with with
+
             void UpdateStatus(DiscoveryStatus status)
             {
                 result.Status = status;
@@ -1024,7 +1028,6 @@ namespace OSDP.Net
             {
                 try
                 {
-                    // ReSharper disable once AccessToModifiedClosure
                     return await IdReport(connectionId, address, options.CancellationToken).ConfigureAwait(false);
                 }
                 catch (TimeoutException)
@@ -1186,6 +1189,8 @@ namespace OSDP.Net
                 if (connectionId != Guid.Empty) await StopConnection(connectionId).ConfigureAwait(false);
                 _replyResponseTimeout = origResponseTimeout;
             }
+
+            // ReSharper enable AccessToModifiedClosure
         }
 
         private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected,
