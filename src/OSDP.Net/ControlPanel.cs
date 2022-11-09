@@ -1069,6 +1069,7 @@ namespace OSDP.Net
                     {
                         result.Id = deviceIdentification;
                         RemoveDevice(connectionId, ConfigurationAddress);
+                        await StopConnection(connectionId).ConfigureAwait(false);
                         UpdateStatus(DiscoveryStatus.ConnectionWithDeviceFound);
                         return true;
                     }
@@ -1084,6 +1085,7 @@ namespace OSDP.Net
             {
                 for (byte address = 0; address < ConfigurationAddress; address++)
                 {
+                    connectionId = StartConnection(result.Connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
                     AddDevice(connectionId, address, true, false);
                     
                     result.Address = address;
@@ -1098,6 +1100,7 @@ namespace OSDP.Net
                     }
 
                     RemoveDevice(connectionId, address);
+                    await StopConnection(connectionId).ConfigureAwait(false);
                 }
 
                 // Since we didn't find a valid device, for an unexpected reason
@@ -1164,7 +1167,7 @@ namespace OSDP.Net
                 if (!await FindDeviceAddress().ConfigureAwait(false))
                 {
                     throw new DeviceDiscoveryException(
-                        $"Unable to determine address of device that responded to a broadcast on baud rate {result.Connection.BaudRate}");
+                        $"Unable to determine address of device that responded to a configuration address on baud rate {result.Connection.BaudRate}");
                 }
 
                 result.Capabilities = await DeviceCapabilities(connectionId, result.Address).ConfigureAwait(false);
