@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -19,6 +18,22 @@ namespace OSDP.Net.Model.ReplyData
         /// Gets the all the PD's device capabilities.
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
+
+        /// <summary>
+        /// Gets a specific PD capability
+        /// </summary>
+        /// <param name="funcCode">Function code of the capability to get</param>
+        /// <returns>
+        /// Either a <see cref="DeviceCapability"/> instance or null if one wasn't found for a given function code.
+        /// </returns>
+        public DeviceCapability Get(CapabilityFunction funcCode) =>
+            Capabilities.FirstOrDefault((cap) => cap.Function == funcCode);
+
+        /// <inheritdoc cref="DeviceCapabilities.Get(CapabilityFunction)"/>
+        /// <summary>
+        /// Strongly timed version of the more generic Get method
+        /// </summary>
+        public T Get<T>(CapabilityFunction funcCode) where T : DeviceCapability => (T)Get(funcCode);
 
         internal static DeviceCapabilities ParseData(ReadOnlySpan<byte> data)
         {
@@ -42,27 +57,14 @@ namespace OSDP.Net.Model.ReplyData
             return deviceCapabilities;
         }
 
+
         /// <inheritdoc />
         public override string ToString()
         {
             var build = new StringBuilder();
             foreach (var capability in Capabilities)
             {
-                build.AppendLine($"  Function: {Helpers.SplitCamelCase(capability.Function.ToString())}");
-
-                if (capability.Function is CapabilityFunction.ReceiveBufferSize
-                    or CapabilityFunction.LargestCombinedMessageSize)
-                {
-                    build.AppendLine(
-                        $"      Size: {Message.ConvertBytesToUnsignedShort(new[] { capability.Compliance, capability.NumberOf })}");
-                }
-                else
-                {
-                    build.AppendLine($"Compliance: {capability.Compliance}");
-                    build.AppendLine($" Number Of: {capability.NumberOf}");
-                }
-
-                build.AppendLine(string.Empty);
+                build.AppendLine(capability.ToString());
             }
 
             return build.ToString();

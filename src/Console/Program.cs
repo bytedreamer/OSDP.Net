@@ -18,6 +18,7 @@ using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.PanelCommands.DeviceDiscover;
 using Terminal.Gui;
 using Command = OSDP.Net.Messages.Command;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
@@ -27,15 +28,19 @@ namespace Console
 {
     internal static class Program
     {
+        private static ILogger<ControlPanel> _panelLogger;
         private static ControlPanel _controlPanel;
         private static readonly Queue<string> Messages = new ();
         private static readonly object MessageLock = new ();
 
+        private static readonly MenuItem DiscoverMenuItem =
+            new MenuItem("_Discover", string.Empty, DiscoverDevice);
         private static readonly MenuBarItem DevicesMenuBarItem =
             new ("_Devices", new[]
             {
                 new MenuItem("_Add", string.Empty, AddDevice),
-                new MenuItem("_Remove", string.Empty, RemoveDevice)
+                new MenuItem("_Remove", string.Empty, RemoveDevice),
+                DiscoverMenuItem,
             });
 
         private static Guid _connectionId = Guid.Empty;
@@ -57,8 +62,9 @@ namespace Console
             
             var factory = new LoggerFactory();
             factory.AddLog4Net();
-            
-            _controlPanel = new ControlPanel(factory.CreateLogger<ControlPanel>());
+            _panelLogger = factory.CreateLogger<ControlPanel>();
+
+            _controlPanel = new ControlPanel(_panelLogger);
 
             _settings = GetConnectionSettings();
 
@@ -166,7 +172,7 @@ namespace Console
             _controlPanel.ConnectionStatusChanged += (_, args) =>
             {
                 DisplayReceivedReply(
-                    $"Device '{_settings.Devices.Single(device => device.Address == args.Address).Name}' " +
+                    $"Device '{_settings.Devices.SingleOrDefault(device => device.Address == args.Address, new DeviceSetting() { Name="[Unknown]"}).Name}' " +
                     $"at address {args.Address} is now " +
                     $"{(args.IsConnected ? (args.IsSecureChannelEstablished ? "connected with secure channel" : "connected with clear text") : "disconnected")}",
                     string.Empty);
@@ -217,16 +223,7 @@ namespace Console
 
         private static void StartSerialConnection()
         {
-            var portNames = SerialPort.GetPortNames();
-            var portNameComboBox = new ComboBox(new Rect(15, 1, 35, 5), portNames);
-
-            // Select default port name
-            if (portNames.Length > 0)
-            {
-                portNameComboBox.Text = portNames.Contains(_settings.SerialConnectionSettings.PortName)
-                    ? _settings.SerialConnectionSettings.PortName
-                    : portNames[0];
-            }
+            var portNameComboBox = CreatePortNameComboBox(15, 1);
                 
             var baudRateTextField = new TextField(25, 3, 25, _settings.SerialConnectionSettings.BaudRate.ToString());
             var replyTimeoutTextField =
@@ -355,7 +352,6 @@ namespace Console
             {
                 if (!int.TryParse(portNumberTextField.Text.ToString(), out var portNumber))
                 {
-
                     MessageBox.ErrorQuery(40, 10, "Error", "Invalid port number entered!", "OK");
                     return;
                 }
@@ -461,6 +457,22 @@ namespace Console
             }
         }
 
+        private static ComboBox CreatePortNameComboBox(int x, int y)
+        {
+            var portNames = SerialPort.GetPortNames();
+            var portNameComboBox = new ComboBox(new Rect(x, y, 35, 5), portNames);
+
+            // Select default port name
+            if (portNames.Length > 0)
+            {
+                portNameComboBox.SelectedItem = Math.Max(
+                    Array.FindIndex(portNames, (port) =>
+                    String.Equals(port, _settings.SerialConnectionSettings.PortName)), 0);
+            }
+
+            return portNameComboBox;
+        }
+
         private static void DisplayReceivedReply(string title, string message)
         {
             AddLogMessage($"{title}{Environment.NewLine}{message}{Environment.NewLine}{new string('*', 30)}");
@@ -478,7 +490,13 @@ namespace Console
                         Messages.Dequeue();
                     }
 
-                    while (!_window.HasFocus)
+                    // Not sure why this is here but it is. When the window is not focused, the client area will not
+                    // get updated but when we return to the window it will also not be updated. And... if the user
+                    // clicks on the menubar, that is also considered to be "outside" of the window. For now to make
+                    // output updates work when user is navigating submenus, just adding _menuBar check here
+                    // -- DXM 2022-11-03
+                    // p.s. this was a while loop???
+                    if (!_window.HasFocus && _menuBar.HasFocus)
                     {
                         return;
                     }
@@ -490,13 +508,16 @@ namespace Console
                     }
                     _scrollView.RemoveAll();
 
+                    // This is one hell of an approach in this function. Every time we add a line, we nuke entire view
+                    // and add a bunch of labels. Is it possible to use something like a TextView set to read-only here
+                    // instead?
+                    // -- DXM 2022-11-03
+
                     int index = 0;
                     foreach (string outputMessage in Messages.Reverse())
                     {
-                        var label = new Label(0, index,
-                            outputMessage.Substring(0, outputMessage.Length - 1));
-
-                        index += outputMessage.Length - outputMessage.Replace(Environment.NewLine, string.Empty).Length;
+                        var label = new Label(0, index, outputMessage.TrimEnd());
+                        index += label.Bounds.Height;
 
                         if (outputMessage.Contains("| WARN |") || outputMessage.Contains("NAK"))
                         {
@@ -703,6 +724,131 @@ namespace Console
             dialog.Add(scrollView);
             removeButton.SetFocus();
             
+            Application.Run(dialog);
+        }
+
+        private static void DiscoverDevice()
+        {
+            var cancelTokenSrc = new CancellationTokenSource();
+            var portNameComboBox = CreatePortNameComboBox(15, 1);
+            var pingTimeoutTextField = new TextField(25, 3, 25, "1000");
+            var reconnectDelayTextField = new TextField(25, 5, 25, "0");
+
+            void CloseDialog() => Application.RequestStop();
+
+            void OnProgress(DiscoveryResult current)
+            {
+                string additionalInfo = "";
+
+                switch(current.Status)
+                {
+                    case DiscoveryStatus.Started:
+                        DisplayReceivedReply("Device Discovery Started", String.Empty);
+                        // NOTE Unlike other statuses, for this one we are intentionally not dropping down
+                        return;
+                    case DiscoveryStatus.LookingForDeviceOnConnection:
+                        additionalInfo = $"{Environment.NewLine}    Connection baud rate {current.Connection.BaudRate}...";
+                        break;
+                    case DiscoveryStatus.ConnectionWithDeviceFound:
+                        additionalInfo = $"{Environment.NewLine}    Connection baud rate {current.Connection.BaudRate}";
+                        break;
+                    case DiscoveryStatus.LookingForDeviceAtAddress:
+                        additionalInfo = $"{Environment.NewLine}    Address {current.Address}...";
+                        break;
+                }
+
+                AddLogMessage($"Device Discovery Progress: {current.Status}{additionalInfo}{Environment.NewLine}");
+            }
+
+            void CancelDiscover()
+            {
+                cancelTokenSrc?.Cancel();
+                cancelTokenSrc?.Dispose();
+                cancelTokenSrc = null;
+            }
+
+            void CompleteDiscover()
+            {
+                DiscoverMenuItem.Title = "_Discover";
+                DiscoverMenuItem.Action = DiscoverDevice;
+            }
+
+            async void OnClickDiscover() 
+            {
+                if (string.IsNullOrEmpty(portNameComboBox.Text.ToString()))
+                {
+                    MessageBox.ErrorQuery(40, 10, "Error", "No port name entered!", "OK");
+                    return;
+                }
+
+                if (!int.TryParse(pingTimeoutTextField.Text.ToString(), out var pingTimeout))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
+                if (!int.TryParse(reconnectDelayTextField.Text.ToString(), out var reconnectDelay))
+                {
+
+                    MessageBox.ErrorQuery(40, 10, "Error", "Invalid reply timeout entered!", "OK");
+                    return;
+                }
+
+                CloseDialog();
+
+                try
+                {
+                    DiscoverMenuItem.Title = "Cancel _Discover";
+                    DiscoverMenuItem.Action = CancelDiscover;
+
+                    var result = await _controlPanel.DiscoverDevice(
+                        SerialPortOsdpConnection.EnumBaudRates(portNameComboBox.Text.ToString()),
+                        new DiscoveryOptions() { 
+                            ProgressCallback = OnProgress,
+                            ResponseTimeout = TimeSpan.FromMilliseconds(pingTimeout),
+                            CancellationToken = cancelTokenSrc.Token,
+                            ReconnectDelay = TimeSpan.FromMilliseconds(reconnectDelay),
+                        }.WithDefaultTracer(_settings.IsTracing));
+
+                    if (result != null)
+                    {
+                        AddLogMessage($"Device discovered successfully:{Environment.NewLine}{result}");
+                    } 
+                    else
+                    {
+                        AddLogMessage("Device was not found");
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    AddLogMessage("Device discovery cancelled");
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.ErrorQuery(40, 10, "Exception in Device Discovery", exception.Message, "OK");
+                    AddLogMessage($"Device Discovery Error:{Environment.NewLine}{exception}");
+                }
+                finally
+                {
+                    CompleteDiscover();
+                }
+            }
+
+            var cancelButton = new Button("Cancel");
+            var discoverButton = new Button("Discover", true);
+            cancelButton.Clicked += CloseDialog;
+            discoverButton.Clicked += OnClickDiscover;
+
+            var dialog = new Dialog("Discover Device", 60, 11, cancelButton, discoverButton);
+            dialog.Add(new Label(1, 1, "Port:"),
+                portNameComboBox,
+                new Label(1, 3, "Ping Timeout(ms):"),
+                pingTimeoutTextField,
+                new Label(1, 5, "Reconnect Delay(ms):"),
+                reconnectDelayTextField
+            );
+            discoverButton.SetFocus();
             Application.Run(dialog);
         }
 

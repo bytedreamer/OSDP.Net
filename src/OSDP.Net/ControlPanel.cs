@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using OSDP.Net.PanelCommands.DeviceDiscover;
 using OSDP.Net.Tracing;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
@@ -22,10 +24,12 @@ namespace OSDP.Net
     /// </summary>
     public class ControlPanel
     {
+        private const byte ConfigurationAddress = 0x7f;
+
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new();
-        private readonly TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
+        private TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
@@ -38,8 +42,6 @@ namespace OSDP.Net
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
                 {
-                    // _logger?.LogDebug($"Received a reply {reply}");
-                    
                     OnReplyReceived(reply);
                 }
             }, TaskCreationOptions.LongRunning);
@@ -139,7 +141,7 @@ namespace OSDP.Net
 
             foreach (byte address in bus.ConfigureDeviceAddresses)
             {
-                // This will fire twice if two threads call StopConnection for the same connection simulatenously.
+                // This will fire twice if two threads call StopConnection for the same connection simultaneously.
                 OnConnectionStatusChanged(bus.Id, address, false, false);
             }
             bus.Dispose();
@@ -167,10 +169,20 @@ namespace OSDP.Net
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <returns>ID report reply data that was requested.</returns>
-        public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address)
+        public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address) => 
+            await IdReport(connectionId, address, default).ConfigureAwait(false);
+
+        /// <summary>Request to get an ID Report from the PD.</summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
+        /// <returns>ID report reply data that was requested.</returns>
+        public async Task<DeviceIdentification> IdReport(Guid connectionId, byte address, CancellationToken cancellationToken)
         {
-            return DeviceIdentification.ParseData((await SendCommand(connectionId,
-                new IdReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
+            return DeviceIdentification.ParseData((await SendCommand(
+                connectionId,
+                new IdReportCommand(address),
+                cancellationToken).ConfigureAwait(false)).ExtractReplyData);
         }
 
         /// <summary>Request to get the capabilities of the PD.</summary>
@@ -536,7 +548,7 @@ namespace OSDP.Net
                     // Abort transfer on error.
                     case < 0:
                         throw new FileTransferException("File transfer failed", status);
-                    // File transfer is completed, but PD wants us to keep sending "idling" filetransfer message (FtFragmentSize = 0) until we receive another status.
+                    // File transfer is completed, but PD wants us to keep sending "idling" file transfer message (FtFragmentSize = 0) until we receive another status.
                     case Model.ReplyData.FileTransferStatus.StatusDetail.FinishingFileTransfer:
                          fragmentSize = 0;
                         break;
@@ -895,7 +907,9 @@ namespace OSDP.Net
 
                 if (source.Task != task)
                 {
-                    throw new TimeoutException();
+                    throw task.IsCanceled 
+                        ? new OperationCanceledException(cancellationToken)
+                        : new TimeoutException();
                 }
 
                 return await source.Task;
@@ -980,11 +994,215 @@ namespace OSDP.Net
             }
         }
 
+        /// <summary>
+        /// Attempts a device discovery on a given connection.
+        /// </summary>
+        /// <param name="connections">
+        /// Enumerable instance which returns a set of connections (e.g. each having a different baud rate)
+        /// on which the method will attempt to find the device. This enumerable can be considered a 
+        /// factory that returns a different instance (and possibly instantiates it only when) when the
+        /// discovery process invokes <see cref="IEnumerator.MoveNext"/>
+        /// </param>
+        /// <param name="options">Can be passed in for additional options for the discovery</param>
+        /// <returns>
+        /// If successful, an instance of DiscoveryResult which identifies the device along with
+        /// providing its capabilities. Otherwise, will return null.
+        /// </returns>
+        public async Task<DiscoveryResult> DiscoverDevice(IEnumerable<IOsdpConnection> connections, DiscoveryOptions options = null)
+        {
+            options ??= new DiscoveryOptions();
+            DiscoveryResult result = new();
+            Guid connectionId = Guid.Empty;
+
+            // ReSharper disable AccessToModifiedClosure
+            // Disable the warning which doesn't apply to us as we are accumulating/modifying results of the discovery
+            // in the above variables which are closed over. We are good with with
+
+            void UpdateStatus(DiscoveryStatus status)
+            {
+                result.Status = status;
+                options.ProgressCallback?.Invoke(result);
+            }
+
+            async Task<DeviceIdentification> TryIdReport(byte address)
+            {
+                try
+                {
+                    return await IdReport(connectionId, address, options.CancellationToken).ConfigureAwait(false);
+                }
+                catch (TimeoutException)
+                {
+                    return null;
+                }
+            }
+
+            async Task<bool> FindConnectionWithActiveDevice()
+            {
+                bool isFirst = true;
+
+                foreach (IOsdpConnection connection in connections)
+                {
+                    if (!isFirst)
+                    {
+                        await Task.Delay(options.ReconnectDelay, options.CancellationToken);
+                    }
+                    isFirst = false;
+
+                    // WARNING: We are specifying zero timespan here so that Polling is
+                    // DISABLED on this entire connection. If we don't do this, it seems
+                    // non-existent devices will attempt to start polling and those commands
+                    // ends up getting "stuck" so that even when we get to the valid device
+                    // we'll end up timing out and not finding it :(
+                    // Polling on "other" devices should be doing this, but there's something
+                    // funky in there. If the device we are looking for happens to be at addr
+                    // 0, everything will work but anything else doesn't unless we disable
+                    // polling
+                    connectionId = StartConnection(connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
+
+                    AddDevice(connectionId, ConfigurationAddress, true, false);
+
+                    result.Connection = connection;
+                    UpdateStatus(DiscoveryStatus.LookingForDeviceOnConnection);
+
+                    var deviceIdentification = await TryIdReport(ConfigurationAddress).ConfigureAwait(false);
+                    if (deviceIdentification != null)
+                    {
+                        result.Id = deviceIdentification;
+                        RemoveDevice(connectionId, ConfigurationAddress);
+                        await StopConnection(connectionId).ConfigureAwait(false);
+                        UpdateStatus(DiscoveryStatus.ConnectionWithDeviceFound);
+                        return true;
+                    }
+
+                    await StopConnection(connectionId).ConfigureAwait(false);
+                }
+
+                result.Connection = null;
+                return false;
+            }
+
+            async Task<bool> FindDeviceAddress()
+            {
+                for (byte address = 0; address < ConfigurationAddress; address++)
+                {
+                    connectionId = StartConnection(result.Connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
+                    AddDevice(connectionId, address, true, false);
+                    
+                    result.Address = address;
+                    UpdateStatus(DiscoveryStatus.LookingForDeviceAtAddress);
+                    var deviceIdentification = await TryIdReport(address).ConfigureAwait(false);
+
+                    if (deviceIdentification != null)
+                    {
+                        result.Id = deviceIdentification;
+                        UpdateStatus(DiscoveryStatus.DeviceIdentified);
+                        return true;
+                    }
+
+                    RemoveDevice(connectionId, address);
+                    await StopConnection(connectionId).ConfigureAwait(false);
+                }
+
+                // Since we didn't find a valid device, for an unexpected reason
+                // let's just leave the at the configuration address
+                result.Address = ConfigurationAddress;
+                return false;
+            }
+
+            async Task CheckForDefaultSecurityKey()
+            {
+                var waitForConnectSource = new TaskCompletionSource<bool>();
+
+                void HandleStatusChange(object sender, ConnectionStatusEventArgs args)
+                {
+                    if (args.Address == result.Address && args.IsConnected) 
+                    {
+                        waitForConnectSource.SetResult(true);
+                    }
+                }
+
+                ConnectionStatusChanged += HandleStatusChange;
+
+                try
+                {
+                    // Right now control panel API doesn't indicate connection errors due invalid credentials, even
+                    // though internally the bus knows it got an error response from the device. Until underlying APIs give
+                    // us that data, the best we can do here is wait for a successful connection and timeout when one 
+                    // isn't established
+                    connectionId = StartConnection(result.Connection, Bus.DefaultPollInterval, options.Tracer ?? (_ => { }));
+                    AddDevice(connectionId, result.Address, true, true);
+
+                    var res = await Task.WhenAny(
+                        waitForConnectSource.Task, Task.Delay(TimeSpan.FromSeconds(8), options.CancellationToken));
+                    result.UsesDefaultSecurityKey = (res == waitForConnectSource.Task);
+                }
+                finally
+                {
+                    ConnectionStatusChanged -= HandleStatusChange;
+                }
+            }
+
+            UpdateStatus(DiscoveryStatus.Started);
+
+            // While we are doing discovery, we want to override default behavior which allows
+            // underlying wire protocols to retry things if something goes wrong. In the
+            // interests for time while cycling through every possible address, we are going to
+            // not be as gracious
+            var origResponseTimeout = _replyResponseTimeout;
+            _replyResponseTimeout = options.ResponseTimeout;
+
+            try
+            {
+                if (!_buses.IsEmpty)
+                {
+                    throw new ControlPanelInUseException();
+                }
+
+                if (!await FindConnectionWithActiveDevice().ConfigureAwait(false))
+                {
+                    UpdateStatus(DiscoveryStatus.DeviceNotFound);
+                    return null;
+                }
+
+                if (!await FindDeviceAddress().ConfigureAwait(false))
+                {
+                    throw new DeviceDiscoveryException(
+                        $"Unable to determine address of device that responded to a configuration address on baud rate {result.Connection.BaudRate}");
+                }
+
+                result.Capabilities = await DeviceCapabilities(connectionId, result.Address).ConfigureAwait(false);
+                UpdateStatus(DiscoveryStatus.CapabilitiesDiscovered);
+
+                // Connection above was opened intentionally with no polling (see above comments). Now we
+                // need to open a new connection with polling before doing the next step
+                await StopConnection(connectionId).ConfigureAwait(false);
+                connectionId = Guid.Empty;
+
+                await CheckForDefaultSecurityKey().ConfigureAwait(false);
+
+                UpdateStatus(DiscoveryStatus.Succeeded);
+                return result;
+            }
+            catch (Exception exception)
+            {
+                result.Error = exception;
+                UpdateStatus(exception is OperationCanceledException 
+                    ? DiscoveryStatus.Cancelled : DiscoveryStatus.Error);
+                throw;
+            }
+            finally
+            {
+                if (connectionId != Guid.Empty) await StopConnection(connectionId).ConfigureAwait(false);
+                _replyResponseTimeout = origResponseTimeout;
+            }
+
+            // ReSharper enable AccessToModifiedClosure
+        }
+
         private void OnConnectionStatusChanged(Guid connectionId, byte address, bool isConnected,
             bool isSecureChannelEstablished)
         {
-            var handler = ConnectionStatusChanged;
-            handler?.Invoke(this,
+            ConnectionStatusChanged?.Invoke(this,
                 new ConnectionStatusEventArgs(connectionId, address, isConnected, isSecureChannelEstablished));
         }
 
