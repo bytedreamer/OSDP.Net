@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
@@ -79,8 +78,8 @@ namespace OSDP.Net.Tests
             var id = panel.StartConnection(mockConnection.Object);
 
             // Act/Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => panel.StartConnection(mockConnection.Object), "");
-            Assert.That(ex?.Message, Is.EqualTo(
+            var exception = Assert.Throws<InvalidOperationException>(() => panel.StartConnection(mockConnection.Object), "");
+            Assert.That(exception?.Message, Is.EqualTo(
                 $"The IOsdpConnection is already active in connection {id}. " +
                     "That connection must be stopped before starting a new one."));
         }
@@ -89,13 +88,14 @@ namespace OSDP.Net.Tests
         public void StartSameConnectionConcurrentlyShouldOnlyStartItOnce()
         {
             // Arrange
-            var connection = new TestConnection();
+            var mockConnection = new MockConnection();
+            var instance = mockConnection.Object;
             var panel = new ControlPanel();
 
             // Act
             var tasks = Enumerable
                 .Range(0, 100)
-                .Select(_ => Task.Run(() => panel.StartConnection(connection)))
+                .Select(_ => Task.Run(() => panel.StartConnection(instance)))
                 .ToArray();
             try
             {
@@ -105,17 +105,17 @@ namespace OSDP.Net.Tests
             catch { /* We handle errors later */ }
 
             // Assert
-            Assert.That(tasks.Where(t => t.Status == TaskStatus.RanToCompletion).Count(), Is.EqualTo(1));
-            Assert.That(tasks.Where(t => t.Status == TaskStatus.Faulted).Count(), Is.EqualTo(99));
+            Assert.That(tasks.Count(t => t.Status == TaskStatus.RanToCompletion), Is.EqualTo(1));
+            Assert.That(tasks.Count(t => t.Status == TaskStatus.Faulted), Is.EqualTo(99));
         }
 
         [Test]
         public void StopSameConnectionConcurrentlyShouldSucceed()
         {
             // Arrange
-            var connection = new TestConnection();
+            var mockConnection = new MockConnection();
             var panel = new ControlPanel();
-            var id = panel.StartConnection(connection);
+            var id = panel.StartConnection(mockConnection.Object);
 
             // Act
             var tasks = Enumerable
@@ -130,34 +130,33 @@ namespace OSDP.Net.Tests
             catch { /* We handle errors later */ }
 
             // Assert
-            Assert.That(tasks.Where(t => t.Status == TaskStatus.RanToCompletion).Count(), Is.EqualTo(100));
+            Assert.That(tasks.Count(t => t.Status == TaskStatus.RanToCompletion), Is.EqualTo(100));
         }
 
         [Test]
         public async Task StartConnectionThatIsClosingShouldFail()
         {
             // Arrange
-            var connection = new TestConnection();
-            var openReachedEvent = new AutoResetEvent(false);
+            var mockConnection = new MockConnection();
             var openCompleteEvent = new AutoResetEvent(false);
-            connection.OpenAction = () => { openReachedEvent.Set(); openCompleteEvent.WaitOne(); };
             var panel = new ControlPanel();
-            var id1 = panel.StartConnection(connection);
+            var id1 = panel.StartConnection(mockConnection.Object);
 
             // Act - Wait for the poll thread to reach open
-            openReachedEvent.WaitOne();
+            await TaskEx.WaitUntil(() => mockConnection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
+                TimeSpan.FromSeconds(3));
             // Act - Initiate stop
             var stopTask = panel.StopConnection(id1);
 
             // Assert - Trying to start the connection while it's stopping fails
-            Assert.Throws<InvalidOperationException>(() => panel.StartConnection(connection));
+            Assert.Throws<InvalidOperationException>(() => panel.StartConnection(mockConnection.Object));
 
             // Act - Wait for the close to complete
             openCompleteEvent.Set();
             await stopTask;
 
             // Act - Starting again once the close is finished is ok.
-            var id2 = panel.StartConnection(connection);
+            var id2 = panel.StartConnection(mockConnection.Object);
 
             // Assert - A new connection was created
             Assert.That(id1, Is.Not.EqualTo(id2));
@@ -166,8 +165,6 @@ namespace OSDP.Net.Tests
             openCompleteEvent.Set();
             await panel.StopConnection(id2);
         }
-
-
 
         [Test]
         public async Task StartConnectionRestartWithSameConnectionTest()
@@ -191,19 +188,19 @@ namespace OSDP.Net.Tests
         public async Task StopConnectionTest()
         {
             // Arrange
-            var connection = new TestConnection();
+            var mockConnection = new MockConnection();
             var panel = new ControlPanel();
 
-            Guid id = panel.StartConnection(connection);
+            Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
 
             // Act
             await panel.StopConnection(id);
 
             // Assert
-            await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
+            await TaskEx.WaitUntil(() => mockConnection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
                 TimeSpan.FromSeconds(3));
-            await TaskEx.WaitUntil(() => connection.NumberOfTimesCalledClose == 1, TimeSpan.FromMilliseconds(100),
+            await TaskEx.WaitUntil(() => mockConnection.NumberOfTimesCalledClose == 1, TimeSpan.FromMilliseconds(100),
                 TimeSpan.FromSeconds(3));
         }
 
@@ -254,56 +251,10 @@ namespace OSDP.Net.Tests
 
         }
 
-        class TestConnection : IOsdpConnection
+        private class MockConnection : Mock<IOsdpConnection>
         {
-            private readonly MemoryStream _stream = new MemoryStream();
-
-            public int NumberOfTimesCalledClose { get; private set; }
-
-            public int NumberOfTimesCalledOpen { get; private set; }
-
-            public int BaudRate => 9600;
-
-            public bool IsOpen { get; private set; }
-
-            public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromSeconds(1);
-
-            public void Open()
-            {
-                NumberOfTimesCalledOpen++;
-                IsOpen = true;
-                OpenAction();
-            }
-
-            public Action OpenAction { get; set; } = () => { };
-
-            public void Close()
-            {
-                NumberOfTimesCalledClose++;
-                IsOpen = false;
-            }
-
-            public async Task WriteAsync(byte[] buffer)
-            {
-                await _stream.FlushAsync();
-
-                await _stream.WriteAsync(
-                    new AckReply().BuildReply(0, 
-                        new Control((byte) (buffer[4] & 0x03), true, false)));
-
-                _stream.Position = 0;
-            }
-
-            public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
-            {
-                return await _stream.ReadAsync(buffer, 0, buffer.Length, token);
-            }
-        }
-
-        class MockConnection : Mock<IOsdpConnection>
-        {
-            static readonly byte[] PollCommandBytes = new byte[] { 255, 83, 0, 8, 0, 4, 96, 235, 170 };
-            static readonly byte[] AckReplyBytes = new byte[] { 83, 128, 8, 0, 5, 64, 104, 159 };
+            static readonly byte[] PollCommandBytes = { 255, 83, 0, 8, 0, 4, 96, 235, 170 };
+            static readonly byte[] AckReplyBytes = { 83, 128, 8, 0, 5, 64, 104, 159 };
 
             public MockConnection() : base(MockBehavior.Strict)
             {

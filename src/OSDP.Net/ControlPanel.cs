@@ -26,6 +26,7 @@ namespace OSDP.Net
     {
         private const byte ConfigurationAddress = 0x7f;
 
+        private readonly object _lockBusCreation = new ();
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new();
@@ -101,10 +102,10 @@ namespace OSDP.Net
         private Bus CreateBus(IOsdpConnection connection, TimeSpan pollInterval, Action<TraceEntry> tracer)
         {
             // Lock while we check/create the bus. This is a very quick operation so the lock is not a performance problem.
-            lock (_buses)
+            lock (_lockBusCreation)
             {
                 var existingBusWithThisConnection = _buses.Values
-                    .FirstOrDefault(b => b.Connection == connection);
+                    .FirstOrDefault(bus => bus.Connection == connection);
                 if (existingBusWithThisConnection != null)
                     throw new InvalidOperationException(
                         $"The IOsdpConnection is already active in connection {existingBusWithThisConnection.Id}. " +

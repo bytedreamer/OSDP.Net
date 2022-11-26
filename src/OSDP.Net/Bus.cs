@@ -22,6 +22,7 @@ namespace OSDP.Net
         private const byte DriverByte = 0xFF;
 
         public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
+        
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
@@ -153,20 +154,19 @@ namespace OSDP.Net
         /// <returns></returns>
         public void StartPolling()
         {
-            if(_pollingTask == null)
-            { 
-                _isShuttingDown = false;
-                _pollingTask = Task.Run(async () => {
-                    try
-                    {
-                        await PollingLoop();
-                    }
-                    catch(Exception exception)
-                    {
-                        _logger?.LogError(exception, $"Unexpected exception in polling loop. Conn:{Id}.");
-                    }
-                });
-            }
+            if (_pollingTask != null) return;
+            
+            _isShuttingDown = false;
+            _pollingTask = Task.Run(async () => {
+                try
+                {
+                    await PollingLoop();
+                }
+                catch(Exception exception)
+                {
+                    _logger?.LogError(exception, $"Unexpected exception in polling loop. Conn:{Id}.");
+                }
+            });
         }
 
         /// <summary>
