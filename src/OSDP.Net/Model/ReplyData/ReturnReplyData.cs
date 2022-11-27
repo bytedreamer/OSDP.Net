@@ -9,9 +9,6 @@ namespace OSDP.Net.Model.ReplyData
         /// True if Ack reply is returned
         public bool Ack { get; internal set; }
 
-        /// Contains Nak reply data if returned
-        public Nak Nak { get; internal set; }
-
         /// Contains expected reply data type if returned
         public T ReplyData { get; internal set; }
 
@@ -23,7 +20,7 @@ namespace OSDP.Net.Model.ReplyData
                 return "Ack";
             }
 
-            return Nak != null ? Nak.ToString() : ReplyData?.ToString();
+            return ReplyData?.ToString();
         }
     }
 }

@@ -33,7 +33,7 @@ namespace OSDP.Net.Model.ReplyData
             var build = new StringBuilder();
             foreach (var readerStatuses in ReaderTamperStatuses)
             {
-                build.AppendLine($"Reader Number {readerNumber++:00}: {Message.SplitCamelCase(readerStatuses.ToString())}");
+                build.AppendLine($"Reader Number {readerNumber++:00}: {Helpers.SplitCamelCase(readerStatuses.ToString())}");
             }
 
             return build.ToString();

@@ -22,6 +22,7 @@ namespace OSDP.Net
         private const byte DriverByte = 0xFF;
 
         public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
+        
         private readonly SortedSet<Device> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
@@ -153,18 +154,26 @@ namespace OSDP.Net
         /// <returns></returns>
         public void StartPolling()
         {
-            if(_pollingTask == null)
-            { 
-                _isShuttingDown = false;
-                _pollingTask = Task.Run(() => StartPollingAsync());
-            }
+            if (_pollingTask != null) return;
+            
+            _isShuttingDown = false;
+            _pollingTask = Task.Run(async () => {
+                try
+                {
+                    await PollingLoop();
+                }
+                catch(Exception exception)
+                {
+                    _logger?.LogError(exception, $"Unexpected exception in polling loop. Conn:{Id}.");
+                }
+            });
         }
 
         /// <summary>
         /// Poll the the devices on the bus
         /// </summary>
         /// <returns></returns>
-        private async Task StartPollingAsync()
+        private async Task PollingLoop()
         {
             DateTime lastMessageSentTime = DateTime.MinValue;
             using var delayTime = new AutoResetEvent(false);
@@ -388,7 +397,7 @@ namespace OSDP.Net
             if (reply.Type == ReplyType.Nak)
             {
                 var errorCode = (ErrorCode)reply.ExtractReplyData.First();
-                if (device.UseSecureChannel &&
+                if (device.IsSecurityEstablished &&
                     errorCode is ErrorCode.DoesNotSupportSecurityBlock or ErrorCode.CommunicationSecurityNotMet
                         or ErrorCode.UnableToProcessCommand ||
                     errorCode == ErrorCode.UnexpectedSequenceNumber && reply.Sequence > 0)
@@ -466,6 +475,10 @@ namespace OSDP.Net
             }
 
             var buffer = new byte[commandData.Length + 1];
+
+            // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
+            // accomplished by sending a character with all bits set to 1. The driver byte is required by
+            // converters and multiplexers to sense when line is idle.
             buffer[0] = DriverByte;
             Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
  
