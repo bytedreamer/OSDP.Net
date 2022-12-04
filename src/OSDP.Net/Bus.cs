@@ -32,10 +32,10 @@ namespace OSDP.Net
         private readonly TimeSpan _pollInterval;
         private readonly BlockingCollection<Reply> _replies;
         private readonly Action<TraceEntry> _tracer;
-        private readonly AutoResetEvent _commandAvailableEvent = new AutoResetEvent(false);
-
-        private bool _isShuttingDown;
-        private Task _pollingTask;
+        private readonly AutoResetEvent _commandAvailableEvent = new (false);
+        private readonly AutoResetEvent _shutdownComplete = new (false);
+        
+        private CancellationTokenSource _cancellationTokenSource;
 
         public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
             Action<TraceEntry> tracer,
@@ -66,6 +66,9 @@ namespace OSDP.Net
 
         public void Dispose()
         {
+            _shutdownComplete?.Dispose();
+            _commandAvailableEvent?.Dispose();
+            _cancellationTokenSource?.Dispose();
         }
 
         private TimeSpan IdleLineDelay(int numberOfBytes)
@@ -77,13 +80,16 @@ namespace OSDP.Net
         /// Closes down the connection
         /// </summary>
         public async Task Close()
-        {
-            if (_pollingTask != null)
+        {            
+            var cancellationTokenSource = _cancellationTokenSource;
+            if (cancellationTokenSource != null)
             {
-                _isShuttingDown = true;
-                await _pollingTask;
-                _pollingTask = null;
+                cancellationTokenSource.Cancel();
+                _shutdownComplete.WaitOne(TimeSpan.FromSeconds(1));
+                _cancellationTokenSource = null;
             }
+
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         /// <summary>
@@ -154,31 +160,37 @@ namespace OSDP.Net
         /// <returns></returns>
         public void StartPolling()
         {
-            if (_pollingTask != null) return;
+            var cancellationTokenSource = _cancellationTokenSource;
+            if (cancellationTokenSource != null) return;
+            _cancellationTokenSource = cancellationTokenSource = new CancellationTokenSource();
             
-            _isShuttingDown = false;
-            _pollingTask = Task.Run(async () => {
+            Task.Factory.StartNew(async () =>
+            {
                 try
                 {
-                    await PollingLoop();
+                    await PollingLoop(cancellationTokenSource.Token).ConfigureAwait(false);
                 }
                 catch(Exception exception)
                 {
-                    _logger?.LogError(exception, $"Unexpected exception in polling loop. Conn:{Id}.");
+                    _logger?.LogError(exception, $"Unexpected exception in polling loop. Connection ID:{Id}.");
                 }
-            });
+                finally
+                {
+                    _shutdownComplete.Set();
+                }
+            }, TaskCreationOptions.LongRunning);
         }
 
         /// <summary>
         /// Poll the the devices on the bus
         /// </summary>
         /// <returns></returns>
-        private async Task PollingLoop()
+        private async Task PollingLoop(CancellationToken cancellationToken)
         {
             DateTime lastMessageSentTime = DateTime.MinValue;
             using var delayTime = new AutoResetEvent(false);
             
-            while (!_isShuttingDown)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 if (!Connection.IsOpen)
                 {
@@ -259,7 +271,7 @@ namespace OSDP.Net
 
                     try
                     {
-                        reply = await SendCommandAndReceiveReply(command, device).ConfigureAwait(false);
+                        reply = await SendCommandAndReceiveReply(command, device, cancellationToken).ConfigureAwait(false);
 
                         // Prevent plain text message replies when secure channel has been established
                         // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
@@ -292,7 +304,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        if (!_isShuttingDown)
+                        if (!cancellationToken.IsCancellationRequested)
                         {
                             _logger?.LogError(exception,
                                 $"Error while sending command {command} to address {command.Address}. Connection {Id}");
@@ -461,7 +473,7 @@ namespace OSDP.Net
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
-        private async Task<Reply> SendCommandAndReceiveReply(Command command, Device device)
+        private async Task<Reply> SendCommandAndReceiveReply(Command command, Device device, CancellationToken cancellationToken)
         {
             byte[] commandData;
             try
@@ -489,24 +501,24 @@ namespace OSDP.Net
             using var delayTime = new AutoResetEvent(false);
             delayTime.WaitOne(IdleLineDelay(buffer.Length));
 
-            return await ReceiveReply(command, device);
+            return await ReceiveReply(command, device, cancellationToken);
         }
 
-        private async Task<Reply> ReceiveReply(Command command, Device device)
+        private async Task<Reply> ReceiveReply(Command command, Device device, CancellationToken cancellationToken)
         {
             var replyBuffer = new Collection<byte>();
 
-            if (!await WaitForStartOfMessage(replyBuffer, device.IsSendingMultiMessage).ConfigureAwait(false))
+            if (!await WaitForStartOfMessage(replyBuffer, device.IsSendingMultiMessage, cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message");
             }
 
-            if (!await WaitForMessageLength(replyBuffer).ConfigureAwait(false))
+            if (!await WaitForMessageLength(replyBuffer, cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message length");
             }
 
-            if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer)).ConfigureAwait(false))
+            if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer), cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
@@ -521,7 +533,7 @@ namespace OSDP.Net
             return Message.ConvertBytesToUnsignedShort(new[] {replyBuffer[2], replyBuffer[3]});
         }
 
-        private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength)
+        private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength, CancellationToken cancellationToken)
         {
             while (replyBuffer.Count < replyLength)
             {
@@ -529,7 +541,8 @@ namespace OSDP.Net
                 int remainingLength = replyLength - replyBuffer.Count;
                 byte[] readBuffer = new byte[Math.Min(maxReadBufferLength, remainingLength)];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout +  IdleLineDelay(readBuffer.Length))
+                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout + IdleLineDelay(readBuffer.Length),
+                            cancellationToken)
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
@@ -547,13 +560,13 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<bool> WaitForMessageLength(ICollection<byte> replyBuffer)
+        private async Task<bool> WaitForMessageLength(ICollection<byte> replyBuffer, CancellationToken cancellationToken)
         {
             while (replyBuffer.Count < 4)
             {
                 byte[] readBuffer = new byte[4];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout)
+                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout, cancellationToken)
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
@@ -571,13 +584,14 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<bool> WaitForStartOfMessage(ICollection<byte> replyBuffer, bool waitLonger)
+        private async Task<bool> WaitForStartOfMessage(ICollection<byte> replyBuffer, bool waitLonger, CancellationToken cancellationToken)
         {
             while (true)
             {
                 byte[] readBuffer = new byte[1];
                 int bytesRead = await TimeOutReadAsync(readBuffer,
-                        Connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero))
+                        Connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero),
+                        cancellationToken)
                     .ConfigureAwait(false);
                 if (bytesRead == 0)
                 {
@@ -596,12 +610,14 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<int> TimeOutReadAsync(byte[] buffer, TimeSpan timeout)
+        private async Task<int> TimeOutReadAsync(byte[] buffer, TimeSpan timeout, CancellationToken cancellationToken)
         {
-            using var cancellationTokenSource = new CancellationTokenSource(timeout);
+            using var timedCancellationTokenSource = new CancellationTokenSource(timeout);
+            using var linkedCancellationTokenSource =
+                CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timedCancellationTokenSource.Token);
             try
             {
-                return await Connection.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
+                return await Connection.ReadAsync(buffer, linkedCancellationTokenSource.Token).ConfigureAwait(false);
             }
             catch
             {

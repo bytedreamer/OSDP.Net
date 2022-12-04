@@ -138,7 +138,7 @@ namespace OSDP.Net
             // No worries, the method is reentrant. All threads will complete safely.
 
             bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
-            await bus.Close();
+            await bus.Close().ConfigureAwait(false);
 
             foreach (byte address in bus.ConfigureDeviceAddresses)
             {
@@ -929,7 +929,7 @@ namespace OSDP.Net
             foreach (var bus in _buses.Values)
             {
                 bus.ConnectionStatusChanged -= BusOnConnectionStatusChanged;
-                await bus.Close();
+                await bus.Close().ConfigureAwait(false);
                 
                 foreach (byte address in bus.ConfigureDeviceAddresses)
                 {
@@ -939,9 +939,9 @@ namespace OSDP.Net
             }
             _buses.Clear();
 
-            foreach (var pivDataLock in _requestLocks.Values)
+            foreach (var requestLock in _requestLocks.Values)
             {
-                pivDataLock.Dispose();
+                requestLock.Dispose();
             }
             _requestLocks.Clear();
         }
@@ -1112,13 +1112,13 @@ namespace OSDP.Net
 
             async Task CheckForDefaultSecurityKey()
             {
-                var waitForConnectSource = new TaskCompletionSource<bool>();
+                var waitForSecureConnection = new TaskCompletionSource<bool>();
 
                 void HandleStatusChange(object sender, ConnectionStatusEventArgs args)
                 {
-                    if (args.Address == result.Address && args.IsConnected) 
+                    if (args.Address == result.Address && args.IsConnected && args.IsSecureChannelEstablished)
                     {
-                        waitForConnectSource.SetResult(true);
+                        waitForSecureConnection.SetResult(true);
                     }
                 }
 
@@ -1130,12 +1130,13 @@ namespace OSDP.Net
                     // though internally the bus knows it got an error response from the device. Until underlying APIs give
                     // us that data, the best we can do here is wait for a successful connection and timeout when one 
                     // isn't established
-                    connectionId = StartConnection(result.Connection, Bus.DefaultPollInterval, options.Tracer ?? (_ => { }));
+                    connectionId = StartConnection(result.Connection, Bus.DefaultPollInterval,
+                        options.Tracer ?? (_ => { }));
                     AddDevice(connectionId, result.Address, true, true);
 
-                    var res = await Task.WhenAny(
-                        waitForConnectSource.Task, Task.Delay(TimeSpan.FromSeconds(8), options.CancellationToken));
-                    result.UsesDefaultSecurityKey = (res == waitForConnectSource.Task);
+                    using var waitForTask = await Task.WhenAny(waitForSecureConnection.Task,
+                        Task.Delay(TimeSpan.FromSeconds(8), options.CancellationToken));
+                    result.UsesDefaultSecurityKey = waitForTask == waitForSecureConnection.Task;
                 }
                 finally
                 {
