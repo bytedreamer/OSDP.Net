@@ -134,39 +134,6 @@ namespace OSDP.Net.Tests
         }
 
         [Test]
-        public async Task StartConnectionThatIsClosingShouldFail()
-        {
-            // Arrange
-            var mockConnection = new MockConnection();
-            var openCompleteEvent = new AutoResetEvent(false);
-            var panel = new ControlPanel();
-            var id1 = panel.StartConnection(mockConnection.Object);
-
-            // Act - Wait for the poll thread to reach open
-            await TaskEx.WaitUntil(() => mockConnection.NumberOfTimesCalledOpen == 1, TimeSpan.FromMilliseconds(100),
-                TimeSpan.FromSeconds(3));
-            // Act - Initiate stop
-            var stopTask = panel.StopConnection(id1);
-
-            // Assert - Trying to start the connection while it's stopping fails
-            Assert.Throws<InvalidOperationException>(() => panel.StartConnection(mockConnection.Object));
-
-            // Act - Wait for the close to complete
-            openCompleteEvent.Set();
-            await stopTask;
-
-            // Act - Starting again once the close is finished is ok.
-            var id2 = panel.StartConnection(mockConnection.Object);
-
-            // Assert - A new connection was created
-            Assert.That(id1, Is.Not.EqualTo(id2));
-
-            // Finish up.
-            openCompleteEvent.Set();
-            await panel.StopConnection(id2);
-        }
-
-        [Test]
         public async Task StartConnectionRestartWithSameConnectionTest()
         {
             // Arrange
@@ -288,7 +255,7 @@ namespace OSDP.Net.Tests
             /// Number of times the Close method is called
             /// </summary>
             public int NumberOfTimesCalledClose { get; private set; }
-
+            
             public class ExpectedCommand
             {
                 public ExpectedCommand(MockConnection parent, byte[] commandBytes)
