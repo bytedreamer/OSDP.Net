@@ -83,7 +83,8 @@ namespace OSDP.Net
             
             if (isPolling)
             {
-                if (MessageControl.Sequence == 0)
+                // Don't send clear text polling if using secure channel
+                if (MessageControl.Sequence == 0 && !UseSecureChannel)
                 {
                     return new PollCommand(Address);
                 }
