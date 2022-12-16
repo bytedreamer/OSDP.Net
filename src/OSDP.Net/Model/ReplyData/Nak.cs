@@ -9,13 +9,20 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// A negative reply.
     /// </summary>
-    public class Nak
+    public class Nak : ReplyData
     {
         /// <summary>
         /// Prevents a default instance of the <see cref="Nak"/> class from being created.
         /// </summary>
         private Nak()
         {
+        }
+
+        public Nak(ErrorCode errorCode)
+        {
+            // TODO: make this guy accept extra data, if/when we need to return that
+
+            ErrorCode = errorCode;
         }
 
         /// <summary>
@@ -27,6 +34,8 @@ namespace OSDP.Net.Model.ReplyData
         /// Gets the extra data.
         /// </summary>
         public IEnumerable<byte> ExtraData { get; private set;  }
+
+        public override ReplyType ReplyType => ReplyType.Nak;
 
         /// <summary>
         /// Parses the data.
@@ -49,6 +58,15 @@ namespace OSDP.Net.Model.ReplyData
             };
 
             return nak;
+        }
+
+        public override byte[] BuildData(bool withPadding)
+        {
+            // TODO: for now we don't support extra data (see constructor) and that's okay
+            var buffer = new byte[withPadding ? 16 : 1];
+            buffer[0] = (byte)ErrorCode;
+            if (withPadding) buffer[1] = Message.FirstPaddingByte;
+            return buffer;
         }
 
         /// <inheritdoc />

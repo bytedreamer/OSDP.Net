@@ -1,3 +1,4 @@
+using OSDP.Net.Messages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +9,9 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// The PD device capabilities data sent as a reply.
     /// </summary>
-    public class DeviceCapabilities
+    public class DeviceCapabilities : ReplyData
     {
-        private DeviceCapabilities()
+        public DeviceCapabilities()
         {
         }
 
@@ -18,6 +19,8 @@ namespace OSDP.Net.Model.ReplyData
         /// Gets the all the PD's device capabilities.
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
+
+        public override ReplyType ReplyType => ReplyType.PdCapabilitiesReport;
 
         /// <summary>
         /// Gets a specific PD capability
@@ -68,6 +71,17 @@ namespace OSDP.Net.Model.ReplyData
             }
 
             return build.ToString();
+        }
+
+        public override byte[] BuildData(bool withPadding = false)
+        {
+            // TODO: Implement this for non-zero capabilities
+            if (Capabilities != null && Capabilities.Any())
+            {
+                throw new NotImplementedException();
+            }
+
+            return Array.Empty<byte>();
         }
     }
 }

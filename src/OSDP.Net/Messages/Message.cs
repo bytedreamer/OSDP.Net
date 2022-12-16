@@ -10,7 +10,11 @@ namespace OSDP.Net.Messages
     /// </summary>
     public abstract class Message
     {
-        internal const byte StartOfMessage = 0x53;
+        public const byte AddressMask = 0x7F;
+        public const byte StartOfMessage = 0x53;
+        public const ushort MsgTypeIndex = 5;
+        public const ushort MacSize = 4;
+        public const int FirstPaddingByte = 0x80;
 
         private static readonly ushort[] CrcTable =
         {

@@ -6,10 +6,8 @@ namespace OSDP.Net.Messages.ACU
 {
     internal abstract class Reply : Message
     {
-        private const byte AddressMask = 0x7F;
         private const ushort ReplyMessageHeaderSize = 6;
-        private const ushort ReplyTypeIndex = 5;
-        private const ushort MacSize = 4;
+
 
         private readonly Command _issuingCommand;
 
@@ -33,7 +31,7 @@ namespace OSDP.Net.Messages.ACU
                 Mac = data.Slice(messageLength, MacSize).ToArray();
             }
 
-            Type = (ReplyType)data[ReplyTypeIndex + secureBlockSize];
+            Type = (ReplyType)data[MsgTypeIndex + secureBlockSize];
 
             ExtractReplyData = data.Slice(ReplyMessageHeaderSize + secureBlockSize, data.Length -
                 ReplyMessageHeaderSize - secureBlockSize - replyMessageFooterSize -
