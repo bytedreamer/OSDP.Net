@@ -1,6 +1,6 @@
 using System;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal class KeepReaderActiveCommand : Command
     {
@@ -16,7 +16,7 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return Message.ConvertShortToBytes(_keepAliveTimeInMilliseconds);
+            return ConvertShortToBytes(_keepAliveTimeInMilliseconds);
         }
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()

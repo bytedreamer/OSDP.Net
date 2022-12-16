@@ -2,19 +2,19 @@ using System;
 using System.Linq;
 using OSDP.Net.Model.CommandData;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
-    internal class CommunicationSetCommand : Command
+    internal class OutputControlCommand : Command
     {
-        private readonly CommunicationConfiguration _communicationConfiguration;
+        private readonly OutputControls _outputControls;
 
-        public CommunicationSetCommand(byte address, CommunicationConfiguration communicationConfiguration)
+        public OutputControlCommand(byte address, OutputControls outputControls)
         {
-            _communicationConfiguration = communicationConfiguration;
+            _outputControls = outputControls;
             Address = address;
         }
 
-        protected override byte CommandCode => 0x6E;
+        protected override byte CommandCode => 0x68;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
@@ -27,12 +27,12 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _communicationConfiguration.BuildData().ToArray();
+            return _outputControls.BuildData().ToArray();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-            
+
         }
     }
 }

@@ -2,19 +2,19 @@ using System;
 using System.Linq;
 using OSDP.Net.Model.CommandData;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
-    internal class ReaderTextOutputCommand : Command
+    internal class ReaderBuzzerControlCommand : Command
     {
-        private readonly ReaderTextOutput _readerTextOutput;
+        private readonly ReaderBuzzerControl _readerBuzzerControl;
 
-        public ReaderTextOutputCommand(byte address, ReaderTextOutput readerTextOutput)
+        public ReaderBuzzerControlCommand(byte address, ReaderBuzzerControl readerBuzzerControl)
         {
-            _readerTextOutput = readerTextOutput;
+            _readerBuzzerControl = readerBuzzerControl;
             Address = address;
         }
 
-        protected override byte CommandCode => 0x6B;
+        protected override byte CommandCode => 0x6A;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
@@ -27,12 +27,12 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _readerTextOutput.BuildData().ToArray();
+            return _readerBuzzerControl.BuildData().ToArray();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-            
+
         }
     }
 }

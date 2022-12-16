@@ -1,20 +1,15 @@
 using System;
-using System.Linq;
-using OSDP.Net.Model.CommandData;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
-    internal class OutputControlCommand : Command
+    internal class IdReportCommand : Command
     {
-        private readonly OutputControls _outputControls;
-
-        public OutputControlCommand(byte address, OutputControls outputControls)
+        public IdReportCommand(byte address)
         {
-            _outputControls = outputControls;
             Address = address;
         }
 
-        protected override byte CommandCode => 0x68;
+        protected override byte CommandCode => 0x61;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
@@ -27,12 +22,11 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _outputControls.BuildData().ToArray();
+            return new byte[] { 0x00 };
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-            
         }
     }
 }

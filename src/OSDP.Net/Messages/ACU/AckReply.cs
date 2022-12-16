@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal class AckReply : Reply
     {

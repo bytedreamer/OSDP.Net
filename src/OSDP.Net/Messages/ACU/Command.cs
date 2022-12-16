@@ -3,7 +3,7 @@ using System.Buffers;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("OSDP.Net.Tests")]
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     /// <summary>
     /// A command sent to the PD.
@@ -39,8 +39,8 @@ namespace OSDP.Net.Messages
                 var combined = EncryptData(header, device);
 
                 // include mac and crc in length before generating mac
-                ushort macAndChecksumLength = (ushort) (4 + (device.MessageControl.UseCrc ? 2 : 1));
-                
+                ushort macAndChecksumLength = (ushort)(4 + (device.MessageControl.UseCrc ? 2 : 1));
+
                 AddPacketLength(combined, macAndChecksumLength);
 
                 var mac = device.GenerateMac(combined, true).Slice(0, 4);
@@ -89,7 +89,7 @@ namespace OSDP.Net.Messages
             }
 
             AddPacketLength(command);
-            
+
             if (device.MessageControl.UseCrc)
             {
                 AddCrc(command);
@@ -107,7 +107,7 @@ namespace OSDP.Net.Messages
         private Span<byte> BuildHeader(Device device)
         {
             const int startOfMessageLength = 5;
-            
+
             var securityControlBlock = device.MessageControl.HasSecurityControlBlock
                 ? SecurityControlBlock()
                 : ReadOnlySpan<byte>.Empty;
@@ -119,7 +119,7 @@ namespace OSDP.Net.Messages
             try
             {
                 var cursor = buffer.Memory.Span;
-                
+
                 cursor[0] = StartOfMessage;
                 cursor[1] = Address;
                 cursor[4] = device.MessageControl.ControlByte;
@@ -141,15 +141,15 @@ namespace OSDP.Net.Messages
         private Span<byte> EncryptData(ReadOnlySpan<byte> header, Device device)
         {
             var encryptedData = EncryptedData(device);
-            
-            int totalLength = header.Length + encryptedData.Length ;
+
+            int totalLength = header.Length + encryptedData.Length;
             var pool = MemoryPool<byte>.Shared;
             var buffer = pool.Rent(totalLength);
 
             try
             {
                 var cursor = buffer.Memory.Span;
-                
+
                 header.CopyTo(cursor);
                 cursor = cursor.Slice(header.Length);
 

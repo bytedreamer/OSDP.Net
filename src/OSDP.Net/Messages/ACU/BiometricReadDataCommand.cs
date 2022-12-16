@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using OSDP.Net.Model.CommandData;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal class BiometricReadDataCommand : Command
     {

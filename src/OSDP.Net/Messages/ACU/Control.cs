@@ -1,4 +1,4 @@
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal class Control
     {
@@ -18,7 +18,7 @@ namespace OSDP.Net.Messages
         public bool HasSecurityControlBlock => !IsSendingMultiMessageNoSecureChannel && _hasSecurityControlBlock;
 
         public byte ControlByte =>
-            (byte) (Sequence & 0x03 | (UseCrc ? 0x04 : 0) | (HasSecurityControlBlock ? 0x08 : 0));
+            (byte)(Sequence & 0x03 | (UseCrc ? 0x04 : 0) | (HasSecurityControlBlock ? 0x08 : 0));
 
         public bool IsSendingMultiMessageNoSecureChannel { get; set; }
 

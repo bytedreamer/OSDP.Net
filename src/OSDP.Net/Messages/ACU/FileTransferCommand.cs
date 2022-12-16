@@ -1,20 +1,19 @@
 using System;
-using System.Linq;
 using OSDP.Net.Model.CommandData;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
-    internal class ReaderBuzzerControlCommand : Command
+    internal class FileTransferCommand : Command
     {
-        private readonly ReaderBuzzerControl _readerBuzzerControl;
+        private readonly FileTransferFragment _fileTransferFragment;
 
-        public ReaderBuzzerControlCommand(byte address, ReaderBuzzerControl readerBuzzerControl)
+        public FileTransferCommand(byte address, FileTransferFragment fileTransferFragment)
         {
-            _readerBuzzerControl = readerBuzzerControl;
             Address = address;
+            _fileTransferFragment = fileTransferFragment;
         }
 
-        protected override byte CommandCode => 0x6A;
+        protected override byte CommandCode => 0x7C;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
@@ -27,12 +26,12 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _readerBuzzerControl.BuildData().ToArray();
+            return _fileTransferFragment.BuildData().ToArray();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-            
+
         }
     }
 }

@@ -1,15 +1,19 @@
-using System;
+﻿using System;
+using OSDP.Net.Model.CommandData;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
-    internal class DeviceCapabilitiesCommand : Command
+    internal class GetPIVDataCommand : Command
     {
-        public DeviceCapabilitiesCommand(byte address)
+        private readonly GetPIVData _getPivData;
+
+        public GetPIVDataCommand(byte address, GetPIVData getPivData)
         {
+            _getPivData = getPivData;
             Address = address;
         }
 
-        protected override byte CommandCode => 0x62;
+        protected override byte CommandCode => 0xA3;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
@@ -22,12 +26,11 @@ namespace OSDP.Net.Messages
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return new byte[] { 0x00 };
+            return _getPivData.BuildData();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-            
         }
     }
 }

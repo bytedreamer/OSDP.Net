@@ -1,6 +1,6 @@
 using System;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal class ServerCryptogramCommand : Command
     {

@@ -1,15 +1,15 @@
 using System;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
-    internal class InputStatusReportCommand : Command
+    internal class ReaderStatusReportCommand : Command
     {
-        public InputStatusReportCommand(byte address)
+        public ReaderStatusReportCommand(byte address)
         {
             Address = address;
         }
 
-        protected override byte CommandCode => 0x65;
+        protected override byte CommandCode => 0x67;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal abstract class Reply : Message
     {
@@ -38,7 +38,7 @@ namespace OSDP.Net.Messages
             ExtractReplyData = data.Slice(ReplyMessageHeaderSize + secureBlockSize, data.Length -
                 ReplyMessageHeaderSize - secureBlockSize - replyMessageFooterSize -
                 (IsSecureMessage ? MacSize : 0)).ToArray();
-            if (SecurityBlockType == (byte)OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity)
+            if (SecurityBlockType == (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity)
             {
                 ExtractReplyData = DecryptData(device).ToArray();
             }
@@ -62,10 +62,10 @@ namespace OSDP.Net.Messages
 
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {
-            (byte)OSDP.Net.Messages.SecurityBlockType.CommandMessageWithNoDataSecurity,
-            (byte)OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity,
-            (byte)OSDP.Net.Messages.SecurityBlockType.CommandMessageWithDataSecurity,
-            (byte)OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity,
+            (byte)Messages.SecurityBlockType.CommandMessageWithNoDataSecurity,
+            (byte)Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity,
+            (byte)Messages.SecurityBlockType.CommandMessageWithDataSecurity,
+            (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity,
         };
 
         public ReplyType Type { get; }
@@ -75,7 +75,7 @@ namespace OSDP.Net.Messages
         public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType) && IsDataSecure;
 
         private bool IsDataSecure => ExtractReplyData == null || ExtractReplyData.Length == 0 || SecurityBlockType ==
-            (byte)OSDP.Net.Messages.SecurityBlockType.ReplyMessageWithDataSecurity;
+            (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity;
 
         protected abstract byte ReplyCode { get; }
 

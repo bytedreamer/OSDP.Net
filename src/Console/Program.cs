@@ -20,7 +20,7 @@ using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.PanelCommands.DeviceDiscover;
 using Terminal.Gui;
-using Command = OSDP.Net.Messages.Command;
+using Command = OSDP.Net.Messages.ACU.Command;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.CommandData.ManufacturerSpecific;
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal class SecurityInitializationRequestCommand : Command
     {
@@ -33,7 +33,7 @@ namespace OSDP.Net.Messages
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
         {
-            
+
         }
     }
 }

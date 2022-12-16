@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal class UnknownReply : Reply
     {
@@ -21,7 +21,7 @@ namespace OSDP.Net.Messages
         protected override IEnumerable<byte> SecurityControlBlock()
         {
             byte securityBlockLength = (byte)(SecureBlockData.Count() + 2);
-            var securityControlBlock = new List<byte> {SecurityBlockType, securityBlockLength};
+            var securityControlBlock = new List<byte> { SecurityBlockType, securityBlockLength };
             securityControlBlock.AddRange(SecureBlockData);
             return securityControlBlock;
         }

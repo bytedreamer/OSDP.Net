@@ -2,8 +2,8 @@
 using OSDP.Net.Model.CommandData;
 using System.Linq;
 
-namespace OSDP.Net.Messages
-{  
+namespace OSDP.Net.Messages.ACU
+{
     internal class ManufacturerSpecificCommand : Command
     {
         private readonly ManufacturerSpecific _manufacturerData;

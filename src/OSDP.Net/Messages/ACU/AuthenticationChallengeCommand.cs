@@ -1,7 +1,7 @@
 ﻿using System;
 using OSDP.Net.Model.CommandData;
 
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.ACU
 {
     internal class AuthenticationChallengeCommand : Command
     {
