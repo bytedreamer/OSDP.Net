@@ -9,25 +9,47 @@ using System.Threading.Tasks;
 
 namespace OSDP.Net.Messages.PD
 {
+    /// <summary>
+    /// Represents an outgoing reply (PD -> ACU) message
+    /// </summary>
     public class Reply : Message
     {
         private const int startOfMessageLength = 5;
+        private readonly IncomingMessage _issuingCommand;
+        private readonly ReplyData _data;
 
-        IncomingMessage _issuingCommand;
-        ReplyData _data;
-
+        /// <summary>
+        /// Creates a new instance of the Reply
+        /// </summary>
+        /// <param name="issuingCommand">Incoming command message that this is in reply to</param>
+        /// <param name="data">the payload portion of the reply message</param>
         public Reply(IncomingMessage issuingCommand, ReplyData data)
         {
             _issuingCommand = issuingCommand;
             _data = data;
         }
 
+        /// <summary>
+        /// Reply code of the message
+        /// </summary>
         public ReplyType Type => _data.ReplyType;
 
+        /// <summary>
+        /// Incoming command that this instance is replying to
+        /// </summary>
         public IncomingMessage IssuingCommand => _issuingCommand;
 
+        /// <summary>
+        /// Packs message information into a byte array
+        /// </summary>
+        /// <param name="channel">Message channel context</param>
+        /// <returns>Byte representation of the message that is ready to be sent over the
+        /// wire to the ACU</returns>
         public byte[] BuildReply(IMessageChannel channel)
         {
+            // TODO: Similar to IncomingMessage, it might make more sense for this code to 
+            // eventually end up in a new class called OutgoingMessage
+
             var payload = _data.BuildData(withPadding: channel.IsSecurityEstablished);
             bool isSecurityBlockPresent = channel.IsSecurityEstablished ||
                 _data.ReplyType == ReplyType.CrypticData || _data.ReplyType == ReplyType.InitialRMac;
@@ -66,13 +88,19 @@ namespace OSDP.Net.Messages.PD
             buffer[curLen] = (byte)_data.ReplyType;
             curLen++;
 
-            curLen += channel.PackPayload(payload, buffer.AsSpan(curLen));
-
             if (channel.IsSecurityEstablished)
             {
-                var mac = channel.GenerateMac(buffer.AsSpan(0, curLen), false).Slice(0, MacSize);
-                mac.CopyTo(buffer.AsSpan(curLen));
-                curLen += mac.Length;
+                channel.EncodePayload(payload, buffer.AsSpan(curLen));
+                curLen += payload.Length;
+                channel.GenerateMac(buffer.AsSpan(0, curLen), false)
+                    .Slice(0, MacSize)
+                    .CopyTo(buffer.AsSpan(curLen));
+                curLen += MacSize;
+            }
+            else
+            {
+                payload.CopyTo(buffer, curLen);
+                curLen += payload.Length;
             }
 
             // TODO: decide on CRC vs Checksum based on incoming command and do the same.
@@ -93,6 +121,7 @@ namespace OSDP.Net.Messages.PD
             return buffer;
         }
 
+        /// <inheritdoc/>
         protected override ReadOnlySpan<byte> Data()
         {
             return _data.BuildData();

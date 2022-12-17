@@ -11,6 +11,9 @@ namespace OSDP.Net.Model.ReplyData
     /// </summary>
     public class DeviceIdentification : ReplyData
     {
+        /// <summary>
+        /// Creates a new instance of DeviceIdentification
+        /// </summary>
         public DeviceIdentification()
         {
         }
@@ -42,6 +45,7 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public byte FirmwareBuild { set; get; }
 
+        /// <inheritdoc/>
         public override ReplyType ReplyType => ReplyType.PdIdReport;
 
         internal static DeviceIdentification ParseData(ReadOnlySpan<byte> data)
@@ -66,6 +70,7 @@ namespace OSDP.Net.Model.ReplyData
             return deviceIdentification;
         }
 
+        /// <inheritdoc/>
         public override byte[] BuildData(bool withPadding)
         {
             var buffer = new byte[withPadding ? 16 : 12];

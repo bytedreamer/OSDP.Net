@@ -4,11 +4,22 @@ using System.Linq;
 
 namespace OSDP.Net.Messages
 {
+    /// <summary>
+    /// Represents a message that was received from the wire. It extends base Message
+    /// class with extra properties/methods that specifically indicate the parsing and
+    /// validation of incoming raw bytes.
+    /// </summary>
     public class IncomingMessage : Message
     {
         private const ushort MessageHeaderSize = 6;
         private readonly byte[] _origMessage;
 
+        /// <summary>
+        /// Creates a new instance of IncomingMessage class
+        /// </summary>
+        /// <param name="data">Raw byte data received from the wire</param>
+        /// <param name="channel">Message channel context</param>
+        /// <param name="connectionId">ID of the connection</param>
         public IncomingMessage(ReadOnlySpan<byte> data, IMessageChannel channel, Guid connectionId)
         {
             // TODO: way too much copying in this code, simplify it.
@@ -60,18 +71,62 @@ namespace OSDP.Net.Messages
             ConnectionId = connectionId;
         }
 
+        /// <summary>
+        /// If true, the message has a CRC suffix; otherwise it has a checksum
+        /// </summary>
         public bool IsUsingCrc { get; }
+
+        /// <summary>
+        /// Command/reply code of the message
+        /// </summary>
         public byte Type { get; }
+
+        /// <summary>
+        /// Message sequence number
+        /// </summary>
         public byte Sequence { get; }
+
+        /// <summary>
+        /// Indicates if the message was sent via an established secure channel
+        /// </summary>
         public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType) && IsDataSecure;
+
+        /// <summary>
+        /// Indicates if the message has a valid MAC signature which was validated via
+        /// local message channel context
+        /// </summary>
         public bool IsValidMac { get; }
+
+        /// <summary>
+        /// Returns the raw message payload
+        /// </summary>
         public byte[] Payload { get; }
 
+        /// <summary>
+        /// Original byte data which includes the header, security control block, payload, 
+        /// MAC and CRC/Checksum suffix
+        /// </summary>
         public ReadOnlySpan<byte> OriginalMsgData => _origMessage;
+
+        /// <summary>
+        /// ID of the connection on which the channel was received
+        /// (not entirely sure if this is needed here)
+        /// </summary>
         public Guid ConnectionId { get; }
+
+        /// <summary>
+        /// Type of the security block, if there is one
+        /// </summary>
         public byte SecurityBlockType { get; }
+
+        /// <summary>
+        /// Raw security block bytes
+        /// </summary>
         protected IEnumerable<byte> SecureBlockData { get; }
+
+        /// <inheritdoc/>
         protected override ReadOnlySpan<byte> Data() => Payload.ToArray();
+
         private bool IsDataSecure => Payload == null || Payload.Length == 0 || 
             SecurityBlockType == (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity || 
             SecurityBlockType == (byte)Messages.SecurityBlockType.CommandMessageWithDataSecurity;

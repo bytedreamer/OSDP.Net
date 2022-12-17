@@ -18,6 +18,10 @@ namespace OSDP.Net.Model.ReplyData
         {
         }
 
+        /// <summary>
+        /// Creates a new instance of Nak class
+        /// </summary>
+        /// <param name="errorCode">Error code associated with NAK response</param>
         public Nak(ErrorCode errorCode)
         {
             // TODO: make this guy accept extra data, if/when we need to return that
@@ -35,6 +39,7 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<byte> ExtraData { get; private set;  }
 
+        /// <inheritdoc/>
         public override ReplyType ReplyType => ReplyType.Nak;
 
         /// <summary>
@@ -60,6 +65,7 @@ namespace OSDP.Net.Model.ReplyData
             return nak;
         }
 
+        /// <inheritdoc/>
         public override byte[] BuildData(bool withPadding)
         {
             // TODO: for now we don't support extra data (see constructor) and that's okay

@@ -11,6 +11,9 @@ namespace OSDP.Net.Model.ReplyData
     /// </summary>
     public class DeviceCapabilities : ReplyData
     {
+        /// <summary>
+        /// Creates a new instance of DeviceCapabilities
+        /// </summary>
         public DeviceCapabilities()
         {
         }
@@ -20,6 +23,7 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
 
+        /// <inheritdoc/>
         public override ReplyType ReplyType => ReplyType.PdCapabilitiesReport;
 
         /// <summary>
@@ -73,6 +77,7 @@ namespace OSDP.Net.Model.ReplyData
             return build.ToString();
         }
 
+        /// <inheritdoc/>
         public override byte[] BuildData(bool withPadding = false)
         {
             // TODO: Implement this for non-zero capabilities
