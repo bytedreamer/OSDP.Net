@@ -18,7 +18,7 @@
         /// <summary>
         /// osdp_CAP - peripheral device capabilities request
         /// </summary>
-        DeviceCap = 0x62,
+        DeviceCapabilities = 0x62,
 
         /// <summary>
         /// osdp_LSTAT - local status report request
@@ -38,7 +38,7 @@
         /// <summary>
         /// osdp_RSTAT - reader status report request
         /// </summary>
-        TamperStatus = 0x67,
+        ReaderStatus = 0x67,
 
         /// <summary>
         /// osdp_OUT - output control command
@@ -53,27 +53,27 @@
         /// <summary>
         /// osdp_BUZ - Reader buzzer control command
         /// </summary>
-        BuzzerControl = 0x6a,
+        BuzzerControl = 0x6A,
 
         /// <summary>
         /// osdp_TEXT - Reader text output command
         /// </summary>
-        TextOutput = 0x6b,
+        TextOutput = 0x6B,
 
         /// <summary>
         /// osdp_COMSET - communication configuration command
         /// </summary>
-        CommCfg = 0x6e,
+        CommunicationSet = 0x6E,
 
         /// <summary>
         /// osdp_BIOREAD - scan and match biometric data
         /// </summary>
-        SendBio = 0x73,
+        BioRead = 0x73,
 
         /// <summary>
         /// osdp_BIOMATCH - scan and match biometric template
         /// </summary>
-        MatchBio = 0x74,
+        BioMatch = 0x74,
 
         /// <summary>
         /// osdp_KEYSET - Encryption key set
@@ -83,56 +83,56 @@
         /// <summary>
         /// osdp_CHLNG - challenge and secure session initialization request
         /// </summary>
-        SessChlng = 0x76,
+        SessionChallenge = 0x76,
 
         /// <summary>
         /// osdp_SCRYPT - server's random number and server cryptogram
         /// </summary>
-        SCrypt = 0x77,
+        ServerCryptogram = 0x77,
 
         /// <summary>
         /// osdp_ACURXSIZE - ACU receive size
         /// </summary>
-        MaxReplySize = 0x7b,
+        MaxReplySize = 0x7B,
 
         /// <summary>
         /// osdp_FILETRANSFER - file transfer command
         /// </summary>
-        FileXfr = 0x7c,
+        FileTransfer = 0x7C,
 
         /// <summary>
         /// osdp_MFG - manufacturer specific command
         /// </summary>
-        MfgCmd = 0x80,
+        ManufacturerSpecific = 0x80,
 
         /// <summary>
         /// osdp_XWR - extended write data
         /// </summary>
-        XWrite = 0xa1,
+        ExtendedWrite = 0xA1,
 
         /// <summary>
         /// osdp_ABORT - abort current operation
         /// </summary>
-        Abort = 0xa2,
+        Abort = 0xA2,
 
         /// <summary>
         /// osdp_PIVDATA - get PIV data
         /// </summary>
-        GetPiv = 0xa3,
+        PivData = 0xA3,
 
         /// <summary>
         /// osdp_GENAUTH - generate authenticate
         /// </summary>
-        ReqAuth = 0xa4,
+        GenerateChallenge = 0xA4,
 
         /// <summary>
         /// osdp_CRAUTH - authenticate challenge
         /// </summary>
-        ReqCrypto = 0xa5,
+        AuthenticateChallenge = 0xA5,
 
         /// <summary>
         /// osdp_KEEPACTIVE - keep reader active
         /// </summary>
-        KeepAlive = 0xa7
+        KeepActive = 0xA7
     }
 }

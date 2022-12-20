@@ -12,7 +12,7 @@ namespace OSDP.Net.Messages.ACU
             _keepAliveTimeInMilliseconds = keepAliveTimeInMilliseconds;
         }
 
-        protected override byte CommandCode => 0xA7;
+        protected override byte CommandCode => (byte)CommandType.KeepActive;
 
         protected override ReadOnlySpan<byte> Data()
         {
@@ -21,11 +21,7 @@ namespace OSDP.Net.Messages.ACU
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x17
-            };
+            return SecurityBlock.CommandMessageWithDataSecurity;
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)

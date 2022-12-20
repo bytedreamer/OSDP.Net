@@ -12,7 +12,7 @@ namespace OSDP.Net.Messages.ACU
             _maximumReceiveBuffer = maximumReceiveBuffer;
         }
 
-        protected override byte CommandCode => 0x7B;
+        protected override byte CommandCode => (byte)CommandType.MaxReplySize;
 
         protected override ReadOnlySpan<byte> Data()
         {
@@ -21,11 +21,7 @@ namespace OSDP.Net.Messages.ACU
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x17
-            };
+            return SecurityBlock.CommandMessageWithDataSecurity;
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)

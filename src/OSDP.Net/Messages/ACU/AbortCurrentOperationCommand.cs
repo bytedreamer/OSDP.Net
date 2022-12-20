@@ -9,7 +9,7 @@ namespace OSDP.Net.Messages.ACU
             Address = address;
         }
 
-        protected override byte CommandCode => 0xA2;
+        protected override byte CommandCode => (byte)CommandType.Abort;
 
         protected override ReadOnlySpan<byte> Data()
         {
@@ -18,11 +18,7 @@ namespace OSDP.Net.Messages.ACU
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x15
-            };
+            return SecurityBlock.CommandMessageWithNoDataSecurity;
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)

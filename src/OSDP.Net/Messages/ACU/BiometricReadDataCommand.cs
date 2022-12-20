@@ -14,7 +14,7 @@ namespace OSDP.Net.Messages.ACU
             _biometricReadData = biometricReadData;
         }
 
-        protected override byte CommandCode => 0x73;
+        protected override byte CommandCode => (byte)CommandType.BioRead;
 
         protected override ReadOnlySpan<byte> Data()
         {
@@ -23,11 +23,7 @@ namespace OSDP.Net.Messages.ACU
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x17
-            };
+            return SecurityBlock.CommandMessageWithDataSecurity;
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)

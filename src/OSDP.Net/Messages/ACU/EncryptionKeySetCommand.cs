@@ -14,15 +14,11 @@ namespace OSDP.Net.Messages.ACU
                                           throw new ArgumentNullException(nameof(encryptionKeyConfiguration));
         }
 
-        protected override byte CommandCode => 0x75;
+        protected override byte CommandCode => (byte)CommandType.KeySet;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x17
-            };
+            return SecurityBlock.CommandMessageWithDataSecurity;
         }
 
         protected override ReadOnlySpan<byte> Data()

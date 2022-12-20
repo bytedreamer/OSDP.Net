@@ -13,15 +13,11 @@ namespace OSDP.Net.Messages.ACU
             _fileTransferFragment = fileTransferFragment;
         }
 
-        protected override byte CommandCode => 0x7C;
+        protected override byte CommandCode => (byte)CommandType.FileTransfer;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x17
-            };
+            return SecurityBlock.CommandMessageWithDataSecurity;
         }
 
         protected override ReadOnlySpan<byte> Data()

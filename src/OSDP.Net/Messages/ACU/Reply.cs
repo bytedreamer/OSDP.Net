@@ -7,8 +7,7 @@ namespace OSDP.Net.Messages.ACU
     internal abstract class Reply : Message
     {
         private const ushort ReplyMessageHeaderSize = 6;
-
-
+        
         private readonly Command _issuingCommand;
 
         protected Reply()
@@ -105,7 +104,7 @@ namespace OSDP.Net.Messages.ACU
 
             if (control.HasSecurityControlBlock)
             {
-                commandBuffer.AddRange(SecurityControlBlock());
+                commandBuffer.AddRange(SecurityControlBlock().ToArray());
             }
 
             commandBuffer.Add(ReplyCode);
@@ -133,7 +132,7 @@ namespace OSDP.Net.Messages.ACU
             return commandBuffer.ToArray();
         }
 
-        protected abstract IEnumerable<byte> SecurityControlBlock();
+        protected abstract ReadOnlySpan<byte> SecurityControlBlock();
 
         public override string ToString()
         {

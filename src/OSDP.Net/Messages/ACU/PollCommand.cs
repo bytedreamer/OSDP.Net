@@ -9,15 +9,11 @@ namespace OSDP.Net.Messages.ACU
             Address = address;
         }
 
-        protected override byte CommandCode => 0x60;
+        protected override byte CommandCode => (byte)CommandType.Poll;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x15
-            };
+            return SecurityBlock.CommandMessageWithNoDataSecurity;
         }
 
         protected override ReadOnlySpan<byte> Data()

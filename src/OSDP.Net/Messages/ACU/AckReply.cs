@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 namespace OSDP.Net.Messages.ACU
 {
@@ -7,13 +6,9 @@ namespace OSDP.Net.Messages.ACU
     {
         protected override byte ReplyCode => (byte)ReplyType.Ack;
 
-        protected override IEnumerable<byte> SecurityControlBlock()
+        protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x16
-            };
+            return SecurityBlock.ReplyMessageWithNoDataSecurity;
         }
 
         protected override ReadOnlySpan<byte> Data()

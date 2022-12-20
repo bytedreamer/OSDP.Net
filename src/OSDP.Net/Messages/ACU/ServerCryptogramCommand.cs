@@ -14,14 +14,14 @@ namespace OSDP.Net.Messages.ACU
             _isDefaultKey = isDefaultKey;
         }
 
-        protected override byte CommandCode => 0x77;
+        protected override byte CommandCode => (byte)CommandType.ServerCryptogram;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
             return new byte[]
             {
                 0x03,
-                0x13,
+                (byte)SecurityBlockType.SecureConnectionSequenceStep3,
                 (byte)(_isDefaultKey ? 0x00 : 0x01)
             };
         }

@@ -14,15 +14,11 @@ namespace OSDP.Net.Messages.ACU
             _manufacturerData = manufacturerData;
         }
 
-        protected override byte CommandCode => 0x80;
+        protected override byte CommandCode => (byte)CommandType.ManufacturerSpecific;
 
         protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
-            return new byte[]
-            {
-                0x02,
-                0x17
-            };
+            return SecurityBlock.CommandMessageWithDataSecurity;
         }
 
         protected override ReadOnlySpan<byte> Data()
