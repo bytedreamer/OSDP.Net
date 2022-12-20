@@ -1,10 +1,5 @@
 ﻿using OSDP.Net.Messages;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -14,7 +9,7 @@ namespace OSDP.Net.Model.ReplyData
     /// </summary>
     public class ChallengeResponse : ReplyData
     {
-        private byte[] _payload;
+        private readonly byte[] _payload;
 
         /// <summary>
         /// Create a new instance of the ChallengeResponse
@@ -31,7 +26,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc/>
-        public override byte[] BuildData(bool withPadding)
+        public override byte[] BuildData(bool withPadding = false)
         {
             if (withPadding)
             {

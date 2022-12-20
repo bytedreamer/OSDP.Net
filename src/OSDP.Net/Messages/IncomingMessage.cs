@@ -61,7 +61,7 @@ namespace OSDP.Net.Messages
             {
                 // TODO: What if this is not a command??
                 var mac = channel.GenerateMac(data.Slice(0, messageLength).ToArray(), true);
-                IsValidMac = !IsSecureMessage || mac.Slice(0, MacSize).SequenceEqual(Mac.ToArray());
+                IsValidMac = !IsSecureMessage || mac.Slice(0, MacSize).SequenceEqual(Mac?.ToArray());
             }
             else
             {
@@ -131,6 +131,7 @@ namespace OSDP.Net.Messages
             SecurityBlockType == (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity || 
             SecurityBlockType == (byte)Messages.SecurityBlockType.CommandMessageWithDataSecurity;
         private IEnumerable<byte> Mac { get; }
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         private bool IsDataCorrect { get; }
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {

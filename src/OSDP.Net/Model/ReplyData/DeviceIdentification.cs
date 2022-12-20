@@ -71,7 +71,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc/>
-        public override byte[] BuildData(bool withPadding)
+        public override byte[] BuildData(bool withPadding = false)
         {
             var buffer = new byte[withPadding ? 16 : 12];
 

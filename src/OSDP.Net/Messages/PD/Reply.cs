@@ -1,11 +1,6 @@
 ﻿using OSDP.Net.Model.ReplyData;
 using System;
-using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OSDP.Net.Messages.PD
 {
@@ -14,7 +9,7 @@ namespace OSDP.Net.Messages.PD
     /// </summary>
     public class Reply : Message
     {
-        private const int startOfMessageLength = 5;
+        private const int StartOfMessageLength = 5;
         private readonly IncomingMessage _issuingCommand;
         private readonly ReplyData _data;
 
@@ -53,7 +48,7 @@ namespace OSDP.Net.Messages.PD
             var payload = _data.BuildData(withPadding: channel.IsSecurityEstablished);
             bool isSecurityBlockPresent = channel.IsSecurityEstablished ||
                 _data.ReplyType == ReplyType.CrypticData || _data.ReplyType == ReplyType.InitialRMac;
-            int headerLength = startOfMessageLength + (isSecurityBlockPresent ? 3 : 0) + sizeof(ReplyType);
+            int headerLength = StartOfMessageLength + (isSecurityBlockPresent ? 3 : 0) + sizeof(ReplyType);
             int totalLength = headerLength + payload.Length + 
                 (_issuingCommand.IsUsingCrc ? 2 : 1) + (channel.IsSecurityEstablished ? MacSize : 0);
             var buffer = new byte[totalLength];
@@ -67,7 +62,7 @@ namespace OSDP.Net.Messages.PD
                 (_issuingCommand.Sequence & 0x03) |
                 (_issuingCommand.IsUsingCrc ? 0x04 : 0x00) |
                 (isSecurityBlockPresent ? 0x08 : 0x00));
-            curLen += startOfMessageLength;
+            curLen += StartOfMessageLength;
 
             if (isSecurityBlockPresent)
             {

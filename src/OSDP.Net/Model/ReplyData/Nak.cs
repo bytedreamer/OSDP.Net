@@ -66,7 +66,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc/>
-        public override byte[] BuildData(bool withPadding)
+        public override byte[] BuildData(bool withPadding = false)
         {
             // TODO: for now we don't support extra data (see constructor) and that's okay
             var buffer = new byte[withPadding ? 16 : 1];
