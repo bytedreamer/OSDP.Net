@@ -18,12 +18,12 @@ namespace OSDP.Net.Messages.ACU
             return ExtractReplyData.ToArray();
         }
 
-        protected override IEnumerable<byte> SecurityControlBlock()
+        protected override ReadOnlySpan<byte> SecurityControlBlock()
         {
             byte securityBlockLength = (byte)(SecureBlockData.Count() + 2);
             var securityControlBlock = new List<byte> { SecurityBlockType, securityBlockLength };
             securityControlBlock.AddRange(SecureBlockData);
-            return securityControlBlock;
+            return securityControlBlock.ToArray();
         }
     }
 }
