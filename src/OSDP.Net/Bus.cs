@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.ACU;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tracing;
 using System;

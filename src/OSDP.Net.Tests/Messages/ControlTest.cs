@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using OSDP.Net.Messages;
+using OSDP.Net.Messages.ACU;
 
 namespace OSDP.Net.Tests.Messages
 {

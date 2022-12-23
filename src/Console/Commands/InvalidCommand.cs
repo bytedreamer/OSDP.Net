@@ -1,5 +1,5 @@
 using System;
-using OSDP.Net.Messages;
+using OSDP.Net.Messages.ACU;
 
 namespace Console.Commands
 {

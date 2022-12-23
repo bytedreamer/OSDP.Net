@@ -32,4 +32,8 @@
     <Compile Remove="Utilities.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Messages\PD\" />
+  </ItemGroup>
+
 </Project>

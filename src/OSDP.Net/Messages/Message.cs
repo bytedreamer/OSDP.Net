@@ -10,7 +10,33 @@ namespace OSDP.Net.Messages
     /// </summary>
     public abstract class Message
     {
-        internal const byte StartOfMessage = 0x53;
+        /// <summary>
+        /// OSDP message address mask
+        /// </summary>
+        public const byte AddressMask = 0x7F;
+
+        /// <summary>
+        /// OSDP message SOM (start of message) byte
+        /// </summary>
+        public const byte StartOfMessage = 0x53;
+
+        /// <summary>
+        /// Index of command/reply code within the message header
+        /// </summary>
+        public const ushort MsgTypeIndex = 5;
+
+        /// <summary>
+        /// Size in bytes of MAC signature in message suffix when
+        /// secure channel has been established
+        /// </summary>
+        public const ushort MacSize = 4;
+
+        /// <summary>
+        /// While padding bytes are generally 0x00, the first byte
+        /// of padding is not. This is the value of that first byte
+        /// when the payload (or message for MAC signing) is padded
+        /// </summary>
+        public const byte FirstPaddingByte = 0x80;
 
         private static readonly ushort[] CrcTable =
         {
