@@ -51,7 +51,7 @@ namespace OSDP.Net.Model.ReplyData
         /// The raw card data.
         /// </summary>
         public BitArray Data { get; private set; }
-
+        /// <inheritdoc/>
         public override ReplyType ReplyType => ReplyType.RawReaderData;
 
         /// <summary>
@@ -113,9 +113,7 @@ namespace OSDP.Net.Model.ReplyData
 
             for (int index = 0; index < mid; index++)
             {
-                bool bit = array[index];
-                array[index] = array[length - index - 1];
-                array[length - index - 1] = bit;
+                (array[index], array[length - index - 1]) = (array[length - index - 1], array[index]);
             }    
         }
 
@@ -124,7 +122,7 @@ namespace OSDP.Net.Model.ReplyData
         {
             var length = 4 + (Data.Count + 7) / 8;
             var buffer = new byte[withPadding ? length + 16 - length % 16 : length];
-            buffer[0] = (byte)ReaderNumber;
+            buffer[0] = ReaderNumber;
             buffer[1] = (byte)FormatCode;
             buffer[2] = (byte)(BitCount & 0xff);
             buffer[3] = (byte)((BitCount >> 8) & 0xff);

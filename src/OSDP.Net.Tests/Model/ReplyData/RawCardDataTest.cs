@@ -1,10 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OSDP.Net.Model.ReplyData;
 
 
@@ -29,7 +26,7 @@ namespace OSDP.Net.Tests.Model.ReplyData
         public void BuildDataNoPadding()
         {
             var data = new BitArray("0001001010101011".Select(
-                x => x == '0' ? false : x == '1' ? true : throw new ArgumentException()).ToArray());
+                x => x != '0' && (x == '1' ? true : throw new ArgumentException())).ToArray());
 
             var rawCardData = new RawCardData(5, FormatCode.NotSpecified, data);
             var buffer = rawCardData.BuildData();
@@ -50,7 +47,7 @@ namespace OSDP.Net.Tests.Model.ReplyData
         public string BuildDataWithPadding(string keyData)
         {
             var data = new BitArray(keyData.Select(
-                x => x == '0' ? false : x == '1' ? true : throw new ArgumentException()).ToArray());
+                x => x != '0' && (x == '1' ? true : throw new Exception("invalid input data"))).ToArray());
 
             var rawCardData = new RawCardData(5, FormatCode.NotSpecified, data);
             var buffer = rawCardData.BuildData(true);
