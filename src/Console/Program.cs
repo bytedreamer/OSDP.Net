@@ -811,14 +811,9 @@ namespace Console
                             ReconnectDelay = TimeSpan.FromMilliseconds(reconnectDelay),
                         }.WithDefaultTracer(_settings.IsTracing));
 
-                    if (result != null)
-                    {
-                        AddLogMessage($"Device discovered successfully:{Environment.NewLine}{result}");
-                    } 
-                    else
-                    {
-                        AddLogMessage("Device was not found");
-                    }
+                    AddLogMessage(result != null
+                        ? $"Device discovered successfully:{Environment.NewLine}{result}"
+                        : "Device was not found");
                 }
                 catch (OperationCanceledException)
                 {
