@@ -1085,9 +1085,9 @@ namespace OSDP.Net
 
             async Task<bool> FindDeviceAddress()
             {
+                connectionId = StartConnection(result.Connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
                 for (byte address = 0; address < ConfigurationAddress; address++)
                 {
-                    connectionId = StartConnection(result.Connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
                     AddDevice(connectionId, address, true, false);
                     
                     result.Address = address;
@@ -1102,8 +1102,8 @@ namespace OSDP.Net
                     }
 
                     RemoveDevice(connectionId, address);
-                    await StopConnection(connectionId).ConfigureAwait(false);
                 }
+                await StopConnection(connectionId).ConfigureAwait(false);
 
                 // Since we didn't find a valid device, for an unexpected reason
                 // let's just leave the at the configuration address
