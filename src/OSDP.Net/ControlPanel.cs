@@ -1,10 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncKeyedLock;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
@@ -14,6 +7,13 @@ using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.PanelCommands.DeviceDiscover;
 using OSDP.Net.Tracing;
+using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
@@ -33,7 +33,7 @@ namespace OSDP.Net
         private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new();
         private TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
-        private readonly AsyncKeyedLocker<byte[]> _requestLocks = new(o =>
+        private readonly AsyncKeyedLocker<byte[]> _asyncKeyedLocker = new(o =>
         {
             o.PoolSize = 20;
             o.PoolInitialFill = 1;
@@ -250,7 +250,7 @@ namespace OSDP.Net
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _requestLocks.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
             if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
@@ -569,7 +569,7 @@ namespace OSDP.Net
             BiometricReadData biometricReadData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _requestLocks.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
             if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
@@ -638,7 +638,7 @@ namespace OSDP.Net
             BiometricTemplateData biometricTemplateData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _requestLocks.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
             if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
@@ -708,7 +708,7 @@ namespace OSDP.Net
             byte algorithm, byte key, byte[] challenge, ushort fragmentSize, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _requestLocks.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
             if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
