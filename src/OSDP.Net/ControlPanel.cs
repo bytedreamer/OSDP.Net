@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncKeyedLock;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
@@ -32,7 +33,11 @@ namespace OSDP.Net
         private readonly ILogger<ControlPanel> _logger;
         private readonly BlockingCollection<Reply> _replies = new();
         private TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
-        private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
+        private readonly AsyncKeyedLocker<byte[]> _requestLocks = new(o =>
+        {
+            o.PoolSize = 20;
+            o.PoolInitialFill = 1;
+        });
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
         /// <param name="logger">The logger definition used for logging.</param>
@@ -245,35 +250,18 @@ namespace OSDP.Net
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            var requestLock = GetRequestLock(connectionId, address);
-            
-            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _requestLocks.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
             }
-            
-            try
-            {
-                return await WaitForPIVData(connectionId, address, getPIVData, timeout, cancellationToken);
-            }
-            finally
-            {
-                requestLock.Release();
-            }
+
+            return await WaitForPIVData(connectionId, address, getPIVData, timeout, cancellationToken);
         }
 
-        private SemaphoreSlim GetRequestLock(Guid connectionId, byte address)
+        private static byte[] GetRequestLockKey(Guid connectionId, byte address)
         {
-            int hash = new { connectionId, address }.GetHashCode();
-            
-            if (_requestLocks.TryGetValue(hash, out var requestLock))
-            {
-                return requestLock;
-            }
-
-            var newRequestLock = new SemaphoreSlim(1, 1);
-            _requestLocks[hash] = newRequestLock;
-            return newRequestLock;
+            return connectionId.ToByteArray().Append(address).ToArray();
         }
 
         private async Task<byte[]> WaitForPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
@@ -581,22 +569,14 @@ namespace OSDP.Net
             BiometricReadData biometricReadData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            var requestLock = GetRequestLock(connectionId, address);
-
-            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _requestLocks.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
             }
 
-            try
-            {
-                return await WaitForBiometricRead(connectionId, address, biometricReadData, timeout,
-                    cancellationToken);
-            }
-            finally
-            {
-                requestLock.Release();
-            }
+            return await WaitForBiometricRead(connectionId, address, biometricReadData, timeout,
+                                cancellationToken);
         }
 
         private async Task<BiometricReadResult> WaitForBiometricRead(Guid connectionId, byte address,
@@ -658,21 +638,13 @@ namespace OSDP.Net
             BiometricTemplateData biometricTemplateData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            var requestLock = GetRequestLock(connectionId, address);
-            
-            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _requestLocks.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
             }
-            
-            try
-            {
-                return await WaitForBiometricMatch(connectionId, address, biometricTemplateData, timeout, cancellationToken);
-            }
-            finally
-            {
-                requestLock.Release();
-            }
+
+            return await WaitForBiometricMatch(connectionId, address, biometricTemplateData, timeout, cancellationToken);
         }
 
         private async Task<BiometricMatchResult> WaitForBiometricMatch(Guid connectionId, byte address, BiometricTemplateData biometricTemplateData, TimeSpan timeout,
@@ -736,22 +708,14 @@ namespace OSDP.Net
             byte algorithm, byte key, byte[] challenge, ushort fragmentSize, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            var requestLock = GetRequestLock(connectionId, address);
-
-            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _requestLocks.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
             }
 
-            try
-            {
-                return await WaitForChallengeResponse(connectionId, address, algorithm, key, challenge, fragmentSize,
+            return await WaitForChallengeResponse(connectionId, address, algorithm, key, challenge, fragmentSize,
                     timeout, cancellationToken);
-            }
-            finally
-            {
-                requestLock.Release();
-            }
         }
 
         private async Task<byte[]> WaitForChallengeResponse(Guid connectionId, byte address, byte algorithm, byte key,
@@ -939,12 +903,6 @@ namespace OSDP.Net
                 bus.Dispose();
             }
             _buses.Clear();
-
-            foreach (var requestLock in _requestLocks.Values)
-            {
-                requestLock.Dispose();
-            }
-            _requestLocks.Clear();
         }
 
         /// <summary>
