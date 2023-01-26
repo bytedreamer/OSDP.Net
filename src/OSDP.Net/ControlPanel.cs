@@ -569,7 +569,7 @@ namespace OSDP.Net
             BiometricReadData biometricReadData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            using var releaser = await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
             if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
@@ -638,7 +638,7 @@ namespace OSDP.Net
             BiometricTemplateData biometricTemplateData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            using var releaser = await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
             if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
@@ -708,7 +708,7 @@ namespace OSDP.Net
             byte algorithm, byte key, byte[] challenge, ushort fragmentSize, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            using var releaser = await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
             if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
