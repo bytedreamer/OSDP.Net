@@ -250,7 +250,7 @@ namespace OSDP.Net
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
-            using var releaser = (AsyncKeyedLockTimeoutReleaser<byte[]>)await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
+            using var releaser = await _asyncKeyedLocker.LockAsync(GetRequestLockKey(connectionId, address), timeout, cancellationToken).ConfigureAwait(false);
             if (!releaser.EnteredSemaphore)
             {
                 throw new TimeoutException("Timeout waiting for another request to complete.");
