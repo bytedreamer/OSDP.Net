@@ -145,6 +145,7 @@ namespace OSDP.Net
             {
                 // This will fire twice if two threads call StopConnection for the same connection simultaneously.
                 OnConnectionStatusChanged(bus.Id, address, false, false);
+                _requestLocks.TryRemove(new { connectionId, address }.GetHashCode(), out _);
             }
             bus.Dispose();
             _buses.TryRemove(connectionId, out bus);
