@@ -8,7 +8,7 @@ namespace OSDP.Net
 {
     internal class Device : IComparable<Device>
     {
-        private const int RetryAmount = 3;
+        private const int RetryAmount = 2;
 
         private static readonly byte[] DefaultKey = {
             0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
