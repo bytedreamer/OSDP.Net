@@ -24,6 +24,7 @@ namespace OSDP.Net.Tests.Model.ReplyData
         [Test]
         public void BuildDataNoPadding()
         {
+            // Resharper disable once ConditionIsAlwaysTrueOrFalse
             var data = new BitArray("0001001010101011".Select(
                 x => x != '0' && (x == '1' ? true : throw new ArgumentException())).ToArray());
 
@@ -45,6 +46,7 @@ namespace OSDP.Net.Tests.Model.ReplyData
                              "80-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00")]
         public string BuildDataWithPadding(string keyData)
         {
+            // Resharper disable once ConditionIsAlwaysTrueOrFalse
             var data = new BitArray(keyData.Select(
                 x => x != '0' && (x == '1' ? true : throw new Exception("invalid input data"))).ToArray());
 

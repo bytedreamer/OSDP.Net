@@ -1,10 +1,6 @@
 ﻿using NUnit.Framework;
 using OSDP.Net.Utilities.Binary;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OSDP.Net.Tests.Utilities
 {

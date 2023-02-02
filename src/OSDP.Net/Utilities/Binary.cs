@@ -38,7 +38,7 @@ namespace OSDP.Net.Utilities.Binary
         /// </exception>
         public static IEnumerable<byte> HexToBytes(IEnumerable<char> seq)
         {
-            var enumerator = seq.GetEnumerator();
+            using var enumerator = seq.GetEnumerator();
 
             while (enumerator.MoveNext())
             {
@@ -103,9 +103,9 @@ namespace OSDP.Net.Utilities.Binary
         /// <exception cref="InvalidOperationException"></exception>
         public static int HexToInt(this char value) => value switch
         {
-            char c when (c >= '0' && c <= '9') => (byte)(c - '0'),
-            char c when (c >= 'A' && c <= 'F') => (byte)(c - 'A' + 10),
-            char c when (c >= 'a' && c <= 'f') => (byte)(c - 'a' + 10),
+            { } c when (c >= '0' && c <= '9') => (byte)(c - '0'),
+            { } c when (c >= 'A' && c <= 'F') => (byte)(c - 'A' + 10),
+            { } c when (c >= 'a' && c <= 'f') => (byte)(c - 'a' + 10),
             _ => throw new InvalidOperationException("Not a valid hex string")
         };
     }
