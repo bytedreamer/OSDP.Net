@@ -1,21 +1,38 @@
 using System;
 using System.Collections;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using OSDP.Net.Messages;
 
+[assembly: InternalsVisibleTo("OSDP.Net.Tests.Model.ReplyData")]
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
     /// A raw card data reply.
     /// </summary>
-    public class RawCardData
+    public class RawCardData : ReplyData
     {
         /// <summary>
         /// Prevents a default instance of the <see cref="RawCardData"/> class from being created.
         /// </summary>
         private RawCardData()
         {
+        }
+
+        /// <summary>
+        /// Creates a new instance of RawCardData. The parameters passed here are
+        /// defined in OSDP spec for osdp_RAW response
+        /// </summary>
+        /// <param name="readerNumber">Reader number</param>
+        /// <param name="format">Format code</param>
+        /// <param name="data">Data</param>
+        public RawCardData(byte readerNumber, FormatCode format, BitArray data)
+        {
+            ReaderNumber = readerNumber;
+            FormatCode = format;
+            Data = data;
+            BitCount = (ushort)data.Count;
         }
 
         /// <summary>
@@ -34,6 +51,8 @@ namespace OSDP.Net.Model.ReplyData
         /// The raw card data.
         /// </summary>
         public BitArray Data { get; private set; }
+        /// <inheritdoc/>
+        public override ReplyType ReplyType => ReplyType.RawReaderData;
 
         /// <summary>
         /// Parses the data.
@@ -76,7 +95,7 @@ namespace OSDP.Net.Model.ReplyData
             return build.ToString();
         }
 
-        private static string FormatData(BitArray bitArray)
+        internal static string FormatData(BitArray bitArray)
         {
             var builder = new StringBuilder();
             foreach (bool bit in bitArray)
@@ -94,10 +113,36 @@ namespace OSDP.Net.Model.ReplyData
 
             for (int index = 0; index < mid; index++)
             {
-                bool bit = array[index];
-                array[index] = array[length - index - 1];
-                array[length - index - 1] = bit;
+                (array[index], array[length - index - 1]) = (array[length - index - 1], array[index]);
             }    
+        }
+
+        /// <inheritdoc/>
+        public override byte[] BuildData(bool withPadding = false)
+        {
+            var length = 4 + (Data.Count + 7) / 8;
+            var buffer = new byte[withPadding ? length + 16 - length % 16 : length];
+            buffer[0] = ReaderNumber;
+            buffer[1] = (byte)FormatCode;
+            buffer[2] = (byte)(BitCount & 0xff);
+            buffer[3] = (byte)((BitCount >> 8) & 0xff);
+            Data.CopyTo(buffer, 4);
+
+            for (int i = 4; i < length; i++)
+            {
+                // Source of this nifty little bitwise logic to reverse the bits:
+                // http://igoro.com/archive/programming-job-interview-challenge/
+
+                byte b = buffer[i];
+                int c = (byte)((b >> 4) | ((b & 0xf) << 4));
+                c = ((c & 0xcc) >> 2) | ((c & 0x33) << 2);
+                c = ((c & 0xaa) >> 1) | ((c & 0x55) << 1);
+                buffer[i] = (byte)c;
+            }
+
+            if (withPadding) buffer[length] = Message.FirstPaddingByte;
+
+            return buffer;
         }
     }
 
