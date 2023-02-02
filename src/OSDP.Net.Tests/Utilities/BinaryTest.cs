@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using OSDP.Net.Utilities.Binary;
+using OSDP.Net.Utilities;
 using System.Linq;
 
 namespace OSDP.Net.Tests.Utilities

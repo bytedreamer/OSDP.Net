@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace OSDP.Net.Utilities.Binary
+namespace OSDP.Net.Utilities
 {
     /// <summary>
     /// Helper routines for manipulating binary representations of data that are used
