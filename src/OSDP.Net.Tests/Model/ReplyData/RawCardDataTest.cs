@@ -4,7 +4,6 @@ using System.Collections;
 using System.Linq;
 using OSDP.Net.Model.ReplyData;
 
-
 namespace OSDP.Net.Tests.Model.ReplyData
 {
     public class RawCardDataTest
