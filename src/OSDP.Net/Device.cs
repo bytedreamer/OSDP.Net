@@ -58,6 +58,11 @@ namespace OSDP.Net
         public DateTime RequestDelay { get; set; }
 
         public bool IsSendingMultiMessageNoSecureChannel { get; set; }
+        
+        /// <summary>
+        /// Has one or more commands waiting in the queue
+        /// </summary>
+        public bool HasQueuedCommand => _commands.Any();
 
         /// <inheritdoc />
         public int CompareTo(Device other)

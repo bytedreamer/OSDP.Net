@@ -216,8 +216,13 @@ namespace OSDP.Net
 
                 if (IsPolling)
                 {
-                    TimeSpan timeDifference = _pollInterval - (DateTime.UtcNow - lastMessageSentTime);
-                    delayTime.WaitOne(timeDifference > TimeSpan.Zero ? timeDifference : TimeSpan.Zero);
+                    // Allow for immediate processing of commands in queue
+                    while (_pollInterval - (DateTime.UtcNow - lastMessageSentTime) > TimeSpan.Zero &&
+                           !_configuredDevices.Any(device => device.HasQueuedCommand))
+                    {
+                        delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
+                    }
+
                     lastMessageSentTime = DateTime.UtcNow;
                     
                     if (!_configuredDevices.Any())
