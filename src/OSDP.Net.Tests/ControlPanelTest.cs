@@ -8,6 +8,7 @@ using Moq;
 using NUnit.Framework;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.ACU;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tests.Utilities;
 
@@ -178,11 +179,11 @@ namespace OSDP.Net.Tests
             public async Task ReturnsValidReportTest()
             {
                 var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
-                var idReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
+                var idReportCommand = new IdReportCommand(0);
                 var idReportReplyBytes = new byte[] { 83, 128, 20, 0, 6, 69, 92, 38, 35, 25, 2, 0, 0, 233, 42, 3, 0, 0, 98, 25 };
 
                 var mockConnection = new MockConnection();
-                mockConnection.OnCommand(idReportCommandBytes).Reply(idReportReplyBytes);
+                mockConnection.OnCommand(idReportCommand).Reply(idReportReplyBytes);
 
                 Guid id = panel.StartConnection(mockConnection.Object);
                 panel.AddDevice(id, 0, true, false);
@@ -202,11 +203,12 @@ namespace OSDP.Net.Tests
             public void ThrowOnNakReplyTest()
             {
                 var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
-                var idReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
+                //var idReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
+                var idReportCommand = new IdReportCommand(0);
                 var nakReplyBytes = new byte[] { 83, 128, 9, 0, 7, 65, 3, 53, 221 };
 
                 var mockConnection = new MockConnection();
-                mockConnection.OnCommand(idReportCommandBytes).Reply(nakReplyBytes);
+                mockConnection.OnCommand(idReportCommand).Reply(nakReplyBytes);
 
                 Guid id = panel.StartConnection(mockConnection.Object);
                 panel.AddDevice(id, 0, true, false);
@@ -220,7 +222,7 @@ namespace OSDP.Net.Tests
 
         private class MockConnection : Mock<IOsdpConnection>
         {
-            static readonly byte[] PollCommandBytes = { 255, 83, 0, 8, 0, 4, 96, 235, 170 };
+            static readonly PollCommand PollCommand = new(0);
             static readonly byte[] AckReplyBytes = { 83, 128, 8, 0, 5, 64, 104, 159 };
 
             public MockConnection() : base(MockBehavior.Strict)
@@ -241,10 +243,10 @@ namespace OSDP.Net.Tests
                 // Setup handling for a polling command which always gets issued when connection is alive
                 // Here we'll just reply with a generic ACK to signal to ACU that the command was successfully
                 // handled.
-                OnCommand(PollCommandBytes).Reply(AckReplyBytes);
+                OnCommand(PollCommand).Reply(AckReplyBytes);
             }
 
-            public ExpectedCommand OnCommand(byte[] commandBytes) => new(this, commandBytes);
+            public ExpectedCommand OnCommand(Command command) => new(this, command);
             
             /// <summary>
             /// Number of times the Open method is called
@@ -258,10 +260,10 @@ namespace OSDP.Net.Tests
             
             public class ExpectedCommand
             {
-                public ExpectedCommand(MockConnection parent, byte[] commandBytes)
+                public ExpectedCommand(MockConnection parent, Command command)
                 {
                     _parent = parent;
-                    _commandBytes = commandBytes;
+                    _command = command;
                 }
 
                 public void Reply(byte[] replyBytes)
@@ -269,21 +271,25 @@ namespace OSDP.Net.Tests
                     for (byte seq = 0; seq < 4; seq++)
                     {
                         // Make local copies because we'll be mutating them to update the sequence number
-                        var command = (byte[])_commandBytes.Clone();
                         var reply = (byte[])replyBytes.Clone();
 
                         // We are doing the span magic here because unlike replies, commands seem to have
                         // at index [0] a "driver byte", the intention of which is somewhat unclear at the
                         // moment
-                        ResetMsgSeqNumber(command.AsSpan().Slice(1), seq);
                         ResetMsgSeqNumber(reply.AsSpan(), seq);
 
                         _parent.Setup(x => x.WriteAsync(It.Is<byte[]>(
-                                a => a.SequenceEqual(command)
-                            ))).Returns(
-                                async (byte[] _) => await _parent._incomingData.Writer.WriteAsync(reply)
-                            );
+                            messageData => IsMatchingCommandType(messageData, _command.Type)
+                        ))).Returns(
+                            async (byte[] _) => await _parent._incomingData.Writer.WriteAsync(reply)
+                        );
                     }
+                }
+
+                private static bool IsMatchingCommandType(byte[] messageData, byte commandType)
+                {
+                    var receivedCommand = new IncomingMessage(messageData.Skip(1).ToArray(), null, new Guid());
+                    return receivedCommand.Type == commandType;
                 }
 
                 private static void ResetMsgSeqNumber(Span<byte> msg, byte seq)
@@ -302,7 +308,7 @@ namespace OSDP.Net.Tests
                 }
 
                 private readonly MockConnection _parent;
-                private readonly byte[] _commandBytes;
+                private readonly Command _command;
             }
 
             private readonly Pipe _incomingData = new();
