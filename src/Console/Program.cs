@@ -20,7 +20,7 @@ using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.PanelCommands.DeviceDiscover;
 using Terminal.Gui;
-using Command = OSDP.Net.Messages.Command;
+using Command = OSDP.Net.Messages.ACU.Command;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.CommandData.ManufacturerSpecific;
 
@@ -811,14 +811,9 @@ namespace Console
                             ReconnectDelay = TimeSpan.FromMilliseconds(reconnectDelay),
                         }.WithDefaultTracer(_settings.IsTracing));
 
-                    if (result != null)
-                    {
-                        AddLogMessage($"Device discovered successfully:{Environment.NewLine}{result}");
-                    } 
-                    else
-                    {
-                        AddLogMessage("Device was not found");
-                    }
+                    AddLogMessage(result != null
+                        ? $"Device discovered successfully:{Environment.NewLine}{result}"
+                        : "Device was not found");
                 }
                 catch (OperationCanceledException)
                 {
@@ -854,6 +849,8 @@ namespace Console
 
         private static void SendCommunicationConfiguration()
         {
+            if (!CanSendCommand()) return;
+            
             var addressTextField = new TextField(20, 1, 20,
                 ((_settings.Devices.OrderBy(device => device.Address).LastOrDefault()?.Address ?? 0) + 1).ToString());
             var baudRateTextField = new TextField(20, 3, 20, _settings.SerialConnectionSettings.BaudRate.ToString());
@@ -917,6 +914,8 @@ namespace Console
 
         private static void SendFileTransferCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var typeTextField = new TextField(20, 1, 20, "1");
             var messageSizeTextField = new TextField(20, 3, 20, "128");
 
@@ -1021,6 +1020,8 @@ namespace Console
 
         private static void SendOutputControlCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var outputAddressTextField = new TextField(20, 1, 20, "0");
             var activateOutputCheckBox = new CheckBox(15, 3, "Activate Output", false);
 
@@ -1059,6 +1060,8 @@ namespace Console
 
         private static void SendReaderLedControlCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var ledNumberTextField = new TextField(20, 1, 20, "0");
             var colorComboBox = new ComboBox(new Rect(20, 3, 20, 5), Enum.GetNames(typeof(LedColor))) {Text = "Red"};
             
@@ -1106,6 +1109,8 @@ namespace Console
 
         private static void SendManufacturerSpecificCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var vendorCodeTextField = new TextField(20, 1, 20, string.Empty);
             var dataTextField = new TextField(20, 3, 20, string.Empty);
 
@@ -1164,6 +1169,8 @@ namespace Console
 
         private static void SendReaderBuzzerControlCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var readerAddressTextField = new TextField(20, 1, 20, "0");
             var repeatTimesTextField = new TextField(20, 3, 20, "1");
 
@@ -1206,6 +1213,8 @@ namespace Console
 
         private static void SendBiometricReadCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var readerAddressTextField = new TextField(20, 1, 20, "0");
             var typeTextField = new TextField(20, 3, 20, "0");
             var formatTextField = new TextField(20, 5, 20, "2");
@@ -1271,6 +1280,8 @@ namespace Console
 
         private static void SendBiometricMatchCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var readerAddressTextField = new TextField(20, 1, 20, "0");
             var typeTextField = new TextField(20, 3, 20, "0");
             var formatTextField = new TextField(20, 5, 20, "2");
@@ -1339,6 +1350,8 @@ namespace Console
 
         private static void SendReaderTextOutputCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var readerAddressTextField = new TextField(20, 1, 20, "0");
             var textOutputTextField = new TextField(20, 3, 20, "Some Text");
 
@@ -1376,6 +1389,8 @@ namespace Console
 
         private static void SendEncryptionKeySetCommand()
         {
+            if (!CanSendCommand()) return;
+            
             var keyTextField = new TextField(20, 1, 32, string.Empty);
 
             void SendButtonClicked()
@@ -1437,11 +1452,7 @@ namespace Console
 
         private static void SendCommand<T>(string title, Guid connectionId, Func<Guid, byte, Task<T>> sendCommandFunction)
         {
-            if (_connectionId == Guid.Empty)
-            {
-                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
-                return;
-            }
+            if (!CanSendCommand()) return;
             
             var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
@@ -1484,11 +1495,7 @@ namespace Console
         private static void SendCommand<T, TU>(string title, Guid connectionId, TU commandData,
             Func<Guid, byte, TU, Task<T>> sendCommandFunction, Action<byte, T> handleResult, bool requireSecurity = false)
         {
-            if (_connectionId == Guid.Empty)
-            {
-                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
-                return;
-            }
+            if (!CanSendCommand()) return;
             
             var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
@@ -1539,11 +1546,7 @@ namespace Console
         private static void SendCommand<T1, T2, T3>(string title, Guid connectionId, T2 commandData, T3 timeOut,
             Func<Guid, byte, T2, T3, CancellationToken, Task<T1>> sendCommandFunction, Action<byte, T1> handleResult, bool requireSecurity = false)
         {
-            if (_connectionId == Guid.Empty)
-            {
-                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
-                return;
-            }
+            if (!CanSendCommand()) return;
             
             var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
@@ -1594,11 +1597,7 @@ namespace Console
         private static void SendCustomCommand(string title, Guid connectionId,
             Func<Guid, Command, Task> sendCommandFunction, Func<byte, Command> createCommand)
         {
-            if (_connectionId == Guid.Empty)
-            {
-                MessageBox.ErrorQuery(60, 10, "Information", "Start a connection before sending commands.", "OK");
-                return;
-            }
+            if (!CanSendCommand()) return;
 
             var deviceSelectionView = CreateDeviceSelectionView(out var orderedDevices, out var deviceRadioGroup);
 
@@ -1655,6 +1654,23 @@ namespace Console
             };
             scrollView.Add(deviceRadioGroup);
             return scrollView;
+        }
+
+        private static bool CanSendCommand()
+        {
+            if (_connectionId == Guid.Empty)
+            {
+                MessageBox.ErrorQuery(60, 10, "Warning", "Start a connection before sending commands.", "OK");
+                return false;
+            }
+            
+            if (_settings.Devices.Count == 0)
+            {
+                MessageBox.ErrorQuery(60, 10, "Warning", "Add a device before sending commands.", "OK");
+                return false;
+            }
+
+            return true;
         }
     }
 }

@@ -9,39 +9,44 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// The PD identification data sent as a reply.
     /// </summary>
-    public class DeviceIdentification
+    public class DeviceIdentification : ReplyData
     {
-        private DeviceIdentification()
+        /// <summary>
+        /// Creates a new instance of DeviceIdentification
+        /// </summary>
+        public DeviceIdentification()
         {
         }
 
         /// <summary>Gets the vendor code.</summary>
-        public IEnumerable<byte> VendorCode { get; private set; }
+        public IEnumerable<byte> VendorCode { set; get; }
 
         /// <summary>Gets the model number.</summary>
-        public byte ModelNumber { get;private set;  }
+        public byte ModelNumber { set; get;  }
 
         /// <summary>Gets the hardware version.</summary>
-        public byte Version { get; private set; }
+        public byte Version { set; get; }
 
         /// <summary>Gets the serial number.</summary>
-        public int SerialNumber { get; private set; }
+        public int SerialNumber { set; get; }
 
         /// <summary>
         /// Gets the firmware major version.
         /// </summary>
-        public byte FirmwareMajor { get; private set; }
+        public byte FirmwareMajor { set; get; }
 
         /// <summary>
         /// Gets the firmware minor version.
         /// </summary>
-        public byte FirmwareMinor { get; private set; }
+        public byte FirmwareMinor { set; get; }
 
         /// <summary>
         /// Gets the firmware build.
         /// </summary>
-        public byte FirmwareBuild { get; private set; }
+        public byte FirmwareBuild { set; get; }
 
+        /// <inheritdoc/>
+        public override ReplyType ReplyType => ReplyType.PdIdReport;
 
         internal static DeviceIdentification ParseData(ReadOnlySpan<byte> data)
         {
@@ -63,6 +68,23 @@ namespace OSDP.Net.Model.ReplyData
             };
 
             return deviceIdentification;
+        }
+
+        /// <inheritdoc/>
+        public override byte[] BuildData(bool withPadding = false)
+        {
+            var buffer = new byte[withPadding ? 16 : 12];
+
+            VendorCode.Take(3).ToArray().CopyTo(buffer, 0);
+            buffer[3] = ModelNumber;
+            buffer[4] = Version;
+            Message.ConvertIntToBytes(SerialNumber).ToArray().CopyTo(buffer, 5);
+            buffer[9] = FirmwareMajor;
+            buffer[10] = FirmwareMinor;
+            buffer[11] = FirmwareBuild;
+            if (withPadding) buffer[12] = Message.FirstPaddingByte;
+
+            return buffer;
         }
 
         /// <inheritdoc />

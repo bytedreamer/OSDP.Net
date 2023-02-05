@@ -15,20 +15,20 @@ internal class Program
         var config = builder.Build();
         
         var osdpSection = config.GetSection("OSDP");
-        string portName = osdpSection["PortName"];
-        int baudRate = int.Parse(osdpSection["BaudRate"]);
-        byte deviceAddress = byte.Parse(osdpSection["DeviceAddress"]);
-        bool useSecureChannel = bool.Parse(osdpSection["UseSecureChannel"]);
-        byte[] securityKey = Convert.FromHexString(osdpSection["SecurityKey"]);
-        byte maximumReceiveSize = byte.Parse(osdpSection["MaximumReceivedSized"]);
-        bool useNetwork = bool.Parse(osdpSection["UseNetwork"]);
-        string networkAddress = osdpSection["NetworkAddress"];
-        int networkPort = int.Parse(osdpSection["NetworkPort"]);
+        string portName = osdpSection["PortName"]!;
+        int baudRate = int.Parse(osdpSection["BaudRate"]!);
+        byte deviceAddress = byte.Parse(osdpSection["DeviceAddress"]!);
+        bool useSecureChannel = bool.Parse(osdpSection["UseSecureChannel"]!);
+        byte[] securityKey = Convert.FromHexString(osdpSection["SecurityKey"]!);
+        byte maximumReceiveSize = byte.Parse(osdpSection["MaximumReceivedSized"]!);
+        bool useNetwork = bool.Parse(osdpSection["UseNetwork"]!);
+        string networkAddress = osdpSection["NetworkAddress"]!;
+        int networkPort = int.Parse(osdpSection["NetworkPort"]!);
         
         var pivDataSection = config.GetSection("PIVData");
-        byte[] objectId = Convert.FromHexString(pivDataSection["ObjectId"]);
-        byte elementId = Convert.FromHexString(pivDataSection["ElementId"])[0];
-        ushort offset = ushort.Parse(pivDataSection["Offset"]);
+        byte[] objectId = Convert.FromHexString(pivDataSection["ObjectId"]!);
+        byte elementId = Convert.FromHexString(pivDataSection["ElementId"]!)[0];
+        ushort offset = ushort.Parse(pivDataSection["Offset"]!);
         
         var panel = new ControlPanel();
         panel.ConnectionStatusChanged += async (_, eventArgs) =>

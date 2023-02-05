@@ -2,13 +2,13 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using OSDP.Net.Messages;
+using OSDP.Net.Messages.ACU;
 
 namespace OSDP.Net
 {
     internal class Device : IComparable<Device>
     {
-        private const int RetryAmount = 3;
+        private const int RetryAmount = 2;
 
         private static readonly byte[] DefaultKey = {
             0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
@@ -58,6 +58,11 @@ namespace OSDP.Net
         public DateTime RequestDelay { get; set; }
 
         public bool IsSendingMultiMessageNoSecureChannel { get; set; }
+        
+        /// <summary>
+        /// Has one or more commands waiting in the queue
+        /// </summary>
+        public bool HasQueuedCommand => _commands.Any();
 
         /// <inheritdoc />
         public int CompareTo(Device other)
@@ -83,7 +88,8 @@ namespace OSDP.Net
             
             if (isPolling)
             {
-                if (MessageControl.Sequence == 0)
+                // Don't send clear text polling if using secure channel
+                if (MessageControl.Sequence == 0 && !UseSecureChannel)
                 {
                     return new PollCommand(Address);
                 }

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.ACU;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.PanelCommands.DeviceDiscover;
@@ -144,6 +145,7 @@ namespace OSDP.Net
             {
                 // This will fire twice if two threads call StopConnection for the same connection simultaneously.
                 OnConnectionStatusChanged(bus.Id, address, false, false);
+                _requestLocks.TryRemove(new { connectionId, address }.GetHashCode(), out _);
             }
             bus.Dispose();
             _buses.TryRemove(connectionId, out bus);
@@ -1084,9 +1086,9 @@ namespace OSDP.Net
 
             async Task<bool> FindDeviceAddress()
             {
+                connectionId = StartConnection(result.Connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
                 for (byte address = 0; address < ConfigurationAddress; address++)
                 {
-                    connectionId = StartConnection(result.Connection, TimeSpan.Zero, options.Tracer ?? (_ => {}));
                     AddDevice(connectionId, address, true, false);
                     
                     result.Address = address;
@@ -1101,8 +1103,8 @@ namespace OSDP.Net
                     }
 
                     RemoveDevice(connectionId, address);
-                    await StopConnection(connectionId).ConfigureAwait(false);
                 }
+                await StopConnection(connectionId).ConfigureAwait(false);
 
                 // Since we didn't find a valid device, for an unexpected reason
                 // let's just leave the at the configuration address

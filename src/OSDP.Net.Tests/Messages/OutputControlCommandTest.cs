@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
-using OSDP.Net.Messages;
+using OSDP.Net.Messages.ACU;
 using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Tests.Messages

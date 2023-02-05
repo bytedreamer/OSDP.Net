@@ -72,6 +72,11 @@ namespace OSDP.Net.Connections
         /// <inheritdoc />
         public async Task WriteAsync(byte[] buffer)
         {
+            // Found an issue where many timeouts would fill up the receive buffer.
+            // When writing to the port, there should be nothing in the buffers.
+            _serialPort.DiscardInBuffer();
+            _serialPort.DiscardOutBuffer();
+            
             await _serialPort.BaseStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
         }
 
