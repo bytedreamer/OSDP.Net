@@ -173,7 +173,7 @@ namespace OSDP.Net
                 }
                 catch(Exception exception)
                 {
-                    _logger?.LogError(exception, $"Unexpected exception in polling loop. Connection ID:{Id}.");
+                    _logger?.LogError(exception, $"[{Connection}] Unexpected exception in polling loop. Connection ID:{Id}.");
                 }
                 finally
                 {
@@ -201,7 +201,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, "Error while opening connection");
+                        _logger?.LogError(exception, $"[{Connection}] Error while opening connection");
                         foreach (var device in _configuredDevices.ToArray())
                         {
                             ResetDevice(device);
@@ -272,7 +272,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, $"Error while notifying connection status for address {command.Address}");
+                        _logger?.LogError(exception, $"[{Connection}] Error while notifying connection status for address {command.Address}");
                     }
 
                     try
@@ -301,7 +301,7 @@ namespace OSDP.Net
                                 ResetDevice(device);
                                 break;
                             default:
-                                _logger?.LogDebug($"Retrying command {command} on connection {Id} because \"{exception.Message}\".");
+                                _logger?.LogDebug($"[{Connection}] Retrying command {command} on connection {Id} because \"{exception.Message}\".");
                                 device.RetryCommand(command);
                                 break;
                         }
@@ -313,7 +313,7 @@ namespace OSDP.Net
                         if (!cancellationToken.IsCancellationRequested)
                         {
                             _logger?.LogError(exception,
-                                $"Error while sending command {command} to address {command.Address}. Connection {Id}");
+                                $"[{Connection}] Error while sending command {command} to address {command.Address}. Connection {Id}");
                         }
 
                         continue;
@@ -325,7 +325,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, $"Error while processing reply {reply} from address {reply.Address}");
+                        _logger?.LogError(exception, $"[{Connection}] Error while processing reply {reply} from address {reply.Address}");
                         continue;
                     }
 
@@ -340,7 +340,7 @@ namespace OSDP.Net
             }
             catch(Exception exception)
             {
-                _logger?.LogError(exception, $"Error while closing connection {Id}.");
+                _logger?.LogError(exception, $"[{Connection}] Error while closing connection {Id}.");
             }
         }
 
@@ -432,7 +432,7 @@ namespace OSDP.Net
                 case ReplyType.InitialRMac:
                     if (!device.ValidateSecureChannelEstablishment(reply))
                     {
-                        _logger?.LogError($"Cryptogram not accepted by address {reply.Address}");
+                        _logger?.LogError($"[{Connection}] Cryptogram not accepted by address {reply.Address}");
                     }
                     break;
             }
@@ -488,7 +488,7 @@ namespace OSDP.Net
             }
             catch (Exception exception)
             {
-                _logger?.LogError(exception, $"Error while building command {command}");
+                _logger?.LogError(exception, $"[{Connection}] Error while building command {command}");
                 throw;
             }
 

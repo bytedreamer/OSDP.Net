@@ -92,5 +92,11 @@ namespace OSDP.Net.Connections
 
             throw new TimeoutException();
         }
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return _portName;
+        }
     }
 }
