@@ -16,7 +16,7 @@ variables:
   buildConfiguration: 'Release'
   major: 4
   minor: 0
-  patch: 2
+  patch: 3
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
@@ -45,6 +45,7 @@ steps:
     arguments: '--configuration $(buildConfiguration)'
 
 - task: ResharperCli@2
+  displayName: 'ReSharper Inspection'
   inputs:
     solutionOrProjectPath: 'src/OSDP.Net.sln'
     failBuildLevelSelector: 'Warning'

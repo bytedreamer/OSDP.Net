@@ -79,5 +79,11 @@ namespace OSDP.Net.Connections
 
             return 0;
         }
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return _listener?.LocalEndpoint.ToString();
+        }
     }
 }

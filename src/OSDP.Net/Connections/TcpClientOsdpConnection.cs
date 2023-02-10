@@ -85,5 +85,11 @@ namespace OSDP.Net.Connections
 
             return 0;
         }
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return $"{_server}:{_portNumber}";
+        }
     }
 }
