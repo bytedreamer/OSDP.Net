@@ -218,13 +218,14 @@ namespace OSDP.Net
                 {
                     // Allow for immediate processing of commands in queue
                     while (_pollInterval - (DateTime.UtcNow - lastMessageSentTime) > TimeSpan.Zero &&
-                           !_configuredDevices.Any(device => device.HasQueuedCommand))
+                           !_configuredDevices.Any(device1 => device1.HasQueuedCommand) && 
+                           !_configuredDevices.Any(device2 => device2.IsSendingMultiMessage))
                     {
                         delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
                     }
 
                     lastMessageSentTime = DateTime.UtcNow;
-                    
+
                     if (!_configuredDevices.Any())
                     {
                         continue;
