@@ -9,8 +9,6 @@ namespace OSDP.Net.Model.ReplyData
     /// </summary>
     public class ChallengeResponse : ReplyData
     {
-        private readonly byte[] _payload;
-
         /// <summary>
         /// Create a new instance of the ChallengeResponse
         /// </summary>
@@ -19,10 +17,27 @@ namespace OSDP.Net.Model.ReplyData
         /// <param name="cryptogram">PD Cryptogram</param>
         public ChallengeResponse(byte[] cUID, byte[] rndB, byte[] cryptogram)
         {
-            _payload = new byte[cUID.Length + rndB.Length + cryptogram.Length];
-            cUID.CopyTo(_payload, 0);
-            rndB.CopyTo(_payload, cUID.Length);
-            cryptogram.CopyTo(_payload, cUID.Length + rndB.Length);
+            ClientUID = cUID;
+            RndB = rndB;
+            Cryptogram = cryptogram;
+        }
+
+        public byte[] ClientUID {get; private set;}
+        public byte[] RndB { get; private set; }
+        public byte[] Cryptogram { get; private set; }
+
+        public static ChallengeResponse ParseData(ReadOnlySpan<byte> data)
+        {
+            if (data.Length != 32)
+            {
+                throw new InvalidPayloadException($"Challenge response must be 32 bytes, received {data.Length}");
+            }
+
+            return new ChallengeResponse(
+                data.Slice(0, 8).ToArray(),
+                data.Slice(8, 8).ToArray(),
+                data.Slice(16, 16).ToArray()
+            );
         }
 
         /// <inheritdoc/>
@@ -36,7 +51,12 @@ namespace OSDP.Net.Model.ReplyData
                 throw new InvalidOperationException("Challenge response should never be padded!");
             }
 
-            return _payload;
+            var payload = new byte[ClientUID.Length + RndB.Length + Cryptogram.Length];
+            ClientUID.CopyTo(payload, 0);
+            RndB.CopyTo(payload, ClientUID.Length);
+            Cryptogram.CopyTo(payload, ClientUID.Length + RndB.Length);
+
+            return payload;
         }
 
         /// <inheritdoc/>

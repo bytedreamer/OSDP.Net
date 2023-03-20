@@ -15,6 +15,13 @@ namespace OSDP.Net.Tests.Utilities
         }
 
         [Test]
+        public void HexWithDashSeparatorsToBytes()
+        {
+            var actual = BinaryUtils.HexToBytes("01-23-45-67-89-ab").ToArray();
+            Assert.That(actual, Is.EquivalentTo(new byte[] { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab }));
+        }
+
+        [Test]
         public void HexStringToBitArray()
         {
             var actual = BinaryUtils.HexStringToBitArray("0123");

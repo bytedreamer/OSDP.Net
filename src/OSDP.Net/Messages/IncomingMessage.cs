@@ -44,12 +44,14 @@ namespace OSDP.Net.Messages
             Payload = data.Slice(MessageHeaderSize + secureBlockSize, data.Length -
                 MessageHeaderSize - secureBlockSize - replyMessageFooterSize -
                 (IsSecureMessage ? MacSize : 0)).ToArray();
-            if (SecurityBlockType == (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity)
+            if (Payload.Length > 0 && (
+                SecurityBlockType == (byte)Messages.SecurityBlockType.CommandMessageWithDataSecurity ||
+                SecurityBlockType == (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity      ))
             {
-                // TODO: will need to figure out how to handle security when there's no Device instance present
-
-                //Payload = device.DecryptData(Payload.ToArray()).ToArray();
-                throw new NotImplementedException();
+                var paddedPayload = channel.DecodePayload(Payload);
+                var lastByteIdx = Payload.Length;
+                while (lastByteIdx > 0 && paddedPayload[--lastByteIdx] != FirstPaddingByte);
+                Payload = paddedPayload.AsSpan().Slice(0, lastByteIdx).ToArray();
             }
 
             IsDataCorrect = IsUsingCrc
@@ -59,9 +61,15 @@ namespace OSDP.Net.Messages
 
             if (IsSecureMessage)
             {
-                // TODO: What if this is not a command??
-                var mac = channel.GenerateMac(data.Slice(0, messageLength).ToArray(), true);
-                IsValidMac = !IsSecureMessage || mac.Slice(0, MacSize).SequenceEqual(Mac?.ToArray());
+                if (channel.IsSecurityEstablished)
+                {
+                    var mac = channel.GenerateMac(data.Slice(0, messageLength).ToArray(), true);
+                    IsValidMac = !IsSecureMessage || mac.Slice(0, MacSize).SequenceEqual(Mac?.ToArray());
+                }
+                else
+                {
+                    IsValidMac = false;
+                }
             }
             else
             {

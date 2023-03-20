@@ -27,7 +27,7 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<byte> Data { get; private set; }
 
-        internal static ManufacturerSpecific ParseData(ReadOnlySpan<byte> data)
+        public static ManufacturerSpecific ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();
             if (dataArray.Length < 3)
@@ -45,11 +45,13 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc />
-        public override string ToString()
+        public override string ToString() => ToString(0);
+        public string ToString(int indent = 0)
         {
+            var padding = new string(' ', indent);
             var build = new StringBuilder();
-            build.AppendLine($"Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
-            build.AppendLine($"       Data: {BitConverter.ToString(Data.ToArray())}");
+            build.AppendLine($"{padding}Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
+            build.AppendLine($"{padding}       Data: {BitConverter.ToString(Data.ToArray())}");
             return build.ToString();
         }
     }

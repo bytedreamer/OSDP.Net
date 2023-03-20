@@ -8,7 +8,7 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// A multi-part message data fragment reply.
     /// </summary>
-    internal class DataFragmentResponse
+    public class DataFragmentResponse
     {
         private DataFragmentResponse()
         {
@@ -34,7 +34,7 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public byte[] Data { get; private set; }
 
-        internal static DataFragmentResponse ParseData(ReadOnlySpan<byte> data)
+        public static DataFragmentResponse ParseData(ReadOnlySpan<byte> data)
         {
             if (data.Length < 6)
             {
@@ -54,13 +54,15 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc />
-        public override string ToString()
+        public override string ToString() => ToString(0);
+        public string ToString(int indent = 0)
         {
+            var padding = new string(' ', indent);
             var build = new StringBuilder();
-            build.AppendLine($"Whole Message Length: {WholeMessageLength}");
-            build.AppendLine($"              Offset: {Offset}");
-            build.AppendLine($"  Length of Fragment: {LengthOfFragment}");
-            build.AppendLine($"                Data: {BitConverter.ToString(Data.ToArray())}");
+            build.AppendLine($"{padding}Whole Message Length: {WholeMessageLength}");
+            build.AppendLine($"{padding}              Offset: {Offset}");
+            build.AppendLine($"{padding}  Length of Fragment: {LengthOfFragment}");
+            build.AppendLine($"{padding}                Data: {BitConverter.ToString(Data.ToArray())}");
             return build.ToString();
         }
     }

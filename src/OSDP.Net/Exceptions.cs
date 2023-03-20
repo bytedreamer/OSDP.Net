@@ -15,6 +15,8 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="message">Message that describes the error</param>
         public OSDPNetException(string message) : base(message) {}
+
+        public OSDPNetException() : base() { }
     }
 
     /// <summary>
@@ -42,5 +44,15 @@ namespace OSDP.Net
 
         /// <inheritdoc />
         public override string Message { get; }
+    }
+
+    public class InvalidPayloadException : OSDPNetException
+    {
+        public InvalidPayloadException(string message) : base(message) { }
+    }
+
+    public class SecureChannelRequired : OSDPNetException
+    {
+        public SecureChannelRequired() : base() { }
     }
 }

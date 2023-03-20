@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
@@ -9,7 +10,7 @@ namespace OSDP.Net.Model.CommandData
     /// </summary>
     public class GetPIVData
     {
-        private readonly bool _useSingleByteOffset;
+        private bool _useSingleByteOffset;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GetPIVData"/> class.
@@ -68,6 +69,22 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public ushort DataOffset { get; }
 
+        public static GetPIVData ParseData(ReadOnlySpan<byte> data)
+        {
+            if (data.Length < 5 || data.Length > 6)
+            {
+                throw new ArgumentException("Invalid data length, must either be 5 or 6 bytes", nameof(data));
+            }
+
+            var isSingleByteOffset = data.Length == 5;
+            ushort offset = isSingleByteOffset ? data[4] :
+                Message.ConvertBytesToUnsignedShort(data.Slice(4, 2));
+
+            var res = new GetPIVData(data.Slice(0, 3).ToArray(), data[3], offset);
+            res._useSingleByteOffset = isSingleByteOffset;
+            return res;
+        }
+
         /// <summary>
         /// Builds the data.
         /// </summary>
@@ -82,6 +99,17 @@ namespace OSDP.Net.Model.CommandData
             else
                 data.AddRange(Message.ConvertShortToBytes(DataOffset));
             return data.ToArray();
+        }
+
+        public override string ToString() => ToString(0);
+        public string ToString(int indent = 0)
+        {
+            var padding = new string(' ', indent);
+            var build = new StringBuilder();
+            build.AppendLine($"{padding}  Object ID: {BitConverter.ToString(ObjectId)}");
+            build.AppendLine($"{padding} Element ID: {ElementId}");
+            build.AppendLine($"{padding}Data Offset: {DataOffset}");
+            return build.ToString();
         }
     }
 

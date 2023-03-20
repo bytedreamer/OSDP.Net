@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace OSDP.Net.Model.CommandData
 {
@@ -34,7 +36,15 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public byte[] Data { get; }
 
-        internal IEnumerable<byte> BuildData()
+        public static ManufacturerSpecific ParseData(ReadOnlySpan<byte> data)
+        {
+            return new ManufacturerSpecific(
+                data.Slice(0, 3).ToArray(),
+                data.Slice(3).ToArray()
+            );
+        }
+
+        public IEnumerable<byte> BuildData()
         {
             var data = new List<byte>
             {
@@ -44,6 +54,16 @@ namespace OSDP.Net.Model.CommandData
             };
             data.AddRange(Data);
             return data;
+        }
+
+        public override string ToString() => ToString(0);
+        public string ToString(int indent = 0)
+        {
+            var padding = new string(' ', indent);
+            var build = new StringBuilder();
+            build.AppendLine($"{padding}Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
+            build.AppendLine($"{padding}       Data: {BitConverter.ToString(Data.ToArray())}");
+            return build.ToString();
         }
     }
 }

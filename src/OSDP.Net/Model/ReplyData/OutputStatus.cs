@@ -22,21 +22,22 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<bool> OutputStatuses { get; private set; }
 
-        internal static OutputStatus ParseData(ReadOnlySpan<byte> data)
+        public static OutputStatus ParseData(ReadOnlySpan<byte> data)
         {
             return new OutputStatus {OutputStatuses = data.ToArray().Select(Convert.ToBoolean)};
         }
 
         /// <inheritdoc />
-        public override string ToString()
+        public override string ToString() => ToString(0);
+        public string ToString(int indent = 0)
         {
+            var padding = new string(' ', indent);
             byte outputNumber = 0;
             var build = new StringBuilder();
             foreach (bool outputStatus in OutputStatuses)
             {
-                build.AppendLine($"Output Number {outputNumber++:00}: {outputStatus}");
+                build.AppendLine($"{padding}Output Number {outputNumber++:00}: {outputStatus}");
             }
-
             return build.ToString();
         }
     }

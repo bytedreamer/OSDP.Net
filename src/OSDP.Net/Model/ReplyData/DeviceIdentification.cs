@@ -48,7 +48,7 @@ namespace OSDP.Net.Model.ReplyData
         /// <inheritdoc/>
         public override ReplyType ReplyType => ReplyType.PdIdReport;
 
-        internal static DeviceIdentification ParseData(ReadOnlySpan<byte> data)
+        public static DeviceIdentification ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();
             if (dataArray.Length != 12)
@@ -88,14 +88,18 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc />
-        public override string ToString()
+        public override string ToString() => ToString(0);
+
+        public string ToString(int indent = 4)
         {
+            string padding = new string(' ', indent);
+
             var build = new StringBuilder();
-            build.AppendLine($"     Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
-            build.AppendLine($"    Model Number: {ModelNumber}");
-            build.AppendLine($"         Version: {Version}");
-            build.AppendLine($"   Serial Number: {BitConverter.ToString(Message.ConvertIntToBytes(SerialNumber).ToArray())}");
-            build.AppendLine($"Firmware Version: {FirmwareMajor}.{FirmwareMinor}.{FirmwareBuild}");
+            build.AppendLine($"{padding}     Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
+            build.AppendLine($"{padding}    Model Number: {ModelNumber}");
+            build.AppendLine($"{padding}         Version: {Version}");
+            build.AppendLine($"{padding}   Serial Number: {BitConverter.ToString(Message.ConvertIntToBytes(SerialNumber).ToArray())}");
+            build.AppendLine($"{padding}Firmware Version: {FirmwareMajor}.{FirmwareMinor}.{FirmwareBuild}");
 
             return build.ToString();
         }

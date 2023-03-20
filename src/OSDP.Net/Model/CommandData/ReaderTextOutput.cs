@@ -54,12 +54,34 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public string Text { get; }
 
-        internal IEnumerable<byte> BuildData()
+        public static ReaderTextOutput ParseData(ReadOnlySpan<byte> data)
+        {
+            string text = Encoding.ASCII.GetString(data.Slice(6).ToArray());
+            return new ReaderTextOutput(data[0], (TextCommand)data[1], data[2], data[3], data[4], text);
+        }
+
+        public IEnumerable<byte> BuildData()
         {
             var data = new List<byte>
                 {ReaderNumber, (byte) TextCommand, TemporaryTextTime, Row, Column, (byte) Text.Length};
             data.AddRange(Encoding.ASCII.GetBytes(Text.Substring(0, Math.Min(Text.Length, byte.MaxValue))));
             return data;
+        }
+
+        public override string ToString() => ToString(0);
+
+        public string ToString(int indent=4)
+        {
+            string padding = new string(' ', indent);
+
+            var build = new StringBuilder();
+            build.AppendLine($"{padding}Reader Number: {ReaderNumber}");
+            build.AppendLine($"{padding}  Text Command: {TextCommand}");
+            build.AppendLine($"{padding}Temp Text Time: {TemporaryTextTime}");
+            build.AppendLine($"{padding}   Row, Column: {Row}, {Column}");
+            build.AppendLine($"{padding}  Display Text: {Text}");
+
+            return build.ToString();
         }
     }
 

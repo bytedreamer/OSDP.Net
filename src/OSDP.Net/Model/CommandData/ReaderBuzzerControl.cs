@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace OSDP.Net.Model.CommandData
 {
@@ -50,9 +51,28 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public byte Count { get;  }
 
-        internal IEnumerable<byte> BuildData()
+        public static ReaderBuzzerControl ParseData(ReadOnlySpan<byte> data)
+        {
+            return new ReaderBuzzerControl(data[0], (ToneCode)data[1], data[2], data[3], data[4]);
+        }
+
+        public IEnumerable<byte> BuildData()
         {
             return new[] {ReaderNumber, (byte) ToneCode, OnTime, OffTime, Count};
+        }
+
+        public override string ToString() => ToString(0);
+
+        public string ToString(int indent = 0)
+        {
+            var padding = new string(' ', indent);
+            var sb = new StringBuilder();
+            sb.AppendLine($"{padding} Reader #: {ReaderNumber}");
+            sb.AppendLine($"{padding}Tone Code: {ToneCode}");
+            sb.AppendLine($"{padding}  On Time: {OnTime}");
+            sb.AppendLine($"{padding} Off Time: {OffTime}");
+            sb.AppendLine($"{padding}    Count: {Count}");
+            return sb.ToString();
         }
     }
 

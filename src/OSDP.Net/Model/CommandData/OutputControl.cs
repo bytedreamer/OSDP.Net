@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Text;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
@@ -36,11 +38,29 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public ushort Timer { get; }
 
-        internal IEnumerable<byte> BuildData()
+        public static OutputControl ParseData(ReadOnlySpan<byte> data)
+        {
+            return new OutputControl(
+                data[0], (OutputControlCode)data[1],
+                Message.ConvertBytesToUnsignedShort(data.Slice(2)));
+        }
+
+        public IEnumerable<byte> BuildData()
         {
             var timerBytes = Message.ConvertShortToBytes(Timer);
             
             return new[] {OutputNumber, (byte) OutputControlCode, timerBytes[0], timerBytes[1]};
+        }
+
+        public override string ToString() => ToString(0);
+        public string ToString(int indent=4)
+        {
+            var padding = new string(' ', indent);
+            var sb = new StringBuilder();
+            sb.AppendLine($"{padding} Output #: {OutputNumber}");
+            sb.AppendLine($"{padding}Ctrl Code: {OutputControlCode}");
+            sb.AppendLine($"{padding}    Timer: {Timer}");
+            return sb.ToString();
         }
     }
 }

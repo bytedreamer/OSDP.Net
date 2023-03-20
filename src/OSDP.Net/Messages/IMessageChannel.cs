@@ -25,14 +25,15 @@ namespace OSDP.Net.Messages
         /// <param name="destination">Identifies where encoded data is to written to</param>
         void EncodePayload(byte[] payload, Span<byte> destination);
 
+        byte[] DecodePayload(byte[] payload);
+
         /// <summary>
         /// Generates a new Message Authentication Code. Note this command IS NOT
         /// idempotent as every time it is called it will calculate a new rolling MAC
         /// value based on the results of the previous call
         /// </summary>
         /// <param name="message">Message to be signed with a MAC</param>
-        /// <param name="isCommand">Indicates whether the message is a command or a response</param>
         /// <returns></returns>
-        ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand);
+        ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming);
     }
 }
