@@ -216,10 +216,10 @@ namespace OSDP.Net
 
                 if (IsPolling)
                 {
-                    // Allow for immediate processing of commands in queue
+                    // Allow for immediate processing of commands in queue or outgoing multipart messages
                     while (_pollInterval - (DateTime.UtcNow - lastMessageSentTime) > TimeSpan.Zero &&
                            !_configuredDevices.Any(device1 => device1.HasQueuedCommand) && 
-                           !_configuredDevices.Any(device2 => device2.IsSendingMultiMessage))
+                           !_configuredDevices.Any(device2 => device2.IsReceivingMultiMessage))
                     {
                         delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
                     }
@@ -453,6 +453,13 @@ namespace OSDP.Net
             var foundDevice = _configuredDevices.First(device => device.Address == address);
 
             foundDevice.IsSendingMultiMessage = isSendingMultiMessage;
+        }
+        
+        public void SetReceivingMultiMessage(byte address, bool isReceivingMultiMessage)
+        {
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
+
+            foundDevice.IsReceivingMultiMessage = isReceivingMultiMessage;
         }
 
         public void SetSendingMultiMessageNoSecureChannel(byte address, bool isSendingMultiMessageNoSecureChannel)

@@ -303,7 +303,7 @@ namespace OSDP.Net
                     new GetPIVDataCommand(address, getPIVData), cancellationToken, throwOnNak: false)
                     .ConfigureAwait(false);
 
-                SetMultipartMessaging(connectionId, address, true);
+                SetReceivingMultipartMessaging(connectionId, address, true);
                 
                 DateTime endTime = DateTime.UtcNow + timeout;
                 
@@ -322,7 +322,7 @@ namespace OSDP.Net
             finally
             {
                 PIVDataReplyReceived -= Handler;
-                SetMultipartMessaging(connectionId, address, false);
+                SetReceivingMultipartMessaging(connectionId, address, false);
             }
         }
 
@@ -627,7 +627,7 @@ namespace OSDP.Net
                 await SendCommand(connectionId,
                     new BiometricReadDataCommand(address, biometricReadData), cancellationToken, throwOnNak: false).ConfigureAwait(false);
 
-                SetMultipartMessaging(connectionId, address, true);
+                SetReceivingMultipartMessaging(connectionId, address, true);
                 
                 DateTime endTime = DateTime.UtcNow + timeout;
 
@@ -646,7 +646,7 @@ namespace OSDP.Net
             finally
             {
                 BiometricReadResultsReplyReceived -= Handler;
-                SetMultipartMessaging(connectionId, address, false);
+                SetReceivingMultipartMessaging(connectionId, address, false);
             }
         }
 
@@ -705,7 +705,7 @@ namespace OSDP.Net
                     new BiometricMatchCommand(address, biometricTemplateData), 
                     cancellationToken, throwOnNak: false).ConfigureAwait(false);
                 
-                SetMultipartMessaging(connectionId, address, true);
+                SetReceivingMultipartMessaging(connectionId, address, true);
                 
                 DateTime endTime = DateTime.UtcNow + timeout;
                 
@@ -724,7 +724,7 @@ namespace OSDP.Net
             finally
             {
                 BiometricMatchReplyReceived -= Handler;
-                SetMultipartMessaging(connectionId, address, false);
+                SetReceivingMultipartMessaging(connectionId, address, false);
             }
         }
 
@@ -791,8 +791,6 @@ namespace OSDP.Net
 
             try
             {
-                SetMultipartMessaging(connectionId, address, true);
-                
                 while (!cancellationToken.IsCancellationRequested && continueTransfer)
                 {
                     await SendCommand(connectionId,
@@ -807,6 +805,8 @@ namespace OSDP.Net
                     // Determine if we should continue on successful status
                     continueTransfer = offset < totalSize;
                 }
+                
+                SetReceivingMultipartMessaging(connectionId, address, true);
                 
                 DateTime endTime = DateTime.UtcNow + timeout;
                 
@@ -825,7 +825,7 @@ namespace OSDP.Net
             finally
             {
                 AuthenticationChallengeResponseReceived -= Handler;
-                SetMultipartMessaging(connectionId, address, false);
+                SetReceivingMultipartMessaging(connectionId, address, false);
             }
         }
 
@@ -884,14 +884,14 @@ namespace OSDP.Net
             return _buses[connectionId].IsOnline(address);
         }
 
-        private void SetMultipartMessaging(Guid connectionId, byte address, bool isMultiPartMessaging)
+        private void SetReceivingMultipartMessaging(Guid connectionId, byte address, bool isMultiPartMessaging)
         {
             if (!_buses.TryGetValue(connectionId, out var bus))
             {
                 throw new ArgumentException("Connection could not be found", nameof(connectionId));
             }
             
-            bus.SetSendingMultiMessage(address, isMultiPartMessaging);
+            bus.SetReceivingMultiMessage(address, isMultiPartMessaging);
         }
         
         private async Task<Reply> SendCommand(Guid connectionId, Command command,

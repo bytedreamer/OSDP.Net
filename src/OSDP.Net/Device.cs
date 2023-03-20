@@ -59,6 +59,8 @@ namespace OSDP.Net
 
         public bool IsSendingMultiMessageNoSecureChannel { get; set; }
         
+        public bool IsReceivingMultiMessage { get; set; }
+        
         /// <summary>
         /// Has one or more commands waiting in the queue
         /// </summary>
