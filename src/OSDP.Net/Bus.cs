@@ -219,7 +219,7 @@ namespace OSDP.Net
                     // Allow for immediate processing of commands in queue or outgoing multipart messages
                     while (_pollInterval - (DateTime.UtcNow - lastMessageSentTime) > TimeSpan.Zero &&
                            !_configuredDevices.Any(device1 => device1.HasQueuedCommand) && 
-                           !_configuredDevices.Any(device2 => device2.IsReceivingMultiMessage))
+                           !_configuredDevices.Any(device2 => device2.IsReceivingMultipartMessage))
                     {
                         delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
                     }
@@ -252,7 +252,7 @@ namespace OSDP.Net
                     }
                     
                     var command = device.GetNextCommandData(IsPolling);
-                    if (command == null || WaitingForNextMultiMessage(command, device.IsSendingMultiMessage))
+                    if (command == null || WaitingForNextMultiMessage(command, device.IsSendingMultipartMessage))
                     {
                         continue;
                     }
@@ -448,18 +448,18 @@ namespace OSDP.Net
             ResetDevice(foundDevice);
         }
 
-        public void SetSendingMultiMessage(byte address, bool isSendingMultiMessage)
+        public void SetSendingMultipartMessage(byte address, bool isSendingMultipartMessage)
         {
             var foundDevice = _configuredDevices.First(device => device.Address == address);
 
-            foundDevice.IsSendingMultiMessage = isSendingMultiMessage;
+            foundDevice.IsSendingMultipartMessage = isSendingMultipartMessage;
         }
         
-        public void SetReceivingMultiMessage(byte address, bool isReceivingMultiMessage)
+        public void SetReceivingMultipartMessage(byte address, bool isReceivingMultipartMessage)
         {
             var foundDevice = _configuredDevices.First(device => device.Address == address);
 
-            foundDevice.IsReceivingMultiMessage = isReceivingMultiMessage;
+            foundDevice.IsReceivingMultipartMessage = isReceivingMultipartMessage;
         }
 
         public void SetSendingMultiMessageNoSecureChannel(byte address, bool isSendingMultiMessageNoSecureChannel)
@@ -522,7 +522,7 @@ namespace OSDP.Net
         {
             var replyBuffer = new Collection<byte>();
 
-            if (!await WaitForStartOfMessage(replyBuffer, device.IsSendingMultiMessage, cancellationToken).ConfigureAwait(false))
+            if (!await WaitForStartOfMessage(replyBuffer, device.IsSendingMultipartMessage, cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message");
             }

@@ -296,15 +296,14 @@ namespace OSDP.Net
             }
 
             PIVDataReplyReceived += Handler;
-
+            SetReceivingMultipartMessaging(connectionId, address, true);
+            
             try
             {
                 await SendCommand(connectionId,
                     new GetPIVDataCommand(address, getPIVData), cancellationToken, throwOnNak: false)
                     .ConfigureAwait(false);
 
-                SetReceivingMultipartMessaging(connectionId, address, true);
-                
                 DateTime endTime = DateTime.UtcNow + timeout;
                 
                 while (DateTime.UtcNow <= endTime)
@@ -471,7 +470,7 @@ namespace OSDP.Net
             var bus = _buses[connectionId];
             return Task.Run(async () =>
             {
-                bus.SetSendingMultiMessage(address, true);
+                bus.SetSendingMultipartMessage(address, true);
                 try
                 {
                     return await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
@@ -479,7 +478,7 @@ namespace OSDP.Net
                 }
                 finally
                 {
-                    bus.SetSendingMultiMessage(address, false);
+                    bus.SetSendingMultipartMessage(address, false);
                     bus.SetSendingMultiMessageNoSecureChannel(address, false);
                 }
             }, cancellationToken);
@@ -621,13 +620,12 @@ namespace OSDP.Net
             }
 
             BiometricReadResultsReplyReceived += Handler;
+            SetReceivingMultipartMessaging(connectionId, address, true);
 
             try
             {
                 await SendCommand(connectionId,
                     new BiometricReadDataCommand(address, biometricReadData), cancellationToken, throwOnNak: false).ConfigureAwait(false);
-
-                SetReceivingMultipartMessaging(connectionId, address, true);
                 
                 DateTime endTime = DateTime.UtcNow + timeout;
 
@@ -698,14 +696,13 @@ namespace OSDP.Net
             }
 
             BiometricMatchReplyReceived += Handler;
+            SetReceivingMultipartMessaging(connectionId, address, true);
 
             try
             {
                 await SendCommand(connectionId,
                     new BiometricMatchCommand(address, biometricTemplateData), 
                     cancellationToken, throwOnNak: false).ConfigureAwait(false);
-                
-                SetReceivingMultipartMessaging(connectionId, address, true);
                 
                 DateTime endTime = DateTime.UtcNow + timeout;
                 
@@ -784,6 +781,7 @@ namespace OSDP.Net
             }
 
             AuthenticationChallengeResponseReceived += Handler;
+            SetReceivingMultipartMessaging(connectionId, address, true);    
             
             int totalSize = requestData.Count;
             int offset = 0;
@@ -805,8 +803,6 @@ namespace OSDP.Net
                     // Determine if we should continue on successful status
                     continueTransfer = offset < totalSize;
                 }
-                
-                SetReceivingMultipartMessaging(connectionId, address, true);
                 
                 DateTime endTime = DateTime.UtcNow + timeout;
                 
@@ -884,14 +880,14 @@ namespace OSDP.Net
             return _buses[connectionId].IsOnline(address);
         }
 
-        private void SetReceivingMultipartMessaging(Guid connectionId, byte address, bool isMultiPartMessaging)
+        private void SetReceivingMultipartMessaging(Guid connectionId, byte address, bool isReceivingMultipartMessaging)
         {
             if (!_buses.TryGetValue(connectionId, out var bus))
             {
                 throw new ArgumentException("Connection could not be found", nameof(connectionId));
             }
             
-            bus.SetReceivingMultiMessage(address, isMultiPartMessaging);
+            bus.SetReceivingMultipartMessage(address, isReceivingMultipartMessaging);
         }
         
         private async Task<Reply> SendCommand(Guid connectionId, Command command,
