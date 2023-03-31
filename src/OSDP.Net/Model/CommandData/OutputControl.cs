@@ -38,6 +38,9 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public ushort Timer { get; }
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of OutputControl representing the message payload</returns>
         public static OutputControl ParseData(ReadOnlySpan<byte> data)
         {
             return new OutputControl(
@@ -45,6 +48,10 @@ namespace OSDP.Net.Model.CommandData
                 Message.ConvertBytesToUnsignedShort(data.Slice(2)));
         }
 
+        /// <summary>
+        /// Builds the data.
+        /// </summary>
+        /// <returns>The Data</returns>
         public IEnumerable<byte> BuildData()
         {
             var timerBytes = Message.ConvertShortToBytes(Timer);
@@ -52,8 +59,15 @@ namespace OSDP.Net.Model.CommandData
             return new[] {OutputNumber, (byte) OutputControlCode, timerBytes[0], timerBytes[1]};
         }
 
+        /// <inheritdoc/>
         public override string ToString() => ToString(0);
-        public string ToString(int indent=4)
+
+        /// <summary>
+        /// Returns a string representation of the current object
+        /// </summary>
+        /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
+        /// <returns>String representation of the current object</returns>
+        public string ToString(int indent)
         {
             var padding = new string(' ', indent);
             var sb = new StringBuilder();

@@ -54,12 +54,19 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public string Text { get; }
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of ReaderTextOutput representing the message payload</returns>
         public static ReaderTextOutput ParseData(ReadOnlySpan<byte> data)
         {
             string text = Encoding.ASCII.GetString(data.Slice(6).ToArray());
             return new ReaderTextOutput(data[0], (TextCommand)data[1], data[2], data[3], data[4], text);
         }
 
+        /// <summary>
+        /// Builds the data.
+        /// </summary>
+        /// <returns>The Data</returns>
         public IEnumerable<byte> BuildData()
         {
             var data = new List<byte>
@@ -68,9 +75,15 @@ namespace OSDP.Net.Model.CommandData
             return data;
         }
 
+        /// <inheritdoc/>
         public override string ToString() => ToString(0);
 
-        public string ToString(int indent=4)
+        /// <summary>
+        /// Returns a string representation of the current object
+        /// </summary>
+        /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
+        /// <returns>String representation of the current object</returns>
+        public string ToString(int indent)
         {
             string padding = new string(' ', indent);
 

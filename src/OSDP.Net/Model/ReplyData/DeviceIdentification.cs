@@ -48,6 +48,9 @@ namespace OSDP.Net.Model.ReplyData
         /// <inheritdoc/>
         public override ReplyType ReplyType => ReplyType.PdIdReport;
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of DeviceIdentification representing the message payload</returns>
         public static DeviceIdentification ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();
@@ -87,10 +90,8 @@ namespace OSDP.Net.Model.ReplyData
             return buffer;
         }
 
-        /// <inheritdoc />
-        public override string ToString() => ToString(0);
-
-        public string ToString(int indent = 4)
+        /// <inheritdoc/>
+        public override string ToString(int indent)
         {
             string padding = new string(' ', indent);
 

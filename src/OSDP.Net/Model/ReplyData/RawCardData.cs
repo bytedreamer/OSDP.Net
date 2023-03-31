@@ -84,9 +84,8 @@ namespace OSDP.Net.Model.ReplyData
             return rawCardData;
         }
 
-        /// <inheritdoc />
-        public override string ToString() => ToString(0);
-        public string ToString(int indent = 0)
+        /// <inheritdoc/>
+        public override string ToString(int indent)
         {
             var padding = new string(' ', indent);
             var build = new StringBuilder();

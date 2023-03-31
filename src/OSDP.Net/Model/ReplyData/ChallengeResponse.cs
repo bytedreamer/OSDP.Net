@@ -22,10 +22,24 @@ namespace OSDP.Net.Model.ReplyData
             Cryptogram = cryptogram;
         }
 
+        /// <summary>
+        /// Client Unique ID
+        /// </summary>
         public byte[] ClientUID {get; private set;}
+
+        /// <summary>
+        /// Rnd.B as defined in OSDP.NET spec
+        /// </summary>
         public byte[] RndB { get; private set; }
+
+        /// <summary>
+        /// Client (PD-side) cryptogram as defined in OSDP.NET spec
+        /// </summary>
         public byte[] Cryptogram { get; private set; }
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of ChallengeResponse representing the message payload</returns>
         public static ChallengeResponse ParseData(ReadOnlySpan<byte> data)
         {
             if (data.Length != 32)

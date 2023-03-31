@@ -83,6 +83,9 @@ namespace OSDP.Net.Model.ReplyData
         /// <summary>Gets the alternative maximum message size.</summary>
         public ushort UpdateMessageMaximum { get; private set; }
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of FileTransferStatus representing the message payload</returns>
         internal static FileTransferStatus ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();

@@ -51,19 +51,32 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public byte Count { get;  }
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of ReaderBuzzerControl representing the message payload</returns>
         public static ReaderBuzzerControl ParseData(ReadOnlySpan<byte> data)
         {
             return new ReaderBuzzerControl(data[0], (ToneCode)data[1], data[2], data[3], data[4]);
         }
 
+        /// <summary>
+        /// Builds the data.
+        /// </summary>
+        /// <returns>The Data</returns>
         public IEnumerable<byte> BuildData()
         {
             return new[] {ReaderNumber, (byte) ToneCode, OnTime, OffTime, Count};
         }
 
+        /// <inheritdoc/>
         public override string ToString() => ToString(0);
 
-        public string ToString(int indent = 0)
+        /// <summary>
+        /// Returns a string representation of the current object
+        /// </summary>
+        /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
+        /// <returns>String representation of the current object</returns>
+        public string ToString(int indent)
         {
             var padding = new string(' ', indent);
             var sb = new StringBuilder();
