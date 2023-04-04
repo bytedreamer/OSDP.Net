@@ -60,7 +60,7 @@ namespace OSDP.Net.Model.ReplyData
         /// <param name="data">The data.</param>
         /// <returns>RawCardData.</returns>
         /// <exception cref="System.Exception">Invalid size for the data</exception>
-        internal static RawCardData ParseData(ReadOnlySpan<byte> data)
+        public static RawCardData ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();
             if (dataArray.Length < 4)
@@ -84,14 +84,15 @@ namespace OSDP.Net.Model.ReplyData
             return rawCardData;
         }
 
-        /// <inheritdoc />
-        public override string ToString()
+        /// <inheritdoc/>
+        public override string ToString(int indent)
         {
+            var padding = new string(' ', indent);
             var build = new StringBuilder();
-            build.AppendLine($"Reader Number: {ReaderNumber}");
-            build.AppendLine($"  Format Code: {Helpers.SplitCamelCase(FormatCode.ToString())}");
-            build.AppendLine($"    Bit Count: {BitCount}");
-            build.AppendLine($"         Data: {FormatData(Data)}");
+            build.AppendLine($"{padding}Reader Number: {ReaderNumber}");
+            build.AppendLine($"{padding}  Format Code: {Helpers.SplitCamelCase(FormatCode.ToString())}");
+            build.AppendLine($"{padding}    Bit Count: {BitCount}");
+            build.AppendLine($"{padding}         Data: {FormatData(Data)}");
             return build.ToString();
         }
 

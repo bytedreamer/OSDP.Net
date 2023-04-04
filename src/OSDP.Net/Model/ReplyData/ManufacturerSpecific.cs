@@ -27,7 +27,10 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<byte> Data { get; private set; }
 
-        internal static ManufacturerSpecific ParseData(ReadOnlySpan<byte> data)
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of ManufacturerSpecific representing the message payload</returns>
+        public static ManufacturerSpecific ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();
             if (dataArray.Length < 3)
@@ -44,12 +47,20 @@ namespace OSDP.Net.Model.ReplyData
             return manufacturerSpecificReply;
         }
 
-        /// <inheritdoc />
-        public override string ToString()
+        /// <inheritdoc/>
+        public override string ToString() => ToString(0);
+
+        /// <summary>
+        /// Returns a string representation of the current object
+        /// </summary>
+        /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
+        /// <returns>String representation of the current object</returns>
+        public string ToString(int indent)
         {
+            var padding = new string(' ', indent);
             var build = new StringBuilder();
-            build.AppendLine($"Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
-            build.AppendLine($"       Data: {BitConverter.ToString(Data.ToArray())}");
+            build.AppendLine($"{padding}Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
+            build.AppendLine($"{padding}       Data: {BitConverter.ToString(Data.ToArray())}");
             return build.ToString();
         }
     }

@@ -42,6 +42,11 @@ namespace OSDP.Net.Utilities
 
             while (enumerator.MoveNext())
             {
+                if (enumerator.Current == '-')
+                {
+                    if (!enumerator.MoveNext()) throw new InvalidOperationException("Not a valid hex string");
+                }
+
                 var a = enumerator.Current.HexToInt();
                 if (!enumerator.MoveNext()) throw new InvalidOperationException("Not a valid hex string");
                 var b = enumerator.Current.HexToInt();

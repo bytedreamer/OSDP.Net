@@ -20,6 +20,9 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public IEnumerable<ReaderTamperStatus> ReaderTamperStatuses { get; private set; }
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of ReaderStatus representing the message payload</returns>
         internal static ReaderStatus ParseData(ReadOnlySpan<byte> data)
         {
             return new ReaderStatus

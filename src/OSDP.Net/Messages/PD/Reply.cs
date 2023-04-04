@@ -76,7 +76,9 @@ namespace OSDP.Net.Messages.PD
                     : (byte)SecurityBlockType.ReplyMessageWithDataSecurity;
 
                 // TODO: How do I determine this properly?? (SCBK vs SCBK-D value)
-                buffer[curLen + 2] = 0x00;
+                // Is this needed only for establishing secure channel? or do we always need to return it
+                // with every reply?
+                buffer[curLen + 2] = 0x01;
                 curLen += 3;
             }
 
