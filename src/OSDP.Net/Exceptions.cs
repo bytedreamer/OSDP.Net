@@ -7,19 +7,23 @@ namespace OSDP.Net
     /// <summary>
     /// Represents a custom exception defined in OSDP.Net library
     /// </summary>
-    public class OSDPNetException : Exception 
+    public class OSDPNetException : Exception
     {
         /// <summary>
         /// Initializes a new instance of OSDP.Net.OSDPNetException with a specified
         /// error message
         /// </summary>
         /// <param name="message">Message that describes the error</param>
-        public OSDPNetException(string message) : base(message) {}
+        public OSDPNetException(string message) : base(message)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of OSDP.Net.OSDPNetException
         /// </summary>
-        public OSDPNetException() : base() { }
+        public OSDPNetException()
+        {
+        }
     }
 
     /// <summary>
@@ -71,6 +75,8 @@ namespace OSDP.Net
         /// <summary>
         /// Initializes a new instance of OSDP.Net.SecureChannelRequired
         /// </summary>
-        public SecureChannelRequired() : base() { }
+        public SecureChannelRequired()
+        {
+        }
     }
 }

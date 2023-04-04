@@ -50,7 +50,10 @@ namespace OSDP.Net.Messages
             {
                 var paddedPayload = channel.DecodePayload(Payload);
                 var lastByteIdx = Payload.Length;
-                while (lastByteIdx > 0 && paddedPayload[--lastByteIdx] != FirstPaddingByte);
+                while (lastByteIdx > 0 && paddedPayload[--lastByteIdx] != FirstPaddingByte)
+                {
+                }
+
                 Payload = paddedPayload.AsSpan().Slice(0, lastByteIdx).ToArray();
             }
 

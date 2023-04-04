@@ -25,7 +25,7 @@ namespace OSDP.Net
         /// <summary>
         /// Optional logger instance
         /// </summary>
-        protected readonly ILogger _logger;
+        protected readonly ILogger Logger;
 
         /// <summary>
         /// Initializes a new instance of SecurityChannel2 class
@@ -40,7 +40,7 @@ namespace OSDP.Net
         public MessageChannel(SecurityContext context = null, ILoggerFactory loggerFactory = null)
         {
             Context = context ?? new();
-            _logger = loggerFactory?.CreateLogger(GetType());
+            Logger = loggerFactory?.CreateLogger(GetType());
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace OSDP.Net
         /// <exception cref="SecureChannelRequired">Thrown if secure channel has not been established</exception>
         protected byte[] GenerateReplyMac(ReadOnlySpan<byte> message) => (Context.RMac = GenerateMac(message, Context.CMac));
 
-        private byte[] GenerateMac(ReadOnlySpan<byte> message, byte[] IV)
+        private byte[] GenerateMac(ReadOnlySpan<byte> message, byte[] iv)
         {
             if (!IsSecurityEstablished)
             {
@@ -84,10 +84,8 @@ namespace OSDP.Net
             }
 
             using var crypto = SecurityContext.CreateCypher(Context.SMac1, false);
-            crypto.IV = IV;
-
-            var initialVector = crypto.IV;
-
+            crypto.IV = iv;
+            
             var cursor = message;
             while (cursor.Length > 0)
             {
@@ -121,9 +119,9 @@ namespace OSDP.Net
         /// Decodes the payload
         /// </summary>
         /// <param name="payload">Cyphertext of the message payload</param>
-        /// <param name="IV">crypto initialization vector</param>
+        /// <param name="iv">crypto initialization vector</param>
         /// <returns>Message payload as plaintext</returns>
-        protected byte[] DecodePayload(byte[] payload, byte[] IV)
+        protected byte[] DecodePayload(byte[] payload, byte[] iv)
         {
             if (!IsSecurityEstablished)
             {
@@ -140,7 +138,7 @@ namespace OSDP.Net
             }
 
             using var crypto = SecurityContext.CreateCypher(Context.Enc, false);
-            crypto.IV = IV.Select(b => (byte)~b).ToArray();
+            crypto.IV = iv.Select(b => (byte)~b).ToArray();
 
             using var encryptor = crypto.CreateDecryptor();
             return encryptor.TransformFinalBlock(payload, 0, payload.Length);
@@ -150,10 +148,10 @@ namespace OSDP.Net
         /// Encodes the payload
         /// </summary>
         /// <param name="payload">Message payload as plaintext</param>
-        /// <param name="IV">Crypto initialization vector</param>
+        /// <param name="iv">Crypto initialization vector</param>
         /// <param name="destination">Destination where cyphertext is to be written</param>
         /// <returns>Cyphertext of the message payload</returns>
-        protected void EncodePayload(byte[] payload, byte[] IV, Span<byte> destination)
+        protected void EncodePayload(byte[] payload, byte[] iv, Span<byte> destination)
         {
             if (!IsSecurityEstablished)
             {
@@ -167,7 +165,7 @@ namespace OSDP.Net
                 }
 
                 using var crypto = SecurityContext.CreateCypher(Context.Enc, false);
-                crypto.IV = IV.Select(b => (byte)~b).ToArray();
+                crypto.IV = iv.Select(b => (byte)~b).ToArray();
 
                 using var encryptor = crypto.CreateEncryptor();
                 encryptor.TransformFinalBlock(payload, 0, payload.Length).CopyTo(destination);
@@ -179,7 +177,7 @@ namespace OSDP.Net
     /// Message channel which represents the Periphery Device (PD) side of the OSDP 
     /// communications (i.e. OSDP commands are received and replies are sent out)
     /// </summary>
-    public class PDMessageChannel : MessageChannel
+    public class PdMessageChannel : MessageChannel
     {
         private byte[] _expectedServerCryptogram;
 
@@ -193,7 +191,7 @@ namespace OSDP.Net
         /// channels</param>
         /// <param name="loggerFactory">Optional logger factory from which a logger object for the
         /// message channel will be acquired</param>
-        public PDMessageChannel(SecurityContext context = null, ILoggerFactory loggerFactory = null) 
+        public PdMessageChannel(SecurityContext context = null, ILoggerFactory loggerFactory = null) 
             : base(context, loggerFactory) {}
 
         /// <inheritdoc />
@@ -251,7 +249,7 @@ namespace OSDP.Net
             var clientCryptogram = SecurityContext.GenerateKey(crypto, rndA, rndB);
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
 
-            _logger?.LogInformation($"Rnd.A: {{rndA}}{Environment.NewLine}" +
+            Logger?.LogInformation($"Rnd.A: {{rndA}}{Environment.NewLine}" +
                 $"Rnd.B: {{rndB}}{Environment.NewLine}" +
                 $"Enc: {{enc}}{Environment.NewLine}" +
                 $"ClientCrypto: {{ccrypto}}{Environment.NewLine}",
@@ -275,15 +273,15 @@ namespace OSDP.Net
 
             if (command.SecurityBlockType != (byte)SecurityBlockType.SecureConnectionSequenceStep3)
             {
-                _logger.LogWarning("Received unexpected security block type: {sbt}", command.SecurityBlockType);
+                Logger.LogWarning("Received unexpected security block type: {sbt}", command.SecurityBlockType);
             }
             else if (!serverCryptogram.SequenceEqual(_expectedServerCryptogram))
             {
-                _logger.LogWarning("Received unexpected server cryptogram!");
+                Logger.LogWarning("Received unexpected server cryptogram!");
             }
             else if (IsSecurityEstablished)
             {
-                _logger.LogWarning("Secure channel already established. Why did we get another SCrypt??");
+                Logger.LogWarning("Secure channel already established. Why did we get another SCrypt??");
             }
             else
             {
