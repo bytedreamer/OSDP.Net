@@ -8,10 +8,16 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// A multi-part message data fragment reply.
     /// </summary>
-    public class DataFragmentResponse
+    public class DataFragmentResponse : ReplyData
     {
-        private DataFragmentResponse()
+        public DataFragmentResponse() { }
+
+        public DataFragmentResponse(ushort totalLength, ushort offset, byte[] data)
         {
+            WholeMessageLength = totalLength;
+            Offset = offset;
+            LengthOfFragment = (ushort)data.Length;
+            Data = data;
         }
 
         /// <summary>
@@ -33,6 +39,9 @@ namespace OSDP.Net.Model.ReplyData
         /// The data.
         /// </summary>
         public byte[] Data { get; private set; }
+
+        /// <inheritdoc/>
+        public override ReplyType ReplyType => ReplyType.PIVData;
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
@@ -57,6 +66,20 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc/>
+        public override byte[] BuildData(bool withPadding = false)
+        {
+            var length = 6 + Data.Length;
+            var buffer = NewBuffer(length, withPadding);
+
+            Message.ConvertShortToBytes(WholeMessageLength).CopyTo(buffer, 0);
+            Message.ConvertShortToBytes(Offset).CopyTo(buffer, 2);
+            Message.ConvertShortToBytes(LengthOfFragment).CopyTo(buffer, 4);
+            Data.CopyTo(buffer, 6);
+
+            return buffer;
+        }
+
+        /// <inheritdoc/>
         public override string ToString() => ToString(0);
 
         /// <summary>
@@ -64,7 +87,7 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
         /// <returns>String representation of the current object</returns>
-        public string ToString(int indent)
+        public override string ToString(int indent)
         {
             var padding = new string(' ', indent);
             var build = new StringBuilder();

@@ -46,5 +46,19 @@ namespace OSDP.Net.Model
         {
             throw new NotImplementedException();
         }
+
+        /// <summary>
+        /// Allocates a buffer to fit serialized payload into including the
+        /// padding if needed
+        /// </summary>
+        /// <param name="length">Serialized length of the payload without padding</param>
+        /// <param name="withPadding">Flag indicating whether or not padding is required</param>
+        /// <returns></returns>
+        protected byte[] NewBuffer(int length, bool withPadding)
+        {
+            var buffer = new byte[withPadding ? length + 16 - length % 16 : length];
+            if (withPadding) buffer[length] = Messages.Message.FirstPaddingByte;
+            return buffer;
+        }
     }
 }
