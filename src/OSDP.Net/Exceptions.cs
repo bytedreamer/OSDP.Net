@@ -45,7 +45,7 @@ namespace OSDP.Net
         public NackReplyException(Nak replyData, string message = null) : base(message)
         {
             Message =
-                $"Received NAK error '{Helpers.SplitCamelCase(replyData.ErrorCode.ToString())}'.{(string.IsNullOrEmpty(Message) ? string.Empty : $" {Message}")}";
+                $"Received NAK error '{Helpers.SplitCamelCase(replyData.ErrorCode.ToString())}'.{(string.IsNullOrEmpty(message) ? string.Empty : $" {message}")}";
             Reply = replyData;
         }
 

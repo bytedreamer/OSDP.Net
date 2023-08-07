@@ -230,7 +230,7 @@ namespace OSDP.Net.PanelCommands
                 sb.AppendLine($"      Address: {Address}");
                 sb.AppendLine("Identification:");
                 sb.Append("        ");
-                sb.AppendLine(Id.ToString().TrimEnd().Replace("\n", "\n        "));
+                sb.AppendLine(Id?.ToString()?.TrimEnd().Replace("\n", "\n        "));
                 sb.AppendLine("  Capabilities:");
                 sb.Append("        ");
                 sb.AppendLine(Capabilities.ToString().TrimEnd().Replace("\n", "\n        "));
