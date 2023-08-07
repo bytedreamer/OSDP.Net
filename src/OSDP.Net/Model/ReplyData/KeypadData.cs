@@ -64,7 +64,10 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public byte[] Data { get; private set; }
 
-        internal static KeypadData ParseData(ReadOnlySpan<byte> data)
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of KeypadData representing the message payload</returns>
+        public static KeypadData ParseData(ReadOnlySpan<byte> data)
         {
             if (data.Length < DataStartIndex)
             {
@@ -81,13 +84,21 @@ namespace OSDP.Net.Model.ReplyData
             return keypadReplyData;
         }
 
-        /// <inheritdoc />
-        public override string ToString()
+        /// <inheritdoc/>
+        public override string ToString() => ToString(0);
+
+        /// <summary>
+        /// Returns a string representation of the current object
+        /// </summary>
+        /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
+        /// <returns>String representation of the current object</returns>
+        public string ToString(int indent)
         {
+            var padding = new string(' ', indent);
             var build = new StringBuilder();
-            build.AppendLine($"Reader Number: {ReaderNumber}");
-            build.AppendLine($"  Digit Count: {DigitCount}");
-            build.AppendLine($"         Data: {DetermineCharacters(Data, DigitCount)}");
+            build.AppendLine($"{padding}Reader Number: {ReaderNumber}");
+            build.AppendLine($"{padding}  Digit Count: {DigitCount}");
+            build.AppendLine($"{padding}         Data: {DetermineCharacters(Data, DigitCount)}");
             return build.ToString();
         }
 

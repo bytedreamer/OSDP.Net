@@ -7,14 +7,23 @@ namespace OSDP.Net
     /// <summary>
     /// Represents a custom exception defined in OSDP.Net library
     /// </summary>
-    public class OSDPNetException : Exception 
+    public class OSDPNetException : Exception
     {
         /// <summary>
         /// Initializes a new instance of OSDP.Net.OSDPNetException with a specified
         /// error message
         /// </summary>
         /// <param name="message">Message that describes the error</param>
-        public OSDPNetException(string message) : base(message) {}
+        public OSDPNetException(string message) : base(message)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of OSDP.Net.OSDPNetException
+        /// </summary>
+        public OSDPNetException()
+        {
+        }
     }
 
     /// <summary>
@@ -42,5 +51,32 @@ namespace OSDP.Net
 
         /// <inheritdoc />
         public override string Message { get; }
+    }
+
+    /// <summary>
+    /// Gets thrown whenever OSDP.NET is unable to parse payload bytes
+    /// </summary>
+    public class InvalidPayloadException : OSDPNetException
+    {
+        /// <summary>
+        /// Initializes a new instance of OSDP.Net.InvalidPayloadException with a specified
+        /// error message
+        /// </summary>
+        /// <param name="message">Optional message to be included with the exception</param>
+        public InvalidPayloadException(string message) : base(message) { }
+    }
+
+    /// <summary>
+    /// Exception that gets thrown if the attempted operation expects channel security 
+    /// to be established
+    /// </summary>
+    public class SecureChannelRequired : OSDPNetException
+    {
+        /// <summary>
+        /// Initializes a new instance of OSDP.Net.SecureChannelRequired
+        /// </summary>
+        public SecureChannelRequired()
+        {
+        }
     }
 }

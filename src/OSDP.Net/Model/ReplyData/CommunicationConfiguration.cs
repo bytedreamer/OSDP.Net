@@ -24,6 +24,9 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public int BaudRate { get; private set; }
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of CommunicationConfiguration representing the message payload</returns>
         internal static CommunicationConfiguration ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();

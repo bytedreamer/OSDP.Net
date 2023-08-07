@@ -26,13 +26,29 @@ namespace OSDP.Net.Messages
         void EncodePayload(byte[] payload, Span<byte> destination);
 
         /// <summary>
+        /// Decodes the payload using the secure channel context. This function can
+        /// only be called once IsSecurityEstablished is true
+        /// </summary>
+        /// <param name="payload">Payload to be decrypted</param>
+        /// <returns>
+        /// Plaintext message payload. Similarly to how original payload must have been
+        /// padded prior to being encrypted, the plaintext byte buffer returned here will
+        /// also be padded and therefore its length will always be divisible by 16. The 
+        /// padding at the end of the buffer will always consist of zero or more 0x00
+        /// bytes preceeded by 0x80 byte.
+        /// </returns>
+        byte[] DecodePayload(byte[] payload);
+
+        /// <summary>
         /// Generates a new Message Authentication Code. Note this command IS NOT
         /// idempotent as every time it is called it will calculate a new rolling MAC
         /// value based on the results of the previous call
         /// </summary>
         /// <param name="message">Message to be signed with a MAC</param>
-        /// <param name="isCommand">Indicates whether the message is a command or a response</param>
-        /// <returns></returns>
-        ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand);
+        /// <param name="isIncoming">If true, indicates that the message was received
+        /// from the wire. If false, indicates that the message is being sent out 
+        /// on the wire</param>
+        /// <returns>16-byte MAC value of the message</returns>
+        ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming);
     }
 }

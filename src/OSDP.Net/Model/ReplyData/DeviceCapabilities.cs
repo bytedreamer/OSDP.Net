@@ -42,6 +42,9 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public T Get<T>(CapabilityFunction funcCode) where T : DeviceCapability => (T)Get(funcCode);
 
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of DeviceCapabilities representing the message payload</returns>
         internal static DeviceCapabilities ParseData(ReadOnlySpan<byte> data)
         {
             var dataArray = data.ToArray();
