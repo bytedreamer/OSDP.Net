@@ -1,9 +1,3 @@
-using Microsoft.Extensions.Logging;
-using OSDP.Net.Connections;
-using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
-using OSDP.Net.Model.ReplyData;
-using OSDP.Net.Tracing;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,6 +5,17 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Microsoft.Extensions.Logging;
+
+using OSDP.Net.Connections;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.ACU;
+using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Tracing;
+#if NETSTANDARD2_0
+using OSDP.Net.Utilities;
+#endif
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace OSDP.Net
@@ -363,15 +368,9 @@ namespace OSDP.Net
             bool isSecureChannelEstablished = device.IsSecurityEstablished;
 
             // Default to false when initializing status checks
-            if (!_lastOnlineConnectionStatus.ContainsKey(device.Address))
-            {
-                _lastOnlineConnectionStatus[device.Address] = false;
-
-            }
-            if (!_lastSecureConnectionStatus.ContainsKey(device.Address))
-            {
-                _lastSecureConnectionStatus[device.Address] = false;
-            }
+            _lastOnlineConnectionStatus.TryAdd(device.Address, false);
+            _lastSecureConnectionStatus.TryAdd(device.Address, false);
+            
             bool onlineConnectionChanged = _lastOnlineConnectionStatus[device.Address] != isConnected;
             bool secureChannelStatusChanged = _lastSecureConnectionStatus[device.Address] != isSecureChannelEstablished;
 
@@ -389,6 +388,13 @@ namespace OSDP.Net
 
         private void ProcessReply(Reply reply, Device device)
         {
+            // Request from PD to reset connection
+            if (device.IsConnected && reply.Sequence == 0)
+            {
+                ResetDevice(device);
+                return;
+            }
+            
             if (!reply.IsValidReply)
             {
                 return;
