@@ -16,7 +16,6 @@ using OSDP.Net.Tracing;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
-
 namespace OSDP.Net
 {
     /// <summary>
@@ -33,6 +32,7 @@ namespace OSDP.Net
         private readonly BlockingCollection<Reply> _replies = new();
         private TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
+        private readonly TimeSpan _timeToWaitToCheckOnData = TimeSpan.FromMilliseconds(10);
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
         /// <param name="logger">The logger definition used for logging.</param>
@@ -281,7 +281,6 @@ namespace OSDP.Net
             CancellationToken cancellationToken)
         {
             bool complete = false;
-            DateTime endTime = DateTime.UtcNow + timeout;
             byte[] data = null;
 
             void Handler(object sender, MultiPartMessageDataReplyEventArgs args)
@@ -297,13 +296,16 @@ namespace OSDP.Net
             }
 
             PIVDataReplyReceived += Handler;
-
+            SetReceivingMultipartMessaging(connectionId, address, true);
+            
             try
             {
                 await SendCommand(connectionId,
                     new GetPIVDataCommand(address, getPIVData), cancellationToken, throwOnNak: false)
                     .ConfigureAwait(false);
 
+                DateTime endTime = DateTime.UtcNow + timeout;
+                
                 while (DateTime.UtcNow <= endTime)
                 {
                     if (complete)
@@ -311,8 +313,7 @@ namespace OSDP.Net
                         return data;
                     }
 
-                    // Delay for default poll interval
-                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                    await Task.Delay(_timeToWaitToCheckOnData, cancellationToken);
                 }
 
                 throw new TimeoutException("Timeout waiting to receive PIV data.");
@@ -320,6 +321,7 @@ namespace OSDP.Net
             finally
             {
                 PIVDataReplyReceived -= Handler;
+                SetReceivingMultipartMessaging(connectionId, address, false);
             }
         }
 
@@ -468,7 +470,7 @@ namespace OSDP.Net
             var bus = _buses[connectionId];
             return Task.Run(async () =>
             {
-                bus.SetSendingMultiMessage(address, true);
+                bus.SetSendingMultipartMessage(address, true);
                 try
                 {
                     return await SendFileTransferCommands(connectionId, address, fileType, fileData, fragmentSize, callback,
@@ -476,7 +478,7 @@ namespace OSDP.Net
                 }
                 finally
                 {
-                    bus.SetSendingMultiMessage(address, false);
+                    bus.SetSendingMultipartMessage(address, false);
                     bus.SetSendingMultiMessageNoSecureChannel(address, false);
                 }
             }, cancellationToken);
@@ -618,12 +620,13 @@ namespace OSDP.Net
             }
 
             BiometricReadResultsReplyReceived += Handler;
+            SetReceivingMultipartMessaging(connectionId, address, true);
 
             try
             {
                 await SendCommand(connectionId,
                     new BiometricReadDataCommand(address, biometricReadData), cancellationToken, throwOnNak: false).ConfigureAwait(false);
-
+                
                 DateTime endTime = DateTime.UtcNow + timeout;
 
                 while (DateTime.UtcNow <= endTime)
@@ -632,9 +635,8 @@ namespace OSDP.Net
                     {
                         return result;
                     }
-
-                    // Delay for default poll interval
-                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                    
+                    await Task.Delay(_timeToWaitToCheckOnData, cancellationToken);
                 }
 
                 throw new TimeoutException("Timeout waiting to for biometric read data.");
@@ -642,6 +644,7 @@ namespace OSDP.Net
             finally
             {
                 BiometricReadResultsReplyReceived -= Handler;
+                SetReceivingMultipartMessaging(connectionId, address, false);
             }
         }
 
@@ -693,6 +696,7 @@ namespace OSDP.Net
             }
 
             BiometricMatchReplyReceived += Handler;
+            SetReceivingMultipartMessaging(connectionId, address, true);
 
             try
             {
@@ -708,9 +712,8 @@ namespace OSDP.Net
                     {
                         return result;
                     }
-
-                    // Delay for default poll interval
-                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                    
+                    await Task.Delay(_timeToWaitToCheckOnData, cancellationToken);
                 }
 
                 throw new TimeoutException("Timeout waiting to for biometric match.");
@@ -718,6 +721,7 @@ namespace OSDP.Net
             finally
             {
                 BiometricMatchReplyReceived -= Handler;
+                SetReceivingMultipartMessaging(connectionId, address, false);
             }
         }
 
@@ -760,7 +764,6 @@ namespace OSDP.Net
             CancellationToken cancellationToken)
         {
             bool complete = false;
-            DateTime endTime = DateTime.UtcNow + timeout;
             var requestData = new List<byte> { algorithm, key };
             requestData.AddRange(challenge);
             byte[] responseData = null;
@@ -778,6 +781,7 @@ namespace OSDP.Net
             }
 
             AuthenticationChallengeResponseReceived += Handler;
+            SetReceivingMultipartMessaging(connectionId, address, true);    
             
             int totalSize = requestData.Count;
             int offset = 0;
@@ -799,16 +803,17 @@ namespace OSDP.Net
                     // Determine if we should continue on successful status
                     continueTransfer = offset < totalSize;
                 }
-
+                
+                DateTime endTime = DateTime.UtcNow + timeout;
+                
                 while (DateTime.UtcNow <= endTime)
                 {
                     if (complete)
                     {
                         return responseData;
                     }
-
-                    // Delay for default poll interval
-                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                    
+                    await Task.Delay(_timeToWaitToCheckOnData, cancellationToken);
                 }
 
                 throw new TimeoutException("Timeout waiting to receive challenge response.");
@@ -816,6 +821,7 @@ namespace OSDP.Net
             finally
             {
                 AuthenticationChallengeResponseReceived -= Handler;
+                SetReceivingMultipartMessaging(connectionId, address, false);
             }
         }
 
@@ -874,7 +880,17 @@ namespace OSDP.Net
             return _buses[connectionId].IsOnline(address);
         }
 
-        internal async Task<Reply> SendCommand(Guid connectionId, Command command,
+        private void SetReceivingMultipartMessaging(Guid connectionId, byte address, bool isReceivingMultipartMessaging)
+        {
+            if (!_buses.TryGetValue(connectionId, out var bus))
+            {
+                throw new ArgumentException("Connection could not be found", nameof(connectionId));
+            }
+            
+            bus.SetReceivingMultipartMessage(address, isReceivingMultipartMessaging);
+        }
+        
+        private async Task<Reply> SendCommand(Guid connectionId, Command command,
             CancellationToken cancellationToken = default, bool throwOnNak = true)
         {
             var source = new TaskCompletionSource<Reply>();
@@ -1210,7 +1226,7 @@ namespace OSDP.Net
                 new ConnectionStatusEventArgs(connectionId, address, isConnected, isSecureChannelEstablished));
         }
 
-        internal virtual void OnReplyReceived(Reply reply)
+        private void OnReplyReceived(Reply reply)
         {
             ReplyReceived?.Invoke(this, new ReplyEventArgs { Reply = reply });
 

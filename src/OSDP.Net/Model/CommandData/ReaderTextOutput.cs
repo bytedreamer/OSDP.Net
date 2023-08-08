@@ -54,12 +54,47 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public string Text { get; }
 
-        internal IEnumerable<byte> BuildData()
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of ReaderTextOutput representing the message payload</returns>
+        public static ReaderTextOutput ParseData(ReadOnlySpan<byte> data)
+        {
+            string text = Encoding.ASCII.GetString(data.Slice(6).ToArray());
+            return new ReaderTextOutput(data[0], (TextCommand)data[1], data[2], data[3], data[4], text);
+        }
+
+        /// <summary>
+        /// Builds the data.
+        /// </summary>
+        /// <returns>The Data</returns>
+        public IEnumerable<byte> BuildData()
         {
             var data = new List<byte>
                 {ReaderNumber, (byte) TextCommand, TemporaryTextTime, Row, Column, (byte) Text.Length};
             data.AddRange(Encoding.ASCII.GetBytes(Text.Substring(0, Math.Min(Text.Length, byte.MaxValue))));
             return data;
+        }
+
+        /// <inheritdoc/>
+        public override string ToString() => ToString(0);
+
+        /// <summary>
+        /// Returns a string representation of the current object
+        /// </summary>
+        /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
+        /// <returns>String representation of the current object</returns>
+        public string ToString(int indent)
+        {
+            string padding = new string(' ', indent);
+
+            var build = new StringBuilder();
+            build.AppendLine($"{padding}Reader Number: {ReaderNumber}");
+            build.AppendLine($"{padding}  Text Command: {TextCommand}");
+            build.AppendLine($"{padding}Temp Text Time: {TemporaryTextTime}");
+            build.AppendLine($"{padding}   Row, Column: {Row}, {Column}");
+            build.AppendLine($"{padding}  Display Text: {Text}");
+
+            return build.ToString();
         }
     }
 

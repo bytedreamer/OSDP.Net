@@ -53,11 +53,13 @@ namespace OSDP.Net
         public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
                                    (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
 
-        public bool IsSendingMultiMessage { get; set; }
+        public bool IsSendingMultipartMessage { get; set; }
 
         public DateTime RequestDelay { get; set; }
 
         public bool IsSendingMultiMessageNoSecureChannel { get; set; }
+        
+        public bool IsReceivingMultipartMessage { get; set; }
         
         /// <summary>
         /// Has one or more commands waiting in the queue

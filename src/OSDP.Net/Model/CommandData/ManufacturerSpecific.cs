@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace OSDP.Net.Model.CommandData
 {
@@ -34,7 +36,22 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public byte[] Data { get; }
 
-        internal IEnumerable<byte> BuildData()
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of ManufacturerSpecific representing the message payload</returns>
+        public static ManufacturerSpecific ParseData(ReadOnlySpan<byte> data)
+        {
+            return new ManufacturerSpecific(
+                data.Slice(0, 3).ToArray(),
+                data.Slice(3).ToArray()
+            );
+        }
+
+        /// <summary>
+        /// Builds the data.
+        /// </summary>
+        /// <returns>The Data</returns>
+        public IEnumerable<byte> BuildData()
         {
             var data = new List<byte>
             {
@@ -44,6 +61,23 @@ namespace OSDP.Net.Model.CommandData
             };
             data.AddRange(Data);
             return data;
+        }
+
+        /// <inheritdoc/>
+        public override string ToString() => ToString(0);
+
+        /// <summary>
+        /// Returns a string representation of the current object
+        /// </summary>
+        /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
+        /// <returns>String representation of the current object</returns>
+        public string ToString(int indent)
+        {
+            var padding = new string(' ', indent);
+            var build = new StringBuilder();
+            build.AppendLine($"{padding}Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
+            build.AppendLine($"{padding}       Data: {BitConverter.ToString(Data.ToArray())}");
+            return build.ToString();
         }
     }
 }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Text;
 using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
@@ -36,11 +38,43 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public ushort Timer { get; }
 
-        internal IEnumerable<byte> BuildData()
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of OutputControl representing the message payload</returns>
+        public static OutputControl ParseData(ReadOnlySpan<byte> data)
+        {
+            return new OutputControl(
+                data[0], (OutputControlCode)data[1],
+                Message.ConvertBytesToUnsignedShort(data.Slice(2)));
+        }
+
+        /// <summary>
+        /// Builds the data.
+        /// </summary>
+        /// <returns>The Data</returns>
+        public IEnumerable<byte> BuildData()
         {
             var timerBytes = Message.ConvertShortToBytes(Timer);
             
             return new[] {OutputNumber, (byte) OutputControlCode, timerBytes[0], timerBytes[1]};
+        }
+
+        /// <inheritdoc/>
+        public override string ToString() => ToString(0);
+
+        /// <summary>
+        /// Returns a string representation of the current object
+        /// </summary>
+        /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
+        /// <returns>String representation of the current object</returns>
+        public string ToString(int indent)
+        {
+            var padding = new string(' ', indent);
+            var sb = new StringBuilder();
+            sb.AppendLine($"{padding} Output #: {OutputNumber}");
+            sb.AppendLine($"{padding}Ctrl Code: {OutputControlCode}");
+            sb.AppendLine($"{padding}    Timer: {Timer}");
+            return sb.ToString();
         }
     }
 }
