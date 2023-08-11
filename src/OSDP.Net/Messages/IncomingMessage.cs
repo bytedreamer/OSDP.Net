@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Messages
 {
@@ -9,7 +10,7 @@ namespace OSDP.Net.Messages
     /// class with extra properties/methods that specifically indicate the parsing and
     /// validation of incoming raw bytes.
     /// </summary>
-    public class IncomingMessage : Message
+    internal class IncomingMessage : Message
     {
         private const ushort MessageHeaderSize = 6;
         private readonly byte[] _origMessage;
@@ -20,7 +21,7 @@ namespace OSDP.Net.Messages
         /// <param name="data">Raw byte data received from the wire</param>
         /// <param name="channel">Message channel context</param>
         /// <param name="connectionId">ID of the connection</param>
-        public IncomingMessage(ReadOnlySpan<byte> data, IMessageChannel channel, Guid connectionId)
+        public IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel, Guid connectionId)
         {
             // TODO: way too much copying in this code, simplify it.
             _origMessage = data.ToArray();
@@ -45,8 +46,8 @@ namespace OSDP.Net.Messages
                 MessageHeaderSize - secureBlockSize - replyMessageFooterSize -
                 (IsSecureMessage ? MacSize : 0)).ToArray();
             if (Payload.Length > 0 && (
-                SecurityBlockType == (byte)Messages.SecurityBlockType.CommandMessageWithDataSecurity ||
-                SecurityBlockType == (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity      ))
+                SecurityBlockType == (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity ||
+                SecurityBlockType == (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity      ))
             {
                 var paddedPayload = channel.DecodePayload(Payload);
                 var lastByteIdx = Payload.Length;
@@ -139,17 +140,17 @@ namespace OSDP.Net.Messages
         protected override ReadOnlySpan<byte> Data() => Payload.ToArray();
 
         private bool IsDataSecure => Payload == null || Payload.Length == 0 || 
-            SecurityBlockType == (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity || 
-            SecurityBlockType == (byte)Messages.SecurityBlockType.CommandMessageWithDataSecurity;
+            SecurityBlockType == (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity || 
+            SecurityBlockType == (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity;
         private IEnumerable<byte> Mac { get; }
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         private bool IsDataCorrect { get; }
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {
-            (byte)Messages.SecurityBlockType.CommandMessageWithNoDataSecurity,
-            (byte)Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity,
-            (byte)Messages.SecurityBlockType.CommandMessageWithDataSecurity,
-            (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity,
+            (byte)SecureChannel.SecurityBlockType.CommandMessageWithNoDataSecurity,
+            (byte)SecureChannel.SecurityBlockType.ReplyMessageWithNoDataSecurity,
+            (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity,
+            (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity,
         };
     }
 }

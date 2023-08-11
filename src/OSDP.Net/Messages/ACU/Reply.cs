@@ -35,7 +35,7 @@ namespace OSDP.Net.Messages.ACU
             ExtractReplyData = data.Slice(ReplyMessageHeaderSize + secureBlockSize, data.Length -
                 ReplyMessageHeaderSize - secureBlockSize - replyMessageFooterSize -
                 (IsSecureMessage ? MacSize : 0)).ToArray();
-            if (SecurityBlockType == (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity)
+            if (SecurityBlockType == (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity)
             {
                 ExtractReplyData = DecryptData(device).ToArray();
             }
@@ -59,10 +59,10 @@ namespace OSDP.Net.Messages.ACU
 
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {
-            (byte)Messages.SecurityBlockType.CommandMessageWithNoDataSecurity,
-            (byte)Messages.SecurityBlockType.ReplyMessageWithNoDataSecurity,
-            (byte)Messages.SecurityBlockType.CommandMessageWithDataSecurity,
-            (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity,
+            (byte)SecureChannel.SecurityBlockType.CommandMessageWithNoDataSecurity,
+            (byte)SecureChannel.SecurityBlockType.ReplyMessageWithNoDataSecurity,
+            (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity,
+            (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity,
         };
 
         public ReplyType Type { get; }
@@ -72,7 +72,7 @@ namespace OSDP.Net.Messages.ACU
         public bool IsSecureMessage => SecureSessionMessages.Contains(SecurityBlockType) && IsDataSecure;
 
         private bool IsDataSecure => ExtractReplyData == null || ExtractReplyData.Length == 0 || SecurityBlockType ==
-            (byte)Messages.SecurityBlockType.ReplyMessageWithDataSecurity;
+            (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity;
 
         protected abstract byte ReplyCode { get; }
 

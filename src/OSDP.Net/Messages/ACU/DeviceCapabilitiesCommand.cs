@@ -1,5 +1,7 @@
 using System;
 
+using OSDP.Net.Messages.SecureChannel;
+
 namespace OSDP.Net.Messages.ACU
 {
     internal class DeviceCapabilitiesCommand : Command

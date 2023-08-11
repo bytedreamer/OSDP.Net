@@ -1,9 +1,9 @@
-namespace OSDP.Net.Messages
+namespace OSDP.Net.Messages.SecureChannel
 {
     /// <summary>
     /// Security Block Type values as defined by OSDP protocol
     /// </summary>
-    public enum SecurityBlockType : byte
+    internal enum SecurityBlockType : byte
     {
         /// <summary>
         /// SCS_11 - Sent along with osdp_CHLNG command when ACU initiates
