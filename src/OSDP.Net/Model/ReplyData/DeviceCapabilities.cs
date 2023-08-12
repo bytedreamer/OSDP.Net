@@ -81,7 +81,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc/>
-        public override byte[] BuildData(bool withPadding = false)
+        public override byte[] BuildData()
         {
             // TODO: Implement this for non-zero capabilities
             if (Capabilities != null && Capabilities.Any())

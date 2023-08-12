@@ -13,12 +13,10 @@ namespace OSDP.Net.Model
         /// as this method is where byte[] array originates and creating a payload that is
         /// ready to be encoded, helps us avoid a few downstream heap operations.
         /// </summary>
-        /// <param name="withPadding">Indicates if returned packed data should be padded
-        /// to a 16-byte boundary such that it is ready to be encrypted</param>
         /// <returns>Packed reply as array of raw bytes. Note that some types of replies,
         /// like osdp_ACK do not have additional data, in which case it is perfectly
         /// acceptable for this array to be 0 length</returns>
-        public abstract byte[] BuildData(bool withPadding = false);
+        public abstract byte[] BuildData();
 
         /// <inheritdoc />
         public override string ToString()

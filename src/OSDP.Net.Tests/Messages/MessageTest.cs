@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using NUnit.Framework;
 using OSDP.Net.Messages;
+using OSDP.Net.Utilities;
 
 namespace OSDP.Net.Tests.Messages
 {
@@ -45,6 +47,19 @@ namespace OSDP.Net.Tests.Messages
 
             // Assert
             Assert.AreEqual(112, actual);
+        }
+
+        [TestCase("05-00-10-00-12-AB",
+            ExpectedResult = "05-00-10-00-12-AB-80-00-00-00-00-00-00-00-00-00")]
+        [TestCase("05-00-58-00-12-AB-CC-CC-CC-CC-CC-CC-CC-CC-CC",
+            ExpectedResult = "05-00-58-00-12-AB-CC-CC-CC-CC-CC-CC-CC-CC-CC-80")]
+        [TestCase("05-00-60-00-12-AB-CC-CC-CC-CC-CC-CD-CC-CC-CC-CC",
+            ExpectedResult = "05-00-60-00-12-AB-CC-CC-CC-CC-CC-CD-CC-CC-CC-CC-" +
+                             "80-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00")]
+        public string PadThisData(string buffer)
+        {
+            return BitConverter.ToString(Message.PadTheData(BinaryUtils.HexToBytes(buffer).ToArray(), 16,
+                Message.FirstPaddingByte));
         }
     }
 }

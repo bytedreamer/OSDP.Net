@@ -200,5 +200,22 @@ namespace OSDP.Net.Messages
 
             return (ushort)(dataSize - (isEncrypted ? encryptedDifference + (dataSize % cryptoLength) : clearTextDifference));
         }
+
+        internal static byte[] PadTheData(ReadOnlySpan<byte> data, byte cryptoLength, byte paddingStart)
+        {
+            int paddingLength = data.Length + 16 - data.Length % 16;
+
+            Span<byte> buffer = stackalloc byte[paddingLength];
+            buffer.Clear();
+
+            var cursor = buffer.Slice(0);
+
+            data.CopyTo(cursor);
+            cursor = cursor.Slice(data.Length);
+
+            cursor[0] = paddingStart;
+
+            return buffer.ToArray();
+        }
     }
 }

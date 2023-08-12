@@ -74,9 +74,9 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc/>
-        public override byte[] BuildData(bool withPadding = false)
+        public override byte[] BuildData()
         {
-            var buffer = new byte[withPadding ? 16 : 12];
+            var buffer = new byte[12];
 
             VendorCode.Take(3).ToArray().CopyTo(buffer, 0);
             buffer[3] = ModelNumber;
@@ -85,7 +85,6 @@ namespace OSDP.Net.Model.ReplyData
             buffer[9] = FirmwareMajor;
             buffer[10] = FirmwareMinor;
             buffer[11] = FirmwareBuild;
-            if (withPadding) buffer[12] = Message.FirstPaddingByte;
 
             return buffer;
         }

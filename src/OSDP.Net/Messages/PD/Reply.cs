@@ -1,6 +1,5 @@
 ﻿using OSDP.Net.Model.ReplyData;
 using System;
-using System.Diagnostics;
 using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Messages.PD
@@ -46,7 +45,12 @@ namespace OSDP.Net.Messages.PD
             // TODO: Similar to IncomingMessage, it might make more sense for this code to 
             // eventually end up in a new class called OutgoingMessage
 
-            var payload = _data.BuildData(withPadding: secureChannel.IsSecurityEstablished);
+            var payload = _data.BuildData();
+            if (secureChannel.IsSecurityEstablished)
+            {
+                payload = PadTheData(payload, 16, Message.FirstPaddingByte);
+            }
+
             bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished ||
                                           _data.ReplyType == ReplyType.CrypticData ||
                                           _data.ReplyType == ReplyType.InitialRMac;
