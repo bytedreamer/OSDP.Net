@@ -1,5 +1,8 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
 
@@ -38,6 +41,17 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public ushort Timer { get; }
 
+        /// <summary>
+        /// Builds the payload data array.
+        /// </summary>
+        /// <returns>The payload data</returns>
+        public IEnumerable<byte> BuildData()
+        {
+            var timerBytes = Message.ConvertShortToBytes(Timer);
+            
+            return new[] {OutputNumber, (byte) OutputControlCode, timerBytes[0], timerBytes[1]};
+        }
+        
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
         /// <returns>An instance of OutputControl representing the message payload</returns>
@@ -46,17 +60,6 @@ namespace OSDP.Net.Model.CommandData
             return new OutputControl(
                 data[0], (OutputControlCode)data[1],
                 Message.ConvertBytesToUnsignedShort(data.Slice(2)));
-        }
-
-        /// <summary>
-        /// Builds the data.
-        /// </summary>
-        /// <returns>The Data</returns>
-        public IEnumerable<byte> BuildData()
-        {
-            var timerBytes = Message.ConvertShortToBytes(Timer);
-            
-            return new[] {OutputNumber, (byte) OutputControlCode, timerBytes[0], timerBytes[1]};
         }
 
         /// <inheritdoc/>

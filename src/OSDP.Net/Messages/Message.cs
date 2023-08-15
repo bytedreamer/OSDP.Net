@@ -66,6 +66,11 @@ namespace OSDP.Net.Messages
         /// Address assigned to the device.
         /// </summary>
         public byte Address { get; protected set; }
+        
+        /// <summary>
+        /// Type of message 
+        /// </summary>
+        public MessageType MessageType { get; protected set; }
 
         /// <summary>
         /// The data.

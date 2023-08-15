@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace OSDP.Net.Model.CommandData
@@ -52,6 +53,18 @@ namespace OSDP.Net.Model.CommandData
                 (byte)Format,
                 Quality
             };
+        }
+
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of BiometricReadData representing the message payload</returns>
+        public static BiometricReadData ParseData(ReadOnlySpan<byte> data)
+        {
+            return new BiometricReadData(
+                data[0], 
+                (BiometricType)data[1], 
+                (BiometricFormat)data[2], 
+                data[3]);
         }
     }
 }

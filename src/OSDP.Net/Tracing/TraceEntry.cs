@@ -7,14 +7,12 @@ namespace OSDP.Net.Tracing;
 /// </summary>
 public enum TraceDirection
 {
-    /// <summary>
-    /// Data is received by the ControlPanel.
-    /// </summary>
-    In,
-    /// <summary>
-    /// Dta is sent from the ControlPanel.
-    /// </summary>
-    Out,
+    /// <summary>Data is sent to the device</summary>
+    Input,
+    /// <summary>Data is sent from the device</summary>
+    Output,
+    /// <summary>Data is being monitored</summary>
+    Trace
 }
 
 /// <summary>

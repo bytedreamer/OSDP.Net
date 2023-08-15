@@ -13,7 +13,7 @@ namespace OSDP.Net.Messages
     internal class IncomingMessage : Message
     {
         private const ushort MessageHeaderSize = 6;
-        private readonly byte[] _origMessage;
+        private readonly byte[] _originalMessage;
 
         /// <summary>
         /// Creates a new instance of IncomingMessage class
@@ -24,9 +24,10 @@ namespace OSDP.Net.Messages
         public IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel, Guid connectionId)
         {
             // TODO: way too much copying in this code, simplify it.
-            _origMessage = data.ToArray();
+            _originalMessage = data.ToArray();
 
             Address = (byte)(data[1] & AddressMask);
+            MessageType = data[1] < 0x80 ? MessageType.Command : MessageType.Reply;
             Sequence = (byte)(data[4] & 0x03);
             IsUsingCrc = Convert.ToBoolean(data[4] & 0x04);
             ushort replyMessageFooterSize = (ushort)(IsUsingCrc ? 2 : 1);
@@ -118,7 +119,7 @@ namespace OSDP.Net.Messages
         /// Original byte data which includes the header, security control block, payload, 
         /// MAC and CRC/Checksum suffix
         /// </summary>
-        public ReadOnlySpan<byte> OriginalMsgData => _origMessage;
+        public ReadOnlySpan<byte> OriginalMessageData => _originalMessage;
 
         /// <summary>
         /// ID of the connection on which the channel was received

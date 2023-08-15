@@ -3,7 +3,7 @@
 namespace OSDP.Net.Model
 {
     /// <summary>
-    /// Base class representing a paylod an OSDP message
+    /// Base class representing a payload an OSDP message
     /// </summary>
     public abstract class PayloadData
     {

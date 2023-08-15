@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using OSDP.Net.Messages;
 
@@ -63,6 +64,19 @@ namespace OSDP.Net.Model.CommandData
             data.AddRange(Message.ConvertShortToBytes((ushort)TemplateData.Length));
             data.AddRange(TemplateData);
             return data;
+        }
+
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of BiometricTemplateData representing the message payload</returns>
+        public static BiometricTemplateData ParseData(ReadOnlySpan<byte> data)
+        {
+            return new BiometricTemplateData(
+                data[0],
+                (BiometricType)data[1],
+                (BiometricFormat)data[1],
+                data[3],
+                data.Slice(4).ToArray());
         }
     }
 }
