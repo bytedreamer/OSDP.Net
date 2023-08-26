@@ -3,16 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using OSDP.Net.Messages.ACU;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net;
 
 internal class Device : IComparable<Device>
 {
     private const int RetryAmount = 2;
-
-    private static readonly byte[] DefaultKey = {
-        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
-    };
 
     private readonly ConcurrentQueue<Command> _commands = new();
 
@@ -33,9 +30,9 @@ internal class Device : IComparable<Device>
 
         if (!UseSecureChannel) return;
 
-        SecureChannelKey = secureChannelKey ?? DefaultKey;
+        SecureChannelKey = secureChannelKey ?? SecurityContext.DefaultKey;
             
-        IsDefaultKey = DefaultKey.SequenceEqual(SecureChannelKey);
+        IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
     }
 
     internal byte[] SecureChannelKey { get; }

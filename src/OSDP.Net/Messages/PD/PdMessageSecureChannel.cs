@@ -37,7 +37,7 @@ namespace OSDP.Net.Messages.PD
         /// <inheritdoc />
         public override ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming) =>
             isIncoming ? GenerateCommandMac(message) : GenerateReplyMac(message);
-
+        
         /// <summary>
         /// Default handler for the SessionChallenge message received on the channel
         /// </summary>
@@ -52,14 +52,6 @@ namespace OSDP.Net.Messages.PD
             byte[] rndA = command.Payload;
             byte[] rndB = new byte[8];
 
-            // TODO: Although somewhere we do need to store the default key, this must not be 
-            // just permanently hardcoded for all sessions. For now this code is only used in the
-            // simulator so this is okay, but it is definitely a candidate for next set of enhancements
-#pragma warning disable IDE0230 // Use UTF-8 string literal
-            byte[] secureChannelKey = new byte[] {
-                0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f };
-#pragma warning restore IDE0230 // Use UTF-8 string literal
-
             // TODO: we should validate payload and SCB type
 
             // It is possible that ACU may decide to re-challenge us after a channel was already set up.
@@ -70,14 +62,14 @@ namespace OSDP.Net.Messages.PD
             // generate RND.B
             new Random().NextBytes(rndB);
 
-            // generate a set of sessioon keys: S-ENC, S-MAC1, S-MAC2 using command.Payload (which is RND.A)
-            var crypto = SecurityContext.CreateCypher(secureChannelKey, true);
+            // generate a set of session keys: S-ENC, S-MAC1, S-MAC2 using command.Payload (which is RND.A)
+            var crypto = SecurityContext.CreateCypher(SecurityContext.DefaultKey, true);
 
             Context.Enc = SecurityContext.GenerateKey(crypto, new byte[] { 0x01, 0x82, rndA[0], rndA[1], rndA[2], rndA[3], rndA[4], rndA[5] });
             Context.SMac1 = SecurityContext.GenerateKey(crypto, new byte[] { 0x01, 0x01, rndA[0], rndA[1], rndA[2], rndA[3], rndA[4], rndA[5] });
             Context.SMac2 = SecurityContext.GenerateKey(crypto, new byte[] { 0x01, 0x02, rndA[0], rndA[1], rndA[2], rndA[3], rndA[4], rndA[5] });
 
-            // generate client crytpogram
+            // generate client cryptogram
             crypto.Key = Context.Enc;
             var clientCryptogram = SecurityContext.GenerateKey(crypto, rndA, rndB);
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
@@ -94,7 +86,7 @@ namespace OSDP.Net.Messages.PD
             // reply with osdp_CCRYPT, returning PD's Id (cUID), its random number and the client cryptogram
             return new Reply(command, new ChallengeResponse(cUID, rndB, clientCryptogram));
         }
-
+        
         /// <summary>
         /// Default handler to the SCrypt command received on the channel
         /// </summary>
@@ -106,16 +98,16 @@ namespace OSDP.Net.Messages.PD
 
             if (command.SecurityBlockType != (byte)SecurityBlockType.SecureConnectionSequenceStep3)
             {
-                Logger.LogWarning("Received unexpected security block type: {SecurityBlockType}",
+                Logger?.LogWarning("Received unexpected security block type: {SecurityBlockType}",
                     command.SecurityBlockType);
             }
             else if (!serverCryptogram.SequenceEqual(_expectedServerCryptogram))
             {
-                Logger.LogWarning("Received unexpected server cryptogram!");
+                Logger?.LogWarning("Received unexpected server cryptogram!");
             }
             else if (IsSecurityEstablished)
             {
-                Logger.LogWarning("Secure channel already established. Why did we get another SCrypt??");
+                Logger?.LogWarning("Secure channel already established. Why did we get another SCrypt??");
             }
             else
             {

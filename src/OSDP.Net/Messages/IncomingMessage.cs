@@ -46,9 +46,7 @@ namespace OSDP.Net.Messages
             Payload = data.Slice(MessageHeaderSize + secureBlockSize, data.Length -
                 MessageHeaderSize - secureBlockSize - replyMessageFooterSize -
                 (IsSecureMessage ? MacSize : 0)).ToArray();
-            if (Payload.Length > 0 && (
-                SecurityBlockType == (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity ||
-                SecurityBlockType == (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity      ))
+            if (Payload.Length > 0 && HasSecureData)
             {
                 var paddedPayload = channel.DecodePayload(Payload);
                 var lastByteIdx = Payload.Length;
@@ -109,6 +107,10 @@ namespace OSDP.Net.Messages
         /// local message channel context
         /// </summary>
         public bool IsValidMac { get; }
+        
+        public bool HasSecureData =>
+            SecurityBlockType == (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity ||
+            SecurityBlockType == (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity;
 
         /// <summary>
         /// Returns the raw message payload

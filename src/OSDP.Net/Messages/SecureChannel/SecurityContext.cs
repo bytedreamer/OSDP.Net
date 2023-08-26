@@ -11,6 +11,8 @@ namespace OSDP.Net.Messages.SecureChannel;
 /// </summary>
 internal class SecurityContext
 {
+    public static readonly byte[] DefaultKey = "0123456789:;<=>?"u8.ToArray();
+    
     /// <summary>
     /// A flag indicating whether or not channel security has been established
     /// </summary>

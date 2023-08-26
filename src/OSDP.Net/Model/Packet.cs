@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
@@ -16,6 +16,8 @@ public class Packet
 
     internal Packet(IncomingMessage message)
     {
+        IncomingMessage = message;
+            
         Address = message.Address;
         Sequence = message.Sequence;
         if (message.MessageType == MessageType.Command)
@@ -31,6 +33,8 @@ public class Packet
         _rawPayloadData = message.Payload;
         _rawData = message.OriginalMessageData.ToArray();
     }
+    
+    internal IncomingMessage IncomingMessage { get; }
 
     /// <summary>
     /// Address of the message
@@ -56,13 +60,18 @@ public class Packet
     /// Is CRC being used
     /// </summary>
     public bool IsUsingCrc { get; }
-
+    
     /// <summary>
     /// The parse the payload data into an object
     /// </summary>
     /// <returns>An message data object representation of the payload data</returns>
     public object ParsePayloadData()
     {
+        if (IncomingMessage.HasSecureData && !IncomingMessage.IsValidMac)
+        {
+            return "*** Unable to parse secure payload data ***";
+        }
+        
         switch (CommandType)
         {
             case Messages.CommandType.Poll:
