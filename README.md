@@ -93,4 +93,4 @@ Be sure to save configuration before exiting.
 ## Contributing
 
 The current goal is to properly support all the commands and replies outlined the OSDP v2.2 standard. 
-The document that outlines the specific of the standard can be found on the [SIA website](https://mysia.securityindustry.org/ProductCatalog/Product.aspx?ID=16773). DM me on Twitter [![Follow NUnit](https://img.shields.io/twitter/follow/bytedreamer.svg?style=social)](https://twitter.com/bytedreamer) if you are interesting in helping.
+The document that outlines the specific of the standard can be found on the [SIA website](https://mysia.securityindustry.org/ProductCatalog/Product.aspx?ID=16773). Contact me through my consulting company [Z-bit System, LLC](https://z-bitco.com), if interested in further collaboration with the OSDP.Net library.
