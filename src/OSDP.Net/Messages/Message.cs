@@ -66,6 +66,11 @@ namespace OSDP.Net.Messages
         /// Address assigned to the device.
         /// </summary>
         public byte Address { get; protected set; }
+        
+        /// <summary>
+        /// Type of message 
+        /// </summary>
+        public MessageType MessageType { get; protected set; }
 
         /// <summary>
         /// The data.
@@ -199,6 +204,23 @@ namespace OSDP.Net.Messages
             const ushort encryptedDifference = 16;
 
             return (ushort)(dataSize - (isEncrypted ? encryptedDifference + (dataSize % cryptoLength) : clearTextDifference));
+        }
+
+        internal static byte[] PadTheData(ReadOnlySpan<byte> data, byte cryptoLength, byte paddingStart)
+        {
+            int paddingLength = data.Length + 16 - data.Length % 16;
+
+            Span<byte> buffer = stackalloc byte[paddingLength];
+            buffer.Clear();
+
+            var cursor = buffer.Slice(0);
+
+            data.CopyTo(cursor);
+            cursor = cursor.Slice(data.Length);
+
+            cursor[0] = paddingStart;
+
+            return buffer.ToArray();
         }
     }
 }

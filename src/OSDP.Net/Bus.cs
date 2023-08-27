@@ -516,7 +516,7 @@ namespace OSDP.Net
  
             await Connection.WriteAsync(buffer).ConfigureAwait(false);
 
-            _tracer(new TraceEntry(TraceDirection.Out, Id, commandData));
+            _tracer(new TraceEntry(TraceDirection.Output, Id, commandData));
             
             using var delayTime = new AutoResetEvent(false);
             delayTime.WaitOne(IdleLineDelay(buffer.Length));
@@ -543,7 +543,7 @@ namespace OSDP.Net
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
             
-            _tracer(new TraceEntry(TraceDirection.In, Id, replyBuffer.ToArray()));
+            _tracer(new TraceEntry(TraceDirection.Input, Id, replyBuffer.ToArray()));
 
             return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }

@@ -15,17 +15,17 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   major: 4
-  minor: 0
-  patch: 4
+  minor: 1
+  patch: 0
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Install .NET 6 SDK'
+  displayName: 'Install .NET 7 SDK'
   inputs:
     packageType: 'sdk'
-    version: '6.x'
+    version: '7.x'
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet build'

@@ -1,5 +1,4 @@
 ﻿using OSDP.Net.Messages;
-using System;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -27,16 +26,8 @@ namespace OSDP.Net.Model.ReplyData
         public override ReplyType ReplyType => ReplyType.InitialRMac;
 
         /// <inheritdoc/>
-        public override byte[] BuildData(bool withPadding = false)
+        public override byte[] BuildData()
         {
-            if (withPadding)
-            {
-                // This response is sent IN ORDER to establish
-                // security. Therefore padding for AES should never be
-                // applied to it
-                throw new InvalidOperationException("Challenge response should never be padded!");
-            }
-
             return RMac;
         }
     }

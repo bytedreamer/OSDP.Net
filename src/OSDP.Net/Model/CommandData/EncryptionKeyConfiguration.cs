@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace OSDP.Net.Model.CommandData
@@ -38,6 +39,14 @@ namespace OSDP.Net.Model.CommandData
             data.AddRange(KeyData);
 
             return data.ToArray();
+        }
+        
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of EncryptionKeyConfiguration representing the message payload</returns>
+        public static EncryptionKeyConfiguration ParseData(ReadOnlySpan<byte> data)
+        {
+            return new EncryptionKeyConfiguration((KeyType)data[0], data.Slice(2).ToArray());
         }
     }
 }

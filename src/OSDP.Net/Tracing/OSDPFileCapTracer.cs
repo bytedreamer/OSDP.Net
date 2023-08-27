@@ -14,7 +14,7 @@ internal static class OSDPFileCapTracer
         {
             timeSec = Math.Floor(unixTime.TotalSeconds).ToString("F0"),
             timeNano = timeNano.ToString("000000000"),
-            io = trace.Direction == TraceDirection.In ? "input" : "output",
+            io = trace.Direction == TraceDirection.Input ? "input" : "output",
             data = BitConverter.ToString(trace.Data),
             osdpTraceVersion = "1",
             osdpSource = "OSDP.Net"

@@ -89,9 +89,9 @@ namespace OSDP.Net.Model.CommandData
         }
 
         /// <summary>
-        /// Builds the data.
+        /// Builds the payload data array.
         /// </summary>
-        /// <returns>The data.</returns>
+        /// <returns>The payload data</returns>
         public ReadOnlySpan<byte> BuildData()
         {
             var data = new List<byte>();

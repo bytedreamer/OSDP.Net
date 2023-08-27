@@ -22,7 +22,7 @@ namespace OSDP.Net.Tests.Model.ReplyData
         }
 
         [Test]
-        public void BuildDataNoPadding()
+        public void BuildData()
         {
             // Resharper disable once ConditionIsAlwaysTrueOrFalse
             var data = new BitArray("0001001010101011".Select(
@@ -31,28 +31,6 @@ namespace OSDP.Net.Tests.Model.ReplyData
             var rawCardData = new RawCardData(5, FormatCode.NotSpecified, data);
             var buffer = rawCardData.BuildData();
             Assert.That(BitConverter.ToString(buffer), Is.EqualTo("05-00-10-00-12-AB"));
-        }
-
-        [TestCase("0001001010101011",
-            ExpectedResult = "05-00-10-00-12-AB-80-00-00-00-00-00-00-00-00-00")]
-        [TestCase("0001001010101011" + "1100110011001100" +
-                  "1100110011001100" + "1100110011001100" +
-                  "1100110011001100" + "11001100",
-            ExpectedResult = "05-00-58-00-12-AB-CC-CC-CC-CC-CC-CC-CC-CC-CC-80")]
-        [TestCase("0001001010101011" + "1100110011001100" +
-                  "1100110011001100" + "1100110011001101" +
-                  "1100110011001100" + "1100110011001100",
-            ExpectedResult = "05-00-60-00-12-AB-CC-CC-CC-CC-CC-CD-CC-CC-CC-CC-" +
-                             "80-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00")]
-        public string BuildDataWithPadding(string keyData)
-        {
-            // Resharper disable once ConditionIsAlwaysTrueOrFalse
-            var data = new BitArray(keyData.Select(
-                x => x != '0' && (x == '1' ? true : throw new Exception("invalid input data"))).ToArray());
-
-            var rawCardData = new RawCardData(5, FormatCode.NotSpecified, data);
-            var buffer = rawCardData.BuildData(true);
-            return BitConverter.ToString(buffer);
         }
     }
 }

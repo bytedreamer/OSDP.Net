@@ -119,10 +119,10 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc/>
-        public override byte[] BuildData(bool withPadding = false)
+        public override byte[] BuildData()
         {
             var length = 4 + (Data.Count + 7) / 8;
-            var buffer = new byte[withPadding ? length + 16 - length % 16 : length];
+            var buffer = new byte[length];
             buffer[0] = ReaderNumber;
             buffer[1] = (byte)FormatCode;
             buffer[2] = (byte)(BitCount & 0xff);
@@ -140,8 +140,6 @@ namespace OSDP.Net.Model.ReplyData
                 c = ((c & 0xaa) >> 1) | ((c & 0x55) << 1);
                 buffer[i] = (byte)c;
             }
-
-            if (withPadding) buffer[length] = Message.FirstPaddingByte;
 
             return buffer;
         }

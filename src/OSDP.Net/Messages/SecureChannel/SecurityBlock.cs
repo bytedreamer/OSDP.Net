@@ -1,11 +1,11 @@
 ﻿using System;
 
-namespace OSDP.Net.Messages;
+namespace OSDP.Net.Messages.SecureChannel;
 
 /// <summary>
 /// Contains standard Security Control Block data that can be used when building messages
 /// </summary>
-public static class SecurityBlock
+internal static class SecurityBlock
 {
     /// <summary>
     /// Secure channel is established and the

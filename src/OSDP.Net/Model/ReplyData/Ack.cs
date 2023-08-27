@@ -12,7 +12,7 @@ namespace OSDP.Net.Model.ReplyData
         public override ReplyType ReplyType => ReplyType.Ack;
 
         /// <inheritdoc/>
-        public override byte[] BuildData(bool withPadding = false)
+        public override byte[] BuildData()
         {
             return Array.Empty<byte>();
         }

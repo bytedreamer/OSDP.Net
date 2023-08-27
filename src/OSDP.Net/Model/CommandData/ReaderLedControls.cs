@@ -1,11 +1,13 @@
+using System;
 using System.Collections.Generic;
+using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
     /// Command data to control the color of LEDs.
     /// </summary>
-    public class ReaderLedControls
+    public class ReaderLedControls : CommandData
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ReaderLedControls"/> class.
@@ -21,11 +23,11 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public IEnumerable<ReaderLedControl> Controls { get; }
 
-        /// <summary>
-        /// Builds the data.
-        /// </summary>
-        /// <returns>The Data</returns>
-        public IEnumerable<byte> BuildData()
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.LEDControl;
+
+        /// <inheritdoc />
+        public override byte[] BuildData()
         {
             var data = new List<byte>();
             foreach (var readerLedControl in Controls)
@@ -33,7 +35,15 @@ namespace OSDP.Net.Model.CommandData
                 data.AddRange(readerLedControl.BuildData());
             }
 
-            return data;
+            return data.ToArray();
+        }
+        
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="payloadData">Message payload as bytes</param>
+        /// <returns>An instance of ReaderLedControls representing the message payload</returns>
+        public static ReaderLedControls ParseData(ReadOnlySpan<byte> payloadData)
+        {
+            return new ReaderLedControls(SplitData(14, data => ReaderLedControl.ParseData(data), payloadData));
         }
     }
 }

@@ -53,5 +53,17 @@ namespace OSDP.Net.Model.CommandData
             data.AddRange(DataFragment);
             return data.ToArray();
         }
+
+        /// <summary>Parses the message payload bytes</summary>
+        /// <param name="data">Message payload as bytes</param>
+        /// <returns>An instance of FileTransferFragment representing the message payload</returns>
+        public static AuthenticationChallengeFragment ParseData(ReadOnlySpan<byte> data)
+        {
+            return new AuthenticationChallengeFragment(
+                Message.ConvertBytesToInt(data.Slice(0, 4).ToArray()),
+                Message.ConvertBytesToInt(data.Slice(4, 4).ToArray()),
+                Message.ConvertBytesToUnsignedShort(data.Slice(8, 2).ToArray()),
+                data.Slice(10).ToArray());
+        }
     }
 }
