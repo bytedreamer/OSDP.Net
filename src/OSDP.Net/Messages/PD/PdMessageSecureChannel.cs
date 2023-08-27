@@ -74,15 +74,6 @@ namespace OSDP.Net.Messages.PD
             var clientCryptogram = SecurityContext.GenerateKey(crypto, rndA, rndB);
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
 
-            Logger?.LogInformation($"Rnd.A: {{rndA}}{Environment.NewLine}" +
-                $"Rnd.B: {{rndB}}{Environment.NewLine}" +
-                $"Enc: {{enc}}{Environment.NewLine}" +
-                $"ClientCrypto: {{ccrypto}}{Environment.NewLine}",
-                BitConverter.ToString(rndA),
-                BitConverter.ToString(rndB),
-                BitConverter.ToString(Context.Enc),
-                BitConverter.ToString(clientCryptogram));
-
             // reply with osdp_CCRYPT, returning PD's Id (cUID), its random number and the client cryptogram
             return new Reply(command, new ChallengeResponse(cUID, rndB, clientCryptogram));
         }
