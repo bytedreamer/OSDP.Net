@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 namespace OSDP.Net.Messages.SecureChannel;
 
 /// <summary>
-/// Security context used within SecureChannel2
+/// Security context used within MessageSecureChannel
 /// 
 /// This state data is placed into its own class to facilitate use cases where multiple channels
 /// (i.e. one for incoming packets; one for outgoing) have to share the same security state.
