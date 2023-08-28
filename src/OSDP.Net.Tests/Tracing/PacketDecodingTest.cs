@@ -36,6 +36,29 @@ public class PacketDecodingTest
     }
     
     [Test]
+    public void ParseMessage_Spaces()
+    {
+        // Arrange
+        var testData = BinaryUtils.HexToBytes("53 00 0D 00 06 6A 00 02 02 02 01 59 92").ToArray();
+        
+        // Act
+        var actual = PacketDecoding.ParseMessage(testData.ToArray());
+        
+        // Assert
+        Assert.That(actual.Address, Is.EqualTo(0));
+        Assert.That(actual.Sequence, Is.EqualTo(2));
+        Assert.That(actual.IsUsingCrc, Is.EqualTo(true));
+        Assert.That(actual.CommandType, Is.EqualTo(CommandType.BuzzerControl));
+        Assert.That(actual.ReplyType, Is.Null);
+
+        var testDataObject = actual.ParsePayloadData() as ReaderBuzzerControl;
+        Assert.That(testDataObject, Is.Not.Null);
+        
+        Assert.That(actual.RawPayloadData.ToArray(), Is.EqualTo(testData.Skip(6).Take(5)));
+        Assert.That(actual.RawData.ToArray(), Is.EqualTo(testData));
+    }
+    
+    [Test]
     public void ParseMessage_Reply()
     {
         // Arrange

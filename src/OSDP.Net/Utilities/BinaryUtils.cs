@@ -42,7 +42,7 @@ public static class BinaryUtils
 
         while (enumerator.MoveNext())
         {
-            if (enumerator.Current == '-')
+            if (enumerator.Current is '-' or ' ')
             {
                 if (!enumerator.MoveNext()) throw new InvalidOperationException("Not a valid hex string");
             }
