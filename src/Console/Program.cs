@@ -979,7 +979,8 @@ internal static class Program
 
                 var result = await _controlPanel.DiscoverDevice(
                     SerialPortOsdpConnection.EnumBaudRates(portNameComboBox.Text.ToString()),
-                    new DiscoveryOptions() { 
+                    new DiscoveryOptions
+                    { 
                         ProgressCallback = OnProgress,
                         ResponseTimeout = TimeSpan.FromMilliseconds(pingTimeout),
                         CancellationToken = cancelTokenSrc.Token,
@@ -1027,7 +1028,7 @@ internal static class Program
         if (!CanSendCommand()) return;
             
         var addressTextField = new TextField(20, 1, 20,
-            ((_settings.Devices.OrderBy(device => device.Address).LastOrDefault()?.Address ?? 0) + 1).ToString());
+            ((_settings.Devices.MaxBy(device => device.Address)?.Address ?? 0) + 1).ToString());
         var baudRateTextField = new TextField(20, 3, 20, _settings.SerialConnectionSettings.BaudRate.ToString());
 
         void SendCommunicationConfigurationButtonClicked()
@@ -1153,7 +1154,7 @@ internal static class Program
                     Application.Run(statusDialog);
                 });
 
-                var data = await File.ReadAllBytesAsync(path);
+                var data = await File.ReadAllBytesAsync(path, tokenSource.Token);
                 int fileSize = data.Length;
                 var result = await _controlPanel.FileTransfer(connectionId, address, type, data, messageSize,
                     status =>
