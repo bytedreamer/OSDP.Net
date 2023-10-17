@@ -47,7 +47,7 @@ namespace OSDP.Net.Connections
         public int BaudRate => _baudRate;
 
         /// <inheritdoc />
-        public bool IsOpen => _serialPort != null && _serialPort.IsOpen;
+        public bool IsOpen => _serialPort is { IsOpen: true };
 
         /// <inheritdoc />
         public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
