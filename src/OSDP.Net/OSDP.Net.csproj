@@ -4,7 +4,6 @@
     <Title>OSDP.Net</Title>
     <Authors>Jonathan Horvath</Authors>
     <Description>OSDP.Net is a .NET framework implementation of the Open Supervised Device Protocol(OSDP).</Description>
-    <RepositoryUrl>https://github.com/bytedreamer/OSDP.Net</RepositoryUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
     <LangVersion>default</LangVersion>
