@@ -13,12 +13,13 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <RepositoryUrl>https://github.com/bytedreamer/OSDP.Net.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DocumentationFile></DocumentationFile>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <None Include="Images\icon.png" Pack="true" PackagePath="" />
   </ItemGroup>
