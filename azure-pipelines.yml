@@ -32,7 +32,7 @@ steps:
   inputs:
     command: 'build'
     projects: '**/*.csproj'
-    arguments: '--configuration $(buildConfiguration) /p:ContinuousIntegrationBuild=true'
+    arguments: '--configuration $(buildConfiguration)'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 
@@ -56,7 +56,7 @@ steps:
   displayName: 'dotnet pack'
   inputs:
     command: 'pack'
-    arguments: '--configuration $(buildConfiguration) /p:ContinuousIntegrationBuild=true'
+    arguments: '--configuration $(buildConfiguration)'
     packagesToPack: 'src/OSDP.Net/OSDP.Net.csproj'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'NugetVersion'
