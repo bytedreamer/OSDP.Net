@@ -16,7 +16,7 @@ variables:
   buildConfiguration: 'Release'
   major: 4
   minor: 1
-  patch: 3
+  patch: 4
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
@@ -32,7 +32,7 @@ steps:
   inputs:
     command: 'build'
     projects: '**/*.csproj'
-    arguments: '--configuration $(buildConfiguration)'
+    arguments: '--configuration $(buildConfiguration) /p:ContinuousIntegrationBuild=true'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 
