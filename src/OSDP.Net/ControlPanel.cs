@@ -433,6 +433,7 @@ namespace OSDP.Net
         {
             if (_buses.Any(bus =>
                     bus.Key == connectionId &&
+                    address != communicationConfiguration.Address &&
                     bus.Value.ConfigureDeviceAddresses.Any(configuredAddress => configuredAddress == communicationConfiguration.Address)))
             {
                 throw new Exception("Address is already configured on the bus.");
