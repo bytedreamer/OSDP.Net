@@ -25,7 +25,7 @@ namespace OSDP.Net
     /// </summary>
     internal class Bus : IDisposable
     {
-        private const byte DriverByte = 0xFF;
+        internal const byte DriverByte = 0xFF;
 
         public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
         
@@ -77,9 +77,9 @@ namespace OSDP.Net
             _cancellationTokenSource?.Dispose();
         }
 
-        private TimeSpan IdleLineDelay(int numberOfBytes)
+        private static TimeSpan IdleLineDelay(IOsdpConnection connection, int numberOfBytes)
         {
-            return TimeSpan.FromSeconds((1.0 / Connection.BaudRate) * (10.0 * numberOfBytes));
+            return TimeSpan.FromSeconds((1.0 / connection.BaudRate) * (10.0 * numberOfBytes));
         }
 
         /// <summary>
@@ -145,6 +145,8 @@ namespace OSDP.Net
                 if (foundDevice == null) return;
                 
                 _configuredDevices.Remove(foundDevice);
+                
+                foundDevice.Dispose();
             }
         }
 
@@ -335,7 +337,7 @@ namespace OSDP.Net
                         continue;
                     }
 
-                    delayTime.WaitOne(IdleLineDelay(2));
+                    delayTime.WaitOne(IdleLineDelay(Connection, 2));
                 }
             }
 
@@ -519,7 +521,7 @@ namespace OSDP.Net
             _tracer(new TraceEntry(TraceDirection.Output, Id, commandData));
             
             using var delayTime = new AutoResetEvent(false);
-            delayTime.WaitOne(IdleLineDelay(buffer.Length));
+            delayTime.WaitOne(IdleLineDelay(Connection, buffer.Length));
 
             return await ReceiveReply(command, device, cancellationToken);
         }
@@ -528,17 +530,17 @@ namespace OSDP.Net
         {
             var replyBuffer = new Collection<byte>();
 
-            if (!await WaitForStartOfMessage(replyBuffer, device.IsSendingMultipartMessage, cancellationToken).ConfigureAwait(false))
+            if (!await WaitForStartOfMessage(Connection, replyBuffer, device.IsSendingMultipartMessage, cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message");
             }
 
-            if (!await WaitForMessageLength(replyBuffer, cancellationToken).ConfigureAwait(false))
+            if (!await WaitForMessageLength(Connection, replyBuffer, cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message length");
             }
 
-            if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer), cancellationToken).ConfigureAwait(false))
+            if (!await WaitForRestOfMessage(Connection, replyBuffer, ExtractMessageLength(replyBuffer), cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
@@ -548,20 +550,20 @@ namespace OSDP.Net
             return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
         }
 
-        private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
+        internal static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
         {
             return Message.ConvertBytesToUnsignedShort(new[] {replyBuffer[2], replyBuffer[3]});
         }
 
-        private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength, CancellationToken cancellationToken)
+        internal static async Task<bool> WaitForRestOfMessage(IOsdpConnection connection, ICollection<byte> replyBuffer, ushort replyLength, CancellationToken cancellationToken)
         {
             while (replyBuffer.Count < replyLength)
             {
-                int maxReadBufferLength = Connection.BaudRate / 40;
+                int maxReadBufferLength = connection.BaudRate / 40;
                 int remainingLength = replyLength - replyBuffer.Count;
                 byte[] readBuffer = new byte[Math.Min(maxReadBufferLength, remainingLength)];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout + IdleLineDelay(readBuffer.Length),
+                    await TimeOutReadAsync(connection, readBuffer, connection.ReplyTimeout + IdleLineDelay(connection, readBuffer.Length),
                             cancellationToken)
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
@@ -580,13 +582,13 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<bool> WaitForMessageLength(ICollection<byte> replyBuffer, CancellationToken cancellationToken)
+        internal static async Task<bool> WaitForMessageLength(IOsdpConnection connection, ICollection<byte> replyBuffer, CancellationToken cancellationToken)
         {
             while (replyBuffer.Count < 4)
             {
                 byte[] readBuffer = new byte[4];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout, cancellationToken)
+                    await TimeOutReadAsync(connection, readBuffer, connection.ReplyTimeout, cancellationToken)
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
@@ -604,13 +606,13 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<bool> WaitForStartOfMessage(ICollection<byte> replyBuffer, bool waitLonger, CancellationToken cancellationToken)
+        internal static async Task<bool> WaitForStartOfMessage(IOsdpConnection connection, ICollection<byte> replyBuffer, bool waitLonger, CancellationToken cancellationToken)
         {
             while (true)
             {
                 byte[] readBuffer = new byte[1];
-                int bytesRead = await TimeOutReadAsync(readBuffer,
-                        Connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero),
+                int bytesRead = await TimeOutReadAsync(connection, readBuffer,
+                        connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero),
                         cancellationToken)
                     .ConfigureAwait(false);
                 if (bytesRead == 0)
@@ -630,14 +632,14 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<int> TimeOutReadAsync(byte[] buffer, TimeSpan timeout, CancellationToken cancellationToken)
+        private static async Task<int> TimeOutReadAsync(IOsdpConnection connection, byte[] buffer, TimeSpan timeout, CancellationToken cancellationToken)
         {
             using var timedCancellationTokenSource = new CancellationTokenSource(timeout);
             using var linkedCancellationTokenSource =
                 CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timedCancellationTokenSource.Token);
             try
             {
-                return await Connection.ReadAsync(buffer, linkedCancellationTokenSource.Token).ConfigureAwait(false);
+                return await connection.ReadAsync(buffer, linkedCancellationTokenSource.Token).ConfigureAwait(false);
             }
             catch
             {

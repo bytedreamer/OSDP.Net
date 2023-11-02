@@ -1,13 +1,26 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using OSDP.Net.Connections;
+using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
+using OSDP.Net.Messages.PD;
 using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model.ReplyData;
+using Reply = OSDP.Net.Messages.ACU.Reply;
 
 namespace OSDP.Net;
 
-internal class Device : IComparable<Device>
+/// <summary>
+/// 
+/// </summary>
+public class Device : IComparable<Device>, IDisposable
 {
     private const int RetryAmount = 2;
 
@@ -15,24 +28,37 @@ internal class Device : IComparable<Device>
 
     private readonly SecureChannel _secureChannel = new();
     private readonly bool _useSecureChannel;
+    private readonly ILogger<Device> _logger;
+    private readonly AutoResetEvent _shutdownComplete = new (false);
+    
     private int _counter = RetryAmount;
-
     private DateTime _lastValidReply = DateTime.MinValue;
+    private CancellationTokenSource _cancellationTokenSource;
 
     private Command _retryCommand;
 
-    public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="address"></param>
+    /// <param name="useCrc"></param>
+    /// <param name="useSecureChannel"></param>
+    /// <param name="secureChannelKey"></param>
+    /// <param name="logger"></param>
+    public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null, ILogger<Device> logger = null)
     {
         _useSecureChannel = useSecureChannel;
+        _logger = logger;
             
         Address = address;
         MessageControl = new Control(0, useCrc, useSecureChannel);
 
-        if (!UseSecureChannel) return;
-
-        SecureChannelKey = secureChannelKey ?? SecurityContext.DefaultKey;
+        if (UseSecureChannel)
+        {
+            SecureChannelKey = secureChannelKey ?? SecurityContext.DefaultKey;
             
-        IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
+            IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
+        }
     }
 
     internal byte[] SecureChannelKey { get; }
@@ -41,7 +67,7 @@ internal class Device : IComparable<Device>
 
     public byte Address { get; }
 
-    public Control MessageControl { get; }
+    internal Control MessageControl { get; }
 
     public bool UseSecureChannel => !IsSendingMultiMessageNoSecureChannel && _useSecureChannel;
 
@@ -50,18 +76,18 @@ internal class Device : IComparable<Device>
     public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
                                (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
 
-    public bool IsSendingMultipartMessage { get; set; }
+    internal bool IsSendingMultipartMessage { get; set; }
 
-    public DateTime RequestDelay { get; set; }
+    internal DateTime RequestDelay { get; set; }
 
-    public bool IsSendingMultiMessageNoSecureChannel { get; set; }
+    internal bool IsSendingMultiMessageNoSecureChannel { get; set; }
         
-    public bool IsReceivingMultipartMessage { get; set; }
+    internal bool IsReceivingMultipartMessage { get; set; }
         
     /// <summary>
     /// Has one or more commands waiting in the queue
     /// </summary>
-    public bool HasQueuedCommand => _commands.Any();
+    internal bool HasQueuedCommand => _commands.Any();
 
     /// <inheritdoc />
     public int CompareTo(Device other)
@@ -71,12 +97,116 @@ internal class Device : IComparable<Device>
         return Address.CompareTo(other.Address);
     }
 
+    public void StartListening(IOsdpConnection connection, ICommandProcessing commandProcessing)
+    {
+        var cancellationTokenSource = _cancellationTokenSource;
+        if (cancellationTokenSource != null) return;
+        _cancellationTokenSource = cancellationTokenSource = new CancellationTokenSource();
+        
+        Task.Factory.StartNew(async () =>
+        {
+            var secureChannel = new PdMessageSecureChannel();
+            Guid connectionId = Guid.NewGuid();
+            try
+            {
+                connection.Open();
+                while (!_cancellationTokenSource.IsCancellationRequested)
+                {
+                    var commandBuffer = await GetCommand(connection);
+                    
+                    if (commandBuffer.Length == 0) continue;
+
+                    var incomingMessage = new IncomingMessage(commandBuffer, secureChannel, connectionId);
+
+                    HandleResponse(connection, secureChannel, incomingMessage, commandProcessing);
+
+                    if (incomingMessage.Sequence > 0) _lastValidReply = DateTime.UtcNow;
+                }
+            }
+            catch(Exception exception)
+            {
+                _logger?.LogError(exception, $"Unexpected exception in polling loop");
+            }
+        }, TaskCreationOptions.LongRunning);
+
+        _shutdownComplete.Set();
+    }
+
+    private void HandleResponse(IOsdpConnection connection, PdMessageSecureChannel secureChannel, IncomingMessage incomingMessage, ICommandProcessing commandProcessing)
+    {
+        ReplyData replyData;
+
+        switch ((CommandType)incomingMessage.Type)
+        {
+            case CommandType.Poll:
+                replyData = commandProcessing.Poll();
+                break;
+            case CommandType.IdReport:
+                replyData = commandProcessing.IdReport();
+                break;
+            default:
+                replyData = new Nak(ErrorCode.UnknownCommandCode);
+                break;
+        }
+
+        var reply = new OSDP.Net.Messages.PD.Reply(incomingMessage, replyData);
+        var data = reply.BuildReply(secureChannel);
+        var buffer = new byte[data.Length + 1];
+
+        // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
+        // accomplished by sending a character with all bits set to 1. The driver byte is required by
+        // converters and multiplexers to sense when line is idle.
+        buffer[0] = Bus.DriverByte;
+        Buffer.BlockCopy(data, 0, buffer, 1, data.Length);
+            
+        Debug.WriteLine("Outgoing: " + BitConverter.ToString(data));
+        
+        connection.WriteAsync(buffer);
+    }
+
+    private async Task<byte[]> GetCommand(IOsdpConnection connection)
+    {
+        var commandBuffer = new Collection<byte>();
+
+        if (!await Bus.WaitForStartOfMessage(connection, commandBuffer, true, _cancellationTokenSource.Token)
+                .ConfigureAwait(false))
+        {
+            return Array.Empty<byte>();
+        }
+
+        if (!await Bus.WaitForMessageLength(connection, commandBuffer, _cancellationTokenSource.Token).ConfigureAwait(false))
+        {
+            throw new TimeoutException("Timeout waiting for command message length");
+        }
+
+        if (!await Bus.WaitForRestOfMessage(connection, commandBuffer, Bus.ExtractMessageLength(commandBuffer),
+                _cancellationTokenSource.Token).ConfigureAwait(false))
+        {
+            throw new TimeoutException("Timeout waiting for command of reply message");
+        }
+        
+        Debug.WriteLine("Incoming: " + BitConverter.ToString(commandBuffer.ToArray()));
+        
+        return commandBuffer.ToArray();
+    }
+
+    public void StopListening()
+    {
+        var cancellationTokenSource = _cancellationTokenSource;
+        if (cancellationTokenSource != null)
+        {
+            cancellationTokenSource.Cancel();
+            _shutdownComplete.WaitOne(TimeSpan.FromSeconds(1));
+            _cancellationTokenSource = null;
+        }
+    }
+
     /// <summary>
     /// Get the next command in the queue, setup security, or send a poll command
     /// </summary>
     /// <param name="isPolling">If false, only send commands in the queue</param>
     /// <returns>The next command always if polling, could be null if not polling</returns>
-    public Command GetNextCommandData(bool isPolling)
+    internal Command GetNextCommandData(bool isPolling)
     {
         if (_retryCommand != null)
         {
@@ -113,7 +243,7 @@ internal class Device : IComparable<Device>
         return command;
     }
 
-    public void SendCommand(Command command)
+    internal void SendCommand(Command command)
     {
         _commands.Enqueue(command);
     }
@@ -122,7 +252,7 @@ internal class Device : IComparable<Device>
     /// Store command for retry
     /// </summary>
     /// <param name="command"></param>
-    public void RetryCommand(Command command)
+    internal void RetryCommand(Command command)
     {
         if (_counter-- > 0)
         {
@@ -135,7 +265,7 @@ internal class Device : IComparable<Device>
         }
     }
 
-    public void ValidReplyHasBeenReceived(byte sequence)
+    internal void ValidReplyHasBeenReceived(byte sequence)
     {
         MessageControl.IncrementSequence(sequence);
             
@@ -146,7 +276,7 @@ internal class Device : IComparable<Device>
         _counter = RetryAmount;
     }
 
-    public void InitializeSecureChannel(Reply reply)
+    internal void InitializeSecureChannel(Reply reply)
     {
         var replyData = reply.ExtractReplyData.ToArray();
 
@@ -154,7 +284,7 @@ internal class Device : IComparable<Device>
             replyData.Skip(16).Take(16).ToArray(), SecureChannelKey);
     }
 
-    public bool ValidateSecureChannelEstablishment(Reply reply)
+    internal bool ValidateSecureChannelEstablishment(Reply reply)
     {
         if (!reply.SecureCryptogramHasBeenAccepted())
         {
@@ -166,23 +296,37 @@ internal class Device : IComparable<Device>
         return true;
     }
 
-    public ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
+    internal ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
     {
         return _secureChannel.GenerateMac(message, isCommand);
     }
 
-    public ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> data)
+    internal ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> data)
     {
         return _secureChannel.EncryptData(data);
     }
 
-    public IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)
+    internal IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)
     {
         return _secureChannel.DecryptData(data);
     }
 
-    public void CreateNewRandomNumber()
+    internal void CreateNewRandomNumber()
     {
         _secureChannel.CreateNewRandomNumber();
     }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _shutdownComplete?.Dispose();
+        _cancellationTokenSource?.Dispose();
+    }
+}
+
+public interface ICommandProcessing
+{
+    ReplyData Poll();
+
+    ReplyData IdReport();
 }
