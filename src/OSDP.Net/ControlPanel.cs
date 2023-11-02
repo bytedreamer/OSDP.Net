@@ -431,6 +431,13 @@ namespace OSDP.Net
         public async Task<Model.ReplyData.CommunicationConfiguration> CommunicationConfiguration(Guid connectionId,
             byte address, CommunicationConfiguration communicationConfiguration)
         {
+            if (_buses.Any(bus =>
+                    bus.Key == connectionId &&
+                    bus.Value.ConfigureDeviceAddresses.Any(configuredAddress => configuredAddress == communicationConfiguration.Address)))
+            {
+                throw new Exception("Address is already configured on the bus.");
+            }
+            
             return Model.ReplyData.CommunicationConfiguration.ParseData((await SendCommand(connectionId,
                     new CommunicationSetCommand(address, communicationConfiguration)).ConfigureAwait(false))
                 .ExtractReplyData);
