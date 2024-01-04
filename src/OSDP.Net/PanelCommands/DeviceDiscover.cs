@@ -14,7 +14,7 @@ namespace OSDP.Net.PanelCommands
         /// This namespace contains type definitions used specifically for 
         /// <see cref="ControlPanel.DiscoverDevice(System.Collections.Generic.IEnumerable{IOsdpConnection}, DiscoveryOptions)"/>
         /// </summary>
-        public static class NamespaceDoc { }
+        public static class NamespaceDoc;
 
         /// <summary>
         /// Represents an error condition encountered during device discovery
