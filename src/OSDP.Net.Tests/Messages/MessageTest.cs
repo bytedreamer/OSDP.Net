@@ -24,7 +24,7 @@ namespace OSDP.Net.Tests.Messages
             Message.BuildMultiPartMessageData(6, 5, 1, part3, completeData);
 
             // Assert
-            Assert.AreEqual(new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, completeData.ToArray());
+            Assert.That(new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, Is.EqualTo(completeData.ToArray()));
         }
 
         [Test]
@@ -35,7 +35,7 @@ namespace OSDP.Net.Tests.Messages
             ushort actual = Message.CalculateMaximumMessageSize(128);
 
             // Assert
-            Assert.AreEqual(120, actual);
+            Assert.That(120, Is.EqualTo(actual));
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace OSDP.Net.Tests.Messages
             ushort actual = Message.CalculateMaximumMessageSize(129, true);
 
             // Assert
-            Assert.AreEqual(112, actual);
+            Assert.That(112, Is.EqualTo(actual));
         }
 
         [TestCase("05-00-10-00-12-AB",

@@ -83,12 +83,12 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// Receive Buffer Size PD capability
     /// </summary>
-    public class RcvBuffSizeDeviceCap : MsgSizeDeviceCap { };
+    public class RcvBuffSizeDeviceCap : MsgSizeDeviceCap;
 
     /// <summary>
     /// Largest Combined Message Size PD capability
     /// </summary>
-    public class LargestCombMsgSizeDeviceCap : MsgSizeDeviceCap { };
+    public class LargestCombMsgSizeDeviceCap : MsgSizeDeviceCap;
 
     /// <summary>
     /// Communication Security PD capability

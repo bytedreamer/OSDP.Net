@@ -6,11 +6,11 @@ namespace OSDP.Net.Messages.ACU
 {
     internal class AuthenticationChallengeCommand : Command
     {
-        private readonly AuthenticationChallengeFragment _authenticationChallengeFragment;
+        private readonly MessageDataFragment _messageDataFragment;
 
-        public AuthenticationChallengeCommand(byte address, AuthenticationChallengeFragment authenticationChallengeFragment)
+        public AuthenticationChallengeCommand(byte address, MessageDataFragment messageDataFragment)
         {
-            _authenticationChallengeFragment = authenticationChallengeFragment;
+            _messageDataFragment = messageDataFragment;
             Address = address;
         }
 
@@ -23,7 +23,7 @@ namespace OSDP.Net.Messages.ACU
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _authenticationChallengeFragment.BuildData();
+            return _messageDataFragment.BuildData();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)

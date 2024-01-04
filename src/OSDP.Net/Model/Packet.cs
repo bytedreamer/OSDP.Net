@@ -123,7 +123,7 @@ public class Packet
             case Messages.CommandType.GenerateChallenge:
                 return null;
             case Messages.CommandType.AuthenticateChallenge:
-                return AuthenticationChallengeFragment.ParseData(RawPayloadData);
+                return MessageDataFragment.ParseData(RawPayloadData);
             case Messages.CommandType.KeepActive:
                 return null;
         }
