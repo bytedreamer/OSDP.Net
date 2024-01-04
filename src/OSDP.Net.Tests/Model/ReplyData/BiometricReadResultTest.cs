@@ -21,11 +21,11 @@ public class BiometricReadResultTest
         var biometricReadResults = BiometricReadResult.ParseData(data.ToArray());
 
         // Assert
-        Assert.AreEqual(0, biometricReadResults.ReaderNumber);
-        Assert.AreEqual(BiometricStatus.Success, biometricReadResults.Status);
-        Assert.AreEqual(BiometricType.RightThumbPrint, biometricReadResults.Type);
-        Assert.AreEqual(0x50, biometricReadResults.Quality);
-        Assert.AreEqual(5, biometricReadResults.Length);
-        Assert.AreEqual(new byte[] {0x00, 0x01, 0x02, 0x03, 0x04}, biometricReadResults.TemplateData);
+        Assert.That(0, Is.EqualTo(biometricReadResults.ReaderNumber));
+        Assert.That(BiometricStatus.Success, Is.EqualTo(biometricReadResults.Status));
+        Assert.That(BiometricType.RightThumbPrint, Is.EqualTo(biometricReadResults.Type));
+        Assert.That(0x50, Is.EqualTo(biometricReadResults.Quality));
+        Assert.That(5, Is.EqualTo(biometricReadResults.Length));
+        Assert.That(new byte[] {0x00, 0x01, 0x02, 0x03, 0x04}, Is.EqualTo(biometricReadResults.TemplateData));
     }
 }

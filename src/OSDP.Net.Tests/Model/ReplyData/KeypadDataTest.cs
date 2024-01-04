@@ -18,9 +18,9 @@ namespace OSDP.Net.Tests.Model.ReplyData
             var keypadData = KeypadData.ParseData(data.ToArray());
 
             // Assert
-            Assert.AreEqual(1, keypadData.ReaderNumber);
-            Assert.AreEqual(5, keypadData.DigitCount);
-            Assert.AreEqual(new byte[] {0x00, 0x01, 0x02, 0x03, 0x04}, keypadData.Data);
+            Assert.That(1, Is.EqualTo(keypadData.ReaderNumber));
+            Assert.That(5, Is.EqualTo(keypadData.DigitCount));
+            Assert.That(new byte[] {0x00, 0x01, 0x02, 0x03, 0x04}, Is.EqualTo(keypadData.Data));
         }
 
         [Test]
@@ -35,9 +35,9 @@ namespace OSDP.Net.Tests.Model.ReplyData
             var keypadData = KeypadData.ParseData(data.ToArray());
 
             // Assert
-            Assert.AreEqual(1, keypadData.ReaderNumber);
-            Assert.AreEqual(0, keypadData.DigitCount);
-            Assert.AreEqual(new byte[] {}, keypadData.Data);
+            Assert.That(1, Is.EqualTo(keypadData.ReaderNumber));
+            Assert.That(0, Is.EqualTo(keypadData.DigitCount));
+            Assert.That(new byte[] {},Is.EqualTo( keypadData.Data));
         }
     }
 }
