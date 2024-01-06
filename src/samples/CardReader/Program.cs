@@ -7,20 +7,20 @@ using OSDP.Net.Model.ReplyData;
 var outgoingReplies = new ConcurrentQueue<ReplyData>();
 
 var connection = new SerialPortOsdpConnection("COM3", 9600);
-using var device = new Device(0, true, false, new byte[] { });
+using var device = new Device(0, true, false, []);
 device.StartListening(connection, new CommandProcessing(outgoingReplies));
 
-Task.Factory.StartNew(async () =>
+Task.Factory.StartNew(() =>
 {
     var cardNumber = new BitArray(26);
     
     while (true)
     {
-        if (device.IsConnected)
-        {
-            outgoingReplies.Enqueue(new RawCardData(0, FormatCode.NotSpecified, cardNumber));
-        }
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        // ReSharper disable once AccessToDisposedClosure
+        if (!device.IsConnected) continue;
+        
+        outgoingReplies.Enqueue(new RawCardData(0, FormatCode.NotSpecified, cardNumber));
+        return;
     }
 });
 
