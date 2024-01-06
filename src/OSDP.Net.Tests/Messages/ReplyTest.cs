@@ -23,7 +23,7 @@ namespace OSDP.Net.Tests.Messages
             var reply = Reply.Parse(rawResponse, connectionId, command, device);
 
             Assert.That(reply.Type, Is.EqualTo(ReplyType.Ack));
-            Assert.IsTrue(reply.IsValidReply);
+            Assert.That(reply.IsValidReply, Is.True);
             Assert.That(reply.IsValidReply, Is.True);
             Assert.That(reply.Sequence, Is.EqualTo(1));
             Assert.That(reply.Address, Is.EqualTo(address));

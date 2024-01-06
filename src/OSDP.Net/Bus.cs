@@ -223,7 +223,7 @@ namespace OSDP.Net
 
                 if (IsPolling)
                 {
-                    // Allow for immediate processing of commands in queue or outgoing multipart messages
+                    // Allow for immediate processing of commands in queue or incoming multipart messages
                     while (_pollInterval - (DateTime.UtcNow - lastMessageSentTime) > TimeSpan.Zero &&
                            !_configuredDevices.Any(device1 => device1.HasQueuedCommand) && 
                            !_configuredDevices.Any(device2 => device2.IsReceivingMultipartMessage))

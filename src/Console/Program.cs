@@ -677,10 +677,6 @@ internal static class Program
                 }
 
                 _scrollView.Frame = new Rect(1, 0, _window.Frame.Width - 3, _window.Frame.Height - 2);
-                foreach (var view in _scrollView.Subviews)
-                {
-                    view.Dispose();
-                }
                 _scrollView.RemoveAll();
 
                 // This is one hell of an approach in this function. Every time we add a line, we nuke entire view
@@ -1049,7 +1045,9 @@ internal static class Program
 
             SendCommand("Communication Configuration", _connectionId,
                 new CommunicationConfiguration(updatedAddress, updatedBaudRate),
-                _controlPanel.CommunicationConfiguration,
+                (connectionId, deviceAddress, communicationConfiguration) => _controlPanel.CommunicationConfiguration(
+                    connectionId, deviceAddress,
+                    communicationConfiguration),
                 (address, configuration) =>
                 {
                     if (_settings.SerialConnectionSettings.BaudRate != configuration.BaudRate)
@@ -1057,13 +1055,15 @@ internal static class Program
                         _settings.SerialConnectionSettings.BaudRate = configuration.BaudRate;
                         Application.MainLoop.Invoke(() =>
                         {
-                            MessageBox.Query(40, 10, "Info", $"The connection needs to started again with baud rate of {configuration.BaudRate}", "OK");
+                            MessageBox.Query(40, 10, "Info",
+                                $"The connection needs to started again with baud rate of {configuration.BaudRate}",
+                                "OK");
                         });
                     }
-                        
+
                     _controlPanel.RemoveDevice(_connectionId, address);
                     LastNak.TryRemove(address, out _);
-                        
+
                     var updatedDevice = _settings.Devices.First(device => device.Address == address);
                     updatedDevice.Address = configuration.Address;
                     _controlPanel.AddDevice(_connectionId, updatedDevice.Address, updatedDevice.UseCrc,

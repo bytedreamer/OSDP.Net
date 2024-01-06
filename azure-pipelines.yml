@@ -16,16 +16,16 @@ variables:
   buildConfiguration: 'Release'
   major: 4
   minor: 1
-  patch: 6
+  patch: 7
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Install .NET 7 SDK'
+  displayName: 'Install .NET 8 SDK'
   inputs:
     packageType: 'sdk'
-    version: '7.x'
+    version: '8.x'
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet build'

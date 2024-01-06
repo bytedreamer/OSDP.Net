@@ -22,10 +22,10 @@ namespace OSDP.Net.Tests.Model.ReplyData
             var pivData = DataFragmentResponse.ParseData(data.ToArray());
 
             // Assert
-            Assert.AreEqual(20, pivData.WholeMessageLength);
-            Assert.AreEqual(10, pivData.Offset);
-            Assert.AreEqual(5, pivData.LengthOfFragment);
-            Assert.AreEqual(new byte[] {0x00, 0x01, 0x02, 0x03, 0x04}, pivData.Data);
+            Assert.That(20, Is.EqualTo(pivData.WholeMessageLength));
+            Assert.That(10, Is.EqualTo(pivData.Offset));
+            Assert.That(5, Is.EqualTo(pivData.LengthOfFragment));
+            Assert.That(new byte[] {0x00, 0x01, 0x02, 0x03, 0x04}, Is.EqualTo(pivData.Data));
         }
 
         [Test]
@@ -43,10 +43,10 @@ namespace OSDP.Net.Tests.Model.ReplyData
             var pivData = DataFragmentResponse.ParseData(data.ToArray());
 
             // Assert
-            Assert.AreEqual(20, pivData.WholeMessageLength);
-            Assert.AreEqual(10, pivData.Offset);
-            Assert.AreEqual(0, pivData.LengthOfFragment);
-            Assert.AreEqual(new byte[] { }, pivData.Data);
+            Assert.That(20, Is.EqualTo(pivData.WholeMessageLength));
+            Assert.That(10, Is.EqualTo(pivData.Offset));
+            Assert.That(0, Is.EqualTo(pivData.LengthOfFragment));
+            Assert.That(new byte[] { }, Is.EqualTo(pivData.Data));
         }
     }
 }

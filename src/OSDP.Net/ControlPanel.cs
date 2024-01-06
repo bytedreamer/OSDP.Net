@@ -240,7 +240,7 @@ namespace OSDP.Net
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <param name="getPIVData">Describe the PIV data to retrieve.</param>
-        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to return immediately when there is a request being processed.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns>A response with the PIV data requested.</returns>
         public async Task<byte[]> GetPIVData(Guid connectionId, byte address, GetPIVData getPIVData, TimeSpan timeout,
@@ -338,7 +338,7 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Send a  manufacture specific command to a PD.
+        /// Sends a manufacture specific command to a PD.
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
@@ -355,6 +355,88 @@ namespace OSDP.Net
                 Ack = reply.Type == ReplyType.Ack,
                 ReplyData = reply.Type == ReplyType.ManufactureSpecific ? ManufacturerSpecific.ParseData(reply.ExtractReplyData) : null
             };
+        }
+
+        /// <summary>
+        /// Sends a manufacturer specific multi-part command to a PD.
+        /// </summary>
+        /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
+        /// <param name="manufacturerSpecific">Manufacturer specific command data with a command code as the first byte.</param>
+        /// <param name="maximumFragmentSize">The maximum size of the packet fragment.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to return immediately when there is a request being processed.</param>
+        /// <param name="cancellationToken">The CancellationToken token to observe.</param>
+        /// <returns>The last reply data that is returned after sending all the command fragments. There is the possibility of different replies can be returned from PD.</returns>
+        public async Task<ReturnReplyData<ManufacturerSpecific>> ManufacturerSpecificCommand(Guid connectionId, byte address,
+            Model.CommandData.ManufacturerSpecific manufacturerSpecific, ushort maximumFragmentSize, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            var requestLock = GetRequestLock(connectionId, address);
+
+            if (!await requestLock.WaitAsync(timeout, cancellationToken))
+            {
+                throw new TimeoutException("Timeout waiting for another request to complete.");
+            }
+
+            try
+            {
+                return await WaitForManufactureResponse(connectionId, address, manufacturerSpecific, maximumFragmentSize,
+                    cancellationToken);
+            }
+            finally
+            {
+                requestLock.Release();
+            }
+        }
+
+        private async Task<ReturnReplyData<ManufacturerSpecific>> WaitForManufactureResponse(Guid connectionId, byte address,
+            Model.CommandData.ManufacturerSpecific manufacturerSpecific, ushort maximumFragmentSize, CancellationToken cancellationToken)
+        {
+            SetReceivingMultipartMessaging(connectionId, address, true);
+
+            var manufactureCommandCode = manufacturerSpecific.Data.Skip(0).Take(1).ToArray();
+            var manufactureCommandData = manufacturerSpecific.Data.Skip(1).ToArray();
+            ushort totalSize = (ushort)manufactureCommandData.Length;
+            ushort offset = 0;
+            bool continueTransfer = true;
+            Reply reply = null;
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested && continueTransfer)
+                {
+                    ushort fragmentSize = (ushort)Math.Min(maximumFragmentSize, totalSize - offset);
+                    reply = await SendCommand(connectionId,
+                            new ManufacturerSpecificCommand(address, new Model.CommandData.ManufacturerSpecific(
+                                manufacturerSpecific.VendorCode, manufactureCommandCode.Concat(
+                                    new MessageDataFragment(totalSize, offset, fragmentSize,
+                                            manufactureCommandData.Skip(offset).Take(fragmentSize).ToArray()).BuildData()
+                                        .ToArray()).ToArray())), cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (reply.Type != ReplyType.Ack) break;
+
+                    offset += maximumFragmentSize;
+
+                    // Determine if we should continue on successful status
+                    continueTransfer = offset < totalSize;
+                }
+
+                if (reply == null)
+                {
+                    throw new Exception("Command didn't return a valid reply");
+                }
+                
+                return new ReturnReplyData<ManufacturerSpecific>
+                {
+                    Ack = reply.Type == ReplyType.Ack,
+                    ReplyData = reply.Type == ReplyType.ManufactureSpecific ? ManufacturerSpecific.ParseData(reply.ExtractReplyData) : null
+                };
+            }
+            finally
+            {
+                SetReceivingMultipartMessaging(connectionId, address, false);
+            }
         }
 
         /// <summary>
@@ -431,6 +513,14 @@ namespace OSDP.Net
         public async Task<Model.ReplyData.CommunicationConfiguration> CommunicationConfiguration(Guid connectionId,
             byte address, CommunicationConfiguration communicationConfiguration)
         {
+            if (_buses.Any(bus =>
+                    bus.Key == connectionId &&
+                    address != communicationConfiguration.Address &&
+                    bus.Value.ConfigureDeviceAddresses.Any(configuredAddress => configuredAddress == communicationConfiguration.Address)))
+            {
+                throw new Exception("Address is already configured on the bus.");
+            }
+            
             return Model.ReplyData.CommunicationConfiguration.ParseData((await SendCommand(connectionId,
                     new CommunicationSetCommand(address, communicationConfiguration)).ConfigureAwait(false))
                 .ExtractReplyData);
@@ -577,7 +667,7 @@ namespace OSDP.Net
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <param name="biometricReadData">Command data to send a request to the PD to send template data from a biometric scan.</param>
-        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to return immediately when there is a request being processed.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns>Results from matching the biometric scan.</returns>
         public async Task<BiometricReadResult> ScanAndSendBiometricData(Guid connectionId, byte address,
@@ -655,7 +745,7 @@ namespace OSDP.Net
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
         /// <param name="address">Address assigned to the device.</param>
         /// <param name="biometricTemplateData">Command data to send a request to the PD to perform a biometric scan and match.</param>
-        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to return immediately when there is a request being processed.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
         /// <returns>Results from matching the biometric scan.</returns>
         public async Task<BiometricMatchResult> ScanAndMatchBiometricTemplate(Guid connectionId, byte address,
@@ -733,12 +823,12 @@ namespace OSDP.Net
         /// <param name="algorithm"></param>
         /// <param name="key"></param>
         /// <param name="challenge"></param>
-        /// <param name="fragmentSize">Size of the fragment sent with each packet</param>
-        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to test the wait handle and return immediately.</param>
+        /// <param name="maximumFragmentSize">The maximum size of the packet fragment.</param>
+        /// <param name="timeout">A TimeSpan that represents time to wait until waiting for the other requests to complete and it's own request, a TimeSpan that represents -1 milliseconds to wait indefinitely, or a TimeSpan that represents 0 milliseconds to return immediately when there is a request being processed.</param>
         /// <param name="cancellationToken">The CancellationToken token to observe.</param>
-        /// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
+        /// <returns></returns>
         public async Task<byte[]> AuthenticationChallenge(Guid connectionId, byte address,
-            byte algorithm, byte key, byte[] challenge, ushort fragmentSize, TimeSpan timeout,
+            byte algorithm, byte key, byte[] challenge, ushort maximumFragmentSize, TimeSpan timeout,
             CancellationToken cancellationToken = default)
         {
             var requestLock = GetRequestLock(connectionId, address);
@@ -750,7 +840,7 @@ namespace OSDP.Net
 
             try
             {
-                return await WaitForChallengeResponse(connectionId, address, algorithm, key, challenge, fragmentSize,
+                return await WaitForChallengeResponse(connectionId, address, algorithm, key, challenge, maximumFragmentSize,
                     timeout, cancellationToken);
             }
             finally
@@ -760,7 +850,7 @@ namespace OSDP.Net
         }
 
         private async Task<byte[]> WaitForChallengeResponse(Guid connectionId, byte address, byte algorithm, byte key,
-            byte[] challenge, ushort fragmentSize, TimeSpan timeout,
+            byte[] challenge, ushort maximumFragmentSize, TimeSpan timeout,
             CancellationToken cancellationToken)
         {
             bool complete = false;
@@ -783,17 +873,18 @@ namespace OSDP.Net
             AuthenticationChallengeResponseReceived += Handler;
             SetReceivingMultipartMessaging(connectionId, address, true);    
             
-            int totalSize = requestData.Count;
-            int offset = 0;
+            ushort totalSize = (ushort)requestData.Count;
+            ushort offset = 0;
             bool continueTransfer = true;
 
             try
             {
                 while (!cancellationToken.IsCancellationRequested && continueTransfer)
                 {
+                    ushort fragmentSize = (ushort)Math.Min(maximumFragmentSize, totalSize - offset);
                     await SendCommand(connectionId,
                             new AuthenticationChallengeCommand(address,
-                                new AuthenticationChallengeFragment(totalSize, offset, fragmentSize,
+                                new MessageDataFragment(totalSize, offset, fragmentSize,
                                     requestData.Skip(offset).Take((ushort)Math.Min(fragmentSize, totalSize - offset))
                                         .ToArray())), cancellationToken)
                         .ConfigureAwait(false);
