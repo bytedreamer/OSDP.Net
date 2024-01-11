@@ -1378,7 +1378,7 @@ internal static class Program
         cancelButton.Clicked += () => Application.RequestStop();
 
         var dialog = new Dialog("Send Reader Buzzer Control Command", 60, 10, cancelButton, sendButton);
-        dialog.Add(new Label(1, 1, "Reader Number:"),
+        dialog.Add(new Label(1, 1, "Buzzer Number:"),
             readerAddressTextField,
             new Label(1, 3, "Repeat Times:"),
             repeatTimesTextField);
