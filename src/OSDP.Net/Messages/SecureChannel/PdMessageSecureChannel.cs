@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Messages.PD;
 using OSDP.Net.Model.ReplyData;
 
-namespace OSDP.Net.Messages.PD
+namespace OSDP.Net.Messages.SecureChannel
 {
     /// <summary>
     /// Message channel which represents the Periphery Device (PD) side of the OSDP 

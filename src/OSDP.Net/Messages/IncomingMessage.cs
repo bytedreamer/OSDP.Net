@@ -20,8 +20,7 @@ namespace OSDP.Net.Messages
         /// </summary>
         /// <param name="data">Raw byte data received from the wire</param>
         /// <param name="channel">Message channel context</param>
-        /// <param name="connectionId">ID of the connection</param>
-        public IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel, Guid connectionId)
+        public IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel)
         {
             // TODO: way too much copying in this code, simplify it.
             _originalMessage = data.ToArray();
@@ -78,8 +77,6 @@ namespace OSDP.Net.Messages
             {
                 IsValidMac = true;
             }
-
-            ConnectionId = connectionId;
         }
 
         /// <summary>
@@ -124,12 +121,6 @@ namespace OSDP.Net.Messages
         public ReadOnlySpan<byte> OriginalMessageData => _originalMessage;
 
         /// <summary>
-        /// ID of the connection on which the channel was received
-        /// (not entirely sure if this is needed here)
-        /// </summary>
-        public Guid ConnectionId { get; }
-
-        /// <summary>
         /// Type of the security block, if there is one
         /// </summary>
         public byte SecurityBlockType { get; }
@@ -145,9 +136,12 @@ namespace OSDP.Net.Messages
         private bool IsDataSecure => Payload == null || Payload.Length == 0 || 
             SecurityBlockType == (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity || 
             SecurityBlockType == (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity;
+        
         private IEnumerable<byte> Mac { get; }
+        
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         private bool IsDataCorrect { get; }
+        
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {
             (byte)SecureChannel.SecurityBlockType.CommandMessageWithNoDataSecurity,

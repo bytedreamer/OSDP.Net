@@ -1,8 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
-using OSDP.Net.Messages.SecureChannel;
 
-namespace OSDP.Net.Messages.ACU;
+namespace OSDP.Net.Messages.SecureChannel;
 
 /// <summary>
 /// Message channel which represents the Access Control Unit (ACU) side of the OSDP 

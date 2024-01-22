@@ -288,7 +288,7 @@ namespace OSDP.Net.Tests
 
                 private static bool IsMatchingCommandType(byte[] messageData, byte commandType)
                 {
-                    var receivedCommand = new IncomingMessage(messageData.Skip(1).ToArray(), null, new Guid());
+                    var receivedCommand = new IncomingMessage(messageData.Skip(1).ToArray(), null);
                     return receivedCommand.Type == commandType;
                 }
 
