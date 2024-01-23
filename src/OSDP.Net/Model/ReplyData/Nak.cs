@@ -9,7 +9,7 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// A negative reply.
     /// </summary>
-    public class Nak : ReplyData
+    public class Nak : PayloadData
     {
         /// <summary>
         /// Prevents a default instance of the <see cref="Nak"/> class from being created.
@@ -38,9 +38,9 @@ namespace OSDP.Net.Model.ReplyData
         /// Gets the extra data.
         /// </summary>
         public IEnumerable<byte> ExtraData { get; private set;  }
-
+        
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.Nak;
+        public override byte Type => (byte)ReplyType.Nak;
 
         /// <summary>
         /// Parses the data.

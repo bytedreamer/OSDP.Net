@@ -12,6 +12,7 @@ using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.PD;
 using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 using Reply = OSDP.Net.Messages.ACU.Reply;
 
@@ -140,7 +141,7 @@ public class Device : IComparable<Device>, IDisposable
 
     private void HandleResponse(IOsdpConnection connection, PdMessageSecureChannel secureChannel, IncomingMessage incomingMessage, ICommandProcessing commandProcessing)
     {
-        ReplyData replyData;
+        PayloadData replyData;
 
         switch ((CommandType)incomingMessage.Type)
         {
@@ -332,7 +333,7 @@ public class Device : IComparable<Device>, IDisposable
 
 public interface ICommandProcessing
 {
-    ReplyData Poll();
+    PayloadData Poll();
 
-    ReplyData IdReport();
+    PayloadData IdReport();
 }

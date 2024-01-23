@@ -5,7 +5,7 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// Represents the payload of osdp_RMAC_I reply
     /// </summary>
-    public class InitialRMac : ReplyData
+    public class InitialRMac : PayloadData
     {
         /// <summary>
         /// Creates a new instance of InitialRMac
@@ -23,7 +23,7 @@ namespace OSDP.Net.Model.ReplyData
         public byte[] RMac { get; }
 
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.InitialRMac;
+        public override byte Type => (byte)ReplyType.InitialRMac;
 
         /// <inheritdoc/>
         public override byte[] BuildData()

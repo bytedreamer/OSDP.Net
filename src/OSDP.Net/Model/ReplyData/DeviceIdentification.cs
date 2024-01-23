@@ -9,7 +9,7 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// The PD identification data sent as a reply.
     /// </summary>
-    public class DeviceIdentification : ReplyData
+    public class DeviceIdentification : PayloadData
     {
         /// <summary>
         /// Creates a new instance of DeviceIdentification
@@ -52,9 +52,9 @@ namespace OSDP.Net.Model.ReplyData
         /// Gets the firmware build.
         /// </summary>
         public byte FirmwareBuild { get; }
-
+        
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.PdIdReport;
+        public override byte Type => (byte)ReplyType.PdIdReport;
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
