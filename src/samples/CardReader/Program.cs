@@ -7,10 +7,10 @@ using OSDP.Net.Model.ReplyData;
 var outgoingReplies = new ConcurrentQueue<ReplyData>();
 
 var connection = new SerialPortOsdpConnection("COM3", 9600);
-using var device = new Device(0, true, false, []);
+using var device = new DeviceProxy(0, true, false, []);
 device.StartListening(connection, new CommandProcessing(outgoingReplies));
 
-Task.Factory.StartNew(() =>
+var _ = Task.Factory.StartNew(() =>
 {
     var cardNumber = new BitArray(26);
     
