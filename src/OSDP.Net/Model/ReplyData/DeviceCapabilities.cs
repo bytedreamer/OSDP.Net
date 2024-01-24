@@ -92,13 +92,13 @@ namespace OSDP.Net.Model.ReplyData
         /// <inheritdoc/>
         public override byte[] BuildData()
         {
-            // TODO: Implement this for non-zero capabilities
-            if (Capabilities != null && Capabilities.Any())
+            var data = new List<byte>();
+            foreach (var capability in Capabilities)
             {
-                throw new NotImplementedException();
+                data.AddRange(capability.BuildData());
             }
 
-            return Array.Empty<byte>();
+            return data.ToArray();
         }
     }
 }
