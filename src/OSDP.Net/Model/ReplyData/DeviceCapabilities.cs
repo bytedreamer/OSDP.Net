@@ -9,7 +9,7 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// The PD device capabilities data sent as a reply.
     /// </summary>
-    public class DeviceCapabilities : ReplyData
+    public class DeviceCapabilities : PayloadData
     {
         /// <summary>
         /// Creates a new instance of DeviceCapabilities
@@ -22,9 +22,9 @@ namespace OSDP.Net.Model.ReplyData
         /// Gets the all the PD's device capabilities.
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
-
+        
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.PdCapabilitiesReport;
+        public override byte Type => (byte)ReplyType.PdCapabilitiesReport;
 
         /// <summary>
         /// Gets a specific PD capability

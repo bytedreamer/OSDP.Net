@@ -12,6 +12,7 @@ using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.PD;
 using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 using Reply = OSDP.Net.Messages.ACU.Reply;
 
@@ -38,18 +39,19 @@ public class Device : IComparable<Device>, IDisposable
     private Command _retryCommand;
 
     /// <summary>
-    /// 
+    /// Represents a device with a specific address.
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="useCrc"></param>
-    /// <param name="useSecureChannel"></param>
-    /// <param name="secureChannelKey"></param>
-    /// <param name="logger"></param>
-    public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null, ILogger<Device> logger = null)
+    /// <param name="address">The address of the device.</param>
+    /// <param name="useCrc">Specifies whether to use CRC (Cyclic Redundancy Check) for message validation.</param>
+    /// <param name="useSecureChannel">Specifies whether to use a secure channel for communication.</param>
+    /// <param name="secureChannelKey">The key used for securing the communication channel.</param>
+    /// <param name="logger">The logger used for logging purposes.</param>
+    public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null,
+        ILogger<Device> logger = null)
     {
         _useSecureChannel = useSecureChannel;
         _logger = logger;
-            
+
         Address = address;
         MessageControl = new Control(0, useCrc, useSecureChannel);
 
@@ -97,6 +99,11 @@ public class Device : IComparable<Device>, IDisposable
         return Address.CompareTo(other.Address);
     }
 
+    /// <summary>
+    /// Starts listening for incoming commands from the specified IOsdpConnection.
+    /// </summary>
+    /// <param name="connection">The IOsdpConnection to listen for commands.</param>
+    /// <param name="commandProcessing">The ICommandProcessing instance to handle the incoming commands.</param>
     public void StartListening(IOsdpConnection connection, ICommandProcessing commandProcessing)
     {
         var cancellationTokenSource = _cancellationTokenSource;
@@ -106,7 +113,7 @@ public class Device : IComparable<Device>, IDisposable
         Task.Factory.StartNew(async () =>
         {
             var secureChannel = new PdMessageSecureChannel();
-            Guid connectionId = Guid.NewGuid();
+
             try
             {
                 connection.Open();
@@ -116,7 +123,7 @@ public class Device : IComparable<Device>, IDisposable
                     
                     if (commandBuffer.Length == 0) continue;
 
-                    var incomingMessage = new IncomingMessage(commandBuffer, secureChannel, connectionId);
+                    var incomingMessage = new IncomingMessage(commandBuffer, secureChannel);
 
                     HandleResponse(connection, secureChannel, incomingMessage, commandProcessing);
 
@@ -134,7 +141,7 @@ public class Device : IComparable<Device>, IDisposable
 
     private void HandleResponse(IOsdpConnection connection, PdMessageSecureChannel secureChannel, IncomingMessage incomingMessage, ICommandProcessing commandProcessing)
     {
-        ReplyData replyData;
+        PayloadData replyData;
 
         switch ((CommandType)incomingMessage.Type)
         {
@@ -326,7 +333,7 @@ public class Device : IComparable<Device>, IDisposable
 
 public interface ICommandProcessing
 {
-    ReplyData Poll();
+    PayloadData Poll();
 
-    ReplyData IdReport();
+    PayloadData IdReport();
 }

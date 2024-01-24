@@ -9,7 +9,7 @@ namespace OSDP.Net.Model.ReplyData;
 /// <summary>
 /// A raw card data reply.
 /// </summary>
-public class RawCardData : ReplyData
+public class RawCardData : PayloadData
 {
     /// <summary>
     /// Creates a new instance of RawCardData. The parameters passed here are
@@ -47,7 +47,7 @@ public class RawCardData : ReplyData
     public BitArray Data { get; }
     
     /// <inheritdoc/>
-    public override ReplyType ReplyType => ReplyType.RawReaderData;
+    public override byte Type => (byte)ReplyType.RawReaderData;
 
     /// <summary>
     /// Parses the data.

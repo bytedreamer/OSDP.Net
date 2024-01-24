@@ -25,6 +25,9 @@ namespace OSDP.Net.Model.CommandData
         
         /// <inheritdoc />
         public override CommandType CommandType => CommandType.OutputControl;
+        
+        /// <inheritdoc />
+        public override byte Type => (byte)CommandType.OutputControl;
 
         /// <inheritdoc />
         public override byte[] BuildData()

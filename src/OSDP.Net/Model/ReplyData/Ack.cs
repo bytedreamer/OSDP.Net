@@ -6,10 +6,10 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// Generic ACK reply
     /// </summary>
-    public class Ack : ReplyData
+    public class Ack : PayloadData
     {
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.Ack;
+        public override byte Type => (byte)ReplyType.Ack;
 
         /// <inheritdoc/>
         public override byte[] BuildData()

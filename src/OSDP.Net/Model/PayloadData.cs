@@ -17,6 +17,8 @@ namespace OSDP.Net.Model
         /// like osdp_ACK do not have additional data, in which case it is perfectly
         /// acceptable for this array to be 0 length</returns>
         public abstract byte[] BuildData();
+        
+        public abstract byte Type { get; }
 
         /// <inheritdoc />
         public override string ToString()

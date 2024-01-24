@@ -7,7 +7,7 @@ namespace OSDP.Net.Model.ReplyData
     /// Represents a reply to osdp_CHLNG command and contain's PD's ID, 
     /// PD-generated random number and PD cryptogram
     /// </summary>
-    public class ChallengeResponse : ReplyData
+    public class ChallengeResponse : PayloadData
     {
         /// <summary>
         /// Create a new instance of the ChallengeResponse
@@ -25,17 +25,17 @@ namespace OSDP.Net.Model.ReplyData
         /// <summary>
         /// Client Unique ID
         /// </summary>
-        public byte[] ClientUID {get; private set;}
+        public byte[] ClientUID {get; }
 
         /// <summary>
         /// Rnd.B as defined in OSDP.NET spec
         /// </summary>
-        public byte[] RndB { get; private set; }
+        public byte[] RndB { get; }
 
         /// <summary>
         /// Client (PD-side) cryptogram as defined in OSDP.NET spec
         /// </summary>
-        public byte[] Cryptogram { get; private set; }
+        public byte[] Cryptogram { get; }
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
@@ -64,8 +64,8 @@ namespace OSDP.Net.Model.ReplyData
 
             return payload;
         }
-
+        
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.CrypticData;
+        public override byte Type => (byte)ReplyType.CrypticData;
     }
 }

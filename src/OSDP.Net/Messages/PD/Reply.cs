@@ -1,6 +1,7 @@
 ﻿using OSDP.Net.Model.ReplyData;
 using System;
 using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model;
 
 namespace OSDP.Net.Messages.PD
 {
@@ -11,14 +12,14 @@ namespace OSDP.Net.Messages.PD
     {
         private const int StartOfMessageLength = 5;
         private readonly IncomingMessage _issuingCommand;
-        private readonly ReplyData _data;
+        private readonly PayloadData _data;
 
         /// <summary>
         /// Creates a new instance of the Reply
         /// </summary>
         /// <param name="issuingCommand">Incoming command message that this is in reply to</param>
         /// <param name="data">the payload portion of the reply message</param>
-        public Reply(IncomingMessage issuingCommand, ReplyData data)
+        public Reply(IncomingMessage issuingCommand, PayloadData data)
         {
             _issuingCommand = issuingCommand;
             _data = data;
@@ -27,7 +28,7 @@ namespace OSDP.Net.Messages.PD
         /// <summary>
         /// Reply code of the message
         /// </summary>
-        public ReplyType Type => _data.ReplyType;
+        public byte Type => _data.Type;
 
         /// <summary>
         /// Incoming command that this instance is replying to
@@ -52,8 +53,8 @@ namespace OSDP.Net.Messages.PD
             }
 
             bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished ||
-                                          _data.ReplyType == ReplyType.CrypticData ||
-                                          _data.ReplyType == ReplyType.InitialRMac;
+                                          _data.Type == (byte)ReplyType.CrypticData ||
+                                          _data.Type == (byte)ReplyType.InitialRMac;
             int headerLength = StartOfMessageLength + (isSecurityBlockPresent ? 3 : 0) + sizeof(ReplyType);
             int totalLength = headerLength + payload.Length +
                               (_issuingCommand.IsUsingCrc ? 2 : 1) +
@@ -74,9 +75,9 @@ namespace OSDP.Net.Messages.PD
             if (isSecurityBlockPresent)
             {
                 buffer[currentLength] = 0x03;
-                buffer[currentLength + 1] = _data.ReplyType == ReplyType.CrypticData
+                buffer[currentLength + 1] = _data.Type == (byte)ReplyType.CrypticData
                     ? (byte)SecurityBlockType.SecureConnectionSequenceStep2
-                    : _data.ReplyType == ReplyType.InitialRMac
+                    : _data.Type == (byte)ReplyType.InitialRMac
                         ? (byte)SecurityBlockType.SecureConnectionSequenceStep4
                         : payload.Length == 0
                             ? (byte)SecurityBlockType.ReplyMessageWithNoDataSecurity
@@ -89,7 +90,7 @@ namespace OSDP.Net.Messages.PD
                 currentLength += 3;
             }
 
-            buffer[currentLength] = (byte)_data.ReplyType;
+            buffer[currentLength] = _data.Type;
             currentLength++;
 
             if (secureChannel.IsSecurityEstablished)
