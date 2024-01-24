@@ -20,7 +20,7 @@ namespace OSDP.Net;
 /// <summary>
 /// 
 /// </summary>
-public class Device : IComparable<Device>, IDisposable
+public class DeviceProxy : IComparable<DeviceProxy>, IDisposable
 {
     private const int RetryAmount = 2;
 
@@ -28,7 +28,7 @@ public class Device : IComparable<Device>, IDisposable
 
     private readonly SecureChannel _secureChannel = new();
     private readonly bool _useSecureChannel;
-    private readonly ILogger<Device> _logger;
+    private readonly ILogger<DeviceProxy> _logger;
     private readonly AutoResetEvent _shutdownComplete = new (false);
     
     private int _counter = RetryAmount;
@@ -45,8 +45,8 @@ public class Device : IComparable<Device>, IDisposable
     /// <param name="useSecureChannel">Specifies whether to use a secure channel for communication.</param>
     /// <param name="secureChannelKey">The key used for securing the communication channel.</param>
     /// <param name="logger">The logger used for logging purposes.</param>
-    public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null,
-        ILogger<Device> logger = null)
+    public DeviceProxy(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null,
+        ILogger<DeviceProxy> logger = null)
     {
         _useSecureChannel = useSecureChannel;
         _logger = logger;
@@ -91,7 +91,7 @@ public class Device : IComparable<Device>, IDisposable
     internal bool HasQueuedCommand => _commands.Any();
 
     /// <inheritdoc />
-    public int CompareTo(Device other)
+    public int CompareTo(DeviceProxy other)
     {
         if (ReferenceEquals(this, other)) return 0;
         if (ReferenceEquals(null, other)) return 1;

@@ -14,7 +14,7 @@ namespace OSDP.Net.Tests.Messages
         {
             var communicationSetCommand = new CommunicationSetCommand(address, 
                 new CommunicationConfiguration(1, 9600));
-            var device = new Device(0, useCrc, useSecureChannel, null);
+            var device = new DeviceProxy(0, useCrc, useSecureChannel, null);
             device.MessageControl.IncrementSequence(1);
             return BitConverter.ToString(communicationSetCommand.BuildCommand(device));
         }

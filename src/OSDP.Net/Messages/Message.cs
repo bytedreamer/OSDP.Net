@@ -162,7 +162,7 @@ namespace OSDP.Net.Messages
             packet[packet.Count - 1] = CalculateChecksum(packet.Take(packet.Count - 1).ToArray());
         }
 
-        internal ReadOnlySpan<byte> EncryptedData(Device device)
+        internal ReadOnlySpan<byte> EncryptedData(DeviceProxy device)
         {
             var data = Data();
             

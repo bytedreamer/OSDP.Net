@@ -12,7 +12,7 @@ namespace OSDP.Net.Tests.Messages
         public string DeviceCapabilitiesCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
             var deviceCapabilitiesCommand = new DeviceCapabilitiesCommand(address);
-            var device = new Device(0, useCrc, useSecureChannel, null);
+            var device = new DeviceProxy(0, useCrc, useSecureChannel, null);
             device.MessageControl.IncrementSequence(1);
             return BitConverter.ToString(deviceCapabilitiesCommand.BuildCommand(device));
         }
