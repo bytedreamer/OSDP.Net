@@ -19,6 +19,15 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <summary>
+        /// Initializes a new instance of DeviceCapabilities class 
+        /// </summary>
+        /// <param name="capabilities">List of DeviceCapability instances</param>
+        public DeviceCapabilities(IEnumerable<DeviceCapability> capabilities)
+        {
+            Capabilities = capabilities;
+        }
+
+        /// <summary>
         /// Gets the all the PD's device capabilities.
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
