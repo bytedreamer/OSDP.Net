@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
-using OSDP.Net.Messages.PD;
 using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
@@ -151,6 +150,9 @@ public class Device : IComparable<Device>, IDisposable
             case CommandType.IdReport:
                 replyData = commandProcessing.IdReport();
                 break;
+            case CommandType.DeviceCapabilities:
+                replyData = commandProcessing.PdCap();
+                break;
             default:
                 replyData = new Nak(ErrorCode.UnknownCommandCode);
                 break;
@@ -165,9 +167,9 @@ public class Device : IComparable<Device>, IDisposable
         // converters and multiplexers to sense when line is idle.
         buffer[0] = Bus.DriverByte;
         Buffer.BlockCopy(data, 0, buffer, 1, data.Length);
-            
+
         Debug.WriteLine("Outgoing: " + BitConverter.ToString(data));
-        
+
         connection.WriteAsync(buffer);
     }
 
@@ -336,4 +338,6 @@ public interface ICommandProcessing
     PayloadData Poll();
 
     PayloadData IdReport();
+
+    PayloadData PdCap();
 }
