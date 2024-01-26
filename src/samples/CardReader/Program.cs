@@ -7,7 +7,7 @@ using OSDP.Net.Model.ReplyData;
 
 var outgoingReplies = new ConcurrentQueue<PayloadData>();
 
-var connection = new SerialPortOsdpConnection("COM3", 9600);
+var connection = new SerialPortOsdpConnection("COM4", 9600);
 using var device = new Device(0, true, false, []);
 device.StartListening(connection, new CommandProcessing(outgoingReplies));
 

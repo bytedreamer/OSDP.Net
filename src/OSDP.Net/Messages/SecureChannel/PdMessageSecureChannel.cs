@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using OSDP.Net.Messages.PD;
 using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net.Messages.SecureChannel
@@ -43,7 +42,7 @@ namespace OSDP.Net.Messages.SecureChannel
         /// </summary>
         /// <param name="command">Incoming command of type SessionChallenge</param>
         /// <returns>A message representing a reply to the SessionChallenge</returns>
-        protected Reply HandleSessionChallenge(IncomingMessage command)
+        protected OutgoingMessage HandleSessionChallenge(IncomingMessage command)
         {
             // TODO: this should be some kind of unique identifier, but a) not sure how to generate it and b) seems
             // the other side presently simply ignores these bytes. So for time being simply leaving this uninitialized
@@ -75,7 +74,7 @@ namespace OSDP.Net.Messages.SecureChannel
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
 
             // reply with osdp_CCRYPT, returning PD's Id (cUID), its random number and the client cryptogram
-            return new Reply(command, new ChallengeResponse(cUID, rndB, clientCryptogram));
+            return new OutgoingMessage(new ChallengeResponse(cUID, rndB, clientCryptogram));
         }
         
         /// <summary>
@@ -83,7 +82,7 @@ namespace OSDP.Net.Messages.SecureChannel
         /// </summary>
         /// <param name="command">An incoming message representing SCrypt command</param>
         /// <returns>Reply to the SCrypt command</returns>
-        protected Reply HandleSCrypt(IncomingMessage command)
+        protected OutgoingMessage HandleSCrypt(IncomingMessage command)
         {
             var serverCryptogram = command.Payload;
 
@@ -107,10 +106,10 @@ namespace OSDP.Net.Messages.SecureChannel
                 crypto.Key = Context.SMac2;
                 Context.RMac = SecurityContext.GenerateKey(crypto, Context.RMac);
 
-                return new Reply(command, new InitialRMac(Context.RMac));
+                return new OutgoingMessage(new InitialRMac(Context.RMac));
             }
 
-            return new Reply(command, new Nak(ErrorCode.DoesNotSupportSecurityBlock));
+            return new OutgoingMessage(new Nak(ErrorCode.DoesNotSupportSecurityBlock));
         }
     }
 }

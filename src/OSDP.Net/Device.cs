@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
-using OSDP.Net.Messages.PD;
 using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
@@ -156,8 +155,8 @@ public class Device : IComparable<Device>, IDisposable
                 break;
         }
 
-        var reply = new OSDP.Net.Messages.PD.Reply(incomingMessage, replyData);
-        var data = reply.BuildReply(secureChannel);
+        var reply = new OutgoingMessage(replyData);
+        var data = reply.BuildMessage(incomingMessage.ControlBlock, secureChannel);
         var buffer = new byte[data.Length + 1];
 
         // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
