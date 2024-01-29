@@ -62,4 +62,6 @@ public interface IMessageSecureChannel
     void ResetSecureChannelSession();
     
     void Establish(byte[] rmac);
+    
+    ReadOnlySpan<byte> PadTheData(ReadOnlySpan<byte> payload);
 }

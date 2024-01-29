@@ -295,15 +295,17 @@ public class Device : IComparable<Device>, IDisposable
         MessageSecureChannel.ResetSecureChannelSession();
     }
 
-    internal ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
+    internal ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming)
     {
-        return MessageSecureChannel.GenerateMac(message, isCommand);
+        return MessageSecureChannel.GenerateMac(message, isIncoming);
     }
 
     internal ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> payload)
     {
-        var encryptedData = new Span<byte>(new byte[payload.Length]);
-        MessageSecureChannel.EncodePayload(payload.ToArray(), encryptedData);
+        var paddedData = MessageSecureChannel.PadTheData(payload);
+        
+        var encryptedData = new Span<byte>(new byte[paddedData.Length]);
+        MessageSecureChannel.EncodePayload(paddedData.ToArray(), encryptedData);
         return encryptedData;
     }
 

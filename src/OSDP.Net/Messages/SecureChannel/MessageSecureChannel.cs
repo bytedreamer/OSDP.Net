@@ -191,4 +191,25 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
             encryptor.TransformFinalBlock(payload, 0, payload.Length).CopyTo(destination);
         }
     }
+    
+    public ReadOnlySpan<byte> PadTheData(ReadOnlySpan<byte> data)
+    {
+        const byte cryptoLength = 16;
+        const byte paddingStart = 0x80;
+        
+        int dataLength = data.Length + 1;
+        int paddingLength = dataLength + (cryptoLength - dataLength % cryptoLength) % cryptoLength;
+            
+        Span<byte> buffer = stackalloc byte[paddingLength];
+        buffer.Clear();
+            
+        var cursor = buffer.Slice(0);
+
+        data.CopyTo(cursor);
+        cursor = cursor.Slice(data.Length);
+            
+        cursor[0] = paddingStart;
+            
+        return buffer.ToArray();
+    }
 }

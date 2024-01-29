@@ -25,7 +25,7 @@ internal class SecurityContext
         _securityKey = securityKey ?? DefaultKey;
 
         IsInitialized = false;
-        IsEstablished = false;
+        IsSecurityEstablished = false;
     }
 
     /// <summary>
@@ -61,8 +61,6 @@ internal class SecurityContext
     public byte[] ServerCryptogram { get; private set; }
 
     public bool IsInitialized { get; private set; }
-    
-    public bool IsEstablished { get; private set; }
 
     /// <summary>
     /// Creates a new instance of AES cypher
@@ -167,6 +165,6 @@ internal class SecurityContext
     public void Establish(byte[] rmac)
     {
         RMac = rmac;
-        IsEstablished = true;
+        IsSecurityEstablished = true;
     }
 }
