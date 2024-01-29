@@ -13,6 +13,12 @@ public interface IMessageSecureChannel
     /// </summary>
     bool IsSecurityEstablished { get; }
 
+    public bool IsInitialized { get; }
+    
+    public byte[] ServerRandomNumber { get; }
+    
+    public byte[] ServerCryptogram { get; }
+
     /// <summary>
     /// Encrypts the payload using the secure channel context. This function can
     /// only be called once IsSecurityEstablished is true.
@@ -50,4 +56,10 @@ public interface IMessageSecureChannel
     /// on the wire</param>
     /// <returns>16-byte MAC value of the message</returns>
     ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming);
+
+    void InitializeACU(byte[] clientRandomNumber, byte[] clientCryptogram);
+    
+    void ResetSecureChannelSession();
+    
+    void Establish(byte[] rmac);
 }

@@ -24,7 +24,7 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
     protected readonly ILogger Logger;
 
     /// <summary>
-    /// Initializes a new instance of SecurityChannel2 class
+    /// Initializes a new instance of MessageSecureChannel class
     /// </summary>
     /// <param name="context">Optional security context state to be used by the channel. If one 
     /// is not provided, new default instance of the context will be created internally. This is
@@ -38,7 +38,7 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
         Context = context ?? new();
         Logger = loggerFactory?.CreateLogger(GetType());
     }
-
+    
     /// <summary>
     /// Security state used by the channel
     /// </summary>
@@ -48,6 +48,15 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
     public bool IsSecurityEstablished => Context.IsSecurityEstablished;
 
     /// <inheritdoc/>
+    public bool IsInitialized => Context.IsInitialized;
+
+    /// <inheritdoc/>
+    public byte[] ServerRandomNumber => Context.ServerRandomNumber;
+    
+    /// <inheritdoc/>
+    public byte[] ServerCryptogram => Context.ServerCryptogram;
+
+    /// <inheritdoc/>
     public abstract byte[] DecodePayload(byte[] payload);
 
     /// <inheritdoc/>
@@ -55,6 +64,22 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
 
     /// <inheritdoc/>
     public abstract ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming);
+
+    /// <inheritdoc/>
+    public void InitializeACU(byte[] clientRandomNumber, byte[] clientCryptogram)
+    {
+        Context.InitializeACU(clientRandomNumber, clientCryptogram);
+    }
+
+    public void ResetSecureChannelSession()
+    {
+        Context.CreateNewRandomNumber();
+    }
+
+    public void Establish(byte[] rmac)
+    {
+        Context.Establish(rmac);
+    }
 
     /// <summary>
     /// Generates a MAC for a command message
@@ -79,7 +104,7 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
             throw new SecureChannelRequired();
         }
 
-        using var crypto = SecurityContext.CreateCypher(Context.SMac1, false);
+        using var crypto = Context.CreateCypher( false, Context.SMac1);
         crypto.IV = iv;
             
         var cursor = message;
@@ -109,8 +134,6 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
         return crypto.IV;
     }
 
-
-
     /// <summary>
     /// Decodes the payload
     /// </summary>
@@ -133,7 +156,7 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
             throw new Exception($"Unexpected payload length: {payload.Length}");
         }
 
-        using var crypto = SecurityContext.CreateCypher(Context.Enc, false);
+        using var crypto = Context.CreateCypher( false, Context.Enc);
         crypto.IV = iv.Select(b => (byte)~b).ToArray();
 
         using var encryptor = crypto.CreateDecryptor();
@@ -161,7 +184,7 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
                 throw new Exception($"Unexpected payload length: {payload.Length}");
             }
 
-            using var crypto = SecurityContext.CreateCypher(Context.Enc, false);
+            using var crypto = Context.CreateCypher( false, Context.Enc);
             crypto.IV = iv.Select(b => (byte)~b).ToArray();
 
             using var encryptor = crypto.CreateEncryptor();

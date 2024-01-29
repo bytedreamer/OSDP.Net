@@ -95,7 +95,7 @@ namespace OSDP.Net.Messages
         /// </summary>
         public byte Sequence { get; }
 
-        public Control ControlBlock => new(SecurityBlockType, IsUsingCrc, IsSecureMessage);
+        public Control ControlBlock => new(Sequence, IsUsingCrc, IsSecureMessage);
 
         /// <summary>
         /// Indicates if the message was sent via an established secure channel
@@ -143,7 +143,7 @@ namespace OSDP.Net.Messages
         private IEnumerable<byte> Mac { get; }
         
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        private bool IsDataCorrect { get; }
+        public bool IsDataCorrect { get; }
         
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {
@@ -152,5 +152,7 @@ namespace OSDP.Net.Messages
             (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity,
             (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity,
         };
+
+        public bool SecureCryptogramHasBeenAccepted() => Convert.ToByte(SecureBlockData.First()) == 0x01;
     }
 }
