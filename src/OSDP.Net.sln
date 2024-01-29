@@ -1,32 +1,32 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34408.163
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSDP.Net", "OSDP.Net\OSDP.Net.csproj", "{50AC5FD2-8C50-48E4-AC4E-4A275D0A879E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSDP.Net", "OSDP.Net\OSDP.Net.csproj", "{50AC5FD2-8C50-48E4-AC4E-4A275D0A879E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "Console\Console.csproj", "{182D66E4-7909-4B18-AF01-BF0FE8B932BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "Console\Console.csproj", "{182D66E4-7909-4B18-AF01-BF0FE8B932BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSDP.Net.Tests", "OSDP.Net.Tests\OSDP.Net.Tests.csproj", "{0018DA90-BBB2-491D-A6C3-086F21D7C29A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSDP.Net.Tests", "OSDP.Net.Tests\OSDP.Net.Tests.csproj", "{0018DA90-BBB2-491D-A6C3-086F21D7C29A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Settings", "Settings", "{5CE38FA4-377F-4C0D-A680-9CEA9A7CDBEE}"
-ProjectSection(SolutionItems) = preProject
-	..\azure-pipelines.yml = ..\azure-pipelines.yml
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		..\azure-pipelines.yml = ..\azure-pipelines.yml
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{B304A16C-CA32-4692-9AED-D8886CC9184C}"
-ProjectSection(SolutionItems) = preProject
-	..\README.md = ..\README.md
-	..\docs\supported_commands.md = ..\docs\supported_commands.md
-	..\docs\powershell.md = ..\docs\powershell.md
-	..\CODE_OF_CONDUCT.md = ..\CODE_OF_CONDUCT.md
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		..\CODE_OF_CONDUCT.md = ..\CODE_OF_CONDUCT.md
+		..\docs\powershell.md = ..\docs\powershell.md
+		..\README.md = ..\README.md
+		..\docs\supported_commands.md = ..\docs\supported_commands.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{A57B307A-A240-4F4F-A3A8-A078093B2809}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PivDataReader", "samples\PivDataReader\PivDataReader.csproj", "{AC0ADC7D-3A78-4937-80B0-F8AA3B7B17BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PivDataReader", "samples\PivDataReader\PivDataReader.csproj", "{AC0ADC7D-3A78-4937-80B0-F8AA3B7B17BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardReader", "samples\CardReader\CardReader.csproj", "{B6E1FC35-3DEC-495F-8FD2-A0CB9C3B4C6A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardReader", "samples\CardReader\CardReader.csproj", "{B6E1FC35-3DEC-495F-8FD2-A0CB9C3B4C6A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,9 +36,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{50AC5FD2-8C50-48E4-AC4E-4A275D0A879E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -102,8 +99,14 @@ Global
 		{B6E1FC35-3DEC-495F-8FD2-A0CB9C3B4C6A}.Release|x86.ActiveCfg = Release|Any CPU
 		{B6E1FC35-3DEC-495F-8FD2-A0CB9C3B4C6A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{AC0ADC7D-3A78-4937-80B0-F8AA3B7B17BD} = {A57B307A-A240-4F4F-A3A8-A078093B2809}
 		{B6E1FC35-3DEC-495F-8FD2-A0CB9C3B4C6A} = {A57B307A-A240-4F4F-A3A8-A078093B2809}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {07D0756C-2DA8-4FA1-8A4A-1FA6BCFBEB46}
 	EndGlobalSection
 EndGlobal

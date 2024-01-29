@@ -9,7 +9,7 @@ namespace OSDP.Net.Messages.SecureChannel;
 /// This state data is placed into its own class to facilitate use cases where multiple channels
 /// (i.e. one for incoming packets; one for outgoing) have to share the same security state.
 /// </summary>
-internal class SecurityContext
+public class SecurityContext
 {
     public static readonly byte[] DefaultKey = "0123456789:;<=>?"u8.ToArray();
     
