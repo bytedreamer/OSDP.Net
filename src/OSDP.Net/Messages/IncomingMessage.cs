@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Messages
@@ -93,6 +94,8 @@ namespace OSDP.Net.Messages
         /// Message sequence number
         /// </summary>
         public byte Sequence { get; }
+
+        public Control ControlBlock => new(Sequence, IsUsingCrc, IsSecureMessage);
 
         /// <summary>
         /// Indicates if the message was sent via an established secure channel

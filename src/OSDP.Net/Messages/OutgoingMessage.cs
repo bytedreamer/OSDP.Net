@@ -9,19 +9,19 @@ internal class OutgoingMessage : Message
 {
     private const int StartOfMessageLength = 5;
     
-    private PayloadData _data;
+    private readonly PayloadData _data;
 
     public OutgoingMessage(PayloadData data)
     {
         _data = data;
     }
 
-    internal byte[] BuildMessage(IMessageSecureChannel secureChannel, Control control)
+    internal byte[] BuildMessage(Control control, IMessageSecureChannel secureChannel)
     {
         var payload = _data.BuildData();
         if (secureChannel.IsSecurityEstablished)
         {
-            payload = PadTheData(payload, 16, Message.FirstPaddingByte);
+            payload = PadTheData(payload, 16, FirstPaddingByte);
         }
 
         bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished ||
@@ -38,10 +38,7 @@ internal class OutgoingMessage : Message
         buffer[1] = Address;
         buffer[2] = (byte)(totalLength & 0xff);
         buffer[3] = (byte)((totalLength >> 8) & 0xff);
-        buffer[4] = (byte)(
-            (control.Sequence & 0x03) |
-            (control.UseCrc ? 0x04 : 0x00) |
-            (isSecurityBlockPresent ? 0x08 : 0x00));
+        buffer[4] = control.ControlByte;
         currentLength += StartOfMessageLength;
 
         if (isSecurityBlockPresent)
@@ -104,6 +101,6 @@ internal class OutgoingMessage : Message
 
     protected override ReadOnlySpan<byte> Data()
     {
-        return Array.Empty<byte>();
+        return _data.BuildData();
     }
 }
