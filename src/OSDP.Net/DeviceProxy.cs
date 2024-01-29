@@ -20,7 +20,7 @@ namespace OSDP.Net;
 /// <summary>
 /// 
 /// </summary>
-public class DeviceProxy : IComparable<DeviceProxy>, IDisposable
+public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
 {
     private const int RetryAmount = 2;
 
@@ -29,11 +29,9 @@ public class DeviceProxy : IComparable<DeviceProxy>, IDisposable
     private readonly SecureChannel _secureChannel = new();
     private readonly bool _useSecureChannel;
     private readonly ILogger<DeviceProxy> _logger;
-    private readonly AutoResetEvent _shutdownComplete = new (false);
-    
+
     private int _counter = RetryAmount;
     private DateTime _lastValidReply = DateTime.MinValue;
-    private CancellationTokenSource _cancellationTokenSource;
 
     private Command _retryCommand;
 
@@ -89,116 +87,14 @@ public class DeviceProxy : IComparable<DeviceProxy>, IDisposable
     /// </summary>
     internal bool HasQueuedCommand => _commands.Any();
 
+    public void Dispose() {}
+
     /// <inheritdoc />
     public int CompareTo(DeviceProxy other)
     {
         if (ReferenceEquals(this, other)) return 0;
         if (ReferenceEquals(null, other)) return 1;
         return Address.CompareTo(other.Address);
-    }
-
-    public void StartListening(IOsdpConnection connection, ICommandProcessing commandProcessing)
-    {
-        var cancellationTokenSource = _cancellationTokenSource;
-        if (cancellationTokenSource != null) return;
-        _cancellationTokenSource = cancellationTokenSource = new CancellationTokenSource();
-        
-        Task.Factory.StartNew(async () =>
-        {
-            var secureChannel = new PdMessageSecureChannel();
-            Guid connectionId = Guid.NewGuid();
-            try
-            {
-                connection.Open();
-                while (!_cancellationTokenSource.IsCancellationRequested)
-                {
-                    var commandBuffer = await GetCommand(connection);
-                    
-                    if (commandBuffer.Length == 0) continue;
-
-                    var incomingMessage = new IncomingMessage(commandBuffer, secureChannel, connectionId);
-
-                    HandleResponse(connection, secureChannel, incomingMessage, commandProcessing);
-
-                    if (incomingMessage.Sequence > 0) _lastValidReply = DateTime.UtcNow;
-                }
-            }
-            catch(Exception exception)
-            {
-                _logger?.LogError(exception, $"Unexpected exception in polling loop");
-            }
-        }, TaskCreationOptions.LongRunning);
-
-        _shutdownComplete.Set();
-    }
-
-    private void HandleResponse(IOsdpConnection connection, PdMessageSecureChannel secureChannel, IncomingMessage incomingMessage, ICommandProcessing commandProcessing)
-    {
-        ReplyData replyData;
-
-        switch ((CommandType)incomingMessage.Type)
-        {
-            case CommandType.Poll:
-                replyData = commandProcessing.Poll();
-                break;
-            case CommandType.IdReport:
-                replyData = commandProcessing.IdReport();
-                break;
-            default:
-                replyData = new Nak(ErrorCode.UnknownCommandCode);
-                break;
-        }
-
-        var reply = new OSDP.Net.Messages.PD.Reply(incomingMessage, replyData);
-        var data = reply.BuildReply(secureChannel);
-        var buffer = new byte[data.Length + 1];
-
-        // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
-        // accomplished by sending a character with all bits set to 1. The driver byte is required by
-        // converters and multiplexers to sense when line is idle.
-        buffer[0] = Bus.DriverByte;
-        Buffer.BlockCopy(data, 0, buffer, 1, data.Length);
-            
-        Debug.WriteLine("Outgoing: " + BitConverter.ToString(data));
-        
-        connection.WriteAsync(buffer);
-    }
-
-    private async Task<byte[]> GetCommand(IOsdpConnection connection)
-    {
-        var commandBuffer = new Collection<byte>();
-
-        if (!await Bus.WaitForStartOfMessage(connection, commandBuffer, true, _cancellationTokenSource.Token)
-                .ConfigureAwait(false))
-        {
-            return Array.Empty<byte>();
-        }
-
-        if (!await Bus.WaitForMessageLength(connection, commandBuffer, _cancellationTokenSource.Token).ConfigureAwait(false))
-        {
-            throw new TimeoutException("Timeout waiting for command message length");
-        }
-
-        if (!await Bus.WaitForRestOfMessage(connection, commandBuffer, Bus.ExtractMessageLength(commandBuffer),
-                _cancellationTokenSource.Token).ConfigureAwait(false))
-        {
-            throw new TimeoutException("Timeout waiting for command of reply message");
-        }
-        
-        Debug.WriteLine("Incoming: " + BitConverter.ToString(commandBuffer.ToArray()));
-        
-        return commandBuffer.ToArray();
-    }
-
-    public void StopListening()
-    {
-        var cancellationTokenSource = _cancellationTokenSource;
-        if (cancellationTokenSource != null)
-        {
-            cancellationTokenSource.Cancel();
-            _shutdownComplete.WaitOne(TimeSpan.FromSeconds(1));
-            _cancellationTokenSource = null;
-        }
     }
 
     /// <summary>
@@ -315,18 +211,4 @@ public class DeviceProxy : IComparable<DeviceProxy>, IDisposable
     {
         _secureChannel.CreateNewRandomNumber();
     }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _shutdownComplete?.Dispose();
-        _cancellationTokenSource?.Dispose();
-    }
-}
-
-public interface ICommandProcessing
-{
-    ReplyData Poll();
-
-    ReplyData IdReport();
 }

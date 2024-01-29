@@ -7,7 +7,7 @@ namespace OSDP.Net.Messages.PD
     /// <summary>
     /// Represents an outgoing reply (PD -> ACU) message
     /// </summary>
-    internal class Reply : Message
+    public class Reply : Message
     {
         private const int StartOfMessageLength = 5;
         private readonly IncomingMessage _issuingCommand;
@@ -40,7 +40,7 @@ namespace OSDP.Net.Messages.PD
         /// <param name="secureChannel">Message secure channel context</param>
         /// <returns>Byte representation of the message that is ready to be sent over the
         /// wire to the ACU</returns>
-        public byte[] BuildReply(IMessageSecureChannel secureChannel)
+        public byte[] BuildReply(IMessageSecureChannel secureChannel, byte[] prefix=null)
         {
             // TODO: Similar to IncomingMessage, it might make more sense for this code to 
             // eventually end up in a new class called OutgoingMessage
@@ -55,17 +55,23 @@ namespace OSDP.Net.Messages.PD
                                           _data.ReplyType == ReplyType.CrypticData ||
                                           _data.ReplyType == ReplyType.InitialRMac;
             int headerLength = StartOfMessageLength + (isSecurityBlockPresent ? 3 : 0) + sizeof(ReplyType);
-            int totalLength = headerLength + payload.Length +
+            int totalLength = (prefix?.Length ?? 0) + headerLength + payload.Length +
                               (_issuingCommand.IsUsingCrc ? 2 : 1) +
                               (secureChannel.IsSecurityEstablished ? MacSize : 0);
             var buffer = new byte[totalLength];
             int currentLength = 0;
 
-            buffer[0] = StartOfMessage;
-            buffer[1] = Address;
-            buffer[2] = (byte)(totalLength & 0xff);
-            buffer[3] = (byte)((totalLength >> 8) & 0xff);
-            buffer[4] = (byte)(
+            if (prefix != null)
+            {
+                prefix.CopyTo(buffer, currentLength);
+                currentLength += prefix.Length;
+            }
+
+            buffer[currentLength] = StartOfMessage;
+            buffer[currentLength + 1] = Address;
+            buffer[currentLength + 2] = (byte)(totalLength & 0xff);
+            buffer[currentLength + 3] = (byte)((totalLength >> 8) & 0xff);
+            buffer[currentLength + 4] = (byte)(
                 (_issuingCommand.Sequence & 0x03) |
                 (_issuingCommand.IsUsingCrc ? 0x04 : 0x00) |
                 (isSecurityBlockPresent ? 0x08 : 0x00));

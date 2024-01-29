@@ -93,7 +93,7 @@ namespace OSDP.Net.Model.ReplyData
         /// <inheritdoc/>
         public override string ToString(int indent)
         {
-            string padding = new string(' ', indent);
+            string padding = new (' ', indent);
 
             var build = new StringBuilder();
             build.AppendLine($"{padding}     Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");
