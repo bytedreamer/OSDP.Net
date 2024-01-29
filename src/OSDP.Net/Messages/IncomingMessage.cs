@@ -95,7 +95,7 @@ namespace OSDP.Net.Messages
         /// </summary>
         public byte Sequence { get; }
 
-        public Control ControlBlock => new(SecurityBlockType, IsUsingCrc, IsSecureMessage);
+        public Control ControlBlock => new(Sequence, IsUsingCrc, IsSecureMessage);
 
         /// <summary>
         /// Indicates if the message was sent via an established secure channel
