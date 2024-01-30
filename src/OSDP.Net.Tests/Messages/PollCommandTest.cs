@@ -11,7 +11,7 @@ namespace OSDP.Net.Tests.Messages
         [TestCaseSource(typeof(PollCommandDataClass), nameof(PollCommandDataClass.TestCases))]
         public string BuildCommand_TestCases(byte address, bool useCrc, bool useSecureChannel)
         {
-            var device = new Device(0, useCrc, useSecureChannel, null);
+            var device = new DeviceProxy(0, useCrc, useSecureChannel, null);
             device.MessageControl.IncrementSequence(1);
             return BitConverter.ToString(new PollCommand(address).BuildCommand(device));
         }
