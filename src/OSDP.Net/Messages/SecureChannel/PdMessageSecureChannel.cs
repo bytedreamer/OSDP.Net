@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
-using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net.Messages.SecureChannel
@@ -48,7 +45,6 @@ namespace OSDP.Net.Messages.SecureChannel
     public class PdMessageSecureChannel : PdMessageSecureChannelBase
     {
         private readonly IOsdpConnection _connection;
-        private readonly Guid _connectionId = Guid.NewGuid();
         private byte[] _expectedServerCryptogram;
 
         public PdMessageSecureChannel(IOsdpConnection connection, SecurityContext context = null, ILoggerFactory loggerFactory = null)
@@ -81,7 +77,7 @@ namespace OSDP.Net.Messages.SecureChannel
             // TODO: best way to log?
             Debug.WriteLine("Incoming: " + BitConverter.ToString(commandBuffer.ToArray()));
 
-            var command = new IncomingMessage(commandBuffer.ToArray().AsSpan(), this, _connectionId);
+            var command = new IncomingMessage(commandBuffer.ToArray().AsSpan(), this);
 
             if (command.Type != (byte)CommandType.Poll)
             {
@@ -92,40 +88,28 @@ namespace OSDP.Net.Messages.SecureChannel
             return commandHandled ? await ReadNextCommand() : command;
         }
 
-        public async Task SendReply(Reply reply)
+        public async Task SendReply(OutgoingMessage reply)
         {
-            if (reply.IssuingCommand.Type != (byte)CommandType.Poll)
-            {
-                Logger.LogInformation("Sending Back Reply: {reply}", Enum.GetName(typeof(ReplyType), reply.Type));
-            }
-
             // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
             // accomplished by sending a character with all bits set to 1. The driver byte is required by
             // converters and multiplexers to sense when line is idle.
             var driverBytePrefix = new byte[] { Bus.DriverByte };
-            await _connection.WriteAsync(reply.BuildReply(this, driverBytePrefix));
+            await _connection.WriteAsync(reply.BuildMessage(this, driverBytePrefix));
         }
 
         private async Task<bool> HandleCommand(IncomingMessage command)
         {
-            Reply reply;
-
-            switch (command.IsValidMac, (CommandType)command.Type)
+            var reply = (command.IsValidMac, (CommandType)command.Type) switch
             {
-                case (false, _):
-                    reply = HandleInvalidMac(command);
-                    break;
-                case (true, CommandType.SessionChallenge):
-                    reply = HandleSessionChallenge(command);
-                    break;
-                case (true, CommandType.ServerCryptogram):
-                    reply = HandleSCrypt(command);
-                    break;
-                default:
-                    return false;
-            }
+                (false, _) => HandleInvalidMac(command),
+                (true, CommandType.SessionChallenge) => HandleSessionChallenge(command),
+                (true, CommandType.ServerCryptogram) => HandleSCrypt(command),
+                _ => null
+            };
 
-            await SendReply(reply);
+            if (reply == null) return false;
+
+            await SendReply(new OutgoingMessage(command.ControlBlock, reply));
 
             if (command.Type == (byte)CommandType.ServerCryptogram)
             {
@@ -134,9 +118,9 @@ namespace OSDP.Net.Messages.SecureChannel
 
             return true;
         }
-        private Reply HandleInvalidMac(IncomingMessage command)
+        private PayloadData HandleInvalidMac(IncomingMessage command)
         {
-            return new Reply(command, new Nak(ErrorCode.CommunicationSecurityNotMet));
+            return new Nak(ErrorCode.CommunicationSecurityNotMet);
         }
 
         /// <summary>
@@ -144,7 +128,7 @@ namespace OSDP.Net.Messages.SecureChannel
         /// </summary>
         /// <param name="command">Incoming command of type SessionChallenge</param>
         /// <returns>A message representing a reply to the SessionChallenge</returns>
-        protected OutgoingMessage HandleSessionChallenge(IncomingMessage command)
+        protected PayloadData HandleSessionChallenge(IncomingMessage command)
         {
             // It is possible that ACU may decide to re-challenge us after a channel was already set up.
             // In that case, let's make sure we clear this flag to indicate that we do NOT in fact have security
@@ -172,7 +156,7 @@ namespace OSDP.Net.Messages.SecureChannel
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
 
             // reply with osdp_CCRYPT, returning PD's Id (cUID), its random number and the client cryptogram
-            return new OutgoingMessage(new ChallengeResponse(cUID, rndB, clientCryptogram));
+            return new ChallengeResponse(cUID, rndB, clientCryptogram);
         }
         
         /// <summary>
@@ -180,7 +164,7 @@ namespace OSDP.Net.Messages.SecureChannel
         /// </summary>
         /// <param name="command">An incoming message representing SCrypt command</param>
         /// <returns>Reply to the SCrypt command</returns>
-        protected OutgoingMessage HandleSCrypt(IncomingMessage command)
+        protected PayloadData HandleSCrypt(IncomingMessage command)
         {
             var serverCryptogram = command.Payload;
 
@@ -204,10 +188,10 @@ namespace OSDP.Net.Messages.SecureChannel
                 crypto.Key = Context.SMac2;
                 Context.RMac = SecurityContext.GenerateKey(crypto, Context.RMac);
 
-                return new OutgoingMessage(new InitialRMac(Context.RMac));
+                return new InitialRMac(Context.RMac);
             }
 
-            return new OutgoingMessage(new Nak(ErrorCode.DoesNotSupportSecurityBlock));
+            return new Nak(ErrorCode.DoesNotSupportSecurityBlock);
         }
     }
 }

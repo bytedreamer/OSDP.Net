@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using OSDP.Net;
 using OSDP.Net.Connections;
+using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 
 
@@ -31,7 +32,7 @@ device.StopListening();
 
 class MySampleDevice : Device
 {
-    protected override ReplyData HandleIdReport()
+    protected override PayloadData HandleIdReport()
     {
         return new DeviceIdentification(new byte[] { 0x00, 0x00, 0x00 }, 0, 1, 0, 0, 0, 0);
     }

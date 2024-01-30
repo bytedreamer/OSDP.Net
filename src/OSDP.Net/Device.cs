@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
-using OSDP.Net.Messages.PD;
 using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 
@@ -22,8 +19,7 @@ public class Device : IDisposable
     private readonly ILogger _logger;
     private CancellationTokenSource _cancellationTokenSource;
     private Task _listenerTask = Task.CompletedTask;
-    private ConcurrentQueue<ReplyData> _pendingPollReplies = new ();
-
+    private ConcurrentQueue<PayloadData> _pendingPollReplies = new ();
 
     public Device(ILogger<DeviceProxy> logger = null)
     {
@@ -90,10 +86,10 @@ public class Device : IDisposable
         }
     }
 
-    public void EnqueuePollReply(ReplyData reply) => _pendingPollReplies.Enqueue(reply);
+    public void EnqueuePollReply(PayloadData reply) => _pendingPollReplies.Enqueue(reply);
 
-    protected virtual Messages.PD.Reply HandleCommand(IncomingMessage command) => 
-        new(command, (CommandType)command.Type switch
+    protected virtual OutgoingMessage HandleCommand(IncomingMessage command) => 
+        new(command.ControlBlock, (CommandType)command.Type switch
         {
             CommandType.Poll => HandlePoll(),
             CommandType.IdReport => HandleIdReport(),
@@ -106,57 +102,57 @@ public class Device : IDisposable
             _ => HandleUnknownCommand(command),
         });
 
-    protected virtual ReplyData HandlePoll()
+    protected virtual PayloadData HandlePoll()
     {
         if (_pendingPollReplies.TryDequeue(out var reply)) return reply;
         return new Ack();
     }
 
-    protected virtual ReplyData HandleIdReport()
+    protected virtual PayloadData HandleIdReport()
     {
-        return new DeviceIdentification([ 0x01, 0x02, 0x03 ], 0x04, 0x05, 0x06070809, 0x0a, 0x0b, 0x0c);
+        return HandleUnknownCommand(CommandType.IdReport);
     }
 
-    protected virtual ReplyData HandleTextOutput(IncomingMessage command)
+    protected virtual PayloadData HandleTextOutput(IncomingMessage command)
     {
-        return new Ack();
+        return HandleUnknownCommand(command);
     }
 
-    protected virtual ReplyData HandleBuzzerControl(IncomingMessage command)
+    protected virtual PayloadData HandleBuzzerControl(IncomingMessage command)
     {
-        return new Ack();
+        return HandleUnknownCommand(command);
     }
 
-    protected virtual ReplyData HandleOutputControl(IncomingMessage command)
+    protected virtual PayloadData HandleOutputControl(IncomingMessage command)
     {
-        return new Ack();
+        return HandleUnknownCommand(command);
     }
 
-    protected virtual ReplyData HandleDeviceCap(IncomingMessage command)
+    protected virtual PayloadData HandleDeviceCap(IncomingMessage command)
     {
-        return new Ack();
+        return HandleUnknownCommand(command);
     }
 
-    protected virtual ReplyData HandlePivData(IncomingMessage command)
+    protected virtual PayloadData HandlePivData(IncomingMessage command)
     {
         var payload = GetPIVData.ParseData(command.Payload);
 
         // TODO: This is where we would trigger async gathering of PIV data which
         // will be returned through a reply to a future poll command
 
-        return new Ack();
+        return HandleUnknownCommand(command);
     }
-    protected virtual ReplyData HandleManufacturerCommand(IncomingMessage command)
+    protected virtual PayloadData HandleManufacturerCommand(IncomingMessage command)
     {
         var payload = Model.CommandData.ManufacturerSpecific.ParseData(command.Payload);
 
         // TODO: This is where we would trigger async manufacturer-specific command
         // reply to which would be returned as a reply to a future poll command
 
-        return new Ack();
+        return HandleUnknownCommand(command);
     }
 
-    protected virtual ReplyData HandleUnknownCommand(IncomingMessage command)
+    protected virtual PayloadData HandleUnknownCommand(IncomingMessage command)
     {
         byte[] rawMessage = command.OriginalMessageData.ToArray();
 
@@ -166,6 +162,15 @@ public class Device : IDisposable
             string.Join("-", rawMessage.Select(x => x.ToString("X2"))),
             command.Type, Enum.GetName(typeof(CommandType), command.Type),
             string.Join("-", command.Payload.Select(x => x.ToString("X2"))));
+
+        return new Nak(ErrorCode.UnknownCommandCode);
+    }
+
+    protected virtual PayloadData HandleUnknownCommand(CommandType commandType)
+    {
+        _logger.LogInformation($"Unexpected Command: {Environment.NewLine}" +
+            $"    Cmd: {{cmd_code}}({{cmd_name}})",
+            (int)commandType, Enum.GetName(typeof(CommandType), commandType));
 
         return new Nak(ErrorCode.UnknownCommandCode);
     }

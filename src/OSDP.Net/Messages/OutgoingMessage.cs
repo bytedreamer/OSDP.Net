@@ -5,18 +5,20 @@ using OSDP.Net.Model;
 
 namespace OSDP.Net.Messages;
 
-internal class OutgoingMessage : Message
+public class OutgoingMessage : Message
 {
     private const int StartOfMessageLength = 5;
-    
     private readonly PayloadData _data;
 
-    public OutgoingMessage(PayloadData data)
+    public OutgoingMessage(Control controlBlock, PayloadData data)
     {
+        ControlBlock = controlBlock;
         _data = data;
     }
 
-    internal byte[] BuildMessage(Control control, IMessageSecureChannel secureChannel)
+    public Control ControlBlock { get; }
+
+    internal byte[] BuildMessage(IMessageSecureChannel secureChannel, byte[] prefix = default)
     {
         var payload = _data.BuildData();
         if (secureChannel.IsSecurityEstablished)
@@ -29,17 +31,22 @@ internal class OutgoingMessage : Message
                                       _data.Type == (byte)ReplyType.InitialRMac;
         int headerLength = StartOfMessageLength + (isSecurityBlockPresent ? 3 : 0) + sizeof(ReplyType);
         int totalLength = headerLength + payload.Length +
-                          (control.UseCrc ? 2 : 1) +
+                          (ControlBlock.UseCrc ? 2 : 1) +
                           (secureChannel.IsSecurityEstablished ? MacSize : 0);
         var buffer = new byte[totalLength];
         int currentLength = 0;
 
-        buffer[0] = StartOfMessage;
-        buffer[1] = Address;
-        buffer[2] = (byte)(totalLength & 0xff);
-        buffer[3] = (byte)((totalLength >> 8) & 0xff);
-        buffer[4] = control.ControlByte;
-        currentLength += StartOfMessageLength;
+        if (prefix != null)
+        {
+            prefix.CopyTo(buffer, currentLength);
+            currentLength += prefix.Length;
+        }
+
+        buffer[currentLength++] = StartOfMessage;
+        buffer[currentLength++] = Address;
+        buffer[currentLength++] = (byte)(totalLength & 0xff);
+        buffer[currentLength++] = (byte)((totalLength >> 8) & 0xff);
+        buffer[currentLength++] = ControlBlock.ControlByte;
 
         if (isSecurityBlockPresent)
         {
@@ -79,7 +86,7 @@ internal class OutgoingMessage : Message
 
         // TODO: decide on CRC vs Checksum based on incoming command and do the same.
         // Is this a valid assumption??
-        if (control.UseCrc)
+        if (ControlBlock.UseCrc)
         {
             AddCrc(buffer);
             currentLength += 2;

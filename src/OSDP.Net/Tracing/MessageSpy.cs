@@ -1,7 +1,5 @@
 ﻿using System;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
-using OSDP.Net.Messages.PD;
 using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Tracing;
@@ -28,7 +26,7 @@ internal class MessageSpy
 
     public IncomingMessage ParseCommand(byte[] data)
     {
-        var command = new IncomingMessage(data, _commandSpyChannel, Guid.Empty);
+        var command = new IncomingMessage(data, _commandSpyChannel);
 
         return (CommandType)command.Type switch
         {
@@ -40,7 +38,7 @@ internal class MessageSpy
 
     public IncomingMessage ParseReply(byte[] data)
     {
-        var reply = new IncomingMessage(data, _replySpyChannel, Guid.Empty);
+        var reply = new IncomingMessage(data, _replySpyChannel);
 
         return (ReplyType)reply.Type switch
         {
