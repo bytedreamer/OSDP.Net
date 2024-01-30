@@ -26,7 +26,7 @@ internal class Program
 
         var outgoingReplies = new ConcurrentQueue<PayloadData>();
         var connection = new SerialPortOsdpConnection(portName, baudRate);
-        using var device = new Device(deviceAddress, true, useSecureChannel, securityKey);
+        using var device = new DeviceProxy(deviceAddress, true, useSecureChannel, securityKey);
         device.StartListening(connection, new CommandProcessing(outgoingReplies));
 
         await Task.Factory.StartNew(() =>
