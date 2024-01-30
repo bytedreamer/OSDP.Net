@@ -6,7 +6,7 @@ namespace OSDP.Net.Messages.ACU
 {
     internal class UnknownReply : Reply
     {
-        public UnknownReply(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, Device device) : base(
+        public UnknownReply(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, DeviceProxy device) : base(
             data, connectionId, issuingCommand, device)
         {
         }

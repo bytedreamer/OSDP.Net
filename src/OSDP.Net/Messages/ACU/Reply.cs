@@ -14,7 +14,7 @@ namespace OSDP.Net.Messages.ACU
         {
         }
 
-        protected Reply(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, Device device)
+        protected Reply(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, DeviceProxy device)
         {
             Address = (byte)(data[1] & AddressMask);
             Sequence = (byte)(data[4] & 0x03);
@@ -80,7 +80,7 @@ namespace OSDP.Net.Messages.ACU
 
         public Guid ConnectionId { get; }
 
-        public static Reply Parse(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, Device device)
+        public static Reply Parse(ReadOnlySpan<byte> data, Guid connectionId, Command issuingCommand, DeviceProxy device)
         {
             var reply = new UnknownReply(data, connectionId, issuingCommand, device);
 
@@ -139,7 +139,7 @@ namespace OSDP.Net.Messages.ACU
             return $"Connection ID: {ConnectionId} Address: {Address} Type: {Type}";
         }
 
-        private IEnumerable<byte> DecryptData(Device device)
+        private IEnumerable<byte> DecryptData(DeviceProxy device)
         {
             return device.DecryptData(ExtractReplyData.ToArray());
         }

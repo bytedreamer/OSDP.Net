@@ -14,7 +14,7 @@ namespace OSDP.Net.Tests.Messages
             const byte address = 0;
 
             var command = new IdReportCommand(address);
-            var device = new Device(address, true, false, null);
+            var device = new DeviceProxy(address, true, false, null);
             var connectionId = new Guid();
 
             // Raw bytes taken off the wire from actual reader responding to poll

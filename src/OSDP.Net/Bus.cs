@@ -29,7 +29,7 @@ namespace OSDP.Net
 
         public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
         
-        private readonly SortedSet<Device> _configuredDevices = new ();
+        private readonly SortedSet<DeviceProxy> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
         private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
@@ -127,7 +127,7 @@ namespace OSDP.Net
                     _configuredDevices.Remove(foundDevice);
                 }
 
-                var addedDevice = new Device(address, useCrc, useSecureChannel, secureChannelKey);
+                var addedDevice = new DeviceProxy(address, useCrc, useSecureChannel, secureChannelKey);
 
                 _configuredDevices.Add(addedDevice);
             }
@@ -364,7 +364,7 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="device"></param>
         /// <returns>Return true if the connection status changed</returns>
-        private bool UpdateConnectionStatus(Device device)
+        private bool UpdateConnectionStatus(DeviceProxy device)
         {
             bool isConnected = device.IsConnected;
             bool isSecureChannelEstablished = device.IsSecurityEstablished;
@@ -388,7 +388,7 @@ namespace OSDP.Net
             return true;
         }
 
-        private void ProcessReply(Reply reply, Device device)
+        private void ProcessReply(Reply reply, DeviceProxy device)
         {
             // Request from PD to reset connection
             if (device.IsConnected && reply.Sequence == 0)
@@ -489,13 +489,13 @@ namespace OSDP.Net
             foundDevice.RequestDelay = requestDelay;
         }
 
-        private void ResetDevice(Device device)
+        private void ResetDevice(DeviceProxy device)
         {
             device.RequestDelay = DateTime.UtcNow + TimeSpan.FromSeconds(1);
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
-        private async Task<Reply> SendCommandAndReceiveReply(Command command, Device device, CancellationToken cancellationToken)
+        private async Task<Reply> SendCommandAndReceiveReply(Command command, DeviceProxy device, CancellationToken cancellationToken)
         {
             byte[] commandData;
             try
@@ -526,7 +526,7 @@ namespace OSDP.Net
             return await ReceiveReply(command, device, cancellationToken);
         }
 
-        private async Task<Reply> ReceiveReply(Command command, Device device, CancellationToken cancellationToken)
+        private async Task<Reply> ReceiveReply(Command command, DeviceProxy device, CancellationToken cancellationToken)
         {
             var replyBuffer = new Collection<byte>();
 

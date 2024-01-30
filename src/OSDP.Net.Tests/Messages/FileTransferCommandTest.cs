@@ -14,7 +14,7 @@ namespace OSDP.Net.Tests.Messages
         {
             var fileTransferCommand = new FileTransferCommand(address,
                 new FileTransferFragment(3, 1000, 10, 5, new byte[] {0x01, 0x02, 0x03, 0x04, 0x05}));
-            var device = new Device(0, useCrc, useSecureChannel, null);
+            var device = new DeviceProxy(0, useCrc, useSecureChannel, null);
             device.MessageControl.IncrementSequence(1);
             return BitConverter.ToString(
                 fileTransferCommand.BuildCommand(device));
