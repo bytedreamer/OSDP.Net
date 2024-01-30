@@ -6,9 +6,9 @@ namespace OSDP.Net.Messages;
 internal class ReplyTracker
 {
     private Command _issuingCommand;
-    private readonly Device _device;
+    private readonly DeviceProxy _device;
 
-    public ReplyTracker(Guid connectionId, IncomingMessage message, Command issuingCommand, Device device)
+    public ReplyTracker(Guid connectionId, IncomingMessage message, Command issuingCommand, DeviceProxy device)
     {
         ConnectionId = connectionId;
         Message = message;
