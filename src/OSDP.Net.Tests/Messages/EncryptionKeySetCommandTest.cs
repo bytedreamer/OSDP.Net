@@ -18,7 +18,7 @@ namespace OSDP.Net.Tests.Messages
                     {
                         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
                     }));
-            var device = new Device(0, useCrc, useSecureChannel, null);
+            var device = new DeviceProxy(0, useCrc, useSecureChannel, null);
             device.MessageControl.IncrementSequence(1);
             return BitConverter.ToString(encryptionKeySetCommand.BuildCommand(device));
         }
