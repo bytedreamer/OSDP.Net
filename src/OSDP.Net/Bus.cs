@@ -291,7 +291,7 @@ namespace OSDP.Net
                         // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
                         // Workaround for KeySet command sending back an clear text Ack
                         if (reply.Type != ReplyType.Busy && reply.Type != ReplyType.Nak && device.UseSecureChannel &&
-                            device.IsSecurityEstablished && !reply.IsSecureMessage && command.Type != 0x75)
+                            device.IsSecurityEstablished && !reply.IsSecureMessage && command.Type != (byte)CommandType.KeySet)
                         {
                             _logger?.LogWarning(
                                 "A plain text message was received when the secure channel had been established");
