@@ -81,7 +81,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             if (command.Type != (byte)CommandType.Poll)
             {
-                Logger.LogInformation("Received Command: {cmd}", Enum.GetName(typeof(CommandType), command.Type));
+                Logger?.LogInformation("Received Command: {cmd}", Enum.GetName(typeof(CommandType), command.Type));
             }
 
             var commandHandled = await HandleCommand(command);
