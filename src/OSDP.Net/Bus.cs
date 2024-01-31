@@ -643,6 +643,7 @@ namespace OSDP.Net
             }
             catch
             {
+                // TODO: be more selective with exception types?
                 return 0;
             }
         }
