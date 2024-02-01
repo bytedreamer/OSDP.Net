@@ -1,10 +1,7 @@
 ﻿using System.Collections;
-using System.Collections.Concurrent;
 using System.Numerics;
 using Microsoft.Extensions.Configuration;
-using OSDP.Net;
 using OSDP.Net.Connections;
-using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 
 namespace CardReader;
@@ -19,15 +16,11 @@ internal class Program
 
         var portName = osdpSection["PortName"];
         var baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
-        var deviceAddress = byte.Parse(osdpSection["DeviceAddress"] ?? "0");
         var readerNumber = byte.Parse(osdpSection["ReaderAddress"] ?? "0");
-        var useSecureChannel = bool.Parse(osdpSection["UseSecureChannel"] ?? "False");
-        var securityKey = Convert.FromHexString(osdpSection["SecurityKey"] ?? "[]");
 
-        var outgoingReplies = new ConcurrentQueue<PayloadData>();
         var connection = new SerialPortOsdpConnection(portName, baudRate);
-        using var device = new Device(deviceAddress, true, useSecureChannel, securityKey);
-        device.StartListening(connection, new CommandProcessing(outgoingReplies));
+        using var device = new MySampleDevice();
+        device.StartListening(connection);
 
         await Task.Factory.StartNew(() =>
         {
@@ -43,7 +36,7 @@ internal class Program
                 if (!device.IsConnected) continue;
 
                 Console.WriteLine($"Device is connected!\nSending card data.");
-                outgoingReplies.Enqueue(new RawCardData(readerNumber, FormatCode.NotSpecified, cardNumber));
+                device.EnqueuePollReply(new RawCardData(readerNumber, FormatCode.NotSpecified, cardNumber));
                 return;
             }
         });
