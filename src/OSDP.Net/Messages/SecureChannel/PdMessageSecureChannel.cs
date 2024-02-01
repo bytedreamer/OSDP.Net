@@ -1,6 +1,12 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using OSDP.Net.Connections;
+using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net.Messages.SecureChannel
@@ -9,10 +15,8 @@ namespace OSDP.Net.Messages.SecureChannel
     /// Message channel which represents the Periphery Device (PD) side of the OSDP 
     /// communications (i.e. OSDP commands are received and replies are sent out)
     /// </summary>
-    internal class PdMessageSecureChannel : MessageSecureChannel
+    public class PdMessageSecureChannelBase : MessageSecureChannel
     {
-        private byte[] _expectedServerCryptogram;
-
         /// <summary>
         /// Initializes a new instance of the PDMessageChannel
         /// </summary>
@@ -23,8 +27,8 @@ namespace OSDP.Net.Messages.SecureChannel
         /// channels</param>
         /// <param name="loggerFactory">Optional logger factory from which a logger object for the
         /// message channel will be acquired</param>
-        public PdMessageSecureChannel(SecurityContext context = null, ILoggerFactory loggerFactory = null) 
-            : base(context, loggerFactory) {}
+        public PdMessageSecureChannelBase(SecurityContext context = null, ILoggerFactory loggerFactory = null)
+            : base(context, loggerFactory) { }
 
         /// <inheritdoc />
         public override void EncodePayload(byte[] payload, Span<byte> destination) =>
@@ -36,45 +40,123 @@ namespace OSDP.Net.Messages.SecureChannel
         /// <inheritdoc />
         public override ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming) =>
             isIncoming ? GenerateCommandMac(message) : GenerateReplyMac(message);
-        
+    }
+
+    public class PdMessageSecureChannel : PdMessageSecureChannelBase
+    {
+        private readonly IOsdpConnection _connection;
+        private byte[] _expectedServerCryptogram;
+
+        public PdMessageSecureChannel(IOsdpConnection connection, SecurityContext context = null, ILoggerFactory loggerFactory = null)
+            : base(context, loggerFactory) 
+        {
+            _connection = connection;
+        }
+
+        public async Task<IncomingMessage> ReadNextCommand(CancellationToken cancellationToken = default)
+        {
+            var commandBuffer = new Collection<byte>();
+
+            if (!await Bus.WaitForStartOfMessage(_connection, commandBuffer, true, cancellationToken)
+                    .ConfigureAwait(false))
+            {
+                return null;
+            }
+
+            if (!await Bus.WaitForMessageLength(_connection, commandBuffer, cancellationToken).ConfigureAwait(false))
+            {
+                throw new TimeoutException("Timeout waiting for command message length");
+            }
+
+            if (!await Bus.WaitForRestOfMessage(_connection, commandBuffer, Bus.ExtractMessageLength(commandBuffer),
+                    cancellationToken).ConfigureAwait(false))
+            {
+                throw new TimeoutException("Timeout waiting for command of reply message");
+            }
+
+            // TODO: best way to log?
+            Debug.WriteLine("Incoming: " + BitConverter.ToString(commandBuffer.ToArray()));
+
+            var command = new IncomingMessage(commandBuffer.ToArray().AsSpan(), this);
+
+            if (command.Type != (byte)CommandType.Poll)
+            {
+                Logger?.LogInformation("Received Command: {cmd}", Enum.GetName(typeof(CommandType), command.Type));
+            }
+
+            var commandHandled = await HandleCommand(command);
+            return commandHandled ? await ReadNextCommand() : command;
+        }
+
+        public async Task SendReply(OutgoingMessage reply)
+        {
+            // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
+            // accomplished by sending a character with all bits set to 1. The driver byte is required by
+            // converters and multiplexers to sense when line is idle.
+            var driverBytePrefix = new byte[] { Bus.DriverByte };
+            await _connection.WriteAsync(reply.BuildMessage(this, driverBytePrefix));
+        }
+
+        private async Task<bool> HandleCommand(IncomingMessage command)
+        {
+            var reply = (command.IsValidMac, (CommandType)command.Type) switch
+            {
+                (false, _) => HandleInvalidMac(command),
+                (true, CommandType.SessionChallenge) => HandleSessionChallenge(command),
+                (true, CommandType.ServerCryptogram) => HandleSCrypt(command),
+                _ => null
+            };
+
+            if (reply == null) return false;
+
+            await SendReply(new OutgoingMessage(command.ControlBlock, reply));
+
+            if (command.Type == (byte)CommandType.ServerCryptogram)
+            {
+                Context.IsSecurityEstablished = true;
+            }
+
+            return true;
+        }
+        private PayloadData HandleInvalidMac(IncomingMessage command)
+        {
+            return new Nak(ErrorCode.CommunicationSecurityNotMet);
+        }
+
         /// <summary>
         /// Default handler for the SessionChallenge message received on the channel
         /// </summary>
         /// <param name="command">Incoming command of type SessionChallenge</param>
         /// <returns>A message representing a reply to the SessionChallenge</returns>
-        protected OutgoingMessage HandleSessionChallenge(IncomingMessage command)
+        protected PayloadData HandleSessionChallenge(IncomingMessage command)
         {
-            // TODO: this should be some kind of unique identifier, but a) not sure how to generate it and b) seems
-            // the other side presently simply ignores these bytes. So for time being simply leaving this uninitialized
-            byte[] cUID = new byte[8];
-
-            byte[] rndA = command.Payload;
-            byte[] rndB = new byte[8];
-
-            // TODO: we should validate payload and SCB type
-
             // It is possible that ACU may decide to re-challenge us after a channel was already set up.
             // In that case, let's make sure we clear this flag to indicate that we do NOT in fact have security
             // established
             Context.IsSecurityEstablished = false;
 
-            // generate RND.B
-            new Random().NextBytes(rndB);
-
             // generate a set of session keys: S-ENC, S-MAC1, S-MAC2 using command.Payload (which is RND.A)
             var crypto = SecurityContext.CreateCypher(SecurityContext.DefaultKey, true);
+            byte[] rndA = command.Payload;
+
+            // TODO: we should validate payload and SCB type
 
             Context.Enc = SecurityContext.GenerateKey(crypto, new byte[] { 0x01, 0x82, rndA[0], rndA[1], rndA[2], rndA[3], rndA[4], rndA[5] });
             Context.SMac1 = SecurityContext.GenerateKey(crypto, new byte[] { 0x01, 0x01, rndA[0], rndA[1], rndA[2], rndA[3], rndA[4], rndA[5] });
             Context.SMac2 = SecurityContext.GenerateKey(crypto, new byte[] { 0x01, 0x02, rndA[0], rndA[1], rndA[2], rndA[3], rndA[4], rndA[5] });
 
-            // generate client cryptogram
+            // TODO: this should be some kind of unique identifier, but a) not sure how to generate it and b) seems
+            // the other side presently simply ignores these bytes. So for time being simply leaving this uninitialized
+            byte[] cUID = new byte[8];
+            byte[] rndB = new byte[8];
+
+            new Random().NextBytes(rndB);
             crypto.Key = Context.Enc;
             var clientCryptogram = SecurityContext.GenerateKey(crypto, rndA, rndB);
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
 
             // reply with osdp_CCRYPT, returning PD's Id (cUID), its random number and the client cryptogram
-            return new OutgoingMessage(new ChallengeResponse(cUID, rndB, clientCryptogram));
+            return new ChallengeResponse(cUID, rndB, clientCryptogram);
         }
         
         /// <summary>
@@ -82,7 +164,7 @@ namespace OSDP.Net.Messages.SecureChannel
         /// </summary>
         /// <param name="command">An incoming message representing SCrypt command</param>
         /// <returns>Reply to the SCrypt command</returns>
-        protected OutgoingMessage HandleSCrypt(IncomingMessage command)
+        protected PayloadData HandleSCrypt(IncomingMessage command)
         {
             var serverCryptogram = command.Payload;
 
@@ -106,10 +188,10 @@ namespace OSDP.Net.Messages.SecureChannel
                 crypto.Key = Context.SMac2;
                 Context.RMac = SecurityContext.GenerateKey(crypto, Context.RMac);
 
-                return new OutgoingMessage(new InitialRMac(Context.RMac));
+                return new InitialRMac(Context.RMac);
             }
 
-            return new OutgoingMessage(new Nak(ErrorCode.DoesNotSupportSecurityBlock));
+            return new Nak(ErrorCode.DoesNotSupportSecurityBlock);
         }
     }
 }

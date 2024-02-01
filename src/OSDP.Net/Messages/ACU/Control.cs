@@ -1,6 +1,6 @@
 namespace OSDP.Net.Messages.ACU
 {
-    internal class Control
+    public class Control
     {
         private readonly bool _hasSecurityControlBlock;
 
