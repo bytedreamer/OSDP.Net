@@ -58,7 +58,7 @@ public class Device : IDisposable
                     if (command != null)
                     {
                         var reply = HandleCommand(command);
-                        channel.SendReply(reply);
+                        await channel.SendReply(reply);
                     }
                 }
 
@@ -87,8 +87,9 @@ public class Device : IDisposable
 
     public void EnqueuePollReply(PayloadData reply) => _pendingPollReplies.Enqueue(reply);
 
-    protected virtual OutgoingMessage HandleCommand(IncomingMessage command) =>
-        new(command.ControlBlock, (CommandType)command.Type switch
+    protected virtual OutgoingMessage HandleCommand(IncomingMessage command)
+    {
+        return new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock, (CommandType)command.Type switch
         {
             CommandType.Poll => HandlePoll(),
             CommandType.IdReport => HandleIdReport(),
@@ -113,8 +114,9 @@ public class Device : IDisposable
             CommandType.Abort => HandleAbortRequest(command),
             CommandType.PivData => HandlePivData(command),
             CommandType.KeepActive => HandleKeepActive(command),
-            _ => HandleUnknownCommand(command),
+            _ => HandleUnknownCommand(command)
         });
+    }
 
     protected virtual PayloadData HandlePoll()
     {
@@ -245,7 +247,7 @@ public class Device : IDisposable
     {
         byte[] rawMessage = command.OriginalMessageData.ToArray();
 
-        _logger.LogInformation($"Unexpected Command: {{cmd_bytes}}!!{Environment.NewLine}" +
+        _logger?.LogInformation($"Unexpected Command: {{cmd_bytes}}!!{Environment.NewLine}" +
             $"    Cmd: {{cmd_code}}({{cmd_name}}){Environment.NewLine}" +
             $"    Payload: {{payload}}",
             string.Join("-", rawMessage.Select(x => x.ToString("X2"))),
@@ -257,7 +259,7 @@ public class Device : IDisposable
 
     protected virtual PayloadData HandleUnknownCommand(CommandType commandType)
     {
-        _logger.LogInformation($"Unexpected Command: {Environment.NewLine}" +
+        _logger?.LogInformation($"Unexpected Command: {Environment.NewLine}" +
             $"    Cmd: {{cmd_code}}({{cmd_name}})",
             (int)commandType, Enum.GetName(typeof(CommandType), commandType));
 

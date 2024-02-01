@@ -90,11 +90,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
         public async Task SendReply(OutgoingMessage reply)
         {
-            // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
-            // accomplished by sending a character with all bits set to 1. The driver byte is required by
-            // converters and multiplexers to sense when line is idle.
-            var driverBytePrefix = new byte[] { Bus.DriverByte };
-            await _connection.WriteAsync(reply.BuildMessage(this, driverBytePrefix));
+            await _connection.WriteAsync(reply.BuildMessage(this));
         }
 
         private async Task<bool> HandleCommand(IncomingMessage command)
@@ -109,7 +105,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             if (reply == null) return false;
 
-            await SendReply(new OutgoingMessage(command.ControlBlock, reply));
+            await SendReply(new OutgoingMessage(           (byte)(command.Address | 0x80), command.ControlBlock, reply));
 
             if (command.Type == (byte)CommandType.ServerCryptogram)
             {

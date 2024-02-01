@@ -10,15 +10,16 @@ public class OutgoingMessage : Message
     private const int StartOfMessageLength = 5;
     private readonly PayloadData _data;
 
-    public OutgoingMessage(Control controlBlock, PayloadData data)
+    public OutgoingMessage(byte address, Control controlBlock, PayloadData data)
     {
+        Address = address;
         ControlBlock = controlBlock;
         _data = data;
     }
 
     public Control ControlBlock { get; }
-
-    internal byte[] BuildMessage(IMessageSecureChannel secureChannel, byte[] prefix = default)
+    
+    internal byte[] BuildMessage(IMessageSecureChannel secureChannel)
     {
         var payload = _data.BuildData();
         if (secureChannel.IsSecurityEstablished)
@@ -35,12 +36,6 @@ public class OutgoingMessage : Message
                           (secureChannel.IsSecurityEstablished ? MacSize : 0);
         var buffer = new byte[totalLength];
         int currentLength = 0;
-
-        if (prefix != null)
-        {
-            prefix.CopyTo(buffer, currentLength);
-            currentLength += prefix.Length;
-        }
 
         buffer[currentLength++] = StartOfMessage;
         buffer[currentLength++] = Address;
@@ -66,8 +61,7 @@ public class OutgoingMessage : Message
             currentLength += 3;
         }
 
-        buffer[currentLength] = _data.Type;
-        currentLength++;
+        buffer[currentLength++] = _data.Type;
 
         if (secureChannel.IsSecurityEstablished)
         {
@@ -83,9 +77,7 @@ public class OutgoingMessage : Message
             payload.CopyTo(buffer, currentLength);
             currentLength += payload.Length;
         }
-
-        // TODO: decide on CRC vs Checksum based on incoming command and do the same.
-        // Is this a valid assumption??
+        
         if (ControlBlock.UseCrc)
         {
             AddCrc(buffer);
@@ -103,7 +95,14 @@ public class OutgoingMessage : Message
                 $"Invalid processing of reply data, expected length {currentLength}, actual length {buffer.Length}");
         }
 
-        return buffer;
+        // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
+        // accomplished by sending a character with all bits set to 1. The driver byte is required by
+        // converters and multiplexers to sense when line is idle.
+        var messageBuffer = new byte[buffer.Length + 1];
+        messageBuffer[0] = Bus.DriverByte;
+        Buffer.BlockCopy(buffer, 0, messageBuffer, 1, buffer.Length);
+
+        return messageBuffer;
     }
 
     protected override ReadOnlySpan<byte> Data()
