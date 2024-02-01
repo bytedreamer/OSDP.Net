@@ -1,18 +1,10 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using OSDP.Net.Connections;
-using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
-using OSDP.Net.Model;
-using OSDP.Net.Model.ReplyData;
 using Reply = OSDP.Net.Messages.ACU.Reply;
 
 namespace OSDP.Net;
