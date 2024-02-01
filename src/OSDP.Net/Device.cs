@@ -11,7 +11,6 @@ using OSDP.Net.Model;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 
-
 namespace OSDP.Net;
 
 public class Device : IDisposable
@@ -19,7 +18,7 @@ public class Device : IDisposable
     private readonly ILogger _logger;
     private CancellationTokenSource _cancellationTokenSource;
     private Task _listenerTask = Task.CompletedTask;
-    private ConcurrentQueue<PayloadData> _pendingPollReplies = new ();
+    private ConcurrentQueue<PayloadData> _pendingPollReplies = new();
 
     public Device(ILogger<DeviceProxy> logger = null)
     {
@@ -50,7 +49,7 @@ public class Device : IDisposable
             try
             {
                 connection.Open();
-                
+
                 var channel = new PdMessageSecureChannel(connection);
 
                 while (!_cancellationTokenSource.IsCancellationRequested)
@@ -88,24 +87,38 @@ public class Device : IDisposable
 
     public void EnqueuePollReply(PayloadData reply) => _pendingPollReplies.Enqueue(reply);
 
-    protected virtual OutgoingMessage HandleCommand(IncomingMessage command) => 
+    protected virtual OutgoingMessage HandleCommand(IncomingMessage command) =>
         new(command.ControlBlock, (CommandType)command.Type switch
         {
             CommandType.Poll => HandlePoll(),
             CommandType.IdReport => HandleIdReport(),
-            CommandType.TextOutput => HandleTextOutput(command),
-            CommandType.BuzzerControl => HandleBuzzerControl(command),
-            CommandType.OutputControl => HandleOutputControl(command),
             CommandType.DeviceCapabilities => HandleDeviceCap(command),
-            CommandType.PivData => HandlePivData(command),
+            CommandType.LocalStatus => HandleLocalStatusReport(command),
+            CommandType.InputStatus => HandleInputStatusReport(command),
+            CommandType.OutputStatus => HandleOutputStatusReport(command),
+            CommandType.ReaderStatus => HandleReaderStatusReport(command),
+            CommandType.OutputControl => HandleOutputControl(command),
+            CommandType.LEDControl => HandleReaderLEDControl(command),
+            CommandType.BuzzerControl => HandleBuzzerControl(command),
+            CommandType.TextOutput => HandleTextOutput(command),
+            CommandType.CommunicationSet => HandleCommunicationSet(command),
+            CommandType.BioRead => HandleBiometricRead(command),
+            CommandType.BioMatch => HandleBiometricMatch(command),
+            CommandType.KeySet => HandleKeySettings(command),
+            CommandType.SessionChallenge => HandleSessionChallenge(command),
+            CommandType.ServerCryptogram => HandleServerCryptogram(command),
+            CommandType.MaxReplySize => HandleMaxReplySize(command),
+            CommandType.FileTransfer => HandleFileTransfer(command),
             CommandType.ManufacturerSpecific => HandleManufacturerCommand(command),
+            CommandType.Abort => HandleAbortRequest(command),
+            CommandType.PivData => HandlePivData(command),
+            CommandType.KeepActive => HandleKeepActive(command),
             _ => HandleUnknownCommand(command),
         });
 
     protected virtual PayloadData HandlePoll()
     {
-        if (_pendingPollReplies.TryDequeue(out var reply)) return reply;
-        return new Ack();
+        return _pendingPollReplies.TryDequeue(out var reply) ? reply : new Ack();
     }
 
     protected virtual PayloadData HandleIdReport()
@@ -142,6 +155,7 @@ public class Device : IDisposable
 
         return HandleUnknownCommand(command);
     }
+
     protected virtual PayloadData HandleManufacturerCommand(IncomingMessage command)
     {
         var payload = Model.CommandData.ManufacturerSpecific.ParseData(command.Payload);
@@ -149,6 +163,81 @@ public class Device : IDisposable
         // TODO: This is where we would trigger async manufacturer-specific command
         // reply to which would be returned as a reply to a future poll command
 
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleKeepActive(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleAbortRequest(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleFileTransfer(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleMaxReplySize(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleSessionChallenge(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleServerCryptogram(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleKeySettings(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleBiometricMatch(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleBiometricRead(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleCommunicationSet(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleReaderLEDControl(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleReaderStatusReport(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleOutputStatusReport(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleInputStatusReport(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleLocalStatusReport(IncomingMessage command)
+    {
         return HandleUnknownCommand(command);
     }
 
