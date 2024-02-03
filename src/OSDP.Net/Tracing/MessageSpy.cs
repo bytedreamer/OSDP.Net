@@ -13,7 +13,7 @@ internal class MessageSpy
         public MessageSpy(byte[] securityKey = null)
         {
             _context = new SecurityContext(securityKey);
-            _commandSpyChannel = new PdMessageSecureChannel(_context);
+            _commandSpyChannel = new PdMessageSecureChannelBase(_context);
             _replySpyChannel = new ACUMessageSecureChannel(_context);
         }
 

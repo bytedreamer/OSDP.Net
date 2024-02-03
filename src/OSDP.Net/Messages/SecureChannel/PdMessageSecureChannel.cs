@@ -1,6 +1,12 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using OSDP.Net.Connections;
+using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net.Messages.SecureChannel
@@ -126,7 +132,7 @@ namespace OSDP.Net.Messages.SecureChannel
             Context.IsSecurityEstablished = false;
 
             // generate a set of session keys: S-ENC, S-MAC1, S-MAC2 using command.Payload (which is RND.A)
-            var crypto = SecurityContext.CreateCypher(SecurityContext.DefaultKey, true);
+            var crypto = Context.CreateCypher(true, SecurityContext.DefaultKey);
             byte[] rndA = command.Payload;
 
             // TODO: we should validate payload and SCB type
@@ -173,7 +179,7 @@ namespace OSDP.Net.Messages.SecureChannel
             }
             else
             {
-                var crypto = SecurityContext.CreateCypher(Context.SMac1, true);
+                var crypto = Context.CreateCypher(true, Context.SMac1);
                 Context.RMac = SecurityContext.GenerateKey(crypto, serverCryptogram);
                 crypto.Key = Context.SMac2;
                 Context.RMac = SecurityContext.GenerateKey(crypto, Context.RMac);
