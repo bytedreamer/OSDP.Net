@@ -16,13 +16,8 @@ namespace OSDP.Net.Messages.SecureChannel;
 /// this new class hierarchy depends on IMessageChannel interface to interact with the secure
 /// channel context and this class is the base implementation for that
 /// </summary>
-internal abstract class MessageSecureChannel : IMessageSecureChannel
+public abstract class MessageSecureChannel : IMessageSecureChannel
 {
-    /// <summary>
-    /// Optional logger instance
-    /// </summary>
-    protected readonly ILogger Logger;
-
     /// <summary>
     /// Initializes a new instance of MessageSecureChannel class
     /// </summary>
@@ -38,7 +33,12 @@ internal abstract class MessageSecureChannel : IMessageSecureChannel
         Context = context ?? new();
         Logger = loggerFactory?.CreateLogger(GetType());
     }
-    
+
+    /// <summary>
+    /// Optional logger instance
+    /// </summary>
+    protected ILogger Logger { get; }
+
     /// <summary>
     /// Security state used by the channel
     /// </summary>

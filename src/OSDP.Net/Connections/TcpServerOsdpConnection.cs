@@ -54,7 +54,7 @@ namespace OSDP.Net.Connections
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
-            if (_tcpClient?.Connected ?? false) tcpClient?.GetStream().Close();
+            if (tcpClient?.Connected ?? false) tcpClient?.GetStream().Close();
             tcpClient?.Close();
         }
 

@@ -17,33 +17,33 @@ internal class MessageSpy
             _replySpyChannel = new ACUMessageSecureChannel(_context);
         }
 
-        public byte PeekAddressByte(ReadOnlySpan<byte> data)
+    public byte PeekAddressByte(ReadOnlySpan<byte> data)
+    {
+        return data[1];
+    }
+
+    public IncomingMessage ParseCommand(byte[] data)
+    {
+        var command = new IncomingMessage(data, _commandSpyChannel);
+
+        return (CommandType)command.Type switch
         {
-            return data[1];
-        }
+            CommandType.SessionChallenge => HandleSessionChallenge(command),
+            CommandType.ServerCryptogram => HandleSCrypt(command),
+            _ => command
+        };
+    }
 
-        public IncomingMessage ParseCommand(byte[] data)
+    public IncomingMessage ParseReply(byte[] data)
+    {
+        var reply = new IncomingMessage(data, _replySpyChannel);
+
+        return (ReplyType)reply.Type switch
         {
-            var command = new IncomingMessage(data, _commandSpyChannel);
-
-            return (CommandType)command.Type switch
-            {
-                CommandType.SessionChallenge => HandleSessionChallenge(command),
-                CommandType.ServerCryptogram => HandleSCrypt(command),
-                _ => command
-            };
-        }
-
-        public IncomingMessage ParseReply(byte[] data)
-        {
-            var reply = new IncomingMessage(data, _replySpyChannel);
-
-            return (ReplyType)reply.Type switch
-            {
-                ReplyType.InitialRMac => HandleInitialRMac(reply),
-                _ => reply
-            };
-        }
+            ReplyType.InitialRMac => HandleInitialRMac(reply),
+            _ => reply
+        };
+    }
 
         private IncomingMessage HandleSessionChallenge(IncomingMessage command)
         {
@@ -65,9 +65,9 @@ internal class MessageSpy
             return command;
         }
 
-        private IncomingMessage HandleInitialRMac(IncomingMessage reply)
-        {
-            _context.IsSecurityEstablished = true;
-            return reply;
-        }
+    private IncomingMessage HandleInitialRMac(IncomingMessage reply)
+    {
+        _context.IsSecurityEstablished = true;
+        return reply;
+    }
 }

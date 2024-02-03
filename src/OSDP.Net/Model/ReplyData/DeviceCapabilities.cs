@@ -19,6 +19,15 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <summary>
+        /// Initializes a new instance of DeviceCapabilities class 
+        /// </summary>
+        /// <param name="capabilities">List of DeviceCapability instances</param>
+        public DeviceCapabilities(IEnumerable<DeviceCapability> capabilities)
+        {
+            Capabilities = capabilities;
+        }
+
+        /// <summary>
         /// Gets the all the PD's device capabilities.
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
@@ -83,13 +92,13 @@ namespace OSDP.Net.Model.ReplyData
         /// <inheritdoc/>
         public override byte[] BuildData()
         {
-            // TODO: Implement this for non-zero capabilities
-            if (Capabilities != null && Capabilities.Any())
+            var data = new List<byte>();
+            foreach (var capability in Capabilities)
             {
-                throw new NotImplementedException();
+                data.AddRange(capability.BuildData());
             }
 
-            return Array.Empty<byte>();
+            return data.ToArray();
         }
     }
 }

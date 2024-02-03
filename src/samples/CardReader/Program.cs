@@ -1,53 +1,61 @@
 ﻿using System.Collections;
-using System.Collections.Concurrent;
-using OSDP.Net;
+using System.Numerics;
+using Microsoft.Extensions.Configuration;
 using OSDP.Net.Connections;
-using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 
-var outgoingReplies = new ConcurrentQueue<PayloadData>();
+namespace CardReader;
 
-var connection = new SerialPortOsdpConnection("COM4", 9600);
-using var device = new DeviceProxy(0, true, false, []);
-device.StartListening(connection, new CommandProcessing(outgoingReplies));
-
-var _ = Task.Factory.StartNew(() =>
+internal class Program
 {
-    var cardNumber = new BitArray(26);
-    
-    while (true)
+    private static async Task Main(string[] args)
     {
-        // ReSharper disable once AccessToDisposedClosure
-        if (!device.IsConnected) continue;
-        
-        outgoingReplies.Enqueue(new RawCardData(0, FormatCode.NotSpecified, cardNumber));
-        return;
+        var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true);
+        var config = builder.Build();
+        var osdpSection = config.GetSection("OSDP");
+
+        var portName = osdpSection["PortName"];
+        var baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
+        var readerNumber = byte.Parse(osdpSection["ReaderAddress"] ?? "0");
+
+        var connection = new SerialPortOsdpConnection(portName, baudRate);
+        using var device = new MySampleDevice();
+        device.StartListening(connection);
+
+        await Task.Factory.StartNew(() =>
+        {
+            // The card format number for this example is 128 bit (as raw card data)
+            const string cardNumberHexValue = "30313233343536373839303030303032";
+            var cardNumberInt = BigInteger.Parse(cardNumberHexValue, System.Globalization.NumberStyles.HexNumber);
+            var cardNumberBitString = BigIntegerToBinaryString(cardNumberInt).PadLeft(128, '0');
+            var cardNumber = new BitArray(cardNumberBitString.Select(c => c == '1').ToArray());
+
+            while (true)
+            {
+                // ReSharper disable once AccessToDisposedClosure
+                if (!device.IsConnected) continue;
+
+                Console.WriteLine($"Device is connected!\nSending card data.");
+                device.EnqueuePollReply(new RawCardData(readerNumber, FormatCode.NotSpecified, cardNumber));
+                return;
+            }
+        });
+
+        Console.ReadKey();
+
+        device.StopListening();
     }
-});
 
-Console.ReadKey();
-
-device.StopListening();
-
-/// <inheritdoc />
-class CommandProcessing : ICommandProcessing
-{
-    private readonly ConcurrentQueue<PayloadData> _outgoingReplies;
-
-    public CommandProcessing(ConcurrentQueue<PayloadData> outgoingReplies)
+    private static string BigIntegerToBinaryString(BigInteger value)
     {
-        _outgoingReplies = outgoingReplies;
-    }
+        var result = "";
 
-    /// <inheritdoc />
-    public PayloadData Poll()
-    {
-        return _outgoingReplies.TryDequeue(out var replyData) ? replyData : new Ack();
-    }
+        while (value > 0)
+        {
+            result = value % 2 + result;
+            value /= 2;
+        }
 
-    /// <inheritdoc />
-    public PayloadData IdReport()
-    {
-        return new DeviceIdentification(new byte[] { 0x00, 0x00, 0x00 }, 0, 1, 0, 0, 0, 0);
+        return string.IsNullOrEmpty(result) ? "0" : result;
     }
 }

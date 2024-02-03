@@ -5,18 +5,21 @@ using OSDP.Net.Model;
 
 namespace OSDP.Net.Messages;
 
-internal class OutgoingMessage : Message
+public class OutgoingMessage : Message
 {
     private const int StartOfMessageLength = 5;
-    
     private readonly PayloadData _data;
 
-    public OutgoingMessage(PayloadData data)
+    public OutgoingMessage(byte address, Control controlBlock, PayloadData data)
     {
+        Address = address;
+        ControlBlock = controlBlock;
         _data = data;
     }
 
-    internal byte[] BuildMessage(Control control, IMessageSecureChannel secureChannel)
+    public Control ControlBlock { get; }
+    
+    internal byte[] BuildMessage(IMessageSecureChannel secureChannel)
     {
         var payload = _data.BuildData();
         if (secureChannel.IsSecurityEstablished)
@@ -29,17 +32,16 @@ internal class OutgoingMessage : Message
                                       _data.Type == (byte)ReplyType.InitialRMac;
         int headerLength = StartOfMessageLength + (isSecurityBlockPresent ? 3 : 0) + sizeof(ReplyType);
         int totalLength = headerLength + payload.Length +
-                          (control.UseCrc ? 2 : 1) +
+                          (ControlBlock.UseCrc ? 2 : 1) +
                           (secureChannel.IsSecurityEstablished ? MacSize : 0);
         var buffer = new byte[totalLength];
         int currentLength = 0;
 
-        buffer[0] = StartOfMessage;
-        buffer[1] = Address;
-        buffer[2] = (byte)(totalLength & 0xff);
-        buffer[3] = (byte)((totalLength >> 8) & 0xff);
-        buffer[4] = control.ControlByte;
-        currentLength += StartOfMessageLength;
+        buffer[currentLength++] = StartOfMessage;
+        buffer[currentLength++] = Address;
+        buffer[currentLength++] = (byte)(totalLength & 0xff);
+        buffer[currentLength++] = (byte)((totalLength >> 8) & 0xff);
+        buffer[currentLength++] = ControlBlock.ControlByte;
 
         if (isSecurityBlockPresent)
         {
@@ -59,8 +61,7 @@ internal class OutgoingMessage : Message
             currentLength += 3;
         }
 
-        buffer[currentLength] = _data.Type;
-        currentLength++;
+        buffer[currentLength++] = _data.Type;
 
         if (secureChannel.IsSecurityEstablished)
         {
@@ -76,10 +77,8 @@ internal class OutgoingMessage : Message
             payload.CopyTo(buffer, currentLength);
             currentLength += payload.Length;
         }
-
-        // TODO: decide on CRC vs Checksum based on incoming command and do the same.
-        // Is this a valid assumption??
-        if (control.UseCrc)
+        
+        if (ControlBlock.UseCrc)
         {
             AddCrc(buffer);
             currentLength += 2;
@@ -96,7 +95,14 @@ internal class OutgoingMessage : Message
                 $"Invalid processing of reply data, expected length {currentLength}, actual length {buffer.Length}");
         }
 
-        return buffer;
+        // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
+        // accomplished by sending a character with all bits set to 1. The driver byte is required by
+        // converters and multiplexers to sense when line is idle.
+        var messageBuffer = new byte[buffer.Length + 1];
+        messageBuffer[0] = Bus.DriverByte;
+        Buffer.BlockCopy(buffer, 0, messageBuffer, 1, buffer.Length);
+
+        return messageBuffer;
     }
 
     protected override ReadOnlySpan<byte> Data()
