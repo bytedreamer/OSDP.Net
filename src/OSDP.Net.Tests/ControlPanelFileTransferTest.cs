@@ -43,9 +43,9 @@ public class ControlPanelFileTransferTest
         {
             await _stream.FlushAsync();
 
-            var outgoingMessage = new OutgoingMessage(new Ack());
-            await _stream.WriteAsync(outgoingMessage.BuildMessage(new Control((byte)(buffer[4] & 0x03), true, false),
-                new PdMessageSecureChannel()));
+            var controlBlock = new Control((byte)(buffer[4] & 0x03), true, false);
+            var outgoingMessage = new OutgoingMessage(0, controlBlock, new Ack());
+            await _stream.WriteAsync(outgoingMessage.BuildMessage(new PdMessageSecureChannelBase()));
 
             _stream.Position = 0;
         }

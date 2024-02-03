@@ -88,7 +88,7 @@ public class Device : IDisposable
 
     public void EnqueuePollReply(PayloadData reply) => _pendingPollReplies.Enqueue(reply);
 
-    protected virtual OutgoingMessage HandleCommand(IncomingMessage command)
+    internal virtual OutgoingMessage HandleCommand(IncomingMessage command)
     {
         return new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock, (CommandType)command.Type switch
         {
