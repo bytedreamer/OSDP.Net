@@ -1,188 +1,269 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using OSDP.Net.Messages.ACU;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using OSDP.Net.Connections;
+using OSDP.Net.Messages;
 using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model;
+using OSDP.Net.Model.CommandData;
+using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net;
 
-internal class Device : IComparable<Device>
+public class Device : IDisposable
 {
-    private const int RetryAmount = 2;
+    private readonly ILogger _logger;
+    private readonly ConcurrentQueue<PayloadData> _pendingPollReplies = new();
+    
+    private CancellationTokenSource _cancellationTokenSource;
+    private Task _listenerTask = Task.CompletedTask;
 
-    private readonly ConcurrentQueue<Command> _commands = new();
-
-    private readonly SecureChannel _secureChannel = new();
-    private readonly bool _useSecureChannel;
-    private int _counter = RetryAmount;
-
-    private DateTime _lastValidReply = DateTime.MinValue;
-
-    private Command _retryCommand;
-
-    public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey)
+    public Device(ILogger<DeviceProxy> logger = null)
     {
-        _useSecureChannel = useSecureChannel;
-            
-        Address = address;
-        MessageControl = new Control(0, useCrc, useSecureChannel);
-
-        if (!UseSecureChannel) return;
-
-        SecureChannelKey = secureChannelKey ?? SecurityContext.DefaultKey;
-            
-        IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
+        _logger = logger;
     }
 
-    internal byte[] SecureChannelKey { get; }
+    /// <inheritdoc/>
+    public void Dispose() => Dispose(true);
 
-    private bool IsDefaultKey { get; }
+    public bool IsConnected { get; private set; } = false;
 
-    public byte Address { get; }
-
-    public Control MessageControl { get; }
-
-    public bool UseSecureChannel => !IsSendingMultiMessageNoSecureChannel && _useSecureChannel;
-
-    public bool IsSecurityEstablished => !IsSendingMultiMessageNoSecureChannel && MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
-
-    public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
-                               (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
-
-    public bool IsSendingMultipartMessage { get; set; }
-
-    public DateTime RequestDelay { get; set; }
-
-    public bool IsSendingMultiMessageNoSecureChannel { get; set; }
-        
-    public bool IsReceivingMultipartMessage { get; set; }
-        
-    /// <summary>
-    /// Has one or more commands waiting in the queue
-    /// </summary>
-    public bool HasQueuedCommand => _commands.Any();
-
-    /// <inheritdoc />
-    public int CompareTo(Device other)
+    protected virtual void Dispose(bool disposing)
     {
-        if (ReferenceEquals(this, other)) return 0;
-        if (ReferenceEquals(null, other)) return 1;
-        return Address.CompareTo(other.Address);
-    }
-
-    /// <summary>
-    /// Get the next command in the queue, setup security, or send a poll command
-    /// </summary>
-    /// <param name="isPolling">If false, only send commands in the queue</param>
-    /// <returns>The next command always if polling, could be null if not polling</returns>
-    public Command GetNextCommandData(bool isPolling)
-    {
-        if (_retryCommand != null)
+        if (disposing)
         {
-            var saveCommand = _retryCommand;
-            _retryCommand = null;
-            return saveCommand;
+            _cancellationTokenSource?.Dispose();
         }
-            
-        if (isPolling)
+    }
+
+    public async void StartListening(IOsdpConnection connection)
+    {
+        var cancellationTokenSource = _cancellationTokenSource;
+        if (cancellationTokenSource != null) return;
+        _cancellationTokenSource = cancellationTokenSource = new CancellationTokenSource();
+
+        _listenerTask = await Task.Factory.StartNew(async () =>
         {
-            // Don't send clear text polling if using secure channel
-            if (MessageControl.Sequence == 0 && !UseSecureChannel)
+            try
             {
-                return new PollCommand(Address);
+                connection.Open();
+
+                var channel = new PdMessageSecureChannel(connection);
+
+                while (!_cancellationTokenSource.IsCancellationRequested)
+                {
+                    var command = await channel.ReadNextCommand(_cancellationTokenSource.Token);
+                    if (command != null)
+                    {
+                        var reply = HandleCommand(command);
+                        await channel.SendReply(reply);
+                    }
+                }
+
+                IsConnected = false;
             }
-                
-            if (UseSecureChannel && !_secureChannel.IsInitialized)
+            catch (Exception exception)
             {
-                return new SecurityInitializationRequestCommand(Address,
-                    _secureChannel.ServerRandomNumber().ToArray(), IsDefaultKey);
+                _logger?.LogError(exception, $"Unexpected exception in polling loop");
             }
+        }, TaskCreationOptions.LongRunning);
+    }
 
-            if (UseSecureChannel && !_secureChannel.IsEstablished)
-            {
-                return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram, IsDefaultKey);
-            }
-        }
-
-        if (!_commands.TryDequeue(out var command) && isPolling)
+    public async void StopListening()
+    {
+        var cancellationTokenSource = _cancellationTokenSource;
+        if (cancellationTokenSource != null)
         {
-            return new PollCommand(Address);
+            cancellationTokenSource.Cancel();
+
+            // TODO: why not block indefinitely?
+            //_shutdownComplete.WaitOne(TimeSpan.FromSeconds(1));
+            await _listenerTask;
+            _cancellationTokenSource = null;
         }
-
-        return command;
     }
 
-    public void SendCommand(Command command)
-    {
-        _commands.Enqueue(command);
-    }
+    public void EnqueuePollReply(PayloadData reply) => _pendingPollReplies.Enqueue(reply);
 
-    /// <summary>
-    /// Store command for retry
-    /// </summary>
-    /// <param name="command"></param>
-    public void RetryCommand(Command command)
+    internal virtual OutgoingMessage HandleCommand(IncomingMessage command)
     {
-        if (_counter-- > 0)
+        return new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock, (CommandType)command.Type switch
         {
-            _retryCommand = command;
-        }
-        else
-        {
-            _retryCommand = null;
-            _counter = RetryAmount;
-        }
+            CommandType.Poll => HandlePoll(),
+            CommandType.IdReport => HandleIdReport(),
+            CommandType.DeviceCapabilities => HandleDeviceCap(command),
+            CommandType.LocalStatus => HandleLocalStatusReport(command),
+            CommandType.InputStatus => HandleInputStatusReport(command),
+            CommandType.OutputStatus => HandleOutputStatusReport(command),
+            CommandType.ReaderStatus => HandleReaderStatusReport(command),
+            CommandType.OutputControl => HandleOutputControl(command),
+            CommandType.LEDControl => HandleReaderLEDControl(command),
+            CommandType.BuzzerControl => HandleBuzzerControl(command),
+            CommandType.TextOutput => HandleTextOutput(command),
+            CommandType.CommunicationSet => HandleCommunicationSet(command),
+            CommandType.BioRead => HandleBiometricRead(command),
+            CommandType.BioMatch => HandleBiometricMatch(command),
+            CommandType.KeySet => HandleKeySettings(command),
+            CommandType.SessionChallenge => HandleSessionChallenge(command),
+            CommandType.ServerCryptogram => HandleServerCryptogram(command),
+            CommandType.MaxReplySize => HandleMaxReplySize(command),
+            CommandType.FileTransfer => HandleFileTransfer(command),
+            CommandType.ManufacturerSpecific => HandleManufacturerCommand(command),
+            CommandType.Abort => HandleAbortRequest(command),
+            CommandType.PivData => HandlePivData(command),
+            CommandType.KeepActive => HandleKeepActive(command),
+            _ => HandleUnknownCommand(command)
+        });
     }
 
-    public void ValidReplyHasBeenReceived(byte sequence)
+    protected virtual PayloadData HandlePoll()
     {
-        MessageControl.IncrementSequence(sequence);
-            
-        // It's valid once sequences are above zero
-        if (sequence > 0) _lastValidReply = DateTime.UtcNow;
-            
-        // Reset retry counter
-        _counter = RetryAmount;
+        return _pendingPollReplies.TryDequeue(out var reply) ? reply : new Ack();
     }
 
-    public void InitializeSecureChannel(Reply reply)
+    protected virtual PayloadData HandleIdReport()
     {
-        var replyData = reply.ExtractReplyData.ToArray();
-
-        _secureChannel.Initialize(replyData.Skip(8).Take(8).ToArray(),
-            replyData.Skip(16).Take(16).ToArray(), SecureChannelKey);
+        return HandleUnknownCommand(CommandType.IdReport);
     }
 
-    public bool ValidateSecureChannelEstablishment(Reply reply)
+    protected virtual PayloadData HandleTextOutput(IncomingMessage command)
     {
-        if (!reply.SecureCryptogramHasBeenAccepted())
-        {
-            return false;
-        }
-
-        _secureChannel.Establish(reply.ExtractReplyData.ToArray());
-
-        return true;
+        return HandleUnknownCommand(command);
     }
 
-    public ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
+    protected virtual PayloadData HandleBuzzerControl(IncomingMessage command)
     {
-        return _secureChannel.GenerateMac(message, isCommand);
+        return HandleUnknownCommand(command);
     }
 
-    public ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> data)
+    protected virtual PayloadData HandleOutputControl(IncomingMessage command)
     {
-        return _secureChannel.EncryptData(data);
+        return HandleUnknownCommand(command);
     }
 
-    public IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)
+    protected virtual PayloadData HandleDeviceCap(IncomingMessage command)
     {
-        return _secureChannel.DecryptData(data);
+        return HandleUnknownCommand(command);
     }
 
-    public void CreateNewRandomNumber()
+    protected virtual PayloadData HandlePivData(IncomingMessage command)
     {
-        _secureChannel.CreateNewRandomNumber();
+        var payload = GetPIVData.ParseData(command.Payload);
+
+        // TODO: This is where we would trigger async gathering of PIV data which
+        // will be returned through a reply to a future poll command
+
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleManufacturerCommand(IncomingMessage command)
+    {
+        var payload = Model.CommandData.ManufacturerSpecific.ParseData(command.Payload);
+
+        // TODO: This is where we would trigger async manufacturer-specific command
+        // reply to which would be returned as a reply to a future poll command
+
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleKeepActive(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleAbortRequest(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleFileTransfer(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleMaxReplySize(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleSessionChallenge(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleServerCryptogram(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleKeySettings(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleBiometricMatch(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleBiometricRead(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleCommunicationSet(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleReaderLEDControl(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleReaderStatusReport(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleOutputStatusReport(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleInputStatusReport(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleLocalStatusReport(IncomingMessage command)
+    {
+        return HandleUnknownCommand(command);
+    }
+
+    protected virtual PayloadData HandleUnknownCommand(IncomingMessage command)
+    {
+        byte[] rawMessage = command.OriginalMessageData.ToArray();
+
+        _logger?.LogInformation($"Unexpected Command: {{cmd_bytes}}!!{Environment.NewLine}" +
+            $"    Cmd: {{cmd_code}}({{cmd_name}}){Environment.NewLine}" +
+            $"    Payload: {{payload}}",
+            string.Join("-", rawMessage.Select(x => x.ToString("X2"))),
+            command.Type, Enum.GetName(typeof(CommandType), command.Type),
+            string.Join("-", command.Payload.Select(x => x.ToString("X2"))));
+
+        return new Nak(ErrorCode.UnknownCommandCode);
+    }
+
+    protected virtual PayloadData HandleUnknownCommand(CommandType commandType)
+    {
+        _logger?.LogInformation($"Unexpected Command: {Environment.NewLine}" +
+            $"    Cmd: {{cmd_code}}({{cmd_name}})",
+            (int)commandType, Enum.GetName(typeof(CommandType), commandType));
+
+        return new Nak(ErrorCode.UnknownCommandCode);
     }
 }

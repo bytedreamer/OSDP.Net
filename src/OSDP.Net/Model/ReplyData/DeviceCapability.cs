@@ -15,6 +15,19 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <summary>
+        /// Initializes a new instance of DeviceCapability class
+        /// </summary>
+        /// <param name="function">Function/feature code</param>
+        /// <param name="compliance">Level of compliance with above function</param>
+        /// <param name="numberOf">Number of objects of this type</param>
+        public DeviceCapability(CapabilityFunction function, byte compliance, byte numberOf)
+        {
+            Function = function;
+            Compliance = compliance;
+            NumberOf = numberOf;
+        }
+
+        /// <summary>
         /// Gets the function code.
         /// </summary>
         public CapabilityFunction Function { get; private set; }
@@ -37,6 +50,11 @@ namespace OSDP.Net.Model.ReplyData
             sb.AppendLine($"Compliance: {Compliance}");
             sb.AppendLine($" Number Of: {NumberOf}");
             return sb.ToString();
+        }
+
+        internal byte[] BuildData()
+        {
+            return [(byte)Function, Compliance, NumberOf];
         }
 
         internal static DeviceCapability ParseData(byte[] data)

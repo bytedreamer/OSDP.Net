@@ -9,44 +9,52 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// The PD identification data sent as a reply.
     /// </summary>
-    public class DeviceIdentification : ReplyData
+    public class DeviceIdentification : PayloadData
     {
         /// <summary>
         /// Creates a new instance of DeviceIdentification
         /// </summary>
-        public DeviceIdentification()
+        public DeviceIdentification(byte[] vendorCode, byte modelNumber, byte version, int serialNumber,
+            byte firmwareMajor, byte firmwareMinor, byte firmwareBuild)
         {
+            VendorCode = vendorCode;
+            ModelNumber = modelNumber;
+            Version = version;
+            SerialNumber = serialNumber;
+            FirmwareMajor = firmwareMajor;
+            FirmwareMinor = firmwareMinor;
+            FirmwareBuild = firmwareBuild;
         }
 
         /// <summary>Gets the vendor code.</summary>
-        public IEnumerable<byte> VendorCode { set; get; }
+        public IEnumerable<byte> VendorCode { get; }
 
         /// <summary>Gets the model number.</summary>
-        public byte ModelNumber { set; get;  }
+        public byte ModelNumber { get;  }
 
         /// <summary>Gets the hardware version.</summary>
-        public byte Version { set; get; }
+        public byte Version { get; }
 
         /// <summary>Gets the serial number.</summary>
-        public int SerialNumber { set; get; }
+        public int SerialNumber { get; }
 
         /// <summary>
         /// Gets the firmware major version.
         /// </summary>
-        public byte FirmwareMajor { set; get; }
+        public byte FirmwareMajor { get; }
 
         /// <summary>
         /// Gets the firmware minor version.
         /// </summary>
-        public byte FirmwareMinor { set; get; }
+        public byte FirmwareMinor { get; }
 
         /// <summary>
         /// Gets the firmware build.
         /// </summary>
-        public byte FirmwareBuild { set; get; }
-
+        public byte FirmwareBuild { get; }
+        
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.PdIdReport;
+        public override byte Type => (byte)ReplyType.PdIdReport;
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
@@ -59,16 +67,9 @@ namespace OSDP.Net.Model.ReplyData
                 throw new Exception("Invalid size for the data");
             }
 
-            var deviceIdentification = new DeviceIdentification
-            {
-                VendorCode = dataArray.Take(3),
-                ModelNumber = dataArray[3],
-                Version = dataArray[4],
-                SerialNumber = Message.ConvertBytesToInt(dataArray.Skip(5).Take(4).ToArray()),
-                FirmwareMajor = dataArray[9],
-                FirmwareMinor = dataArray[10],
-                FirmwareBuild = dataArray[11]
-            };
+            var deviceIdentification = new DeviceIdentification(dataArray.Take(3).ToArray(), dataArray[3], dataArray[4],
+                Message.ConvertBytesToInt(dataArray.Skip(5).Take(4).ToArray()), dataArray[9], dataArray[10],
+                dataArray[11]);
 
             return deviceIdentification;
         }
@@ -92,7 +93,7 @@ namespace OSDP.Net.Model.ReplyData
         /// <inheritdoc/>
         public override string ToString(int indent)
         {
-            string padding = new string(' ', indent);
+            string padding = new (' ', indent);
 
             var build = new StringBuilder();
             build.AppendLine($"{padding}     Vendor Code: {BitConverter.ToString(VendorCode.ToArray())}");

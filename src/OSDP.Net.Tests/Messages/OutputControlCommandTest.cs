@@ -18,7 +18,7 @@ namespace OSDP.Net.Tests.Messages
                     new OutputControl(0, OutputControlCode.PermanentStateOffAllowTimedOperation, 100),
                     new OutputControl(1, OutputControlCode.TemporaryStateOffResumePermanentState, 120),
                 }));
-            var device = new Device(0, useCrc, useSecureChannel, null);
+            var device = new DeviceProxy(0, useCrc, useSecureChannel, null);
             device.MessageControl.IncrementSequence(1);
             return BitConverter.ToString(
                 outputControlCommand.BuildCommand(device));

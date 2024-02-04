@@ -29,7 +29,7 @@ namespace OSDP.Net.Messages.ACU
         /// <param name="commandBuffer">The command buffer.</param>
         protected abstract void CustomCommandUpdate(Span<byte> commandBuffer);
 
-        internal byte[] BuildCommand(Device device)
+        internal byte[] BuildCommand(DeviceProxy device)
         {
             var header = BuildHeader(device);
 
@@ -43,7 +43,7 @@ namespace OSDP.Net.Messages.ACU
 
                 AddPacketLength(combined, macAndChecksumLength);
 
-                var mac = device.GenerateMac(combined, true).Slice(0, 4);
+                var mac = device.GenerateMac(combined, false).Slice(0, 4);
 
                 int commandLength = combined.Length + macAndChecksumLength;
                 var pool = MemoryPool<byte>.Shared;
@@ -104,7 +104,7 @@ namespace OSDP.Net.Messages.ACU
             return command;
         }
 
-        private Span<byte> BuildHeader(Device device)
+        private Span<byte> BuildHeader(DeviceProxy device)
         {
             const int startOfMessageLength = 5;
 
@@ -138,7 +138,7 @@ namespace OSDP.Net.Messages.ACU
             }
         }
 
-        private Span<byte> EncryptData(ReadOnlySpan<byte> header, Device device)
+        private Span<byte> EncryptData(ReadOnlySpan<byte> header, DeviceProxy device)
         {
             var encryptedData = EncryptedData(device);
 

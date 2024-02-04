@@ -9,7 +9,7 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// The PD device capabilities data sent as a reply.
     /// </summary>
-    public class DeviceCapabilities : ReplyData
+    public class DeviceCapabilities : PayloadData
     {
         /// <summary>
         /// Creates a new instance of DeviceCapabilities
@@ -19,12 +19,21 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <summary>
+        /// Initializes a new instance of DeviceCapabilities class 
+        /// </summary>
+        /// <param name="capabilities">List of DeviceCapability instances</param>
+        public DeviceCapabilities(IEnumerable<DeviceCapability> capabilities)
+        {
+            Capabilities = capabilities;
+        }
+
+        /// <summary>
         /// Gets the all the PD's device capabilities.
         /// </summary>
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
-
+        
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.PdCapabilitiesReport;
+        public override byte Type => (byte)ReplyType.PdCapabilitiesReport;
 
         /// <summary>
         /// Gets a specific PD capability
@@ -83,13 +92,13 @@ namespace OSDP.Net.Model.ReplyData
         /// <inheritdoc/>
         public override byte[] BuildData()
         {
-            // TODO: Implement this for non-zero capabilities
-            if (Capabilities != null && Capabilities.Any())
+            var data = new List<byte>();
+            foreach (var capability in Capabilities)
             {
-                throw new NotImplementedException();
+                data.AddRange(capability.BuildData());
             }
 
-            return Array.Empty<byte>();
+            return data.ToArray();
         }
     }
 }

@@ -24,7 +24,7 @@ public static class PacketDecoding
     /// <returns>The parse data of a packet</returns>
     public static Packet ParseMessage(ReadOnlySpan<byte> data, IMessageSecureChannel secureChannel = null)
     {
-        var message = new IncomingMessage(data, secureChannel, Guid.Empty);
+        var message = new IncomingMessage(data, secureChannel);
         return new Packet(message);
     }
 
