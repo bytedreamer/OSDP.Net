@@ -15,7 +15,7 @@ namespace OSDP.Net.Messages.SecureChannel
     /// Message channel which represents the Periphery Device (PD) side of the OSDP 
     /// communications (i.e. OSDP commands are received and replies are sent out)
     /// </summary>
-    public class PdMessageSecureChannelBase : MessageSecureChannel
+    internal class PdMessageSecureChannelBase : MessageSecureChannel
     {
         /// <summary>
         /// Initializes a new instance of the PDMessageChannel
@@ -42,7 +42,7 @@ namespace OSDP.Net.Messages.SecureChannel
             isIncoming ? GenerateCommandMac(message) : GenerateReplyMac(message);
     }
 
-    public class PdMessageSecureChannel : PdMessageSecureChannelBase
+    internal class PdMessageSecureChannel : PdMessageSecureChannelBase
     {
         private readonly IOsdpConnection _connection;
         private byte[] _expectedServerCryptogram;
@@ -88,7 +88,7 @@ namespace OSDP.Net.Messages.SecureChannel
             return commandHandled ? await ReadNextCommand() : command;
         }
 
-        public async Task SendReply(OutgoingMessage reply)
+        internal async Task SendReply(OutgoingMessage reply)
         {
             await _connection.WriteAsync(reply.BuildMessage(this));
         }
@@ -132,7 +132,7 @@ namespace OSDP.Net.Messages.SecureChannel
             Context.IsSecurityEstablished = false;
 
             // generate a set of session keys: S-ENC, S-MAC1, S-MAC2 using command.Payload (which is RND.A)
-            var crypto = SecurityContext.CreateCypher(SecurityContext.DefaultKey, true);
+            var crypto = Context.CreateCypher(true, SecurityContext.DefaultKey);
             byte[] rndA = command.Payload;
 
             // TODO: we should validate payload and SCB type
@@ -179,7 +179,7 @@ namespace OSDP.Net.Messages.SecureChannel
             }
             else
             {
-                var crypto = SecurityContext.CreateCypher(Context.SMac1, true);
+                var crypto = Context.CreateCypher(true, Context.SMac1);
                 Context.RMac = SecurityContext.GenerateKey(crypto, serverCryptogram);
                 crypto.Key = Context.SMac2;
                 Context.RMac = SecurityContext.GenerateKey(crypto, Context.RMac);

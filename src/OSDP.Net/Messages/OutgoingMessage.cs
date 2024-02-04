@@ -5,19 +5,19 @@ using OSDP.Net.Model;
 
 namespace OSDP.Net.Messages;
 
-public class OutgoingMessage : Message
+internal class OutgoingMessage : Message
 {
     private const int StartOfMessageLength = 5;
     private readonly PayloadData _data;
 
-    public OutgoingMessage(byte address, Control controlBlock, PayloadData data)
+    internal OutgoingMessage(byte address, Control controlBlock, PayloadData data)
     {
         Address = address;
         ControlBlock = controlBlock;
         _data = data;
     }
 
-    public Control ControlBlock { get; }
+    internal Control ControlBlock { get; }
     
     internal byte[] BuildMessage(IMessageSecureChannel secureChannel)
     {

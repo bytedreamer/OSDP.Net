@@ -36,14 +36,14 @@ namespace OSDP.Net
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval;
-        private readonly BlockingCollection<Reply> _replies;
+        private readonly BlockingCollection<ReplyTracker> _replies;
         private readonly Action<TraceEntry> _tracer;
         private readonly AutoResetEvent _commandAvailableEvent = new (false);
         private readonly AutoResetEvent _shutdownComplete = new (false);
         
         private CancellationTokenSource _cancellationTokenSource;
 
-        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
+        public Bus(IOsdpConnection connection, BlockingCollection<ReplyTracker> replies, TimeSpan pollInterval,
             Action<TraceEntry> tracer,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
@@ -264,7 +264,7 @@ namespace OSDP.Net
                         continue;
                     }
                     
-                    Reply reply;
+                    ReplyTracker reply;
                     
                     try
                     {
@@ -290,12 +290,12 @@ namespace OSDP.Net
                         // Prevent plain text message replies when secure channel has been established
                         // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
                         // Workaround for KeySet command sending back an clear text Ack
-                        if (reply.Type != ReplyType.Busy && reply.Type != ReplyType.Nak && device.UseSecureChannel &&
-                            device.IsSecurityEstablished && !reply.IsSecureMessage && command.Type != (byte)CommandType.KeySet)
+                        if (reply.Message.Type != (byte)ReplyType.Busy && reply.Message.Type != (byte)ReplyType.Nak && device.UseSecureChannel &&
+                            device.IsSecurityEstablished && !reply.Message.IsSecureMessage && command.Type != (byte)CommandType.KeySet)
                         {
                             _logger?.LogWarning(
                                 "A plain text message was received when the secure channel had been established");
-                            device.CreateNewRandomNumber();
+                            device.ResetSecureChannelSession();
                             ResetDevice(device);
                             continue;
                         }
@@ -333,7 +333,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, $"[{Connection}] Error while processing reply {reply} from address {reply.Address}");
+                        _logger?.LogError(exception, $"[{Connection}] Error while processing reply {reply} from address {reply.Message.Address}");
                         continue;
                     }
 
@@ -388,10 +388,10 @@ namespace OSDP.Net
             return true;
         }
 
-        private void ProcessReply(Reply reply, DeviceProxy device)
+        private void ProcessReply(ReplyTracker reply, DeviceProxy device)
         {
             // Request from PD to reset connection
-            if (device.IsConnected && reply.Sequence == 0)
+            if (device.IsConnected && reply.Message.ControlBlock.Sequence == 0)
             {
                 ResetDevice(device);
                 return;
@@ -402,46 +402,45 @@ namespace OSDP.Net
                 return;
             }
 
-            if (reply.IsSecureMessage)
+            if (reply.Message.IsSecureMessage)
             {
-                var mac = device.GenerateMac(reply.MessageForMacGeneration.ToArray(), false);
-                if (!reply.IsValidMac(mac))
+                if (!reply.Message.IsValidMac)
                 {
                     ResetDevice(device);
                     return;
                 }
             }
 
-            if (reply.Type != ReplyType.Busy)
+            if (reply.Message.Type != (byte)ReplyType.Busy)
             {
-                device.ValidReplyHasBeenReceived(reply.Sequence);
+                device.ValidReplyHasBeenReceived(reply.Message.Sequence);
             }
             else
             {
                 return;
             }
 
-            if (reply.Type == ReplyType.Nak)
+            if (reply.Message.Type == (byte)ReplyType.Nak)
             {
-                var errorCode = (ErrorCode)reply.ExtractReplyData.First();
+                var errorCode = (ErrorCode)reply.Message.Payload.First();
                 if (device.IsSecurityEstablished &&
                     errorCode is ErrorCode.DoesNotSupportSecurityBlock or ErrorCode.CommunicationSecurityNotMet
                         or ErrorCode.UnableToProcessCommand ||
-                    errorCode == ErrorCode.UnexpectedSequenceNumber && reply.Sequence > 0)
+                    errorCode == ErrorCode.UnexpectedSequenceNumber && reply.Message.Sequence > 0)
                 {
                     ResetDevice(device);
                 }
             }
 
-            switch (reply.Type)
+            switch ((ReplyType)reply.Message.Type)
             {
                 case ReplyType.CrypticData:
-                    device.InitializeSecureChannel(reply);
+                    device.InitializeSecureChannel(reply.Message.Payload);
                     break;
                 case ReplyType.InitialRMac:
-                    if (!device.ValidateSecureChannelEstablishment(reply))
+                    if (!reply.ValidateSecureChannelEstablishment())
                     {
-                        _logger?.LogError($"[{Connection}] Cryptogram not accepted by address {reply.Address}");
+                        _logger?.LogError($"[{Connection}] Cryptogram not accepted by address {reply.Message.Address}");
                     }
                     break;
             }
@@ -478,7 +477,7 @@ namespace OSDP.Net
             foundDevice.MessageControl.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
             if (isSendingMultiMessageNoSecureChannel)
             {
-                foundDevice.CreateNewRandomNumber();
+                foundDevice.ResetSecureChannelSession();
             }
         }
 
@@ -495,7 +494,7 @@ namespace OSDP.Net
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
-        private async Task<Reply> SendCommandAndReceiveReply(Command command, DeviceProxy device, CancellationToken cancellationToken)
+        private async Task<ReplyTracker> SendCommandAndReceiveReply(Command command, DeviceProxy device, CancellationToken cancellationToken)
         {
             byte[] commandData;
             try
@@ -526,7 +525,7 @@ namespace OSDP.Net
             return await ReceiveReply(command, device, cancellationToken);
         }
 
-        private async Task<Reply> ReceiveReply(Command command, DeviceProxy device, CancellationToken cancellationToken)
+        private async Task<ReplyTracker> ReceiveReply(Command command, DeviceProxy device, CancellationToken cancellationToken)
         {
             var replyBuffer = new Collection<byte>();
 
@@ -547,7 +546,7 @@ namespace OSDP.Net
             
             _tracer(new TraceEntry(TraceDirection.Input, Id, replyBuffer.ToArray()));
 
-            return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
+            return new ReplyTracker(Id, new IncomingMessage(replyBuffer.ToArray(), device.MessageSecureChannel),  command, device);
         }
 
         internal static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)

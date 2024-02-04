@@ -5,7 +5,8 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
-using Reply = OSDP.Net.Messages.ACU.Reply;
+using OSDP.Net.Model;
+using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net;
 
@@ -18,7 +19,8 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
 
     private readonly ConcurrentQueue<Command> _commands = new();
 
-    private readonly SecureChannel _secureChannel = new();
+    public IMessageSecureChannel MessageSecureChannel { get; }
+    
     private readonly bool _useSecureChannel;
     private readonly ILogger<DeviceProxy> _logger;
 
@@ -49,6 +51,8 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
             SecureChannelKey = secureChannelKey ?? SecurityContext.DefaultKey;
             
             IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
+
+            MessageSecureChannel = new ACUMessageSecureChannel(new SecurityContext(secureChannelKey));
         }
     }
 
@@ -62,7 +66,7 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
 
     public bool UseSecureChannel => !IsSendingMultiMessageNoSecureChannel && _useSecureChannel;
 
-    public bool IsSecurityEstablished => !IsSendingMultiMessageNoSecureChannel && MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
+    public bool IsSecurityEstablished => !IsSendingMultiMessageNoSecureChannel && MessageControl.HasSecurityControlBlock && MessageSecureChannel.IsSecurityEstablished;
 
     public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
                                (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
@@ -112,15 +116,15 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
                 return new PollCommand(Address);
             }
                 
-            if (UseSecureChannel && !_secureChannel.IsInitialized)
+            if (UseSecureChannel && !MessageSecureChannel.IsInitialized)
             {
                 return new SecurityInitializationRequestCommand(Address,
-                    _secureChannel.ServerRandomNumber().ToArray(), IsDefaultKey);
+                    MessageSecureChannel.ServerRandomNumber, IsDefaultKey);
             }
 
-            if (UseSecureChannel && !_secureChannel.IsEstablished)
+            if (UseSecureChannel && !MessageSecureChannel.IsSecurityEstablished)
             {
-                return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram, IsDefaultKey);
+                return new ServerCryptogramCommand(Address, MessageSecureChannel.ServerCryptogram, IsDefaultKey);
             }
         }
 
@@ -165,43 +169,33 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
         _counter = RetryAmount;
     }
 
-    internal void InitializeSecureChannel(Reply reply)
+    internal void InitializeSecureChannel(byte[] payload)
     {
-        var replyData = reply.ExtractReplyData.ToArray();
-
-        _secureChannel.Initialize(replyData.Skip(8).Take(8).ToArray(),
-            replyData.Skip(16).Take(16).ToArray(), SecureChannelKey);
+        MessageSecureChannel.InitializeACU(payload.Skip(8).Take(8).ToArray(),
+            payload.Skip(16).Take(16).ToArray());
+    }
+    
+    internal void ResetSecureChannelSession()
+    {
+        MessageSecureChannel.ResetSecureChannelSession();
     }
 
-    internal bool ValidateSecureChannelEstablishment(Reply reply)
+    internal ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming)
     {
-        if (!reply.SecureCryptogramHasBeenAccepted())
-        {
-            return false;
-        }
-
-        _secureChannel.Establish(reply.ExtractReplyData.ToArray());
-
-        return true;
+        return MessageSecureChannel.GenerateMac(message, isIncoming);
     }
 
-    internal ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
+    internal ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> payload)
     {
-        return _secureChannel.GenerateMac(message, isCommand);
+        var paddedData = MessageSecureChannel.PadTheData(payload);
+        
+        var encryptedData = new Span<byte>(new byte[paddedData.Length]);
+        MessageSecureChannel.EncodePayload(paddedData.ToArray(), encryptedData);
+        return encryptedData;
     }
 
-    internal ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> data)
+    internal IEnumerable<byte> DecryptData(ReadOnlySpan<byte> payload)
     {
-        return _secureChannel.EncryptData(data);
-    }
-
-    internal IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)
-    {
-        return _secureChannel.DecryptData(data);
-    }
-
-    internal void CreateNewRandomNumber()
-    {
-        _secureChannel.CreateNewRandomNumber();
+        return MessageSecureChannel.DecodePayload(payload.ToArray());
     }
 }

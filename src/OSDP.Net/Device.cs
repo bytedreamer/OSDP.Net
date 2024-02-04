@@ -16,9 +16,10 @@ namespace OSDP.Net;
 public class Device : IDisposable
 {
     private readonly ILogger _logger;
+    private readonly ConcurrentQueue<PayloadData> _pendingPollReplies = new();
+    
     private CancellationTokenSource _cancellationTokenSource;
     private Task _listenerTask = Task.CompletedTask;
-    private ConcurrentQueue<PayloadData> _pendingPollReplies = new();
 
     public Device(ILogger<DeviceProxy> logger = null)
     {
@@ -87,7 +88,7 @@ public class Device : IDisposable
 
     public void EnqueuePollReply(PayloadData reply) => _pendingPollReplies.Enqueue(reply);
 
-    protected virtual OutgoingMessage HandleCommand(IncomingMessage command)
+    internal virtual OutgoingMessage HandleCommand(IncomingMessage command)
     {
         return new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock, (CommandType)command.Type switch
         {

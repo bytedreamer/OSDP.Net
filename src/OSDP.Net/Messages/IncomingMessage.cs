@@ -21,7 +21,7 @@ namespace OSDP.Net.Messages
         /// </summary>
         /// <param name="data">Raw byte data received from the wire</param>
         /// <param name="channel">Message channel context</param>
-        public IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel)
+        internal IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel)
         {
             // TODO: way too much copying in this code, simplify it.
             _originalMessage = data.ToArray();
@@ -95,7 +95,7 @@ namespace OSDP.Net.Messages
         /// </summary>
         public byte Sequence { get; }
 
-        public Control ControlBlock => new(Sequence, IsUsingCrc, IsSecureMessage);
+        internal Control ControlBlock => new(Sequence, IsUsingCrc, IsSecureMessage);
 
         /// <summary>
         /// Indicates if the message was sent via an established secure channel
@@ -143,7 +143,7 @@ namespace OSDP.Net.Messages
         private IEnumerable<byte> Mac { get; }
         
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        private bool IsDataCorrect { get; }
+        public bool IsDataCorrect { get; }
         
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {
@@ -152,5 +152,7 @@ namespace OSDP.Net.Messages
             (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity,
             (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity,
         };
+
+        public bool SecureCryptogramHasBeenAccepted() => Convert.ToByte(SecureBlockData.First()) == 0x01;
     }
 }

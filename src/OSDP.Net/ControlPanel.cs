@@ -29,7 +29,7 @@ namespace OSDP.Net
         private readonly object _lockBusCreation = new ();
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
         private readonly ILogger<ControlPanel> _logger;
-        private readonly BlockingCollection<Reply> _replies = new();
+        private readonly BlockingCollection<ReplyTracker> _replies = new();
         private TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
         private readonly TimeSpan _timeToWaitToCheckOnData = TimeSpan.FromMilliseconds(10);
@@ -185,7 +185,7 @@ namespace OSDP.Net
             return DeviceIdentification.ParseData((await SendCommand(
                 connectionId,
                 new IdReportCommand(address),
-                cancellationToken).ConfigureAwait(false)).ExtractReplyData);
+                cancellationToken).ConfigureAwait(false)).Payload);
         }
 
         /// <summary>Request to get the capabilities of the PD.</summary>
@@ -195,7 +195,7 @@ namespace OSDP.Net
         public async Task<DeviceCapabilities> DeviceCapabilities(Guid connectionId, byte address)
         {
             return Model.ReplyData.DeviceCapabilities.ParseData((await SendCommand(connectionId,
-                new DeviceCapabilitiesCommand(address)).ConfigureAwait(false)).ExtractReplyData);
+                new DeviceCapabilitiesCommand(address)).ConfigureAwait(false)).Payload);
         }
 
         /// <summary>
@@ -207,7 +207,7 @@ namespace OSDP.Net
         public async Task<LocalStatus> LocalStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.LocalStatus.ParseData((await SendCommand(connectionId,
-                new LocalStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
+                new LocalStatusReportCommand(address)).ConfigureAwait(false)).Payload);
         }
 
         /// <summary>
@@ -219,7 +219,7 @@ namespace OSDP.Net
         public async Task<InputStatus> InputStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.InputStatus.ParseData((await SendCommand(connectionId,
-                new InputStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
+                new InputStatusReportCommand(address)).ConfigureAwait(false)).Payload);
         }
 
         /// <summary>
@@ -231,7 +231,7 @@ namespace OSDP.Net
         public async Task<OutputStatus> OutputStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.OutputStatus.ParseData((await SendCommand(connectionId,
-                new OutputStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
+                new OutputStatusReportCommand(address)).ConfigureAwait(false)).Payload);
         }
 
         /// <summary>
@@ -334,7 +334,7 @@ namespace OSDP.Net
         public async Task<ReaderStatus> ReaderStatus(Guid connectionId, byte address)
         {
             return Model.ReplyData.ReaderStatus.ParseData((await SendCommand(connectionId,
-                new ReaderStatusReportCommand(address)).ConfigureAwait(false)).ExtractReplyData);
+                new ReaderStatusReportCommand(address)).ConfigureAwait(false)).Payload);
         }
 
         /// <summary>
@@ -352,8 +352,8 @@ namespace OSDP.Net
 
             return new ReturnReplyData<ManufacturerSpecific>
             {
-                Ack = reply.Type == ReplyType.Ack,
-                ReplyData = reply.Type == ReplyType.ManufactureSpecific ? ManufacturerSpecific.ParseData(reply.ExtractReplyData) : null
+                Ack = reply.Type == (byte)ReplyType.Ack,
+                ReplyData = reply.Type == (byte)ReplyType.ManufactureSpecific ? ManufacturerSpecific.ParseData(reply.Payload) : null
             };
         }
 
@@ -399,7 +399,7 @@ namespace OSDP.Net
             ushort totalSize = (ushort)manufactureCommandData.Length;
             ushort offset = 0;
             bool continueTransfer = true;
-            Reply reply = null;
+            IncomingMessage reply = null;
 
             try
             {
@@ -414,7 +414,7 @@ namespace OSDP.Net
                                         .ToArray()).ToArray())), cancellationToken)
                         .ConfigureAwait(false);
 
-                    if (reply.Type != ReplyType.Ack) break;
+                    if (reply.Type != (byte)ReplyType.Ack) break;
 
                     offset += maximumFragmentSize;
 
@@ -429,8 +429,8 @@ namespace OSDP.Net
                 
                 return new ReturnReplyData<ManufacturerSpecific>
                 {
-                    Ack = reply.Type == ReplyType.Ack,
-                    ReplyData = reply.Type == ReplyType.ManufactureSpecific ? ManufacturerSpecific.ParseData(reply.ExtractReplyData) : null
+                    Ack = reply.Type == (byte)ReplyType.Ack,
+                    ReplyData = reply.Type == (byte)ReplyType.ManufactureSpecific ? ManufacturerSpecific.ParseData(reply.Payload) : null
                 };
             }
             finally
@@ -453,8 +453,8 @@ namespace OSDP.Net
             
             return new ReturnReplyData<OutputStatus>
             {
-                Ack = reply.Type == ReplyType.Ack,
-                ReplyData = reply.Type == ReplyType.OutputStatusReport ? Model.ReplyData.OutputStatus.ParseData(reply.ExtractReplyData) : null
+                Ack = reply.Type == (byte)ReplyType.Ack,
+                ReplyData = reply.Type == (byte)ReplyType.OutputStatusReport ? Model.ReplyData.OutputStatus.ParseData(reply.Payload) : null
             };
         }
 
@@ -470,7 +470,7 @@ namespace OSDP.Net
             var reply = await SendCommand(connectionId,
                 new ReaderLedControlCommand(address, readerLedControls)).ConfigureAwait(false);
             
-            return reply.Type == ReplyType.Ack;
+            return reply.Type == (byte)ReplyType.Ack;
         }
 
         /// <summary>
@@ -485,7 +485,7 @@ namespace OSDP.Net
             var reply = await SendCommand(connectionId,
                 new ReaderBuzzerControlCommand(address, readerBuzzerControl)).ConfigureAwait(false);
             
-            return reply.Type == ReplyType.Ack;
+            return reply.Type == (byte)ReplyType.Ack;
         }
 
         /// <summary>
@@ -500,7 +500,7 @@ namespace OSDP.Net
             var reply = await SendCommand(connectionId,
                 new ReaderTextOutputCommand(address, readerTextOutput)).ConfigureAwait(false);
             
-            return reply.Type == ReplyType.Ack;
+            return reply.Type == (byte)ReplyType.Ack;
         }
 
         /// <summary>
@@ -523,7 +523,7 @@ namespace OSDP.Net
             
             return Model.ReplyData.CommunicationConfiguration.ParseData((await SendCommand(connectionId,
                     new CommunicationSetCommand(address, communicationConfiguration)).ConfigureAwait(false))
-                .ExtractReplyData);
+                .Payload);
         }
 
         /// <summary>
@@ -539,7 +539,7 @@ namespace OSDP.Net
             var reply = await SendCommand(connectionId,
                 new EncryptionKeySetCommand(address, encryptionKeyConfiguration)).ConfigureAwait(false);
 
-            return reply.Type == ReplyType.Ack;
+            return reply.Type == (byte)ReplyType.Ack;
         }
 
         /// <summary>
@@ -601,8 +601,8 @@ namespace OSDP.Net
                 offset += nextFragmentSize;
 
                 // Parse the fileTransfer status
-                var fileTransferStatusReply = reply.Type == ReplyType.FileTransferStatus
-                    ? Model.ReplyData.FileTransferStatus.ParseData(reply.ExtractReplyData)
+                var fileTransferStatusReply = reply.Type == (byte)ReplyType.FileTransferStatus
+                    ? Model.ReplyData.FileTransferStatus.ParseData(reply.Payload)
                     : null;
 
                 // Check reply to see if PD has requested some change in com procedures.
@@ -633,7 +633,7 @@ namespace OSDP.Net
                 var status = new FileTransferStatus(
                     fileTransferStatusReply?.Detail ?? Model.ReplyData.FileTransferStatus.StatusDetail.UnknownError,
                     offset,
-                    reply.Type == ReplyType.Nak ? Nak.ParseData(reply.ExtractReplyData) : null);
+                    reply.Type == (byte)ReplyType.Nak ? Nak.ParseData(reply.Payload) : null);
 
                 // Report status to progress listeners
                 callback(status);
@@ -928,7 +928,7 @@ namespace OSDP.Net
             var reply = await SendCommand(connectionId,
                 new ACUReceiveSizeCommand(address, maximumReceiveSize)).ConfigureAwait(false);
 
-            return reply.Type == ReplyType.Ack;
+            return reply.Type == (byte)ReplyType.Ack;
         }
 
         /// <summary>
@@ -943,7 +943,7 @@ namespace OSDP.Net
             var reply = await SendCommand(connectionId,
                 new KeepReaderActiveCommand(address, keepAliveTimeInMilliseconds)).ConfigureAwait(false);
 
-            return reply.Type == ReplyType.Ack;
+            return reply.Type == (byte)ReplyType.Ack;
         }
 
         /// <summary>
@@ -957,7 +957,7 @@ namespace OSDP.Net
             var reply = await SendCommand(connectionId, new AbortCurrentOperationCommand(address))
                 .ConfigureAwait(false);
 
-            return reply.Type == ReplyType.Ack;
+            return reply.Type == (byte)ReplyType.Ack;
         }
 
         /// <summary>
@@ -981,23 +981,23 @@ namespace OSDP.Net
             bus.SetReceivingMultipartMessage(address, isReceivingMultipartMessaging);
         }
         
-        private async Task<Reply> SendCommand(Guid connectionId, Command command,
+        private async Task<IncomingMessage> SendCommand(Guid connectionId, Command command,
             CancellationToken cancellationToken = default, bool throwOnNak = true)
         {
-            var source = new TaskCompletionSource<Reply>();
+            var source = new TaskCompletionSource<IncomingMessage>();
 
             void EventHandler(object sender, ReplyEventArgs replyEventArgs)
             {
                 var reply = replyEventArgs.Reply;
                 if (!reply.MatchIssuingCommand(command)) return;
 
-                if (throwOnNak && replyEventArgs.Reply.Type == ReplyType.Nak)
+                if (throwOnNak && replyEventArgs.Reply.Message.Type == (byte)ReplyType.Nak)
                 {
-                    source.SetException(new NackReplyException(Nak.ParseData(reply.ExtractReplyData)));
+                    source.SetException(new NackReplyException(Nak.ParseData(reply.Message.Payload)));
                 }
                 else
                 {
-                    source.SetResult(reply);
+                    source.SetResult(reply.Message);
                 }
             }
 
@@ -1317,71 +1317,71 @@ namespace OSDP.Net
                 new ConnectionStatusEventArgs(connectionId, address, isConnected, isSecureChannelEstablished));
         }
 
-        private void OnReplyReceived(Reply reply)
+        private void OnReplyReceived(ReplyTracker reply)
         {
             ReplyReceived?.Invoke(this, new ReplyEventArgs { Reply = reply });
 
-            switch (reply.Type)
+            switch ((ReplyType)reply.Message.Type)
             {
                 case ReplyType.Nak:
                     NakReplyReceived?.Invoke(this,
-                        new NakReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Nak.ParseData(reply.ExtractReplyData)));
+                        new NakReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            Nak.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.LocalStatusReport:
                     LocalStatusReportReplyReceived?.Invoke(this,
-                        new LocalStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Model.ReplyData.LocalStatus.ParseData(reply.ExtractReplyData)));
+                        new LocalStatusReportReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            Model.ReplyData.LocalStatus.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.InputStatusReport:
                     InputStatusReportReplyReceived?.Invoke(this,
-                        new InputStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Model.ReplyData.InputStatus.ParseData(reply.ExtractReplyData)));
+                        new InputStatusReportReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            Model.ReplyData.InputStatus.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.OutputStatusReport:
                     OutputStatusReportReplyReceived?.Invoke(this,
-                        new OutputStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Model.ReplyData.OutputStatus.ParseData(reply.ExtractReplyData)));
+                        new OutputStatusReportReplyEventArgs(reply.ConnectionId,reply.Message.Address,
+                            Model.ReplyData.OutputStatus.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.ReaderStatusReport:
                     ReaderStatusReportReplyReceived?.Invoke(this,
-                        new ReaderStatusReportReplyEventArgs(reply.ConnectionId, reply.Address,
-                            Model.ReplyData.ReaderStatus.ParseData(reply.ExtractReplyData)));
+                        new ReaderStatusReportReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            Model.ReplyData.ReaderStatus.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.RawReaderData:
                     RawCardDataReplyReceived?.Invoke(this,
-                        new RawCardDataReplyEventArgs(reply.ConnectionId, reply.Address,
-                            RawCardData.ParseData(reply.ExtractReplyData)));
+                        new RawCardDataReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            RawCardData.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.ManufactureSpecific:
                     ManufacturerSpecificReplyReceived?.Invoke(this,
-                        new ManufacturerSpecificReplyEventArgs(reply.ConnectionId, reply.Address,
-                            ManufacturerSpecific.ParseData(reply.ExtractReplyData)));
+                        new ManufacturerSpecificReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            ManufacturerSpecific.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.PIVData:
                     PIVDataReplyReceived?.Invoke(this,
-                        new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Address,
-                            DataFragmentResponse.ParseData(reply.ExtractReplyData)));
+                        new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            DataFragmentResponse.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.ResponseToChallenge:
                     AuthenticationChallengeResponseReceived?.Invoke(this,
-                        new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Address,
-                            DataFragmentResponse.ParseData(reply.ExtractReplyData)));   
+                        new MultiPartMessageDataReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            DataFragmentResponse.ParseData(reply.Message.Payload)));   
                     break;
                 case ReplyType.KeypadData:
                     KeypadReplyReceived?.Invoke(this,
-                        new KeypadReplyEventArgs(reply.ConnectionId, reply.Address,
-                            KeypadData.ParseData(reply.ExtractReplyData)));
+                        new KeypadReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            KeypadData.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.BiometricData:
                     BiometricReadResultsReplyReceived?.Invoke(this,
-                        new BiometricReadResultsReplyEventArgs(reply.ConnectionId, reply.Address,
-                            BiometricReadResult.ParseData(reply.ExtractReplyData)));
+                        new BiometricReadResultsReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            BiometricReadResult.ParseData(reply.Message.Payload)));
                     break;
                 case ReplyType.BiometricMatchResult:
                     BiometricMatchReplyReceived?.Invoke(this,
-                        new BiometricMatchReplyEventArgs(reply.ConnectionId, reply.Address,
-                            BiometricMatchResult.ParseData(reply.ExtractReplyData)));
+                        new BiometricMatchReplyEventArgs(reply.ConnectionId, reply.Message.Address,
+                            BiometricMatchResult.ParseData(reply.Message.Payload)));
                     break;
             }
         }
@@ -1924,7 +1924,7 @@ namespace OSDP.Net
 
         private class ReplyEventArgs : EventArgs
         {
-            public Reply Reply { get; set; }
+            public ReplyTracker Reply { get; set; }
         }
     }
 }

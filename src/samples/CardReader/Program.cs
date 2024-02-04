@@ -8,7 +8,7 @@ namespace CardReader;
 
 internal class Program
 {
-    private static async Task Main(string[] args)
+    private static async Task Main()
     {
         var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true);
         var config = builder.Build();

@@ -43,7 +43,7 @@ namespace OSDP.Net.Messages.ACU
 
                 AddPacketLength(combined, macAndChecksumLength);
 
-                var mac = device.GenerateMac(combined, true).Slice(0, 4);
+                var mac = device.GenerateMac(combined, false).Slice(0, 4);
 
                 int commandLength = combined.Length + macAndChecksumLength;
                 var pool = MemoryPool<byte>.Shared;

@@ -4,7 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using OSDP.Net.Connections;
+using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
+using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net.Tests;
 
@@ -40,9 +43,9 @@ public class ControlPanelFileTransferTest
         {
             await _stream.FlushAsync();
 
-            await _stream.WriteAsync(
-                new AckReply().BuildReply(0, 
-                    new Control((byte) (buffer[4] & 0x03), true, false)));
+            var controlBlock = new Control((byte)(buffer[4] & 0x03), true, false);
+            var outgoingMessage = new OutgoingMessage(0, controlBlock, new Ack());
+            await _stream.WriteAsync(outgoingMessage.BuildMessage(new PdMessageSecureChannelBase()));
 
             _stream.Position = 0;
         }
