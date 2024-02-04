@@ -1,24 +1,46 @@
 ﻿using NUnit.Framework;
-using OSDP.Net.Utilities;
-using System.Linq;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Tests.Model.CommandData
 {
     internal class ReaderBuzzerControlTest
     {
+        private byte[] TestData => [0x00, 0x02, 0x05, 0x02, 0x01];
+
+        private ReaderBuzzerControl TestReaderBuzzerControl => new ReaderBuzzerControl(0, ToneCode.Default, 5, 2, 1);
+            
+        [Test]
+        public void CheckConstantValues()
+        {
+            // Arrange Act Assert
+            Assert.That(TestReaderBuzzerControl.CommandType, Is.EqualTo(CommandType.BuzzerControl));
+            Assert.That(TestReaderBuzzerControl.SecurityControlBlock().ToArray(),
+                Is.EqualTo(SecurityBlock.CommandMessageWithDataSecurity.ToArray()));
+        }
+        
+        [Test]
+        public void BuildData()
+        {
+            // Arrange
+            // Act
+            var actual = TestReaderBuzzerControl.BuildData();
+
+            // Assert
+            Assert.That(actual, Is.EqualTo(TestData));
+        }
+        
         [Test]
         public void ParseData()
         {
-            var inputData = BinaryUtils.HexToBytes("00-02-05-02-01").ToArray();
+            var actual = ReaderBuzzerControl.ParseData(TestData);
 
-            var actual = ReaderBuzzerControl.ParseData(inputData);
-
-            Assert.That(actual.ReaderNumber, Is.EqualTo(0));
-            Assert.That(actual.ToneCode, Is.EqualTo(ToneCode.Default));
-            Assert.That(actual.OnTime, Is.EqualTo(5));
-            Assert.That(actual.OffTime, Is.EqualTo(2));
-            Assert.That(actual.Count, Is.EqualTo(1));
+            Assert.That(actual.ReaderNumber, Is.EqualTo(TestReaderBuzzerControl.ReaderNumber));
+            Assert.That(actual.ToneCode, Is.EqualTo(TestReaderBuzzerControl.ToneCode));
+            Assert.That(actual.OnTime, Is.EqualTo(TestReaderBuzzerControl.OnTime));
+            Assert.That(actual.OffTime, Is.EqualTo(TestReaderBuzzerControl.OffTime));
+            Assert.That(actual.Count, Is.EqualTo(TestReaderBuzzerControl.Count));
         }
     }
 }

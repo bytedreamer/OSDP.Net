@@ -36,7 +36,7 @@ namespace OSDP.Net.Model.CommandData
         public override CommandType CommandType => CommandType.LEDControl;
         
         /// <inheritdoc />
-        public override byte Type => (byte)CommandType.LEDControl;
+        public override byte Type => (byte)CommandType;
         
         /// <inheritdoc />
         internal override ReadOnlySpan<byte> SecurityControlBlock()
