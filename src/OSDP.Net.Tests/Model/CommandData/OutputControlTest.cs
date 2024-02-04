@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace OSDP.Net.Tests.Model.CommandData
 {
-    internal class OutputControlTest
+    public class OutputControlTest
     {
         [Test]
         public void BuildData()
