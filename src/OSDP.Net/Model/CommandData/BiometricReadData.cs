@@ -1,26 +1,27 @@
 using System;
-using System.Collections.Generic;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
     /// Command data to send a request to the PD to perform a biometric scan and match.
     /// </summary>
-    public class BiometricReadData
+    public class BiometricReadData : CommandData
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="BiometricReadData"/> class.
         /// </summary>
         /// <param name="readerNumber">The reader number starting at 0.</param>
-        /// <param name="type">The type/body part to scan.</param>
-        /// <param name="format">The format of the attached template.</param>
-        /// <param name="quality">.</param>
-        public BiometricReadData(byte readerNumber, BiometricType type, BiometricFormat format,
+        /// <param name="biometricType">body part to scan.</param>
+        /// <param name="biometricFormatType">The format of the attached template.</param>
+        /// <param name="quality"></param>
+        public BiometricReadData(byte readerNumber, BiometricType biometricType, BiometricFormat biometricFormatType,
             byte quality)
         {
             ReaderNumber = readerNumber;
-            Type = type;
-            Format = format;
+            BiometricType = biometricType;
+            BiometricFormatType = biometricFormatType;
             Quality = quality;
         }
 
@@ -32,25 +33,35 @@ namespace OSDP.Net.Model.CommandData
         /// <summary>
         /// Gets the type/body part to scan.
         /// </summary>
-        public BiometricType Type { get; }
+        public BiometricType BiometricType { get; }
 
         /// <summary>
         /// Gets the format of the attached template.
         /// </summary>
-        public BiometricFormat Format { get; }
+        public BiometricFormat BiometricFormatType { get; }
 
         /// <summary>
         /// Gets the ?.
         /// </summary>
         public byte Quality { get; }
+        
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.BioRead;
 
-        internal IEnumerable<byte> BuildData()
+        /// <inheritdoc />
+        public override byte MessageType => (byte)CommandType;
+        
+        /// <inheritdoc />
+        internal override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
+
+        /// <inheritdoc />
+        public override byte[] BuildData()
         {
             return new []
             {
                 ReaderNumber,
-                (byte)Type,
-                (byte)Format,
+                (byte)BiometricType,
+                (byte)BiometricFormatType,
                 Quality
             };
         }

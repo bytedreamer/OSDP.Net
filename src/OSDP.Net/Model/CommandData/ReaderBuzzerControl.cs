@@ -70,7 +70,7 @@ public class ReaderBuzzerControl : CommandData
     public override CommandType CommandType => CommandType.BuzzerControl;
 
     /// <inheritdoc />
-    public override byte Type => (byte)CommandType;
+    public override byte MessageType => (byte)CommandType;
         
     /// <inheritdoc />
     internal override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;

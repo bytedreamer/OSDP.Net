@@ -54,7 +54,7 @@ namespace OSDP.Net.Model.ReplyData
         public byte FirmwareBuild { get; }
         
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.PdIdReport;
+        public override byte MessageType => (byte)ReplyType.PdIdReport;
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>

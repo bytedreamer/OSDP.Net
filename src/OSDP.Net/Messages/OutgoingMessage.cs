@@ -28,8 +28,8 @@ internal class OutgoingMessage : Message
         }
 
         bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished ||
-                                      _data.Type == (byte)ReplyType.CrypticData ||
-                                      _data.Type == (byte)ReplyType.InitialRMac;
+                                      _data.MessageType == (byte)ReplyType.CrypticData ||
+                                      _data.MessageType == (byte)ReplyType.InitialRMac;
         int headerLength = StartOfMessageLength + (isSecurityBlockPresent ? 3 : 0) + sizeof(ReplyType);
         int totalLength = headerLength + payload.Length +
                           (ControlBlock.UseCrc ? 2 : 1) +
@@ -46,9 +46,9 @@ internal class OutgoingMessage : Message
         if (isSecurityBlockPresent)
         {
             buffer[currentLength] = 0x03;
-            buffer[currentLength + 1] = _data.Type == (byte)ReplyType.CrypticData
+            buffer[currentLength + 1] = _data.MessageType == (byte)ReplyType.CrypticData
                 ? (byte)SecurityBlockType.SecureConnectionSequenceStep2
-                : _data.Type == (byte)ReplyType.InitialRMac
+                : _data.MessageType == (byte)ReplyType.InitialRMac
                     ? (byte)SecurityBlockType.SecureConnectionSequenceStep4
                     : payload.Length == 0
                         ? (byte)SecurityBlockType.ReplyMessageWithNoDataSecurity
@@ -61,7 +61,7 @@ internal class OutgoingMessage : Message
             currentLength += 3;
         }
 
-        buffer[currentLength++] = _data.Type;
+        buffer[currentLength++] = _data.MessageType;
 
         if (secureChannel.IsSecurityEstablished)
         {

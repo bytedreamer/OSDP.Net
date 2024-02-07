@@ -9,7 +9,7 @@ namespace OSDP.Net.Tests.Model.CommandData
     {
         private byte[] TestData => [0x00, 0x02, 0x05, 0x02, 0x01];
 
-        private ReaderBuzzerControl TestReaderBuzzerControl => new ReaderBuzzerControl(0, ToneCode.Default, 5, 2, 1);
+        private ReaderBuzzerControl TestReaderBuzzerControl => new (0, ToneCode.Default, 5, 2, 1);
             
         [Test]
         public void CheckConstantValues()
