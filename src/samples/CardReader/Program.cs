@@ -16,7 +16,7 @@ internal class Program
 
         var portName = osdpSection["PortName"];
         var baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
-        var readerNumber = byte.Parse(osdpSection["ReaderAddress"] ?? "0");
+        var readerNumber = byte.Parse(osdpSection["ReaderNumber"] ?? "0");
 
         var connection = new SerialPortOsdpConnection(portName, baudRate);
         using var device = new MySampleDevice();
@@ -35,12 +35,15 @@ internal class Program
                 // ReSharper disable once AccessToDisposedClosure
                 if (!device.IsConnected) continue;
 
-                Console.WriteLine($"Device is connected!\nSending card data.");
+                Console.WriteLine($"Device is connected!\nPress any key to send card data.");
+                Console.ReadKey();
                 device.EnqueuePollReply(new RawCardData(readerNumber, FormatCode.NotSpecified, cardNumber));
+                Console.WriteLine($"Sent card data: {cardNumberHexValue}");
                 return;
             }
         });
 
+        Console.WriteLine("Press any key to finish the program.");
         Console.ReadKey();
 
         device.StopListening();
