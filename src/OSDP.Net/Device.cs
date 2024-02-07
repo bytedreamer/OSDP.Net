@@ -20,6 +20,8 @@ public class Device : IDisposable
     
     private CancellationTokenSource _cancellationTokenSource;
     private Task _listenerTask = Task.CompletedTask;
+    private DateTime _lastValidReceivedCommand = DateTime.MinValue;
+    private bool _isDeviceListening;
 
     public Device(ILogger<DeviceProxy> logger = null)
     {
@@ -29,7 +31,7 @@ public class Device : IDisposable
     /// <inheritdoc/>
     public void Dispose() => Dispose(true);
 
-    public bool IsConnected { get; private set; } = false;
+    public bool IsConnected => _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow && _isDeviceListening;
 
     protected virtual void Dispose(bool disposing)
     {
@@ -50,8 +52,8 @@ public class Device : IDisposable
             try
             {
                 connection.Open();
-
                 var channel = new PdMessageSecureChannel(connection);
+                _isDeviceListening = true;
 
                 while (!_cancellationTokenSource.IsCancellationRequested)
                 {
@@ -63,10 +65,11 @@ public class Device : IDisposable
                     }
                 }
 
-                IsConnected = false;
+                _isDeviceListening = false;
             }
             catch (Exception exception)
             {
+                _isDeviceListening = false;
                 _logger?.LogError(exception, $"Unexpected exception in polling loop");
             }
         }, TaskCreationOptions.LongRunning);
@@ -83,6 +86,7 @@ public class Device : IDisposable
             //_shutdownComplete.WaitOne(TimeSpan.FromSeconds(1));
             await _listenerTask;
             _cancellationTokenSource = null;
+            _isDeviceListening = false;
         }
     }
 
@@ -90,6 +94,9 @@ public class Device : IDisposable
 
     internal virtual OutgoingMessage HandleCommand(IncomingMessage command)
     {
+        if (command.IsDataCorrect && Enum.IsDefined(typeof(CommandType), command.Type))
+            _lastValidReceivedCommand = DateTime.Now;
+
         return new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock, (CommandType)command.Type switch
         {
             CommandType.Poll => HandlePoll(),
