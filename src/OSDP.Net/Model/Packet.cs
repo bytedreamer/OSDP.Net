@@ -3,6 +3,7 @@
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using DeviceCapabilities = OSDP.Net.Model.ReplyData.DeviceCapabilities;
 
 namespace OSDP.Net.Model;
 

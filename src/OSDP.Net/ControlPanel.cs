@@ -14,6 +14,7 @@ using OSDP.Net.Model.ReplyData;
 using OSDP.Net.PanelCommands.DeviceDiscover;
 using OSDP.Net.Tracing;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
+using DeviceCapabilities = OSDP.Net.Model.ReplyData.DeviceCapabilities;
 using ManufacturerSpecific = OSDP.Net.Model.ReplyData.ManufacturerSpecific;
 
 namespace OSDP.Net

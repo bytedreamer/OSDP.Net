@@ -8,6 +8,7 @@ using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model.ReplyData;
+using OutgoingMessage = OSDP.Net.Messages.OutgoingMessage;
 
 namespace OSDP.Net.Tests;
 
