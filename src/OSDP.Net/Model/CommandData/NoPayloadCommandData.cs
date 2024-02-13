@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using OSDP.Net.Messages;
 using OSDP.Net.Messages.SecureChannel;
 
@@ -9,20 +10,33 @@ namespace OSDP.Net.Model.CommandData;
 /// </summary>
 internal class NoPayloadCommandData : CommandData
 {
+    private readonly CommandType[] _validCommandTypes =
+    {
+        CommandType.InputStatus,
+        CommandType.LocalStatus,
+        CommandType.OutputStatus,
+        CommandType.Poll
+    };
+
     public NoPayloadCommandData(CommandType commandType)
     {
+        if (!_validCommandTypes.Contains(commandType))
+        {
+            throw new Exception("Invalid command type for a sending a payload with no data.");
+        }
+
         CommandType = commandType;
     }
-    
+
     /// <inheritdoc />
     public override byte MessageType => (byte)CommandType;
-    
+
     /// <inheritdoc />
     public override CommandType CommandType { get; }
-    
+
     /// <inheritdoc />
     internal override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithNoDataSecurity;
-    
+
     /// <inheritdoc />
     public override byte[] BuildData()
     {
