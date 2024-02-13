@@ -10,7 +10,7 @@ internal static class SecurityBlock
     /// <summary>
     /// Secure channel is established and the
     /// reply message contains a MAC signature but the data field
-    /// is unencrypted
+    /// is unencrypted or not present
     /// </summary>
     public static ReadOnlySpan<byte> CommandMessageWithNoDataSecurity => new byte[]
     {

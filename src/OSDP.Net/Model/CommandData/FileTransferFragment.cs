@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData;
 
 /// <summary>
 /// Command data to send a data fragment of a file to a PD.
 /// </summary>
-internal class FileTransferFragment
+internal class FileTransferFragment : CommandData
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="FileTransferFragment"/> class.
@@ -51,7 +52,17 @@ internal class FileTransferFragment
     /// </summary>
     public byte[] DataFragment { get; }
 
-    internal ReadOnlySpan<byte> BuildData()
+    /// <inheritdoc />
+    public override CommandType CommandType => CommandType.FileTransfer;
+
+    /// <inheritdoc />
+    public override byte MessageType => (byte)CommandType;
+        
+    /// <inheritdoc />
+    internal override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
+
+    /// <inheritdoc />
+    public override byte[] BuildData()
     {
         var data = new List<byte> {Type};
         data.AddRange(Message.ConvertIntToBytes(TotalSize));

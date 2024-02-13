@@ -23,7 +23,7 @@ namespace OSDP.Net.Messages.ACU
 
         protected override ReadOnlySpan<byte> Data()
         {
-            return _fileTransferFragment.BuildData().ToArray();
+            return _fileTransferFragment.BuildData();
         }
 
         protected override void CustomCommandUpdate(Span<byte> commandBuffer)
