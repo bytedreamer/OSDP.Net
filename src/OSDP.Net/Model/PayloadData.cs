@@ -18,7 +18,9 @@ namespace OSDP.Net.Model
         /// acceptable for this array to be 0 length</returns>
         public abstract byte[] BuildData();
         
-        public abstract byte Type { get; }
+        public abstract byte Code { get; }
+
+        public abstract void CustomMessageUpdate(Span<byte> messageBuffer);
 
         /// <inheritdoc />
         public override string ToString()

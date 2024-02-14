@@ -54,7 +54,7 @@ namespace OSDP.Net.Model.ReplyData
         public byte FirmwareBuild { get; }
         
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.PdIdReport;
+        public override byte Code => (byte)ReplyType.PdIdReport;
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
@@ -103,6 +103,11 @@ namespace OSDP.Net.Model.ReplyData
             build.AppendLine($"{padding}Firmware Version: {FirmwareMajor}.{FirmwareMinor}.{FirmwareBuild}");
 
             return build.ToString();
+        }
+        
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
         }
     }
 }

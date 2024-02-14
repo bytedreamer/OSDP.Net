@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
     /// Manufacture specific command data sent to a PD.
     /// </summary>
-    public class ManufacturerSpecific 
+    public class ManufacturerSpecific : CommandData
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ManufacturerSpecific"/> class.
@@ -35,6 +37,33 @@ namespace OSDP.Net.Model.CommandData
         /// Gets the manufacture specific data.
         /// </summary>
         public byte[] Data { get; }
+        
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.ManufacturerSpecific;
+
+        /// <inheritdoc />
+        public override byte Code => (byte)CommandType;
+        
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
+
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
+        }
+
+        /// <inheritdoc />
+        public override byte[] BuildData()
+        {
+            var data = new List<byte>
+            {
+                VendorCode[0],
+                VendorCode[1],
+                VendorCode[2]
+            };
+            data.AddRange(Data);
+            return data.ToArray();
+        }
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
@@ -47,22 +76,6 @@ namespace OSDP.Net.Model.CommandData
             );
         }
 
-        /// <summary>
-        /// Builds the data.
-        /// </summary>
-        /// <returns>The Data</returns>
-        public IEnumerable<byte> BuildData()
-        {
-            var data = new List<byte>
-            {
-                VendorCode[0],
-                VendorCode[1],
-                VendorCode[2]
-            };
-            data.AddRange(Data);
-            return data;
-        }
-
         /// <inheritdoc/>
         public override string ToString() => ToString(0);
 
@@ -71,7 +84,7 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
         /// <returns>String representation of the current object</returns>
-        public string ToString(int indent)
+        public override string ToString(int indent)
         {
             var padding = new string(' ', indent);
             var build = new StringBuilder();

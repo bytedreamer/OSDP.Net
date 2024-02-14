@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
     /// Command data for sending text to be shown on a PD.
     /// </summary>
-    public class ReaderTextOutput
+    public class ReaderTextOutput : CommandData
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ReaderTextOutput"/> class.
@@ -63,16 +65,30 @@ namespace OSDP.Net.Model.CommandData
             return new ReaderTextOutput(data[0], (TextCommand)data[1], data[2], data[3], data[4], text);
         }
 
-        /// <summary>
-        /// Builds the data.
-        /// </summary>
-        /// <returns>The Data</returns>
-        public IEnumerable<byte> BuildData()
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.TextOutput;
+
+        /// <inheritdoc />
+        public override byte Code => (byte)CommandType;
+        
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return SecurityBlock.CommandMessageWithDataSecurity;
+        }
+
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
+        }
+
+        /// <inheritdoc />
+        public override byte[] BuildData()
         {
             var data = new List<byte>
                 {ReaderNumber, (byte) TextCommand, TemporaryTextTime, Row, Column, (byte) Text.Length};
             data.AddRange(Encoding.ASCII.GetBytes(Text.Substring(0, Math.Min(Text.Length, byte.MaxValue))));
-            return data;
+            return data.ToArray();
         }
 
         /// <inheritdoc/>
@@ -83,7 +99,7 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
         /// <returns>String representation of the current object</returns>
-        public string ToString(int indent)
+        public new string ToString(int indent)
         {
             string padding = new string(' ', indent);
 

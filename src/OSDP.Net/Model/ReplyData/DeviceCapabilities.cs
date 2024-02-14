@@ -33,7 +33,7 @@ namespace OSDP.Net.Model.ReplyData
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
         
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.PdCapabilitiesReport;
+        public override byte Code => (byte)ReplyType.PdCapabilitiesReport;
 
         /// <summary>
         /// Gets a specific PD capability
@@ -99,6 +99,11 @@ namespace OSDP.Net.Model.ReplyData
             }
 
             return data.ToArray();
+        }
+        
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
         }
     }
 }

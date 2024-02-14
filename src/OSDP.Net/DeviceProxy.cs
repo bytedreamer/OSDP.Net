@@ -2,32 +2,24 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.Logging;
-using OSDP.Net.Messages.ACU;
+using System.Runtime.CompilerServices;
+using OSDP.Net.Messages;
 using OSDP.Net.Messages.SecureChannel;
-using OSDP.Net.Model;
-using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Model.CommandData;
 
+[assembly: InternalsVisibleTo("OSDP.Net.Tests")]
 namespace OSDP.Net;
 
-/// <summary>
-/// 
-/// </summary>
-public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
+internal class DeviceProxy : IComparable<DeviceProxy>
 {
     private const int RetryAmount = 2;
 
-    private readonly ConcurrentQueue<Command> _commands = new();
-
-    public IMessageSecureChannel MessageSecureChannel { get; }
-    
+    private readonly ConcurrentQueue<CommandData> _commands = new();
     private readonly bool _useSecureChannel;
-    private readonly ILogger<DeviceProxy> _logger;
-
+    
     private int _counter = RetryAmount;
     private DateTime _lastValidReply = DateTime.MinValue;
-
-    private Command _retryCommand;
+    private CommandData _retryCommand;
 
     /// <summary>
     /// Represents a device with a specific address.
@@ -36,12 +28,9 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
     /// <param name="useCrc">Specifies whether to use CRC (Cyclic Redundancy Check) for message validation.</param>
     /// <param name="useSecureChannel">Specifies whether to use a secure channel for communication.</param>
     /// <param name="secureChannelKey">The key used for securing the communication channel.</param>
-    /// <param name="logger">The logger used for logging purposes.</param>
-    public DeviceProxy(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null,
-        ILogger<DeviceProxy> logger = null)
+    public DeviceProxy(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
     {
         _useSecureChannel = useSecureChannel;
-        _logger = logger;
 
         Address = address;
         MessageControl = new Control(0, useCrc, useSecureChannel);
@@ -52,7 +41,11 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
             
             IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
 
-            MessageSecureChannel = new ACUMessageSecureChannel(new SecurityContext(secureChannelKey));
+            MessageSecureChannel = new ACUMessageSecureChannel(new SecurityContext(SecureChannelKey));
+        }
+        else
+        {
+            MessageSecureChannel = new ACUMessageSecureChannel(new SecurityContext());
         }
     }
 
@@ -70,6 +63,8 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
 
     public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
                                (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
+    
+    public IMessageSecureChannel MessageSecureChannel { get; }
 
     internal bool IsSendingMultipartMessage { get; set; }
 
@@ -83,9 +78,7 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
     /// Has one or more commands waiting in the queue
     /// </summary>
     internal bool HasQueuedCommand => _commands.Any();
-
-    public void Dispose() {}
-
+    
     /// <inheritdoc />
     public int CompareTo(DeviceProxy other)
     {
@@ -99,13 +92,13 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
     /// </summary>
     /// <param name="isPolling">If false, only send commands in the queue</param>
     /// <returns>The next command always if polling, could be null if not polling</returns>
-    internal Command GetNextCommandData(bool isPolling)
+    internal OutgoingMessage GetNextCommandData(bool isPolling)
     {
         if (_retryCommand != null)
         {
             var saveCommand = _retryCommand;
             _retryCommand = null;
-            return saveCommand;
+            return new OutgoingMessage(Address, MessageControl, saveCommand);
         }
             
         if (isPolling)
@@ -113,30 +106,31 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
             // Don't send clear text polling if using secure channel
             if (MessageControl.Sequence == 0 && !UseSecureChannel)
             {
-                return new PollCommand(Address);
+                return new OutgoingMessage(Address, MessageControl, new NoPayloadCommandData(CommandType.Poll));
             }
                 
             if (UseSecureChannel && !MessageSecureChannel.IsInitialized)
             {
-                return new SecurityInitializationRequestCommand(Address,
-                    MessageSecureChannel.ServerRandomNumber, IsDefaultKey);
+                return new OutgoingMessage(Address, MessageControl,
+                    new SecurityInitialization(MessageSecureChannel.ServerRandomNumber, IsDefaultKey));
             }
 
             if (UseSecureChannel && !MessageSecureChannel.IsSecurityEstablished)
             {
-                return new ServerCryptogramCommand(Address, MessageSecureChannel.ServerCryptogram, IsDefaultKey);
+                return new OutgoingMessage(Address, MessageControl,
+                    new ServerCryptogramData(MessageSecureChannel.ServerCryptogram, IsDefaultKey));
             }
         }
 
         if (!_commands.TryDequeue(out var command) && isPolling)
         {
-            return new PollCommand(Address);
+            return new OutgoingMessage(Address, MessageControl, new NoPayloadCommandData(CommandType.Poll));
         }
 
-        return command;
+        return new OutgoingMessage(Address, MessageControl, command);
     }
 
-    internal void SendCommand(Command command)
+    internal void SendCommand(CommandData command)
     {
         _commands.Enqueue(command);
     }
@@ -145,7 +139,7 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
     /// Store command for retry
     /// </summary>
     /// <param name="command"></param>
-    internal void RetryCommand(Command command)
+    internal void RetryCommand(CommandData command)
     {
         if (_counter-- > 0)
         {

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Messages

@@ -5,12 +5,12 @@ namespace OSDP.Net.Messages.SecureChannel;
 /// <summary>
 /// Contains standard Security Control Block data that can be used when building messages
 /// </summary>
-internal static class SecurityBlock
+public static class SecurityBlock
 {
     /// <summary>
     /// Secure channel is established and the
     /// reply message contains a MAC signature but the data field
-    /// is unencrypted
+    /// is unencrypted or not present
     /// </summary>
     public static ReadOnlySpan<byte> CommandMessageWithNoDataSecurity => new byte[]
     {

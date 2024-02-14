@@ -66,6 +66,11 @@ namespace OSDP.Net.Model.ReplyData
         }
         
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.CrypticData;
+        public override byte Code => (byte)ReplyType.CrypticData;
+        
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
+        }
     }
 }

@@ -40,7 +40,7 @@ namespace OSDP.Net.Model.ReplyData
         public IEnumerable<byte> ExtraData { get; private set;  }
         
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.Nak;
+        public override byte Code => (byte)ReplyType.Nak;
 
         /// <summary>
         /// Parses the data.
@@ -71,6 +71,11 @@ namespace OSDP.Net.Model.ReplyData
             var buffer = new byte[1];
             buffer[0] = (byte)ErrorCode;
             return buffer;
+        }
+        
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
         }
 
         /// <inheritdoc />

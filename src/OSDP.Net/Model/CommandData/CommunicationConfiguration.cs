@@ -1,14 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData;
 
 /// <summary>
 /// Command data to set the communication configuration on a PD.
 /// </summary>
-public class CommunicationConfiguration
+public class CommunicationConfiguration : CommandData
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CommunicationConfiguration"/> class.
@@ -30,8 +30,23 @@ public class CommunicationConfiguration
     /// Gets the baud rate.
     /// </summary>
     public int BaudRate { get; }
+    
+    /// <inheritdoc />
+    public override CommandType CommandType => CommandType.CommunicationSet;
 
-    internal IEnumerable<byte> BuildData()
+    /// <inheritdoc />
+    public override byte Code => (byte)CommandType;
+        
+    /// <inheritdoc />
+    public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
+    
+    /// <inheritdoc />
+    public override void CustomMessageUpdate(Span<byte> messageBuffer)
+    {
+    }
+
+    /// <inheritdoc />
+    public override byte[] BuildData()
     {
         var baudRateBytes = Message.ConvertIntToBytes(BaudRate).ToArray();
             

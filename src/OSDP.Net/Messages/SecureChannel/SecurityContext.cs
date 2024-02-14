@@ -13,8 +13,6 @@ namespace OSDP.Net.Messages.SecureChannel;
 public class SecurityContext
 {
     private readonly byte[] _securityKey;
-    
-    public byte[] ServerRandomNumber => new byte[8];
 
     // Todo - make private when conversion is done
     public static readonly byte[] DefaultKey = "0123456789:;<=>?"u8.ToArray();
@@ -59,6 +57,8 @@ public class SecurityContext
     public byte[] CMac { get; set; } = Array.Empty<byte>();
     
     public byte[] ServerCryptogram { get; private set; }
+    
+    public byte[] ServerRandomNumber { get; } = new byte[8];
 
     public bool IsInitialized { get; private set; }
 
@@ -158,7 +158,6 @@ public class SecurityContext
         // Todo - this might be needed
         // IsInitialized = false;
         // IsEstablished = false;
-        
         new Random().NextBytes(ServerRandomNumber);
     }
     

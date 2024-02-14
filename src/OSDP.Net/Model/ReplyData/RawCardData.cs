@@ -47,7 +47,7 @@ public class RawCardData : PayloadData
     public BitArray Data { get; }
     
     /// <inheritdoc/>
-    public override byte Type => (byte)ReplyType.RawReaderData;
+    public override byte Code => (byte)ReplyType.RawReaderData;
 
     /// <summary>
     /// Parses the data.
@@ -129,6 +129,11 @@ public class RawCardData : PayloadData
         }
 
         return buffer;
+    }
+    
+    /// <inheritdoc />
+    public override void CustomMessageUpdate(Span<byte> messageBuffer)
+    {
     }
 }
 

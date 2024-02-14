@@ -8,7 +8,7 @@ using Moq;
 using NUnit.Framework;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
+using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tests.Utilities;
 
@@ -179,7 +179,7 @@ namespace OSDP.Net.Tests
             public async Task ReturnsValidReportTest()
             {
                 var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
-                var idReportCommand = new IdReportCommand(0);
+                var idReportCommand = new IdReport();
                 var idReportReplyBytes = new byte[] { 83, 128, 20, 0, 6, 69, 92, 38, 35, 25, 2, 0, 0, 233, 42, 3, 0, 0, 98, 25 };
 
                 var mockConnection = new MockConnection();
@@ -204,7 +204,7 @@ namespace OSDP.Net.Tests
             {
                 var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
                 //var idReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
-                var idReportCommand = new IdReportCommand(0);
+                var idReportCommand = new IdReport();
                 var nakReplyBytes = new byte[] { 83, 128, 9, 0, 7, 65, 3, 53, 221 };
 
                 var mockConnection = new MockConnection();
@@ -222,7 +222,7 @@ namespace OSDP.Net.Tests
 
         private class MockConnection : Mock<IOsdpConnection>
         {
-            static readonly PollCommand PollCommand = new(0);
+            static readonly CommandData PollCommand = new NoPayloadCommandData(CommandType.Poll);
             static readonly byte[] AckReplyBytes = { 83, 128, 8, 0, 5, 64, 104, 159 };
 
             public MockConnection() : base(MockBehavior.Strict)
@@ -246,7 +246,7 @@ namespace OSDP.Net.Tests
                 OnCommand(PollCommand).Reply(AckReplyBytes);
             }
 
-            public ExpectedCommand OnCommand(Command command) => new(this, command);
+            public ExpectedCommand OnCommand(CommandData command) => new(this, command);
             
             /// <summary>
             /// Number of times the Open method is called
@@ -260,7 +260,7 @@ namespace OSDP.Net.Tests
             
             public class ExpectedCommand
             {
-                public ExpectedCommand(MockConnection parent, Command command)
+                public ExpectedCommand(MockConnection parent, CommandData command)
                 {
                     _parent = parent;
                     _command = command;
@@ -279,7 +279,7 @@ namespace OSDP.Net.Tests
                         ResetMsgSeqNumber(reply.AsSpan(), seq);
 
                         _parent.Setup(x => x.WriteAsync(It.Is<byte[]>(
-                            messageData => IsMatchingCommandType(messageData, _command.Type)
+                            messageData => IsMatchingCommandType(messageData, _command.Code)
                         ))).Returns(
                             async (byte[] _) => await _parent._incomingData.Writer.WriteAsync(reply)
                         );
@@ -308,7 +308,7 @@ namespace OSDP.Net.Tests
                 }
 
                 private readonly MockConnection _parent;
-                private readonly Command _command;
+                private readonly CommandData _command;
             }
 
             private readonly Pipe _incomingData = new();

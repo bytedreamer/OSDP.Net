@@ -1,4 +1,5 @@
-﻿using OSDP.Net.Messages;
+﻿using System;
+using OSDP.Net.Messages;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -23,12 +24,17 @@ namespace OSDP.Net.Model.ReplyData
         public byte[] RMac { get; }
 
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.InitialRMac;
+        public override byte Code => (byte)ReplyType.InitialRMac;
 
         /// <inheritdoc/>
         public override byte[] BuildData()
         {
             return RMac;
+        }
+        
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
         }
     }
 }
