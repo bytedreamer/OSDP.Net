@@ -72,6 +72,11 @@ namespace OSDP.Net.Model.ReplyData
             buffer[0] = (byte)ErrorCode;
             return buffer;
         }
+        
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
+        }
 
         /// <inheritdoc />
         public override string ToString()

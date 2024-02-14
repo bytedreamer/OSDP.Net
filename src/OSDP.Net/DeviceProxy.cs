@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
@@ -15,15 +14,10 @@ internal class DeviceProxy : IComparable<DeviceProxy>
     private const int RetryAmount = 2;
 
     private readonly ConcurrentQueue<CommandData> _commands = new();
-
-    public IMessageSecureChannel MessageSecureChannel { get; }
-    
     private readonly bool _useSecureChannel;
-    private readonly ILogger<DeviceProxy> _logger;
-
+    
     private int _counter = RetryAmount;
     private DateTime _lastValidReply = DateTime.MinValue;
-
     private CommandData _retryCommand;
 
     /// <summary>
@@ -33,12 +27,9 @@ internal class DeviceProxy : IComparable<DeviceProxy>
     /// <param name="useCrc">Specifies whether to use CRC (Cyclic Redundancy Check) for message validation.</param>
     /// <param name="useSecureChannel">Specifies whether to use a secure channel for communication.</param>
     /// <param name="secureChannelKey">The key used for securing the communication channel.</param>
-    /// <param name="logger">The logger used for logging purposes.</param>
-    public DeviceProxy(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null,
-        ILogger<DeviceProxy> logger = null)
+    public DeviceProxy(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
     {
         _useSecureChannel = useSecureChannel;
-        _logger = logger;
 
         Address = address;
         MessageControl = new Control(0, useCrc, useSecureChannel);
@@ -49,7 +40,7 @@ internal class DeviceProxy : IComparable<DeviceProxy>
             
             IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
 
-            MessageSecureChannel = new ACUMessageSecureChannel(new SecurityContext(secureChannelKey));
+            MessageSecureChannel = new ACUMessageSecureChannel(new SecurityContext(SecureChannelKey));
         }
         else
         {
@@ -71,6 +62,8 @@ internal class DeviceProxy : IComparable<DeviceProxy>
 
     public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
                                (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
+    
+    public IMessageSecureChannel MessageSecureChannel { get; }
 
     internal bool IsSendingMultipartMessage { get; set; }
 
@@ -84,7 +77,7 @@ internal class DeviceProxy : IComparable<DeviceProxy>
     /// Has one or more commands waiting in the queue
     /// </summary>
     internal bool HasQueuedCommand => _commands.Any();
-
+    
     /// <inheritdoc />
     public int CompareTo(DeviceProxy other)
     {

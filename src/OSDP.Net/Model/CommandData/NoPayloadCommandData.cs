@@ -37,7 +37,12 @@ internal class NoPayloadCommandData : CommandData
     public override CommandType CommandType { get; }
 
     /// <inheritdoc />
-    internal override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithNoDataSecurity;
+    public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithNoDataSecurity;
+
+    /// <inheritdoc />
+    public override void CustomMessageUpdate(Span<byte> messageBuffer)
+    {
+    }
 
     /// <inheritdoc />
     public override byte[] BuildData()

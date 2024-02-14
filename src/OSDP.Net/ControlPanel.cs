@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.PanelCommands.DeviceDiscover;
@@ -163,11 +162,11 @@ namespace OSDP.Net
         /// Send a custom command for testing.
         /// </summary>
         /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+        /// <param name="address">Address assigned to the device.</param>
         /// <param name="command">The custom command to send.</param>
-        public async Task SendCustomCommand(Guid connectionId, Command command)
+        public async Task SendCustomCommand(Guid connectionId, byte address, CommandData command)
         {
-            // TODO
-            //await SendCommand(connectionId, command).ConfigureAwait(false);
+            await SendCommand(connectionId, address, command).ConfigureAwait(false);
         }
 
         /// <summary>Request to get an ID Report from the PD.</summary>

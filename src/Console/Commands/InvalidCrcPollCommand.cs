@@ -1,37 +1,35 @@
 using System;
+using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
+using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model.CommandData;
 
 namespace Console.Commands
 {
     /// <summary>
     /// Change the CRC on a poll command
     /// </summary>
-    public class InvalidCrcPollCommand : Command
+    public class InvalidCrcPollCommand : CommandData
     {
-        public InvalidCrcPollCommand(byte address)
-        {
-            Address = address;
-        }
+        /// <inheritdoc />
+        public override byte Code => (byte)CommandType;
+        
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.Poll;
 
-        protected override byte CommandCode => 0x60;
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithNoDataSecurity;
 
-        protected override ReadOnlySpan<byte> SecurityControlBlock()
-        {
-            return new byte[]
-            {
-                0x02,
-                0x15
-            };
-        }
-
-        protected override void CustomCommandUpdate(Span<byte> commandBuffer)
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> commandBuffer)
         {
             commandBuffer[^1] = (byte)(commandBuffer[^1] + 1);
         }
 
-        protected override ReadOnlySpan<byte> Data()
+        /// <inheritdoc />
+        public override byte[] BuildData()
         {
-            return ReadOnlySpan<byte>.Empty;
+            return Array.Empty<byte>();
         }
     }
 }

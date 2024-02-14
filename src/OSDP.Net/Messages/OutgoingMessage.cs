@@ -90,6 +90,8 @@ internal class OutgoingMessage : Message
                 $"Invalid processing of reply data, expected length {currentLength}, actual length {buffer.Length}");
         }
 
+        PayloadData.CustomMessageUpdate(buffer);
+
         // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
         // accomplished by sending a character with all bits set to 1. The driver byte is required by
         // converters and multiplexers to sense when line is idle.

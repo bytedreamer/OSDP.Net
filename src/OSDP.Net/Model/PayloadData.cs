@@ -20,6 +20,8 @@ namespace OSDP.Net.Model
         
         public abstract byte Code { get; }
 
+        public abstract void CustomMessageUpdate(Span<byte> messageBuffer);
+
         /// <inheritdoc />
         public override string ToString()
         {
