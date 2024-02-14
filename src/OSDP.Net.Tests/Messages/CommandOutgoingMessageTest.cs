@@ -9,11 +9,11 @@ using OutgoingMessage = OSDP.Net.Messages.OutgoingMessage;
 namespace OSDP.Net.Tests.Messages;
 
 [TestFixture]
-public class CommandOutgoingMessageTest
+internal class CommandOutgoingMessageTest
 {
     [TestCaseSource(typeof(CommunicationConfigurationBuildMessageTestClass),
         nameof(CommunicationConfigurationBuildMessageTestClass.TestCases))]
-    internal string CommunicationConfigurationBuildMessage_TestCases(DeviceProxy device)
+    public string CommunicationConfigurationBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
 
@@ -24,7 +24,7 @@ public class CommandOutgoingMessageTest
             outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class CommunicationConfigurationBuildMessageTestClass
+    public class CommunicationConfigurationBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -42,7 +42,7 @@ public class CommandOutgoingMessageTest
 
     [TestCaseSource(typeof(DeviceCapabilitiesBuildMessageTestClass),
         nameof(DeviceCapabilitiesBuildMessageTestClass.TestCases))]
-    internal string DeviceCapabilitiesBuildMessage_TestCases(DeviceProxy device)
+    public string DeviceCapabilitiesBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
 
@@ -53,7 +53,7 @@ public class CommandOutgoingMessageTest
             outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class DeviceCapabilitiesBuildMessageTestClass
+    public class DeviceCapabilitiesBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -71,7 +71,7 @@ public class CommandOutgoingMessageTest
 
     [TestCaseSource(typeof(EncryptionKeyConfigurationBuildMessageTestClass),
         nameof(EncryptionKeyConfigurationBuildMessageTestClass.TestCases))]
-    internal string EncryptionKeyConfigurationBuildMessage_TestCases(DeviceProxy device)
+    public string EncryptionKeyConfigurationBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
 
@@ -85,7 +85,7 @@ public class CommandOutgoingMessageTest
         return BitConverter.ToString(outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class EncryptionKeyConfigurationBuildMessageTestClass
+    public class EncryptionKeyConfigurationBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -102,7 +102,7 @@ public class CommandOutgoingMessageTest
     }
 
     [TestCaseSource(typeof(FileTransferBuildMessageTestClass), nameof(FileTransferBuildMessageTestClass.TestCases))]
-    internal string FileTransferBuildMessage_TestCases(DeviceProxy device)
+    public string FileTransferBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
 
@@ -112,7 +112,7 @@ public class CommandOutgoingMessageTest
         return BitConverter.ToString(outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class FileTransferBuildMessageTestClass
+    public class FileTransferBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -129,7 +129,7 @@ public class CommandOutgoingMessageTest
     }
 
     [TestCaseSource(typeof(GetPIVDataBuildMessageTestDataClass), nameof(GetPIVDataBuildMessageTestDataClass.TestCases))]
-    internal string GetPIVDataBuildMessage_TestCases(DeviceProxy device)
+    public string GetPIVDataBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
 
@@ -139,7 +139,7 @@ public class CommandOutgoingMessageTest
         return BitConverter.ToString(outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class GetPIVDataBuildMessageTestDataClass
+    public class GetPIVDataBuildMessageTestDataClass
     {
         public static IEnumerable TestCases
         {
@@ -156,7 +156,7 @@ public class CommandOutgoingMessageTest
     }
     
     [TestCaseSource(typeof(IdReportBuildMessageTestClass), nameof(IdReportBuildMessageTestClass.TestCases))]
-    internal string IdReportBuildMessage_TestCases(DeviceProxy device)
+    public string IdReportBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
         
@@ -167,7 +167,7 @@ public class CommandOutgoingMessageTest
             outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class IdReportBuildMessageTestClass
+    public class IdReportBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -184,7 +184,7 @@ public class CommandOutgoingMessageTest
     }
     
     [TestCaseSource(typeof(InputStatusBuildMessageTestClass), nameof(InputStatusBuildMessageTestClass.TestCases))]
-    internal string InputStatusBuildMessage_TestCases(DeviceProxy device)
+    public string InputStatusBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
         
@@ -195,7 +195,7 @@ public class CommandOutgoingMessageTest
             outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class InputStatusBuildMessageTestClass
+    public class InputStatusBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -212,7 +212,7 @@ public class CommandOutgoingMessageTest
     }
     
     [TestCaseSource(typeof(LocalStatusBuildMessageTestClass), nameof(LocalStatusBuildMessageTestClass.TestCases))]
-    internal string LocalStatusBuildMessage_TestCases(DeviceProxy device)
+    public string LocalStatusBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
         
@@ -223,7 +223,7 @@ public class CommandOutgoingMessageTest
             outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class LocalStatusBuildMessageTestClass
+    public class LocalStatusBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -240,7 +240,7 @@ public class CommandOutgoingMessageTest
     }
     
     [TestCaseSource(typeof(ManufacturerSpecificBuildMessageTestClass), nameof(ManufacturerSpecificBuildMessageTestClass.TestCases))]
-    internal string ManufacturerSpecificBuildMessage_TestCases(DeviceProxy device)
+    public string ManufacturerSpecificBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
         
@@ -251,7 +251,7 @@ public class CommandOutgoingMessageTest
             outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class ManufacturerSpecificBuildMessageTestClass
+    public class ManufacturerSpecificBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -268,7 +268,7 @@ public class CommandOutgoingMessageTest
     }
 
     [TestCaseSource(typeof(OutputControlBuildMessageTestClass), nameof(OutputControlBuildMessageTestClass.TestCases))]
-    internal string OutputControlBuildMessage_TestCases(DeviceProxy device)
+    public string OutputControlBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
 
@@ -283,7 +283,7 @@ public class CommandOutgoingMessageTest
             outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class OutputControlBuildMessageTestClass
+    public class OutputControlBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -300,7 +300,7 @@ public class CommandOutgoingMessageTest
     }
     
     [TestCaseSource(typeof(OutputStatusBuildMessageTestClass), nameof(OutputStatusBuildMessageTestClass.TestCases))]
-    internal string OutputStatusBuildMessage_TestCases(DeviceProxy device)
+    public string OutputStatusBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
         
@@ -311,7 +311,7 @@ public class CommandOutgoingMessageTest
             outgoingMessage.BuildMessage(CreateSecureChannel(device.UseSecureChannel)));
     }
 
-    internal class OutputStatusBuildMessageTestClass
+    public class OutputStatusBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
@@ -328,7 +328,7 @@ public class CommandOutgoingMessageTest
     }
 
     [TestCaseSource(typeof(PollBuildMessageTestClass), nameof(PollBuildMessageTestClass.TestCases))]
-    internal string PollBuildMessage_TestCases(DeviceProxy device)
+    public string PollBuildMessage_TestCases(DeviceProxy device)
     {
         device.MessageControl.IncrementSequence(1);
 
@@ -340,7 +340,7 @@ public class CommandOutgoingMessageTest
     }
 
 
-    internal class PollBuildMessageTestClass
+    public class PollBuildMessageTestClass
     {
         public static IEnumerable TestCases
         {
