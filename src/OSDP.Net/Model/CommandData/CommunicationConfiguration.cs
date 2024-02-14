@@ -35,7 +35,7 @@ public class CommunicationConfiguration : CommandData
     public override CommandType CommandType => CommandType.CommunicationSet;
 
     /// <inheritdoc />
-    public override byte MessageType => (byte)CommandType;
+    public override byte Code => (byte)CommandType;
         
     /// <inheritdoc />
     internal override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;

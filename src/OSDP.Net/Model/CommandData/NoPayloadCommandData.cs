@@ -12,24 +12,26 @@ internal class NoPayloadCommandData : CommandData
 {
     private readonly CommandType[] _validCommandTypes =
     {
+        CommandType.Abort,
         CommandType.InputStatus,
         CommandType.LocalStatus,
         CommandType.OutputStatus,
-        CommandType.Poll
+        CommandType.Poll,
+        CommandType.ReaderStatus
     };
 
     public NoPayloadCommandData(CommandType commandType)
     {
         if (!_validCommandTypes.Contains(commandType))
         {
-            throw new Exception("Invalid command type for a sending a payload with no data.");
+            throw new ArgumentException("Invalid command type for a sending a payload with no data.");
         }
 
         CommandType = commandType;
     }
 
     /// <inheritdoc />
-    public override byte MessageType => (byte)CommandType;
+    public override byte Code => (byte)CommandType;
 
     /// <inheritdoc />
     public override CommandType CommandType { get; }

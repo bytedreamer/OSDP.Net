@@ -23,7 +23,7 @@ public class Device : IDisposable
     private DateTime _lastValidReceivedCommand = DateTime.MinValue;
     private bool _isDeviceListening;
 
-    public Device(ILogger<DeviceProxy> logger = null)
+    public Device(ILogger<Device> logger = null)
     {
         _logger = logger;
     }

@@ -94,7 +94,7 @@ namespace OSDP.Net.Model.CommandData
         public override CommandType CommandType => CommandType.PivData;
 
         /// <inheritdoc />
-        public override byte MessageType => (byte)CommandType;
+        public override byte Code => (byte)CommandType;
         
         /// <inheritdoc />
         internal override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;

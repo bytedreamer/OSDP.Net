@@ -42,7 +42,7 @@ namespace OSDP.Net.Model.CommandData
         }
 
         /// <inheritdoc />
-        public override byte MessageType => (byte)CommandType;
+        public override byte Code => (byte)CommandType;
 
         /// <inheritdoc />
         public override byte[] BuildData()

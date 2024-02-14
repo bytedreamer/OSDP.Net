@@ -3,21 +3,18 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using OSDP.Net.Messages;
 using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
-using OSDP.Net.Model;
-using OSDP.Net.Model.ReplyData;
+using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net;
 
-/// <summary>
-/// 
-/// </summary>
-public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
+internal class DeviceProxy : IComparable<DeviceProxy>
 {
     private const int RetryAmount = 2;
 
-    private readonly ConcurrentQueue<Command> _commands = new();
+    private readonly ConcurrentQueue<CommandData> _commands = new();
 
     public IMessageSecureChannel MessageSecureChannel { get; }
     
@@ -27,7 +24,7 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
     private int _counter = RetryAmount;
     private DateTime _lastValidReply = DateTime.MinValue;
 
-    private Command _retryCommand;
+    private CommandData _retryCommand;
 
     /// <summary>
     /// Represents a device with a specific address.
@@ -53,6 +50,10 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
             IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
 
             MessageSecureChannel = new ACUMessageSecureChannel(new SecurityContext(secureChannelKey));
+        }
+        else
+        {
+            MessageSecureChannel = new ACUMessageSecureChannel(new SecurityContext());
         }
     }
 
@@ -84,8 +85,6 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
     /// </summary>
     internal bool HasQueuedCommand => _commands.Any();
 
-    public void Dispose() {}
-
     /// <inheritdoc />
     public int CompareTo(DeviceProxy other)
     {
@@ -99,13 +98,13 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
     /// </summary>
     /// <param name="isPolling">If false, only send commands in the queue</param>
     /// <returns>The next command always if polling, could be null if not polling</returns>
-    internal Command GetNextCommandData(bool isPolling)
+    internal OutgoingMessage GetNextCommandData(bool isPolling)
     {
         if (_retryCommand != null)
         {
             var saveCommand = _retryCommand;
             _retryCommand = null;
-            return saveCommand;
+            return new OutgoingMessage(Address, MessageControl, saveCommand);
         }
             
         if (isPolling)
@@ -113,30 +112,31 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
             // Don't send clear text polling if using secure channel
             if (MessageControl.Sequence == 0 && !UseSecureChannel)
             {
-                return new PollCommand(Address);
+                return new OutgoingMessage(Address, MessageControl, new NoPayloadCommandData(CommandType.Poll));
             }
                 
             if (UseSecureChannel && !MessageSecureChannel.IsInitialized)
             {
-                return new SecurityInitializationRequestCommand(Address,
-                    MessageSecureChannel.ServerRandomNumber, IsDefaultKey);
+                return new OutgoingMessage(Address, MessageControl,
+                    new SecurityInitialization(MessageSecureChannel.ServerRandomNumber, IsDefaultKey));
             }
 
             if (UseSecureChannel && !MessageSecureChannel.IsSecurityEstablished)
             {
-                return new ServerCryptogramCommand(Address, MessageSecureChannel.ServerCryptogram, IsDefaultKey);
+                return new OutgoingMessage(Address, MessageControl,
+                    new ServerCryptogramData(MessageSecureChannel.ServerCryptogram, IsDefaultKey));
             }
         }
 
         if (!_commands.TryDequeue(out var command) && isPolling)
         {
-            return new PollCommand(Address);
+            return new OutgoingMessage(Address, MessageControl, new NoPayloadCommandData(CommandType.Poll));
         }
 
-        return command;
+        return new OutgoingMessage(Address, MessageControl, command);
     }
 
-    internal void SendCommand(Command command)
+    internal void SendCommand(CommandData command)
     {
         _commands.Enqueue(command);
     }
@@ -145,7 +145,7 @@ public class DeviceProxy : IComparable<DeviceProxy>,IDisposable
     /// Store command for retry
     /// </summary>
     /// <param name="command"></param>
-    internal void RetryCommand(Command command)
+    internal void RetryCommand(CommandData command)
     {
         if (_counter-- > 0)
         {

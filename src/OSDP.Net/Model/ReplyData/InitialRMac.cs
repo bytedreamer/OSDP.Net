@@ -23,7 +23,7 @@ namespace OSDP.Net.Model.ReplyData
         public byte[] RMac { get; }
 
         /// <inheritdoc/>
-        public override byte MessageType => (byte)ReplyType.InitialRMac;
+        public override byte Code => (byte)ReplyType.InitialRMac;
 
         /// <inheritdoc/>
         public override byte[] BuildData()

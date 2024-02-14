@@ -47,7 +47,7 @@ public class RawCardData : PayloadData
     public BitArray Data { get; }
     
     /// <inheritdoc/>
-    public override byte MessageType => (byte)ReplyType.RawReaderData;
+    public override byte Code => (byte)ReplyType.RawReaderData;
 
     /// <summary>
     /// Parses the data.

@@ -9,28 +9,33 @@ namespace OSDP.Net.Messages;
 internal class OutgoingMessage : Message
 {
     private const int StartOfMessageLength = 5;
-    private readonly PayloadData _data;
 
     internal OutgoingMessage(byte address, Control controlBlock, PayloadData data)
     {
         Address = address;
         ControlBlock = controlBlock;
-        _data = data;
+        PayloadData = data;
     }
 
     internal Control ControlBlock { get; }
+
+    internal byte Code => PayloadData.Code;
+    
+    internal PayloadData PayloadData { get; }
     
     internal byte[] BuildMessage(IMessageSecureChannel secureChannel)
     {
-        var payload = _data.BuildData();
+        var payload = PayloadData.BuildData();
         if (secureChannel.IsSecurityEstablished && payload.Length > 0)
         {
             payload = PadTheData(payload, 16, FirstPaddingByte);
         }
 
         bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished ||
-                                      _data.MessageType == (byte)ReplyType.CrypticData ||
-                                      _data.MessageType == (byte)ReplyType.InitialRMac;
+                                      PayloadData.Code == (byte)CommandType.SessionChallenge ||
+                                      PayloadData.Code == (byte)CommandType.ServerCryptogram ||
+                                      PayloadData.Code == (byte)ReplyType.CrypticData ||
+                                      PayloadData.Code == (byte)ReplyType.InitialRMac;
         var securityBlock = isSecurityBlockPresent ? BuildSecurityBlock(payload) : Array.Empty<byte>();
         int headerLength = StartOfMessageLength + securityBlock.Length + sizeof(ReplyType);
         int totalLength = headerLength + payload.Length +
@@ -51,7 +56,7 @@ internal class OutgoingMessage : Message
             currentLength += securityBlock.Length;
         }
         
-        buffer[currentLength++] = _data.MessageType;
+        buffer[currentLength++] = PayloadData.Code;
 
         if (secureChannel.IsSecurityEstablished)
         {
@@ -97,16 +102,16 @@ internal class OutgoingMessage : Message
 
     private ReadOnlySpan<byte> BuildSecurityBlock(byte[] payload)
     {
-        if (_data is CommandData data)
+        if (PayloadData is CommandData data)
         {
             return data.SecurityControlBlock();
         }
 
         var buffer = new byte[3];
         buffer[0] = 0x03;
-        buffer[1] = _data.MessageType == (byte)ReplyType.CrypticData
+        buffer[1] = PayloadData.Code == (byte)ReplyType.CrypticData
             ? (byte)SecurityBlockType.SecureConnectionSequenceStep2
-            : _data.MessageType == (byte)ReplyType.InitialRMac
+            : PayloadData.Code == (byte)ReplyType.InitialRMac
                 ? (byte)SecurityBlockType.SecureConnectionSequenceStep4
                 : payload.Length == 0
                     ? (byte)SecurityBlockType.ReplyMessageWithNoDataSecurity
@@ -121,6 +126,6 @@ internal class OutgoingMessage : Message
     
     protected override ReadOnlySpan<byte> Data()
     {
-        return _data.BuildData();
+        return PayloadData.BuildData();
     }
 }

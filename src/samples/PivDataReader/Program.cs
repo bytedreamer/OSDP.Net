@@ -39,7 +39,7 @@ internal class Program
 
             if (eventArgs.IsConnected)
             {
-                await panel.ACUReceivedSize(_connectionId, deviceAddress, maximumReceiveSize);
+                await panel.ACUReceiveSize(_connectionId, deviceAddress, maximumReceiveSize);
             }
         };
         panel.RawCardDataReplyReceived += (_, eventArgs) =>

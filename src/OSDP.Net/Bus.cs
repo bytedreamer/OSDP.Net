@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
+using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tracing;
 #if NETSTANDARD2_0
@@ -101,10 +101,11 @@ namespace OSDP.Net
         /// <summary>
         /// Send a command to a device
         /// </summary>
-        /// <param name="command">Details about the command</param>
-        public void SendCommand(Command command)
+        /// <param name="address">Address of the device to send the command</param>
+        /// <param name="command">The data for the command</param>
+        public void SendCommand(byte address, CommandData command)
         {
-            var foundDevice = _configuredDevices.First(device => device.Address == command.Address);            
+            var foundDevice = _configuredDevices.First(device => device.Address == address);            
             foundDevice.SendCommand(command);
             _commandAvailableEvent.Set();
         }
@@ -145,8 +146,6 @@ namespace OSDP.Net
                 if (foundDevice == null) return;
                 
                 _configuredDevices.Remove(foundDevice);
-                
-                foundDevice.Dispose();
             }
         }
 
@@ -258,8 +257,8 @@ namespace OSDP.Net
                         continue;
                     }
                     
-                    var command = device.GetNextCommandData(IsPolling);
-                    if (command == null || WaitingForNextMultiMessage(command, device.IsSendingMultipartMessage))
+                    var commandMessage = device.GetNextCommandData(IsPolling);
+                    if (commandMessage == null || WaitingForNextMultiMessage(commandMessage.Code, device.IsSendingMultipartMessage))
                     {
                         continue;
                     }
@@ -280,18 +279,18 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, $"[{Connection}] Error while notifying connection status for address {command.Address}");
+                        _logger?.LogError(exception, $"[{Connection}] Error while notifying connection status for address {commandMessage.Address}");
                     }
 
                     try
                     {
-                        reply = await SendCommandAndReceiveReply(command, device, cancellationToken).ConfigureAwait(false);
+                        reply = await SendCommandAndReceiveReply(commandMessage, device, cancellationToken).ConfigureAwait(false);
 
                         // Prevent plain text message replies when secure channel has been established
                         // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
                         // Workaround for KeySet command sending back an clear text Ack
-                        if (reply.Message.Type != (byte)ReplyType.Busy && reply.Message.Type != (byte)ReplyType.Nak && device.UseSecureChannel &&
-                            device.IsSecurityEstablished && !reply.Message.IsSecureMessage && command.Type != (byte)CommandType.KeySet)
+                        if (reply.ReplyMessage.Type != (byte)ReplyType.Busy && reply.ReplyMessage.Type != (byte)ReplyType.Nak && device.UseSecureChannel &&
+                            device.IsSecurityEstablished && !reply.ReplyMessage.IsSecureMessage && commandMessage.Code != (byte)CommandType.KeySet)
                         {
                             _logger?.LogWarning(
                                 "A plain text message was received when the secure channel had been established");
@@ -305,12 +304,12 @@ namespace OSDP.Net
                         switch (IsPolling)
                         {
                             // Make sure the security is reset properly if reader goes offline
-                            case true when device.IsSecurityEstablished && !IsOnline(command.Address):
+                            case true when device.IsSecurityEstablished && !IsOnline(commandMessage.Address):
                                 ResetDevice(device);
                                 break;
                             default:
-                                _logger?.LogDebug($"[{Connection}] Retrying command {command} on connection {Id} because \"{exception.Message}\".");
-                                device.RetryCommand(command);
+                                _logger?.LogDebug($"[{Connection}] Retrying command {commandMessage} on connection {Id} because \"{exception.Message}\".");
+                                device.RetryCommand(commandMessage.PayloadData as CommandData);
                                 break;
                         }
 
@@ -321,7 +320,7 @@ namespace OSDP.Net
                         if (!cancellationToken.IsCancellationRequested)
                         {
                             _logger?.LogError(exception,
-                                $"[{Connection}] Error while sending command {command} to address {command.Address}. Connection {Id}");
+                                $"[{Connection}] Error while sending command {commandMessage} to address {commandMessage.Address}. Connection {Id}");
                         }
 
                         continue;
@@ -333,7 +332,7 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, $"[{Connection}] Error while processing reply {reply} from address {reply.Message.Address}");
+                        _logger?.LogError(exception, $"[{Connection}] Error while processing reply {reply} from address {reply.ReplyMessage.Address}");
                         continue;
                     }
 
@@ -352,9 +351,9 @@ namespace OSDP.Net
             }
         }
 
-        private static bool WaitingForNextMultiMessage(Command command, bool sendingMultiMessage)
+        private static bool WaitingForNextMultiMessage(byte messageCode, bool sendingMultiMessage)
         {
-            return sendingMultiMessage && command is not FileTransferCommand;
+            return sendingMultiMessage && messageCode == (byte)CommandType.FileTransfer;
         }
 
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
@@ -391,7 +390,7 @@ namespace OSDP.Net
         private void ProcessReply(ReplyTracker reply, DeviceProxy device)
         {
             // Request from PD to reset connection
-            if (device.IsConnected && reply.Message.ControlBlock.Sequence == 0)
+            if (device.IsConnected && reply.ReplyMessage.ControlBlock.Sequence == 0)
             {
                 ResetDevice(device);
                 return;
@@ -402,45 +401,45 @@ namespace OSDP.Net
                 return;
             }
 
-            if (reply.Message.IsSecureMessage)
+            if (reply.ReplyMessage.IsSecureMessage)
             {
-                if (!reply.Message.IsValidMac)
+                if (!reply.ReplyMessage.IsValidMac)
                 {
                     ResetDevice(device);
                     return;
                 }
             }
 
-            if (reply.Message.Type != (byte)ReplyType.Busy)
+            if (reply.ReplyMessage.Type != (byte)ReplyType.Busy)
             {
-                device.ValidReplyHasBeenReceived(reply.Message.Sequence);
+                device.ValidReplyHasBeenReceived(reply.ReplyMessage.Sequence);
             }
             else
             {
                 return;
             }
 
-            if (reply.Message.Type == (byte)ReplyType.Nak)
+            if (reply.ReplyMessage.Type == (byte)ReplyType.Nak)
             {
-                var errorCode = (ErrorCode)reply.Message.Payload.First();
+                var errorCode = (ErrorCode)reply.ReplyMessage.Payload.First();
                 if (device.IsSecurityEstablished &&
                     errorCode is ErrorCode.DoesNotSupportSecurityBlock or ErrorCode.CommunicationSecurityNotMet
                         or ErrorCode.UnableToProcessCommand ||
-                    errorCode == ErrorCode.UnexpectedSequenceNumber && reply.Message.Sequence > 0)
+                    errorCode == ErrorCode.UnexpectedSequenceNumber && reply.ReplyMessage.Sequence > 0)
                 {
                     ResetDevice(device);
                 }
             }
 
-            switch ((ReplyType)reply.Message.Type)
+            switch ((ReplyType)reply.ReplyMessage.Type)
             {
                 case ReplyType.CrypticData:
-                    device.InitializeSecureChannel(reply.Message.Payload);
+                    device.InitializeSecureChannel(reply.ReplyMessage.Payload);
                     break;
                 case ReplyType.InitialRMac:
                     if (!reply.ValidateSecureChannelEstablishment())
                     {
-                        _logger?.LogError($"[{Connection}] Cryptogram not accepted by address {reply.Message.Address}");
+                        _logger?.LogError($"[{Connection}] Cryptogram not accepted by address {reply.ReplyMessage.Address}");
                     }
                     break;
             }
@@ -494,38 +493,30 @@ namespace OSDP.Net
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
-        private async Task<ReplyTracker> SendCommandAndReceiveReply(Command command, DeviceProxy device, CancellationToken cancellationToken)
+        private async Task<ReplyTracker> SendCommandAndReceiveReply(OutgoingMessage command, DeviceProxy device, CancellationToken cancellationToken)
         {
             byte[] commandData;
             try
             {
-                commandData = command.BuildCommand(device);
+                commandData = command.BuildMessage(device.MessageSecureChannel);
             }
             catch (Exception exception)
             {
                 _logger?.LogError(exception, $"[{Connection}] Error while building command {command}");
                 throw;
             }
-
-            var buffer = new byte[commandData.Length + 1];
-
-            // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
-            // accomplished by sending a character with all bits set to 1. The driver byte is required by
-            // converters and multiplexers to sense when line is idle.
-            buffer[0] = DriverByte;
-            Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
  
-            await Connection.WriteAsync(buffer).ConfigureAwait(false);
+            await Connection.WriteAsync(commandData).ConfigureAwait(false);
 
-            _tracer(new TraceEntry(TraceDirection.Output, Id, commandData));
+            _tracer(new TraceEntry(TraceDirection.Output, Id, commandData.Skip(1).ToArray()));
             
             using var delayTime = new AutoResetEvent(false);
-            delayTime.WaitOne(IdleLineDelay(Connection, buffer.Length));
+            delayTime.WaitOne(IdleLineDelay(Connection, commandData.Length));
 
             return await ReceiveReply(command, device, cancellationToken);
         }
 
-        private async Task<ReplyTracker> ReceiveReply(Command command, DeviceProxy device, CancellationToken cancellationToken)
+        private async Task<ReplyTracker> ReceiveReply(OutgoingMessage command, DeviceProxy device, CancellationToken cancellationToken)
         {
             var replyBuffer = new Collection<byte>();
 
