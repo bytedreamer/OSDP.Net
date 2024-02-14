@@ -1,5 +1,4 @@
 ﻿using System;
-using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model;
 using OSDP.Net.Model.CommandData;

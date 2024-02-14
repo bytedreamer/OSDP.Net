@@ -4,7 +4,6 @@ using NUnit.Framework;
 using OSDP.Net.Messages;
 using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model.CommandData;
-using OutgoingMessage = OSDP.Net.Messages.OutgoingMessage;
 
 namespace OSDP.Net.Tests.Messages;
 

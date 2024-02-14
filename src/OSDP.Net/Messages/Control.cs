@@ -1,4 +1,4 @@
-namespace OSDP.Net.Messages.ACU
+namespace OSDP.Net.Messages
 {
     internal class Control
     {

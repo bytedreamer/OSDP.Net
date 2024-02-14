@@ -2,11 +2,12 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
 using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model.CommandData;
 
+[assembly: InternalsVisibleTo("OSDP.Net.Tests")]
 namespace OSDP.Net;
 
 internal class DeviceProxy : IComparable<DeviceProxy>
