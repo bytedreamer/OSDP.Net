@@ -14,6 +14,7 @@ public class Packet
 {
     private readonly byte[] _rawPayloadData;
     private readonly byte[] _rawData;
+    private readonly bool _isUsingDefaultKey;
 
     internal Packet(IncomingMessage message)
     {
@@ -33,6 +34,7 @@ public class Packet
         IsUsingCrc = message.IsUsingCrc;
         _rawPayloadData = message.Payload;
         _rawData = message.OriginalMessageData.ToArray();
+        _isUsingDefaultKey = message.IsUsingDefaultKey;
     }
     
     internal IncomingMessage IncomingMessage { get; }
@@ -170,7 +172,7 @@ public class Packet
             case Messages.ReplyType.PIVData:
                 return DataFragmentResponse.ParseData(RawPayloadData);
             case Messages.ReplyType.ResponseToChallenge:
-                return ChallengeResponse.ParseData(RawPayloadData);
+                return ChallengeResponse.ParseData(RawPayloadData, _isUsingDefaultKey);
             case Messages.ReplyType.ManufactureSpecific:
                 return ReplyData.ManufacturerSpecific.ParseData(RawPayloadData);
             case Messages.ReplyType.ExtendedRead:

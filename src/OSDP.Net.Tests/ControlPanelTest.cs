@@ -8,6 +8,7 @@ using Moq;
 using NUnit.Framework;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tests.Utilities;
@@ -264,6 +265,7 @@ namespace OSDP.Net.Tests
                 {
                     _parent = parent;
                     _command = command;
+                    
                 }
 
                 public void Reply(byte[] replyBytes)
@@ -288,7 +290,7 @@ namespace OSDP.Net.Tests
 
                 private static bool IsMatchingCommandType(byte[] messageData, byte commandType)
                 {
-                    var receivedCommand = new IncomingMessage(messageData.Skip(1).ToArray(), null);
+                    var receivedCommand = new IncomingMessage(messageData.Skip(1).ToArray(), new ACUMessageSecureChannel());
                     return receivedCommand.Type == commandType;
                 }
 

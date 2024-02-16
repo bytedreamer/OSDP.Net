@@ -1,5 +1,6 @@
 ﻿using System;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -12,9 +13,10 @@ namespace OSDP.Net.Model.ReplyData
         /// Creates a new instance of InitialRMac
         /// </summary>
         /// <param name="rmac"></param>
-        public InitialRMac(byte[] rmac)
+        public InitialRMac(byte[] rmac, bool isDefaultKey)
         {
             RMac = rmac;
+            IsDefaultKey = isDefaultKey;
         }
 
         /// <summary>
@@ -22,12 +24,25 @@ namespace OSDP.Net.Model.ReplyData
         /// command message
         /// </summary>
         public byte[] RMac { get; }
+        
+        public bool IsDefaultKey { get; }
 
         /// <inheritdoc/>
         public override byte Code => (byte)ReplyType.InitialRMac;
         
         /// <inheritdoc />
         public override bool IsSecurityInitialization => true;
+        
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return new byte[]
+            {
+                0x03,
+                (byte)SecurityBlockType.SecureConnectionSequenceStep2,
+                (byte)(IsDefaultKey ? 0x00 : 0x01)
+            };
+        }
 
         /// <inheritdoc/>
         public override byte[] BuildData()

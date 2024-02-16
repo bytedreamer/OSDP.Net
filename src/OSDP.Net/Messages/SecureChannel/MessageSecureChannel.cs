@@ -57,6 +57,9 @@ public abstract class MessageSecureChannel : IMessageSecureChannel
     public byte[] ServerCryptogram => Context.ServerCryptogram;
 
     /// <inheritdoc/>
+    public bool IsUsingDefaultKey => Context.IsUsingDefaultKey;
+
+    /// <inheritdoc/>
     public abstract byte[] DecodePayload(byte[] payload);
 
     /// <inheritdoc/>

@@ -1,7 +1,6 @@
 ﻿using System;
 using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model;
-using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages;
 
@@ -21,7 +20,7 @@ internal class OutgoingMessage : Message
     internal byte Code => PayloadData.Code;
     
     internal PayloadData PayloadData { get; }
-    
+
     internal byte[] BuildMessage(IMessageSecureChannel secureChannel)
     {
         var payload = PayloadData.BuildData();
@@ -31,8 +30,8 @@ internal class OutgoingMessage : Message
         }
 
         bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished || PayloadData.IsSecurityInitialization;
-        var securityBlock = isSecurityBlockPresent ? BuildSecurityBlock(payload) : Array.Empty<byte>();
-        
+        var securityBlock = isSecurityBlockPresent ? PayloadData.SecurityControlBlock() : Array.Empty<byte>();
+
         int headerLength = StartOfMessageLength + securityBlock.Length + sizeof(ReplyType);
         int totalLength = headerLength + payload.Length +
                           (ControlBlock.UseCrc ? 2 : 1) +
@@ -51,7 +50,7 @@ internal class OutgoingMessage : Message
             securityBlock.CopyTo(buffer.AsSpan(currentLength));
             currentLength += securityBlock.Length;
         }
-        
+
         buffer[currentLength++] = PayloadData.Code;
 
         if (secureChannel.IsSecurityEstablished)
@@ -68,7 +67,7 @@ internal class OutgoingMessage : Message
             payload.CopyTo(buffer, currentLength);
             currentLength += payload.Length;
         }
-        
+
         if (ControlBlock.UseCrc)
         {
             AddCrc(buffer);
@@ -98,30 +97,6 @@ internal class OutgoingMessage : Message
         return messageBuffer;
     }
 
-    private ReadOnlySpan<byte> BuildSecurityBlock(byte[] payload)
-    {
-        if (PayloadData is CommandData data)
-        {
-            return data.SecurityControlBlock();
-        }
-
-        var buffer = new byte[3];
-        buffer[0] = 0x03;
-        buffer[1] = PayloadData.Code == (byte)ReplyType.CrypticData
-            ? (byte)SecurityBlockType.SecureConnectionSequenceStep2
-            : PayloadData.Code == (byte)ReplyType.InitialRMac
-                ? (byte)SecurityBlockType.SecureConnectionSequenceStep4
-                : payload.Length == 0
-                    ? (byte)SecurityBlockType.ReplyMessageWithNoDataSecurity
-                    : (byte)SecurityBlockType.ReplyMessageWithDataSecurity;
-
-        // TODO: How do I determine this properly?? (SCBK vs SCBK-D value)
-        // Is this needed only for establishing secure channel? or do we always need to return it
-        // with every reply?
-        buffer[2] = 0x01;
-        return buffer;
-    }
-    
     protected override ReadOnlySpan<byte> Data()
     {
         return PayloadData.BuildData();

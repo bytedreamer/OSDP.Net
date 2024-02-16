@@ -13,8 +13,6 @@ namespace OSDP.Net.Model.CommandData
         /// Message command code
         /// </summary>
         public abstract CommandType CommandType { get; }
-
-        public abstract ReadOnlySpan<byte> SecurityControlBlock();
         
         protected static T[] SplitData<T>(int size, Func<byte[], T> parseDataFunction, ReadOnlySpan<byte> payloadData)
         {

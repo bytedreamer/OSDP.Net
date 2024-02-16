@@ -22,7 +22,7 @@ public static class PacketDecoding
     /// <param name="data">The byte data of the raw message starting with the SOM byte</param>
     /// <param name="secureChannel"></param>
     /// <returns>The parse data of a packet</returns>
-    public static Packet ParseMessage(ReadOnlySpan<byte> data, IMessageSecureChannel secureChannel = null)
+    public static Packet ParseMessage(ReadOnlySpan<byte> data, IMessageSecureChannel secureChannel)
     {
         var message = new IncomingMessage(data, secureChannel);
         return new Packet(message);

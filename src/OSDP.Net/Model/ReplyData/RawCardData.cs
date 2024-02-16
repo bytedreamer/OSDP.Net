@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData;
 
@@ -48,6 +49,12 @@ public class RawCardData : PayloadData
     
     /// <inheritdoc/>
     public override byte Code => (byte)ReplyType.RawReaderData;
+    
+    /// <inheritdoc/>
+    public override ReadOnlySpan<byte> SecurityControlBlock()
+    {
+        return SecurityBlock.ReplyMessageWithDataSecurity;
+    }
 
     /// <summary>
     /// Parses the data.

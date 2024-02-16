@@ -35,4 +35,13 @@ public static class SecurityBlock
         0x02,
         (byte)SecurityBlockType.CommandMessageWithDataSecurity
     };
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    public static ReadOnlySpan<byte> ReplyMessageWithDataSecurity => new byte[]
+    {
+        0x02,
+        (byte)SecurityBlockType.ReplyMessageWithDataSecurity
+    };
 }

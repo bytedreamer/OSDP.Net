@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -34,6 +35,12 @@ namespace OSDP.Net.Model.ReplyData
         
         /// <inheritdoc/>
         public override byte Code => (byte)ReplyType.PdCapabilitiesReport;
+        
+        /// <inheritdoc/>
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return SecurityBlock.ReplyMessageWithDataSecurity;
+        }
 
         /// <summary>
         /// Gets a specific PD capability

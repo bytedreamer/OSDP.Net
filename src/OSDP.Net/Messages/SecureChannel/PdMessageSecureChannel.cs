@@ -152,7 +152,7 @@ namespace OSDP.Net.Messages.SecureChannel
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
 
             // reply with osdp_CCRYPT, returning PD's Id (cUID), its random number and the client cryptogram
-            return new ChallengeResponse(cUID, rndB, clientCryptogram);
+            return new ChallengeResponse(cUID, rndB, clientCryptogram, Context.IsUsingDefaultKey);
         }
         
         /// <summary>
@@ -184,7 +184,7 @@ namespace OSDP.Net.Messages.SecureChannel
                 crypto.Key = Context.SMac2;
                 Context.RMac = SecurityContext.GenerateKey(crypto, Context.RMac);
 
-                return new InitialRMac(Context.RMac);
+                return new InitialRMac(Context.RMac, Context.IsUsingDefaultKey);
             }
 
             return new Nak(ErrorCode.DoesNotSupportSecurityBlock);

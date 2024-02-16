@@ -14,6 +14,7 @@ namespace OSDP.Net.Messages
     {
         private const ushort MessageHeaderSize = 6;
         private readonly byte[] _originalMessage;
+        private readonly bool _isUsingDefaultKey;
 
         /// <summary>
         /// Creates a new instance of IncomingMessage class
@@ -22,6 +23,8 @@ namespace OSDP.Net.Messages
         /// <param name="channel">Message channel context</param>
         internal IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel)
         {
+            _isUsingDefaultKey = channel.IsUsingDefaultKey;
+            
             // TODO: way too much copying in this code, simplify it.
             _originalMessage = data.ToArray();
 
@@ -106,6 +109,8 @@ namespace OSDP.Net.Messages
         /// local message channel context
         /// </summary>
         public bool IsValidMac { get; }
+
+        public bool IsUsingDefaultKey => _isUsingDefaultKey;
         
         public bool HasSecureData =>
             SecurityBlockType == (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity ||

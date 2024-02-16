@@ -20,6 +20,7 @@ public class SecurityContext
     public SecurityContext(byte[] securityKey = null)
     {
         CreateNewRandomNumber();
+        IsUsingDefaultKey = securityKey != null && securityKey != DefaultKey;
         _securityKey = securityKey ?? DefaultKey;
 
         IsInitialized = false;
@@ -61,6 +62,8 @@ public class SecurityContext
     public byte[] ServerRandomNumber { get; } = new byte[8];
 
     public bool IsInitialized { get; private set; }
+
+    public bool IsUsingDefaultKey { get; private set; }
 
     /// <summary>
     /// Creates a new instance of AES cypher

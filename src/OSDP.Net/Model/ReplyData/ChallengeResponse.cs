@@ -1,5 +1,6 @@
 ﻿using OSDP.Net.Messages;
 using System;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -15,11 +16,12 @@ namespace OSDP.Net.Model.ReplyData
         /// <param name="cUID">PD(Client) ID to send back to ACU</param>
         /// <param name="rndB">PD random number</param>
         /// <param name="cryptogram">PD Cryptogram</param>
-        public ChallengeResponse(byte[] cUID, byte[] rndB, byte[] cryptogram)
+        public ChallengeResponse(byte[] cUID, byte[] rndB, byte[] cryptogram, bool isUsingDefaultKey)
         {
             ClientUID = cUID;
             RndB = rndB;
             Cryptogram = cryptogram;
+            IsUsingDefaultKey = isUsingDefaultKey;
         }
 
         /// <summary>
@@ -37,20 +39,23 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public byte[] Cryptogram { get; }
 
+        public bool IsUsingDefaultKey { get; }
+
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
         /// <returns>An instance of ChallengeResponse representing the message payload</returns>
-        public static ChallengeResponse ParseData(ReadOnlySpan<byte> data)
+        public static ChallengeResponse ParseData(ReadOnlySpan<byte> data, bool isDefaultKey)
         {
             if (data.Length != 32)
             {
                 throw new InvalidPayloadException($"Challenge response must be 32 bytes, received {data.Length}");
             }
-
+            
             return new ChallengeResponse(
                 data.Slice(0, 8).ToArray(),
                 data.Slice(8, 8).ToArray(),
-                data.Slice(16, 16).ToArray()
+                data.Slice(16, 16).ToArray(),
+                isDefaultKey
             );
         }
 
@@ -70,5 +75,16 @@ namespace OSDP.Net.Model.ReplyData
         
         /// <inheritdoc />
         public override bool IsSecurityInitialization => true;
+        
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return new byte[]
+            {
+                0x03,
+                (byte)SecurityBlockType.SecureConnectionSequenceStep2,
+                (byte)(IsUsingDefaultKey ? 0x00 : 0x01)
+            };
+        }
     }
 }

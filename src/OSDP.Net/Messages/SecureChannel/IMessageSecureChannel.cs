@@ -18,6 +18,8 @@ public interface IMessageSecureChannel
     public byte[] ServerRandomNumber { get; }
     
     public byte[] ServerCryptogram { get; }
+    
+    public bool IsUsingDefaultKey { get; }
 
     /// <summary>
     /// Encrypts the payload using the secure channel context. This function can
