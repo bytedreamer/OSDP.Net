@@ -95,7 +95,7 @@ public class Device : IDisposable
     internal virtual OutgoingMessage HandleCommand(IncomingMessage command)
     {
         if (command.IsDataCorrect && Enum.IsDefined(typeof(CommandType), command.Type))
-            _lastValidReceivedCommand = DateTime.Now;
+            _lastValidReceivedCommand = DateTime.UtcNow;
 
         return new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock, (CommandType)command.Type switch
         {
