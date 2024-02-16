@@ -39,12 +39,7 @@ namespace OSDP.Net.Model.CommandData
         
         /// <inheritdoc />
         public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
-        
-        /// <inheritdoc />
-        public override void CustomMessageUpdate(Span<byte> messageBuffer)
-        {
-        }
-        
+ 
         /// <inheritdoc />
         public override byte[] BuildData()
         {

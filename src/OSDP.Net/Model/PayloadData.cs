@@ -18,9 +18,26 @@ namespace OSDP.Net.Model
         /// acceptable for this array to be 0 length</returns>
         public abstract byte[] BuildData();
         
+        /// <summary>
+        /// Gets the command or reply code byte value that represent the type of data
+        /// </summary>
         public abstract byte Code { get; }
 
-        public abstract void CustomMessageUpdate(Span<byte> messageBuffer);
+        /// <summary>
+        /// Gets a value indicating whether the security initialization is performed by this payload.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if the security initialization is performed; otherwise, <c>false</c>.
+        /// </value>
+        public virtual bool IsSecurityInitialization => false;
+
+        /// <summary>
+        /// Updates the message data before sending in the specified byte buffer.
+        /// </summary>
+        /// <param name="messageBuffer">The byte buffer containing the custom message.</param>
+        public virtual void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
+        }
 
         /// <inheritdoc />
         public override string ToString()

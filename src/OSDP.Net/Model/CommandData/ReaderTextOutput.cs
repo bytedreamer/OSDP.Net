@@ -78,11 +78,6 @@ namespace OSDP.Net.Model.CommandData
         }
 
         /// <inheritdoc />
-        public override void CustomMessageUpdate(Span<byte> messageBuffer)
-        {
-        }
-
-        /// <inheritdoc />
         public override byte[] BuildData()
         {
             var data = new List<byte>

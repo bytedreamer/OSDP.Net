@@ -40,11 +40,6 @@ internal class NoPayloadCommandData : CommandData
     public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithNoDataSecurity;
 
     /// <inheritdoc />
-    public override void CustomMessageUpdate(Span<byte> messageBuffer)
-    {
-    }
-
-    /// <inheritdoc />
     public override byte[] BuildData()
     {
         return Array.Empty<byte>();

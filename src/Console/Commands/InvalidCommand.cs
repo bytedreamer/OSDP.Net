@@ -20,11 +20,6 @@ namespace Console.Commands
         public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithNoDataSecurity;
 
         /// <inheritdoc />
-        public override void CustomMessageUpdate(Span<byte> commandBuffer)
-        {
-        }
-
-        /// <inheritdoc />
         public override byte[] BuildData()
         {
             return Array.Empty<byte>();

@@ -69,8 +69,6 @@ namespace OSDP.Net.Model.ReplyData
         public override byte Code => (byte)ReplyType.CrypticData;
         
         /// <inheritdoc />
-        public override void CustomMessageUpdate(Span<byte> messageBuffer)
-        {
-        }
+        public override bool IsSecurityInitialization => true;
     }
 }

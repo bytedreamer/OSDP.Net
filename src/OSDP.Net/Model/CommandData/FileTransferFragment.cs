@@ -62,11 +62,6 @@ internal class FileTransferFragment : CommandData
     public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
 
     /// <inheritdoc />
-    public override void CustomMessageUpdate(Span<byte> messageBuffer)
-    {
-    }
-
-    /// <inheritdoc />
     public override byte[] BuildData()
     {
         var data = new List<byte> {Type};

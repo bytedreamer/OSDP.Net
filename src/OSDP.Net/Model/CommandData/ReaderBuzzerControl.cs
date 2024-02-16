@@ -76,11 +76,6 @@ public class ReaderBuzzerControl : CommandData
     public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
 
     /// <inheritdoc />
-    public override void CustomMessageUpdate(Span<byte> messageBuffer)
-    {
-    }
-
-    /// <inheritdoc />
     public override byte[] BuildData()
     {
         return new[] {ReaderNumber, (byte) ToneCode, OnTime, OffTime, Count};

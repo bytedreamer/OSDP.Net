@@ -25,16 +25,14 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <inheritdoc/>
         public override byte Code => (byte)ReplyType.InitialRMac;
+        
+        /// <inheritdoc />
+        public override bool IsSecurityInitialization => true;
 
         /// <inheritdoc/>
         public override byte[] BuildData()
         {
             return RMac;
-        }
-        
-        /// <inheritdoc />
-        public override void CustomMessageUpdate(Span<byte> messageBuffer)
-        {
         }
     }
 }

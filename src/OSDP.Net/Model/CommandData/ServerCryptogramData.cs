@@ -21,7 +21,10 @@ public class ServerCryptogramData : CommandData
 
     /// <inheritdoc />
     public override byte Code => (byte)CommandType;
-        
+
+    /// <inheritdoc />
+    public override bool IsSecurityInitialization => true;
+
     /// <inheritdoc />
     public override ReadOnlySpan<byte> SecurityControlBlock()
     {
@@ -31,11 +34,6 @@ public class ServerCryptogramData : CommandData
             (byte)SecurityBlockType.SecureConnectionSequenceStep3,
             (byte)(IsDefaultKey ? 0x00 : 0x01)
         };
-    }
-    
-    /// <inheritdoc />
-    public override void CustomMessageUpdate(Span<byte> messageBuffer)
-    {
     }
 
     /// <inheritdoc />

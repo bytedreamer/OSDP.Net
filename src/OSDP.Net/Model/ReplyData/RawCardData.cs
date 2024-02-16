@@ -130,11 +130,6 @@ public class RawCardData : PayloadData
 
         return buffer;
     }
-    
-    /// <inheritdoc />
-    public override void CustomMessageUpdate(Span<byte> messageBuffer)
-    {
-    }
 }
 
 /// <summary>

@@ -27,11 +27,6 @@ public class ACUReceiveSize : CommandData
     public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
 
     /// <inheritdoc />
-    public override void CustomMessageUpdate(Span<byte> messageBuffer)
-    {
-    }
-
-    /// <inheritdoc />
     public override byte[] BuildData()
     {
         return Message.ConvertShortToBytes(MaximumReceiveSize);

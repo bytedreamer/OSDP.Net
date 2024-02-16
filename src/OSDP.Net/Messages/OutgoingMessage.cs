@@ -30,12 +30,9 @@ internal class OutgoingMessage : Message
             payload = PadTheData(payload, 16, FirstPaddingByte);
         }
 
-        bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished ||
-                                      PayloadData.Code == (byte)CommandType.SessionChallenge ||
-                                      PayloadData.Code == (byte)CommandType.ServerCryptogram ||
-                                      PayloadData.Code == (byte)ReplyType.CrypticData ||
-                                      PayloadData.Code == (byte)ReplyType.InitialRMac;
+        bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished || PayloadData.IsSecurityInitialization;
         var securityBlock = isSecurityBlockPresent ? BuildSecurityBlock(payload) : Array.Empty<byte>();
+        
         int headerLength = StartOfMessageLength + securityBlock.Length + sizeof(ReplyType);
         int totalLength = headerLength + payload.Length +
                           (ControlBlock.UseCrc ? 2 : 1) +

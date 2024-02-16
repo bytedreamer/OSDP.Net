@@ -100,10 +100,5 @@ namespace OSDP.Net.Model.ReplyData
 
             return data.ToArray();
         }
-        
-        /// <inheritdoc />
-        public override void CustomMessageUpdate(Span<byte> messageBuffer)
-        {
-        }
     }
 }
