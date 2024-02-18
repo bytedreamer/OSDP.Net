@@ -4,8 +4,9 @@ using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData;
 
-public class SecurityInitialization : CommandData
+internal class SecurityInitialization : CommandData
 {
+    /// <inheritdoc />
     public SecurityInitialization(byte[] serverRandomNumber, bool isDefaultKey)
     {
         ServerRandomNumber = serverRandomNumber ?? throw new ArgumentNullException(nameof(serverRandomNumber));;

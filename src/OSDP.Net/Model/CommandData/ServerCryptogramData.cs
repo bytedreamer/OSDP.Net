@@ -4,11 +4,12 @@ using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData;
 
-public class ServerCryptogramData : CommandData
+internal class ServerCryptogramData : CommandData
 {
+    /// <inheritdoc />
     public ServerCryptogramData(byte[] serverCryptogram, bool isDefaultKey)
     {
-        ServerCryptogram = serverCryptogram ?? throw new ArgumentNullException(nameof(serverCryptogram));;
+        ServerCryptogram = serverCryptogram ?? throw new ArgumentNullException(nameof(serverCryptogram));
         IsDefaultKey = isDefaultKey;
     }
     

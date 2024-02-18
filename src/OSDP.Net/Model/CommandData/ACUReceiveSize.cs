@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using OSDP.Net.Messages;
 using OSDP.Net.Messages.SecureChannel;
 
@@ -10,11 +9,15 @@ namespace OSDP.Net.Model.CommandData;
 /// </summary>
 public class ACUReceiveSize : CommandData
 {
+    /// <inheritdoc />
     public ACUReceiveSize(ushort maximumReceiveSize)
     {
         MaximumReceiveSize = maximumReceiveSize;
     }
 
+    /// <summary>
+    /// Gets the maximum message size the ACU can receive.
+    /// </summary>
     public ushort MaximumReceiveSize { get; }
     
     /// <inheritdoc />

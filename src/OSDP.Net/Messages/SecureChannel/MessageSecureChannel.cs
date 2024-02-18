@@ -74,11 +74,13 @@ public abstract class MessageSecureChannel : IMessageSecureChannel
         Context.InitializeACU(clientRandomNumber, clientCryptogram);
     }
 
+    /// <inheritdoc />
     public void ResetSecureChannelSession()
     {
         Context.CreateNewRandomNumber();
     }
 
+    /// <inheritdoc />
     public void Establish(byte[] rmac)
     {
         Context.Establish(rmac);
@@ -194,7 +196,8 @@ public abstract class MessageSecureChannel : IMessageSecureChannel
             encryptor.TransformFinalBlock(payload, 0, payload.Length).CopyTo(destination);
         }
     }
-    
+
+    /// <inheritdoc />
     public ReadOnlySpan<byte> PadTheData(ReadOnlySpan<byte> data)
     {
         const byte cryptoLength = 16;

@@ -10,11 +10,19 @@ namespace OSDP.Net.Model.CommandData;
 /// </summary>
 public class KeepReaderActive : CommandData
 {
+    /// <inheritdoc />
     public KeepReaderActive(ushort keepAliveTimeInMilliseconds)
     {
         KeepAliveTimeInMilliseconds = keepAliveTimeInMilliseconds;
     }
 
+    /// <summary>
+    /// Gets the keep alive time in milliseconds.
+    /// </summary>
+    /// <remarks>
+    /// The keep alive time is used to determine how long a connection can remain idle before it is closed.
+    /// Once the keep alive time elapses without any activity, the connection will be closed.
+    /// </remarks>
     public ushort KeepAliveTimeInMilliseconds { get; }
     
     /// <inheritdoc />

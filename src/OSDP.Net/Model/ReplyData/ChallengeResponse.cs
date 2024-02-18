@@ -8,7 +8,7 @@ namespace OSDP.Net.Model.ReplyData
     /// Represents a reply to osdp_CHLNG command and contain's PD's ID, 
     /// PD-generated random number and PD cryptogram
     /// </summary>
-    public class ChallengeResponse : PayloadData
+    internal class ChallengeResponse : PayloadData
     {
         /// <summary>
         /// Create a new instance of the ChallengeResponse
@@ -16,6 +16,7 @@ namespace OSDP.Net.Model.ReplyData
         /// <param name="cUID">PD(Client) ID to send back to ACU</param>
         /// <param name="rndB">PD random number</param>
         /// <param name="cryptogram">PD Cryptogram</param>
+        /// <param name="isUsingDefaultKey"></param>
         public ChallengeResponse(byte[] cUID, byte[] rndB, byte[] cryptogram, bool isUsingDefaultKey)
         {
             ClientUID = cUID;
@@ -43,6 +44,7 @@ namespace OSDP.Net.Model.ReplyData
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
+        /// <param name="isDefaultKey"></param>
         /// <returns>An instance of ChallengeResponse representing the message payload</returns>
         public static ChallengeResponse ParseData(ReadOnlySpan<byte> data, bool isDefaultKey)
         {

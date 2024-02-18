@@ -14,9 +14,14 @@ public class SecurityContext
 {
     private readonly byte[] _securityKey;
 
-    // Todo - make private when conversion is done
-    public static readonly byte[] DefaultKey = "0123456789:;<=>?"u8.ToArray();
+    /// <summary>
+    /// Represents the default key used in the security context.
+    /// </summary>
+    internal static readonly byte[] DefaultKey = "0123456789:;<=>?"u8.ToArray();
 
+    /// <summary>
+    /// Represents a security context for OSDP secure channel.
+    /// </summary>
     public SecurityContext(byte[] securityKey = null)
     {
         CreateNewRandomNumber();
@@ -30,39 +35,64 @@ public class SecurityContext
     /// <summary>
     /// A flag indicating whether or not channel security has been established
     /// </summary>
-    public bool IsSecurityEstablished { get; set; }
+    internal bool IsSecurityEstablished { get; set; }
 
     /// <summary>
     /// Symmertric message encryption key established by the secure channel handshake
     /// </summary>
-    public byte[] Enc { get; set; } = Array.Empty<byte>();
+    internal byte[] Enc { get; set; } = Array.Empty<byte>();
 
     /// <summary>
     /// S-MAC1 value
     /// </summary>
-    public byte[] SMac1 { get; set; } = Array.Empty<byte>();
+    internal byte[] SMac1 { get; set; } = Array.Empty<byte>();
 
     /// <summary>
     /// S-MAC2 value
     /// </summary>
-    public byte[] SMac2 { get; set; } = Array.Empty<byte>();
+    internal byte[] SMac2 { get; set; } = Array.Empty<byte>();
 
     /// <summary>
     /// R-MAC value
     /// </summary>
-    public byte[] RMac { get; set; } = Array.Empty<byte>();
+    internal byte[] RMac { get; set; } = Array.Empty<byte>();
 
     /// <summary>
     /// C-MAC value
     /// </summary>
-    public byte[] CMac { get; set; } = Array.Empty<byte>();
-    
-    public byte[] ServerCryptogram { get; private set; }
-    
-    public byte[] ServerRandomNumber { get; } = new byte[8];
+    internal byte[] CMac { get; set; } = Array.Empty<byte>();
 
+    /// <summary>
+    /// Represents the server cryptogram used in the secure channel protocol.
+    /// </summary>
+    internal byte[] ServerCryptogram { get; private set; }
+
+    /// <summary>
+    /// Represents the server's random number in the secure channel.
+    /// </summary>
+    /// <remarks>
+    /// The server's random number is used in the initialization of the secure channel
+    /// to establish a secure connection between the client and the server.
+    /// </remarks>
+    /// <example>
+    /// serverRandomNumber.CreateNewRandomNumber();
+    /// </example>
+    internal byte[] ServerRandomNumber { get; } = new byte[8];
+
+    /// <summary>
+    /// Gets a value indicating whether the security context is initialized.
+    /// </summary>
+    /// <value>
+    /// <c>true</c> if the security context is initialized; otherwise, <c>false</c>.
+    /// </value>
     public bool IsInitialized { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether the security context is using the default key.
+    /// </summary>
+    /// <value>
+    /// <c>true</c> if the security context is using the default key; otherwise, <c>false</c>.
+    /// </value>
     public bool IsUsingDefaultKey { get; private set; }
 
     /// <summary>
@@ -72,8 +102,9 @@ public class SecurityContext
     /// session setup and message data encryption. Depending on the case, it has 
     /// to be initialized slightly differently so this flag indicates which case 
     /// is currently needed.</param>
+    /// <param name="key"></param>
     /// <returns>Cypher instance</returns>
-    public Aes CreateCypher(bool isForSessionSetup, byte[] key = null)
+    internal Aes CreateCypher(bool isForSessionSetup, byte[] key = null)
     {
         var crypto = Aes.Create();
         if (crypto == null)
@@ -109,7 +140,7 @@ public class SecurityContext
     /// byte array, but the total sum of all bytes MUST be less than or equal
     /// to 16</param>
     /// <returns></returns>
-    public static byte[] GenerateKey(Aes aes, params byte[][] input)
+    internal static byte[] GenerateKey(Aes aes, params byte[][] input)
     {
         var buffer = new byte[16];
         int currentSize = 0;
@@ -122,8 +153,14 @@ public class SecurityContext
 
         return encryptor.TransformFinalBlock(buffer, 0, buffer.Length);
     }
-    
-    public void InitializeACU(byte[] clientRandomNumber, byte[] clientCryptogram)
+
+    /// <summary>
+    /// Initializes the Access Control Unit (ACU) with the provided client random number and cryptogram.
+    /// </summary>
+    /// <param name="clientRandomNumber">The client random number.</param>
+    /// <param name="clientCryptogram">The client cryptogram.</param>
+    /// <exception cref="Exception">Thrown if the client cryptogram is invalid.</exception>
+    internal void InitializeACU(byte[] clientRandomNumber, byte[] clientCryptogram)
     {
         using var keyAlgorithm = CreateCypher(true);
         Enc = GenerateKey(keyAlgorithm, new byte[]
@@ -155,8 +192,11 @@ public class SecurityContext
         ServerCryptogram = GenerateKey(serverCypher, clientRandomNumber, ServerRandomNumber);
         IsInitialized = true;
     }
-    
-    public void CreateNewRandomNumber()
+
+    /// <summary>
+    /// Generates a new random number in the SecurityContext.
+    /// </summary>
+    internal void CreateNewRandomNumber()
     {
         // Todo - this might be needed
         // IsInitialized = false;
@@ -164,7 +204,7 @@ public class SecurityContext
         new Random().NextBytes(ServerRandomNumber);
     }
     
-    public void Establish(byte[] rmac)
+    internal void Establish(byte[] rmac)
     {
         RMac = rmac;
         IsSecurityEstablished = true;

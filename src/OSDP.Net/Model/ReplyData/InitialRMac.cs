@@ -7,12 +7,13 @@ namespace OSDP.Net.Model.ReplyData
     /// <summary>
     /// Represents the payload of osdp_RMAC_I reply
     /// </summary>
-    public class InitialRMac : PayloadData
+    internal class InitialRMac : PayloadData
     {
         /// <summary>
         /// Creates a new instance of InitialRMac
         /// </summary>
         /// <param name="rmac"></param>
+        /// <param name="isDefaultKey"></param>
         public InitialRMac(byte[] rmac, bool isDefaultKey)
         {
             RMac = rmac;
