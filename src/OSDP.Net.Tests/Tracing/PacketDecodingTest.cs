@@ -2,6 +2,7 @@
 using System.Linq;
 using NUnit.Framework;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tracing;
@@ -19,7 +20,7 @@ public class PacketDecodingTest
         var testData = BinaryUtils.HexToBytes("53-00-0D-00-06-6A-00-02-02-02-01-59-92").ToArray();
         
         // Act
-        var actual = PacketDecoding.ParseMessage(testData.ToArray());
+        var actual = PacketDecoding.ParseMessage(testData.ToArray(), new ACUMessageSecureChannel());
         
         // Assert
         Assert.That(actual.Address, Is.EqualTo(0));
@@ -42,7 +43,7 @@ public class PacketDecodingTest
         var testData = BinaryUtils.HexToBytes("53 00 0D 00 06 6A 00 02 02 02 01 59 92").ToArray();
         
         // Act
-        var actual = PacketDecoding.ParseMessage(testData.ToArray());
+        var actual = PacketDecoding.ParseMessage(testData.ToArray(), new ACUMessageSecureChannel());
         
         // Assert
         Assert.That(actual.Address, Is.EqualTo(0));
@@ -65,7 +66,7 @@ public class PacketDecodingTest
         var testData = BinaryUtils.HexToBytes("53-80-14-00-06-45-00-0E-E3-10-10-00-00-74-97-23-06-06-1B-88").ToArray();
         
         // Act
-        var actual = PacketDecoding.ParseMessage(testData.ToArray());
+        var actual = PacketDecoding.ParseMessage(testData.ToArray(), new ACUMessageSecureChannel());
         
         // Assert
         Assert.That(actual.Address, Is.EqualTo(0));

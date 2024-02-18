@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
     /// Command data to set the encryption key configuration on a PD.
     /// </summary>
-    public class EncryptionKeyConfiguration
+    public class EncryptionKeyConfiguration : CommandData
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EncryptionKeyConfiguration"/> class.
@@ -29,7 +31,17 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         public byte[] KeyData { get; }
 
-        internal byte[] BuildData()
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.KeySet;
+
+        /// <inheritdoc />
+        public override byte Code => (byte)CommandType;
+        
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
+ 
+        /// <inheritdoc />
+        public override byte[] BuildData()
         {
             var data = new List<byte>
             {
@@ -46,7 +58,9 @@ namespace OSDP.Net.Model.CommandData
         /// <returns>An instance of EncryptionKeyConfiguration representing the message payload</returns>
         public static EncryptionKeyConfiguration ParseData(ReadOnlySpan<byte> data)
         {
-            return new EncryptionKeyConfiguration((KeyType)data[0], data.Slice(2).ToArray());
+            byte keyLength = data[1];
+            
+            return new EncryptionKeyConfiguration((KeyType)data[0], data.Slice(2, keyLength).ToArray());
         }
     }
 }

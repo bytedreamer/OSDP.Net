@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData
 {
@@ -12,10 +14,17 @@ namespace OSDP.Net.Model.CommandData
         /// <summary>
         /// Initializes a new instance of the <see cref="OutputControls"/> class.
         /// </summary>
-        /// <param name="controls">The controls.</param>
+        /// <param name="controls">The output controls to be updated. It can't be null and requires at least one in the collection.</param>
         public OutputControls(IEnumerable<OutputControl> controls)
         {
-            Controls = controls;
+            if (controls == null) throw new ArgumentNullException(nameof(controls));
+            
+            Controls = controls.ToArray();
+            
+            if (!Controls.Any())
+            {
+                throw new Exception("Requires at least one output control");
+            }
         }
 
         /// <summary>
@@ -25,9 +34,12 @@ namespace OSDP.Net.Model.CommandData
         
         /// <inheritdoc />
         public override CommandType CommandType => CommandType.OutputControl;
-        
+
         /// <inheritdoc />
-        public override byte Type => (byte)CommandType.OutputControl;
+        public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
+
+        /// <inheritdoc />
+        public override byte Code => (byte)CommandType;
 
         /// <inheritdoc />
         public override byte[] BuildData()

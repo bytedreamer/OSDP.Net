@@ -13,11 +13,31 @@ public interface IMessageSecureChannel
     /// </summary>
     bool IsSecurityEstablished { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether the secure channel is initialized.
+    /// </summary>
+    /// <value>
+    /// <c>true</c> if the secure channel is initialized; otherwise, <c>false</c>.
+    /// </value>
     public bool IsInitialized { get; }
-    
+
+    /// <summary>
+    /// Represents the server random number used in the secure channel context.
+    /// </summary>
     public byte[] ServerRandomNumber { get; }
-    
+
+    /// <summary>
+    /// Represents the secure channel cryptogram used by the server.
+    /// </summary>
+    /// <remarks>
+    /// This property is used to retrieve the server cryptogram for the secure channel context within which a message is packed/unpacked.
+    /// </remarks>
     public byte[] ServerCryptogram { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the secure channel is using the default key.
+    /// </summary>
+    public bool IsUsingDefaultKey { get; }
 
     /// <summary>
     /// Encrypts the payload using the secure channel context. This function can
@@ -57,11 +77,28 @@ public interface IMessageSecureChannel
     /// <returns>16-byte MAC value of the message</returns>
     ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isIncoming);
 
+    /// <summary>
+    /// Initializes the Access Control Unit (ACU) in the secure channel context.
+    /// </summary>
+    /// <param name="clientRandomNumber">The client random number.</param>
+    /// <param name="clientCryptogram">The client cryptogram.</param>
     void InitializeACU(byte[] clientRandomNumber, byte[] clientCryptogram);
-    
+
+    /// <summary>
+    /// Resets the secure channel session by creating a new random number.
+    /// </summary>
     void ResetSecureChannelSession();
-    
+
+    /// <summary>
+    /// Establishes the secure channel with the provided RMAC.
+    /// </summary>
+    /// <param name="rmac">The RMAC.</param>
     void Establish(byte[] rmac);
-    
+
+    /// <summary>
+    /// Pads the given data with padding bytes to make it a multiple of a specified length.
+    /// </summary>
+    /// <param name="payload">The payload data to pad.</param>
+    /// <returns>The padded data.</returns>
     ReadOnlySpan<byte> PadTheData(ReadOnlySpan<byte> payload);
 }

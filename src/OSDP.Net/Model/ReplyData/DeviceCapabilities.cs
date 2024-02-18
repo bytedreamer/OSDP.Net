@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -33,7 +34,13 @@ namespace OSDP.Net.Model.ReplyData
         public IEnumerable<DeviceCapability> Capabilities { get; private set; }
         
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.PdCapabilitiesReport;
+        public override byte Code => (byte)ReplyType.PdCapabilitiesReport;
+        
+        /// <inheritdoc/>
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return SecurityBlock.ReplyMessageWithDataSecurity;
+        }
 
         /// <summary>
         /// Gets a specific PD capability

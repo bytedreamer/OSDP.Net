@@ -1,37 +1,36 @@
 ﻿using System;
-using OSDP.Net.Messages.ACU;
 
 namespace OSDP.Net.Messages;
 
 internal class ReplyTracker
 {
-    private Command _issuingCommand;
+    private readonly OutgoingMessage _issuingCommand;
     private readonly DeviceProxy _device;
 
-    public ReplyTracker(Guid connectionId, IncomingMessage message, Command issuingCommand, DeviceProxy device)
+    public ReplyTracker(Guid connectionId, IncomingMessage replyMessage, OutgoingMessage issuingCommand, DeviceProxy device)
     {
         ConnectionId = connectionId;
-        Message = message;
+        ReplyMessage = replyMessage;
         _issuingCommand = issuingCommand;
         _device = device;
     }
 
-    public IncomingMessage Message { get; }
+    public IncomingMessage ReplyMessage { get; }
     
     public Guid ConnectionId { get; }
     
-    public bool IsValidReply => Message.Address == _issuingCommand.Address && Message.IsDataCorrect;
-
-    public bool MatchIssuingCommand(Command command) => command.Equals(_issuingCommand);
+    public bool IsValidReply => ReplyMessage.Address == _issuingCommand.Address && ReplyMessage.IsDataCorrect;
+    
+    public bool MatchIssuingCommand(byte commandCode) => commandCode.Equals(_issuingCommand.Code);
     
     internal bool ValidateSecureChannelEstablishment()
     {
-        if (!Message.SecureCryptogramHasBeenAccepted())
+        if (!ReplyMessage.SecureCryptogramHasBeenAccepted())
         {
             return false;
         }
 
-        _device.MessageSecureChannel.Establish(Message.Payload);
+        _device.MessageSecureChannel.Establish(ReplyMessage.Payload);
 
         return true;
     }

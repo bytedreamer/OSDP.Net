@@ -1,8 +1,8 @@
 ﻿using NUnit.Framework;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
 using System;
 using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Tests.Messages
 {
@@ -14,8 +14,9 @@ namespace OSDP.Net.Tests.Messages
         {
             const byte address = 0;
 
-            var command = new IdReportCommand(address);
-            var device = new DeviceProxy(address, true, false, null);
+            var controlBlock = new Control(0, true, false);
+            var command = new OutgoingMessage(address, controlBlock, new IdReport());
+            var device = new DeviceProxy(address, true, false);
             var connectionId = new Guid();
 
             // Raw bytes taken off the wire from actual reader responding to poll
@@ -23,12 +24,10 @@ namespace OSDP.Net.Tests.Messages
 
             var reply = new ReplyTracker(connectionId, new IncomingMessage(rawResponse, new ACUMessageSecureChannel()), command, device);
 
-            Assert.That(reply.Message.Type, Is.EqualTo((byte)ReplyType.Ack));
+            Assert.That(reply.ReplyMessage.Type, Is.EqualTo((byte)ReplyType.Ack));
             Assert.That(reply.IsValidReply, Is.True);
-            Assert.That(reply.IsValidReply, Is.True);
-            Assert.That(reply.Message.Sequence, Is.EqualTo(1));
-            Assert.That(reply.Message.Address, Is.EqualTo(address));
-            Assert.That(reply.MatchIssuingCommand(command), Is.True);
+            Assert.That(reply.ReplyMessage.Sequence, Is.EqualTo(1));
+            Assert.That(reply.ReplyMessage.Address, Is.EqualTo(address));
         }
     }
 }

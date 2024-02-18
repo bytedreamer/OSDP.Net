@@ -18,7 +18,37 @@ namespace OSDP.Net.Model
         /// acceptable for this array to be 0 length</returns>
         public abstract byte[] BuildData();
         
-        public abstract byte Type { get; }
+        /// <summary>
+        /// Gets the command or reply code byte value that represent the type of data
+        /// </summary>
+        public abstract byte Code { get; }
+        
+        /// <summary>
+        /// Gets a value indicating whether the security initialization is performed by this payload.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if the security initialization is performed; otherwise, <c>false</c>.
+        /// </value>
+        public virtual bool IsSecurityInitialization => false;
+
+        /// <summary>
+        /// Retrieves the security control block for a specific command data type.
+        /// </summary>
+        /// <returns>The security control block for the command data type.</returns>
+        /// <remarks>
+        /// This method is used to retrieve the security control block for a specific command data type. Each command data type
+        /// has a specific security control block associated with it. The security control block is a collection of bytes that
+        /// contains security-related information for the command data type.
+        /// </remarks>
+        public abstract ReadOnlySpan<byte> SecurityControlBlock();
+
+        /// <summary>
+        /// Updates the message data before sending in the specified byte buffer.
+        /// </summary>
+        /// <param name="messageBuffer">The byte buffer containing the custom message.</param>
+        public virtual void CustomMessageUpdate(Span<byte> messageBuffer)
+        {
+        }
 
         /// <inheritdoc />
         public override string ToString()

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -54,7 +55,13 @@ namespace OSDP.Net.Model.ReplyData
         public byte FirmwareBuild { get; }
         
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.PdIdReport;
+        public override byte Code => (byte)ReplyType.PdIdReport;
+        
+        /// <inheritdoc/>
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return SecurityBlock.ReplyMessageWithDataSecurity;
+        }
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>

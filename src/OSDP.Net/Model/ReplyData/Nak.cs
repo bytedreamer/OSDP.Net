@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -40,7 +41,13 @@ namespace OSDP.Net.Model.ReplyData
         public IEnumerable<byte> ExtraData { get; private set;  }
         
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.Nak;
+        public override byte Code => (byte)ReplyType.Nak;
+        
+        /// <inheritdoc/>
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return SecurityBlock.ReplyMessageWithDataSecurity;
+        }
 
         /// <summary>
         /// Parses the data.

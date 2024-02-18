@@ -1,13 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData;
 
 /// <summary>
 /// Command data to control the buzzer on a PD.
 /// </summary>
-public class ReaderBuzzerControl
+public class ReaderBuzzerControl : CommandData
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ReaderBuzzerControl"/> class.
@@ -64,11 +65,18 @@ public class ReaderBuzzerControl
             data[4]);
     }
  
-    /// <summary>
-    /// Builds the data.
-    /// </summary>
-    /// <returns>The Data</returns>
-    public IEnumerable<byte> BuildData()
+    
+    /// <inheritdoc />
+    public override CommandType CommandType => CommandType.BuzzerControl;
+
+    /// <inheritdoc />
+    public override byte Code => (byte)CommandType;
+        
+    /// <inheritdoc />
+    public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
+
+    /// <inheritdoc />
+    public override byte[] BuildData()
     {
         return new[] {ReaderNumber, (byte) ToneCode, OnTime, OffTime, Count};
     }
@@ -81,7 +89,7 @@ public class ReaderBuzzerControl
     /// </summary>
     /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
     /// <returns>String representation of the current object</returns>
-    public string ToString(int indent)
+    public new string ToString(int indent)
     {
         var padding = new string(' ', indent);
         var sb = new StringBuilder();

@@ -81,7 +81,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             if (command.Type != (byte)CommandType.Poll)
             {
-                Logger?.LogInformation("Received Command: {cmd}", Enum.GetName(typeof(CommandType), command.Type));
+                Logger?.LogInformation("Received Command: {CommandType}", Enum.GetName(typeof(CommandType), command.Type));
             }
 
             var commandHandled = await HandleCommand(command);
@@ -97,7 +97,7 @@ namespace OSDP.Net.Messages.SecureChannel
         {
             var reply = (command.IsValidMac, (CommandType)command.Type) switch
             {
-                (false, _) => HandleInvalidMac(command),
+                (false, _) => HandleInvalidMac(),
                 (true, CommandType.SessionChallenge) => HandleSessionChallenge(command),
                 (true, CommandType.ServerCryptogram) => HandleSCrypt(command),
                 _ => null
@@ -114,7 +114,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             return true;
         }
-        private PayloadData HandleInvalidMac(IncomingMessage command)
+        private PayloadData HandleInvalidMac()
         {
             return new Nak(ErrorCode.CommunicationSecurityNotMet);
         }
@@ -152,7 +152,7 @@ namespace OSDP.Net.Messages.SecureChannel
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
 
             // reply with osdp_CCRYPT, returning PD's Id (cUID), its random number and the client cryptogram
-            return new ChallengeResponse(cUID, rndB, clientCryptogram);
+            return new ChallengeResponse(cUID, rndB, clientCryptogram, Context.IsUsingDefaultKey);
         }
         
         /// <summary>
@@ -184,7 +184,7 @@ namespace OSDP.Net.Messages.SecureChannel
                 crypto.Key = Context.SMac2;
                 Context.RMac = SecurityContext.GenerateKey(crypto, Context.RMac);
 
-                return new InitialRMac(Context.RMac);
+                return new InitialRMac(Context.RMac, Context.IsUsingDefaultKey);
             }
 
             return new Nak(ErrorCode.DoesNotSupportSecurityBlock);

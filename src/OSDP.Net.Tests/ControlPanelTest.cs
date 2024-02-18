@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
@@ -8,7 +7,9 @@ using Moq;
 using NUnit.Framework;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
+using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model;
+using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tests.Utilities;
 
@@ -179,11 +180,12 @@ namespace OSDP.Net.Tests
             public async Task ReturnsValidReportTest()
             {
                 var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
-                var idReportCommand = new IdReportCommand(0);
-                var idReportReplyBytes = new byte[] { 83, 128, 20, 0, 6, 69, 92, 38, 35, 25, 2, 0, 0, 233, 42, 3, 0, 0, 98, 25 };
+                var idReportCommand = new IdReport();
+                var deviceIdentificationReply =
+                    new DeviceIdentification([0x5C, 0x26, 0x23], 0x19, 0x02, 719912960, 0x03, 0x00, 0x00);
 
                 var mockConnection = new MockConnection();
-                mockConnection.OnCommand(idReportCommand).Reply(idReportReplyBytes);
+                mockConnection.OnCommand(idReportCommand).Reply(deviceIdentificationReply);
 
                 Guid id = panel.StartConnection(mockConnection.Object);
                 panel.AddDevice(id, 0, true, false);
@@ -203,12 +205,11 @@ namespace OSDP.Net.Tests
             public void ThrowOnNakReplyTest()
             {
                 var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
-                //var idReportCommandBytes = new byte[] { 255, 83, 0, 9, 0, 6, 97, 0, 160, 8 };
-                var idReportCommand = new IdReportCommand(0);
-                var nakReplyBytes = new byte[] { 83, 128, 9, 0, 7, 65, 3, 53, 221 };
+                var idReportCommand = new IdReport();
+                var nakReply = new Nak(ErrorCode.UnknownCommandCode);
 
                 var mockConnection = new MockConnection();
-                mockConnection.OnCommand(idReportCommand).Reply(nakReplyBytes);
+                mockConnection.OnCommand(idReportCommand).Reply(nakReply);
 
                 Guid id = panel.StartConnection(mockConnection.Object);
                 panel.AddDevice(id, 0, true, false);
@@ -222,8 +223,8 @@ namespace OSDP.Net.Tests
 
         private class MockConnection : Mock<IOsdpConnection>
         {
-            static readonly PollCommand PollCommand = new(0);
-            static readonly byte[] AckReplyBytes = { 83, 128, 8, 0, 5, 64, 104, 159 };
+            private static readonly CommandData PollCommand = new NoPayloadCommandData(CommandType.Poll);
+            private static readonly PayloadData Ack = new Ack();
 
             public MockConnection() : base(MockBehavior.Strict)
             {
@@ -233,7 +234,7 @@ namespace OSDP.Net.Tests
                 Setup(x => x.BaudRate).Returns(9600);
                 Setup(x => x.ReplyTimeout).Returns(TimeSpan.FromSeconds(999999));
                 Setup(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
-                    .Returns(async (byte[] buffer, CancellationToken cancellationToken) => 
+                    .Returns(async (byte[] buffer, CancellationToken cancellationToken) =>
                         await readStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)
                     );
 
@@ -243,72 +244,54 @@ namespace OSDP.Net.Tests
                 // Setup handling for a polling command which always gets issued when connection is alive
                 // Here we'll just reply with a generic ACK to signal to ACU that the command was successfully
                 // handled.
-                OnCommand(PollCommand).Reply(AckReplyBytes);
+                OnCommand(PollCommand).Reply(Ack);
             }
 
-            public ExpectedCommand OnCommand(Command command) => new(this, command);
-            
+            public ExpectedCommand OnCommand(CommandData command) => new(this, command);
+
             /// <summary>
             /// Number of times the Open method is called
             /// </summary>
             public int NumberOfTimesCalledOpen { get; private set; }
-            
+
             /// <summary>
             /// Number of times the Close method is called
             /// </summary>
             public int NumberOfTimesCalledClose { get; private set; }
-            
+
             public class ExpectedCommand
             {
-                public ExpectedCommand(MockConnection parent, Command command)
+                public ExpectedCommand(MockConnection parent, CommandData command)
                 {
                     _parent = parent;
                     _command = command;
                 }
 
-                public void Reply(byte[] replyBytes)
+                public void Reply(PayloadData replyData)
                 {
                     for (byte seq = 0; seq < 4; seq++)
                     {
-                        // Make local copies because we'll be mutating them to update the sequence number
-                        var reply = (byte[])replyBytes.Clone();
-
-                        // We are doing the span magic here because unlike replies, commands seem to have
-                        // at index [0] a "driver byte", the intention of which is somewhat unclear at the
-                        // moment
-                        ResetMsgSeqNumber(reply.AsSpan(), seq);
+                        var replyMessage = new OutgoingMessage(0x80, new Control(seq, true, false), replyData);
 
                         _parent.Setup(x => x.WriteAsync(It.Is<byte[]>(
-                            messageData => IsMatchingCommandType(messageData, _command.Type)
+                            messageData => IsMatchingCommandType(messageData, _command.Code)
                         ))).Returns(
-                            async (byte[] _) => await _parent._incomingData.Writer.WriteAsync(reply)
+                            async (byte[] _) =>
+                                await _parent._incomingData.Writer.WriteAsync(
+                                    replyMessage.BuildMessage(new PdMessageSecureChannelBase()))
                         );
                     }
                 }
 
                 private static bool IsMatchingCommandType(byte[] messageData, byte commandType)
                 {
-                    var receivedCommand = new IncomingMessage(messageData.Skip(1).ToArray(), null);
+                    var receivedCommand =
+                        new IncomingMessage(messageData.Skip(1).ToArray(), new ACUMessageSecureChannel());
                     return receivedCommand.Type == commandType;
                 }
 
-                private static void ResetMsgSeqNumber(Span<byte> msg, byte seq)
-                {
-                    Debug.Assert(seq < 4);
-
-                    // The way we use OSDP Protocol, we have a common message format for all commands and
-                    // their replies:
-                    //   1. Bits 0-1 of byte [5] contain the sequence number of the message
-                    //   2. Last two bytes contain CRC of the message.
-                    // Therefore what we do here is an in-place update of the sequence number and then
-                    // recalculate the last two bytes
-                    msg[4] &= 0xfc;
-                    msg[4] |= seq;
-                    Message.AddCrc(msg);
-                }
-
                 private readonly MockConnection _parent;
-                private readonly Command _command;
+                private readonly CommandData _command;
             }
 
             private readonly Pipe _incomingData = new();

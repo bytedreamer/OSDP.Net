@@ -1,36 +1,34 @@
 using System;
-using OSDP.Net.Messages.ACU;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model.CommandData;
 
 namespace Console.Commands
 {
     /// <summary>
     /// Change the length on a poll command
     /// </summary>
-    public class InvalidLengthPollCommand : Command
+    public class InvalidLengthPollCommand : CommandData
     {
-        public InvalidLengthPollCommand(byte address)
+        /// <inheritdoc />
+        public override byte Code => (byte)CommandType;
+        
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.Poll;
+
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithNoDataSecurity;
+
+        /// <inheritdoc />
+        public override void CustomMessageUpdate(Span<byte> commandBuffer)
         {
-            Address = address;
+            commandBuffer[2] = (byte)(commandBuffer[2] + 1);
         }
 
-        protected override byte CommandCode => 0x60;
-
-        protected override ReadOnlySpan<byte> SecurityControlBlock()
+        /// <inheritdoc />
+        public override byte[] BuildData()
         {
-            return new byte[]
-            {
-                0x02,
-                0x15
-            };
-        }
-
-        protected override void CustomCommandUpdate(Span<byte> commandBuffer)
-        {
-        }
-
-        protected override ReadOnlySpan<byte> Data()
-        {
-            return new byte[] { 0x01 };
+            return Array.Empty<byte>();
         }
     }
 }

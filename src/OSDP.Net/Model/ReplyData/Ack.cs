@@ -1,5 +1,6 @@
 ﻿using OSDP.Net.Messages;
 using System;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
@@ -9,7 +10,13 @@ namespace OSDP.Net.Model.ReplyData
     public class Ack : PayloadData
     {
         /// <inheritdoc/>
-        public override byte Type => (byte)ReplyType.Ack;
+        public override byte Code => (byte)ReplyType.Ack;
+
+        /// <inheritdoc/>
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return SecurityBlock.ReplyMessageWithNoDataSecurity;
+        }
 
         /// <inheritdoc/>
         public override byte[] BuildData()

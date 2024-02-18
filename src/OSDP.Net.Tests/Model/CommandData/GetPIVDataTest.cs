@@ -1,20 +1,32 @@
 ﻿using NUnit.Framework;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Utilities;
-using System;
 using System.Linq;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Tests.Model.CommandData
 {
     internal class GetPIVDataTest
     {
+        private byte[] TestData => [0x5F, 0xC1, 0x02, 0x01, 0x19, 0x00];
+        
+        private GetPIVData TestGetPIVData => new([0x5F, 0xC1, 0x02], 1, 25);
+        
         [Test]
-        public void BuildData2()
+        public void CheckConstantValues()
         {
-            var command = new GetPIVData(new byte[] { 0x5F, 0xC1, 0x02 }, 1, 25);
-
-            var actual = command.BuildData().ToArray();
-            Assert.That(BitConverter.ToString(actual), Is.EqualTo("5F-C1-02-01-19-00"));
+            // Arrange Act Assert
+            Assert.That(TestGetPIVData.CommandType, Is.EqualTo(CommandType.PivData));
+            Assert.That(TestGetPIVData.SecurityControlBlock().ToArray(),
+                Is.EqualTo(SecurityBlock.CommandMessageWithDataSecurity.ToArray()));
+        }
+        
+        [Test]
+        public void BuildData()
+        {
+            var actual = TestGetPIVData.BuildData().ToArray();
+            Assert.That(actual, Is.EqualTo(TestData));
         }
 
         [TestCase("5F-C1-02-01-19-00")]
