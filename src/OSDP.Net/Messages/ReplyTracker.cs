@@ -1,11 +1,10 @@
 ﻿using System;
-using OSDP.Net.Model.CommandData;
 
 namespace OSDP.Net.Messages;
 
 internal class ReplyTracker
 {
-    private OutgoingMessage _issuingCommand;
+    private readonly OutgoingMessage _issuingCommand;
     private readonly DeviceProxy _device;
 
     public ReplyTracker(Guid connectionId, IncomingMessage replyMessage, OutgoingMessage issuingCommand, DeviceProxy device)

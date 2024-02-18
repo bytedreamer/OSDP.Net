@@ -81,7 +81,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             if (command.Type != (byte)CommandType.Poll)
             {
-                Logger?.LogInformation("Received Command: {cmd}", Enum.GetName(typeof(CommandType), command.Type));
+                Logger?.LogInformation("Received Command: {CommandType}", Enum.GetName(typeof(CommandType), command.Type));
             }
 
             var commandHandled = await HandleCommand(command);
@@ -97,7 +97,7 @@ namespace OSDP.Net.Messages.SecureChannel
         {
             var reply = (command.IsValidMac, (CommandType)command.Type) switch
             {
-                (false, _) => HandleInvalidMac(command),
+                (false, _) => HandleInvalidMac(),
                 (true, CommandType.SessionChallenge) => HandleSessionChallenge(command),
                 (true, CommandType.ServerCryptogram) => HandleSCrypt(command),
                 _ => null
@@ -114,7 +114,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             return true;
         }
-        private PayloadData HandleInvalidMac(IncomingMessage command)
+        private PayloadData HandleInvalidMac()
         {
             return new Nak(ErrorCode.CommunicationSecurityNotMet);
         }

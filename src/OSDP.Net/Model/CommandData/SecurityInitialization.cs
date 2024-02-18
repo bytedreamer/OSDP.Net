@@ -9,7 +9,7 @@ internal class SecurityInitialization : CommandData
     /// <inheritdoc />
     public SecurityInitialization(byte[] serverRandomNumber, bool isDefaultKey)
     {
-        ServerRandomNumber = serverRandomNumber ?? throw new ArgumentNullException(nameof(serverRandomNumber));;
+        ServerRandomNumber = serverRandomNumber ?? throw new ArgumentNullException(nameof(serverRandomNumber));
         IsDefaultKey = isDefaultKey;
     }
     

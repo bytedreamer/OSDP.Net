@@ -6,10 +6,6 @@ namespace OSDP.Net.Model.CommandData;
 
 internal class DeviceCapabilities : CommandData
 {
-    public DeviceCapabilities()
-    {
-    }
-    
     /// <inheritdoc />
     public override CommandType CommandType => CommandType.DeviceCapabilities;
 

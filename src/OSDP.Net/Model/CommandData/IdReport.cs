@@ -6,10 +6,6 @@ namespace OSDP.Net.Model.CommandData;
 
 internal class IdReport : CommandData
 {
-    public IdReport()
-    {
-    }
-    
     /// <inheritdoc />
     public override CommandType CommandType => CommandType.IdReport;
 

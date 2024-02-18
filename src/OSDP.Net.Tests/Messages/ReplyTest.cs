@@ -16,7 +16,7 @@ namespace OSDP.Net.Tests.Messages
 
             var controlBlock = new Control(0, true, false);
             var command = new OutgoingMessage(address, controlBlock, new IdReport());
-            var device = new DeviceProxy(address, true, false, null);
+            var device = new DeviceProxy(address, true, false);
             var connectionId = new Guid();
 
             // Raw bytes taken off the wire from actual reader responding to poll
