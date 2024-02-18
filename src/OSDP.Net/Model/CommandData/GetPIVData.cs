@@ -120,7 +120,7 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
         /// <returns>String representation of the current object</returns>
-        public string ToString(int indent)
+        public override string ToString(int indent)
         {
             var padding = new string(' ', indent);
             var build = new StringBuilder();

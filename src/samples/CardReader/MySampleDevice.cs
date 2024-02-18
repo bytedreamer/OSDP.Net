@@ -1,5 +1,4 @@
 using OSDP.Net;
-using OSDP.Net.Messages;
 using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
 
@@ -12,7 +11,7 @@ internal class MySampleDevice : Device
         return new DeviceIdentification([0x00, 0x00, 0x00], 0, 1, 0, 0, 0, 0);
     }
 
-    protected override PayloadData HandleDeviceCap(IncomingMessage command)
+    protected override PayloadData HandleDeviceCapabilities()
     {
         var deviceCapabilities = new DeviceCapabilities(new[]
         {

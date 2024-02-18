@@ -6,7 +6,7 @@ using OSDP.Net.Messages.SecureChannel;
 namespace OSDP.Net.Model.CommandData;
 
 /// <summary>
-/// Command data to set the maximum message size the ACU can receive.
+/// Command data to set the keep alive time.
 /// </summary>
 public class KeepReaderActive : CommandData
 {
