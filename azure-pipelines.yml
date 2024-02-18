@@ -14,9 +14,9 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-  major: 4
-  minor: 1
-  patch: 7
+  major: 5
+  minor: 0
+  patch: 0-beta
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)
 
