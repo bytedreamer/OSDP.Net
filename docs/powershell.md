@@ -7,17 +7,17 @@ You don't have to be a developer to make use of the OSDP.Net library. Commands c
 # Install Nuget packages and assemblies if needed
 if (([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object FullName -like '*Microsoft.Extensions.Logging.Abstractions*') -eq $null)
 {
-  Install-Package -Name Microsoft.Extensions.Logging.Abstractions -ProviderName NuGet -Scope CurrentUser -RequiredVersion 5.0.0 -SkipDependencies -Destination . -Force
-  Add-Type -Path ./Microsoft.Extensions.Logging.Abstractions.5.0.0/lib/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.dll
+  Install-Package -Name Microsoft.Extensions.Logging.Abstractions -ProviderName NuGet -Scope CurrentUser -RequiredVersion 8.0.0 -SkipDependencies -Destination . -Force
+  Add-Type -Path ./Microsoft.Extensions.Logging.Abstractions.8.0.0/lib/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.dll
 }
 if (([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object FullName -like '*OSDP.Net*') -eq $null)
 {
-  Install-Package -Name OSDP.Net -ProviderName NuGet -Scope CurrentUser -RequiredVersion 2.0.14 -SkipDependencies -Destination . -Force
-  Add-Type -Path ./OSDP.Net.2.0.14/lib/netstandard2.0/OSDP.Net.dll
+  Install-Package -Name OSDP.Net -ProviderName NuGet -Scope CurrentUser -RequiredVersion 4.1.7 -SkipDependencies -Destination . -Force
+  Add-Type -Path ./OSDP.Net.4.1.7/lib/netstandard2.0/OSDP.Net.dll
 }
 
 # Settings
-$serialPortName = "COM1"
+$serialPortName = "COM3"
 $serialPortSpeed = 9600
 $deviceAddress = 0
 $secureChannel = $true
@@ -51,7 +51,7 @@ while($true)
     {
       L 
       { 
-        $panel.ReaderLedControl($id, 1, [OSDP.Net.Model.CommandData.ReaderLedControls]::new(
+        $panel.ReaderLedControl($id, $deviceAddress, [OSDP.Net.Model.CommandData.ReaderLedControls]::new(
           [OSDP.Net.Model.CommandData.ReaderLedControl[]]@([OSDP.Net.Model.CommandData.ReaderLedControl]::new(
             0, 
             0,

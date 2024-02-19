@@ -10,7 +10,7 @@ namespace OSDP.Net.Messages
     /// class with extra properties/methods that specifically indicate the parsing and
     /// validation of incoming raw bytes.
     /// </summary>
-    internal class IncomingMessage : Message
+    public class IncomingMessage : Message
     {
         private const ushort MessageHeaderSize = 6;
         private readonly byte[] _originalMessage;
@@ -20,9 +20,10 @@ namespace OSDP.Net.Messages
         /// </summary>
         /// <param name="data">Raw byte data received from the wire</param>
         /// <param name="channel">Message channel context</param>
-        /// <param name="connectionId">ID of the connection</param>
-        public IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel, Guid connectionId)
+        internal IncomingMessage(ReadOnlySpan<byte> data, IMessageSecureChannel channel)
         {
+            IsUsingDefaultKey = channel.IsUsingDefaultKey;
+            
             // TODO: way too much copying in this code, simplify it.
             _originalMessage = data.ToArray();
 
@@ -78,8 +79,6 @@ namespace OSDP.Net.Messages
             {
                 IsValidMac = true;
             }
-
-            ConnectionId = connectionId;
         }
 
         /// <summary>
@@ -97,6 +96,8 @@ namespace OSDP.Net.Messages
         /// </summary>
         public byte Sequence { get; }
 
+        internal Control ControlBlock => new(Sequence, IsUsingCrc, IsSecureMessage);
+
         /// <summary>
         /// Indicates if the message was sent via an established secure channel
         /// </summary>
@@ -107,7 +108,26 @@ namespace OSDP.Net.Messages
         /// local message channel context
         /// </summary>
         public bool IsValidMac { get; }
-        
+
+        /// <summary>
+        /// Gets whether the incoming message is using the default key.
+        /// </summary>
+        /// <remarks>
+        /// The IsUsingDefaultKey property is a boolean value that indicates whether the incoming message is using the default key.
+        /// This property is true if the incoming message is using the default key; otherwise, false.
+        /// The default key is a pre-configured key that is used for cryptographic operations.
+        /// </remarks>
+        public bool IsUsingDefaultKey { get; }
+
+        /// <summary>
+        /// Determines whether the incoming message has secure data.
+        /// </summary>
+        /// <remarks>
+        /// The HasSecureData property is used to check if the incoming message has secure data.
+        /// </remarks>
+        /// <value>
+        /// <c>true</c> if the incoming message has secure data; otherwise, <c>false</c>.
+        /// </value>
         public bool HasSecureData =>
             SecurityBlockType == (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity ||
             SecurityBlockType == (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity;
@@ -122,12 +142,6 @@ namespace OSDP.Net.Messages
         /// MAC and CRC/Checksum suffix
         /// </summary>
         public ReadOnlySpan<byte> OriginalMessageData => _originalMessage;
-
-        /// <summary>
-        /// ID of the connection on which the channel was received
-        /// (not entirely sure if this is needed here)
-        /// </summary>
-        public Guid ConnectionId { get; }
 
         /// <summary>
         /// Type of the security block, if there is one
@@ -145,9 +159,15 @@ namespace OSDP.Net.Messages
         private bool IsDataSecure => Payload == null || Payload.Length == 0 || 
             SecurityBlockType == (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity || 
             SecurityBlockType == (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity;
+        
         private IEnumerable<byte> Mac { get; }
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        private bool IsDataCorrect { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the data in the incoming message is correct.
+        /// </summary>
+        /// <returns>true if the data is correct; otherwise, false.</returns>
+        public bool IsDataCorrect { get; }
+
         private static IEnumerable<byte> SecureSessionMessages => new[]
         {
             (byte)SecureChannel.SecurityBlockType.CommandMessageWithNoDataSecurity,
@@ -155,5 +175,11 @@ namespace OSDP.Net.Messages
             (byte)SecureChannel.SecurityBlockType.CommandMessageWithDataSecurity,
             (byte)SecureChannel.SecurityBlockType.ReplyMessageWithDataSecurity,
         };
+
+        /// <summary>
+        /// Checks whether the secure cryptogram has been accepted.
+        /// </summary>
+        /// <returns>Returns true if the secure cryptogram has been accepted; otherwise, false.</returns>
+        public bool SecureCryptogramHasBeenAccepted() => Convert.ToByte(SecureBlockData.First()) == 0x01;
     }
 }

@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
     /// A negative reply.
     /// </summary>
-    public class Nak : ReplyData
+    public class Nak : PayloadData
     {
         /// <summary>
         /// Prevents a default instance of the <see cref="Nak"/> class from being created.
@@ -38,9 +39,15 @@ namespace OSDP.Net.Model.ReplyData
         /// Gets the extra data.
         /// </summary>
         public IEnumerable<byte> ExtraData { get; private set;  }
-
+        
         /// <inheritdoc/>
-        public override ReplyType ReplyType => ReplyType.Nak;
+        public override byte Code => (byte)ReplyType.Nak;
+        
+        /// <inheritdoc/>
+        public override ReadOnlySpan<byte> SecurityControlBlock()
+        {
+            return SecurityBlock.ReplyMessageWithDataSecurity;
+        }
 
         /// <summary>
         /// Parses the data.

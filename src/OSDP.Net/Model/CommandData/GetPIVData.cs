@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Text;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.CommandData
 {
     /// <summary>
     /// Command data to get the PIV data
     /// </summary>
-    public class GetPIVData
+    public class GetPIVData : CommandData
     {
         private bool _useSingleByteOffset;
 
@@ -83,24 +84,31 @@ namespace OSDP.Net.Model.CommandData
             ushort offset = isSingleByteOffset ? data[4] :
                 Message.ConvertBytesToUnsignedShort(data.Slice(4, 2));
 
-            var res = new GetPIVData(data.Slice(0, 3).ToArray(), data[3], offset);
-            res._useSingleByteOffset = isSingleByteOffset;
-            return res;
+            return new GetPIVData(data.Slice(0, 3).ToArray(), data[3], offset)
+            {
+                _useSingleByteOffset = isSingleByteOffset
+            };
         }
+        
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.PivData;
 
-        /// <summary>
-        /// Builds the payload data array.
-        /// </summary>
-        /// <returns>The payload data</returns>
-        public ReadOnlySpan<byte> BuildData()
+        /// <inheritdoc />
+        public override byte Code => (byte)CommandType;
+        
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithDataSecurity;
+
+        /// <inheritdoc />
+        public override byte[] BuildData()
         {
             var data = new List<byte>();
             data.AddRange(ObjectId);
             data.Add(ElementId);
-            if (_useSingleByteOffset)
-                data.Add(Message.ConvertShortToBytes(DataOffset)[0]);
-            else
-                data.AddRange(Message.ConvertShortToBytes(DataOffset));
+            
+            if (_useSingleByteOffset) data.Add(Message.ConvertShortToBytes(DataOffset)[0]);
+            else data.AddRange(Message.ConvertShortToBytes(DataOffset));
+            
             return data.ToArray();
         }
 
@@ -112,7 +120,7 @@ namespace OSDP.Net.Model.CommandData
         /// </summary>
         /// <param name="indent">Number of ' ' chars to add to beginning of every line</param>
         /// <returns>String representation of the current object</returns>
-        public string ToString(int indent)
+        public override string ToString(int indent)
         {
             var padding = new string(' ', indent);
             var build = new StringBuilder();

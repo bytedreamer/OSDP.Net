@@ -23,7 +23,6 @@ using OSDP.Net.Model.ReplyData;
 using OSDP.Net.PanelCommands.DeviceDiscover;
 using OSDP.Net.Tracing;
 using Terminal.Gui;
-using Command = OSDP.Net.Messages.ACU.Command;
 using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 using ManufacturerSpecific = OSDP.Net.Model.CommandData.ManufacturerSpecific;
 
@@ -145,13 +144,13 @@ internal static class Program
             {
                 new MenuItem("_Bad CRC/Checksum", "",
                     () => SendCustomCommand("Bad CRC/Checksum", _connectionId, _controlPanel.SendCustomCommand,
-                        address => new InvalidCrcPollCommand(address))),
-                new MenuItem("Invalid Command Length", "",
+                        new InvalidCrcPollCommand())),
+               new MenuItem("Invalid Command Length", "",
                     () => SendCustomCommand("Invalid Command Length", _connectionId, _controlPanel.SendCustomCommand,
-                        address => new InvalidLengthPollCommand(address))),
+                        new InvalidLengthPollCommand())),
                 new MenuItem("Invalid Command", "",
                     () => SendCustomCommand("Invalid Command Length", _connectionId, _controlPanel.SendCustomCommand,
-                        address => new InvalidCommand(address)))
+                        new InvalidCommand()))
             })
         });
 
@@ -1771,7 +1770,7 @@ internal static class Program
     }
 
     private static void SendCustomCommand(string title, Guid connectionId,
-        Func<Guid, Command, Task> sendCommandFunction, Func<byte, Command> createCommand)
+        Func<Guid, byte, CommandData, Task> sendCommandFunction, CommandData commandData)
     {
         if (!CanSendCommand()) return;
 
@@ -1787,7 +1786,7 @@ internal static class Program
             {
                 try
                 {
-                    await sendCommandFunction(connectionId, createCommand(address));
+                    await sendCommandFunction(connectionId, address, commandData);
                 }
                 catch (Exception exception)
                 {

@@ -1,36 +1,28 @@
 using System;
-using OSDP.Net.Messages.ACU;
+using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model.CommandData;
 
 namespace Console.Commands
 {
     /// <summary>
     /// 
     /// </summary>
-    public class InvalidCommand : Command
+    public class InvalidCommand : CommandData
     {
-        public InvalidCommand(byte address)
-        {
-            Address = address;
-        }
+        /// <inheritdoc />
+        public override byte Code => 0x59;
+        
+        /// <inheritdoc />
+        public override CommandType CommandType => CommandType.Poll;
 
-        protected override byte CommandCode => 0x59;
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.CommandMessageWithNoDataSecurity;
 
-        protected override ReadOnlySpan<byte> SecurityControlBlock()
+        /// <inheritdoc />
+        public override byte[] BuildData()
         {
-            return new byte[]
-            {
-                0x02,
-                0x15
-            };
-        }
-
-        protected override void CustomCommandUpdate(Span<byte> commandBuffer)
-        {
-        }
-
-        protected override ReadOnlySpan<byte> Data()
-        {
-            return ReadOnlySpan<byte>.Empty;
+            return Array.Empty<byte>();
         }
     }
 }

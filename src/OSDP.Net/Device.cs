@@ -1,188 +1,371 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using OSDP.Net.Messages.ACU;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using OSDP.Net.Connections;
+using OSDP.Net.Messages;
 using OSDP.Net.Messages.SecureChannel;
+using OSDP.Net.Model;
+using OSDP.Net.Model.CommandData;
+using OSDP.Net.Model.ReplyData;
+using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
+using ManufacturerSpecific = OSDP.Net.Model.CommandData.ManufacturerSpecific;
 
 namespace OSDP.Net;
 
-internal class Device : IComparable<Device>
+/// <summary>
+/// Represents a Peripheral Device (PD) that communicates over the OSDP protocol.
+/// </summary>
+public class Device : IDisposable
 {
-    private const int RetryAmount = 2;
+    private readonly ILogger _logger;
+    private readonly ConcurrentQueue<PayloadData> _pendingPollReplies = new();
 
-    private readonly ConcurrentQueue<Command> _commands = new();
+    private CancellationTokenSource _cancellationTokenSource;
+    private Task _listenerTask = Task.CompletedTask;
+    private DateTime _lastValidReceivedCommand = DateTime.MinValue;
+    private bool _isDeviceListening;
 
-    private readonly SecureChannel _secureChannel = new();
-    private readonly bool _useSecureChannel;
-    private int _counter = RetryAmount;
-
-    private DateTime _lastValidReply = DateTime.MinValue;
-
-    private Command _retryCommand;
-
-    public Device(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey)
+    /// <summary>
+    /// Represents a Peripheral Device (PD) that communicates over the OSDP protocol.
+    /// </summary>
+    public Device(ILogger<Device> logger = null)
     {
-        _useSecureChannel = useSecureChannel;
-            
-        Address = address;
-        MessageControl = new Control(0, useCrc, useSecureChannel);
-
-        if (!UseSecureChannel) return;
-
-        SecureChannelKey = secureChannelKey ?? SecurityContext.DefaultKey;
-            
-        IsDefaultKey = SecurityContext.DefaultKey.SequenceEqual(SecureChannelKey);
+        _logger = logger;
     }
 
-    internal byte[] SecureChannelKey { get; }
-
-    private bool IsDefaultKey { get; }
-
-    public byte Address { get; }
-
-    public Control MessageControl { get; }
-
-    public bool UseSecureChannel => !IsSendingMultiMessageNoSecureChannel && _useSecureChannel;
-
-    public bool IsSecurityEstablished => !IsSendingMultiMessageNoSecureChannel && MessageControl.HasSecurityControlBlock && _secureChannel.IsEstablished;
-
-    public bool IsConnected => _lastValidReply + TimeSpan.FromSeconds(8) >= DateTime.UtcNow &&
-                               (IsSendingMultiMessageNoSecureChannel || !MessageControl.HasSecurityControlBlock || IsSecurityEstablished);
-
-    public bool IsSendingMultipartMessage { get; set; }
-
-    public DateTime RequestDelay { get; set; }
-
-    public bool IsSendingMultiMessageNoSecureChannel { get; set; }
-        
-    public bool IsReceivingMultipartMessage { get; set; }
-        
     /// <summary>
-    /// Has one or more commands waiting in the queue
+    /// Gets a value indicating whether the device is currently connected.
     /// </summary>
-    public bool HasQueuedCommand => _commands.Any();
+    /// <value><c>true</c> if the device is connected; otherwise, <c>false</c>.</value>
+    public bool IsConnected =>
+        _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow && _isDeviceListening;
+
+    /// <summary>
+    /// Starts listening for commands from the OSDP device through the specified connection.
+    /// </summary>
+    /// <param name="connection">The I/O connection used for communication with the OSDP device.</param>
+    public async void StartListening(IOsdpConnection connection)
+    {
+        _cancellationTokenSource = new CancellationTokenSource();
+
+        _listenerTask = await Task.Factory.StartNew(async () =>
+        {
+            try
+            {
+                connection.Open();
+                var channel = new PdMessageSecureChannel(connection);
+                _isDeviceListening = true;
+
+                while (!_cancellationTokenSource.IsCancellationRequested)
+                {
+                    var command = await channel.ReadNextCommand(_cancellationTokenSource.Token);
+                    if (command != null)
+                    {
+                        var reply = HandleCommand(command);
+                        await channel.SendReply(reply);
+                    }
+                }
+
+                _isDeviceListening = false;
+            }
+            catch (Exception exception)
+            {
+                _isDeviceListening = false;
+                _logger?.LogError(exception, $"Unexpected exception in polling loop");
+            }
+        }, TaskCreationOptions.LongRunning);
+    }
+
+    /// <summary>
+    /// Stops listening for OSDP messages on the device.
+    /// </summary>
+    public async void StopListening()
+    {
+        var cancellationTokenSource = _cancellationTokenSource;
+        if (cancellationTokenSource != null)
+        {
+            cancellationTokenSource.Cancel();
+
+            // TODO: why not block indefinitely?
+            //_shutdownComplete.WaitOne(TimeSpan.FromSeconds(1));
+            await _listenerTask;
+            _cancellationTokenSource = null;
+            _isDeviceListening = false;
+        }
+    }
+
+    /// <summary>
+    /// Enqueues a reply into the pending poll reply queue.
+    /// </summary>
+    /// <param name="reply">The reply to enqueue.</param>
+    public void EnqueuePollReply(PayloadData reply) => _pendingPollReplies.Enqueue(reply);
+
+    internal virtual OutgoingMessage HandleCommand(IncomingMessage command)
+    {
+        if (command.IsDataCorrect && Enum.IsDefined(typeof(CommandType), command.Type))
+            _lastValidReceivedCommand = DateTime.UtcNow;
+
+        return new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock,
+            (CommandType)command.Type switch
+            {
+                CommandType.Poll => HandlePoll(),
+                CommandType.IdReport => HandleIdReport(),
+                CommandType.DeviceCapabilities => HandleDeviceCapabilities(),
+                CommandType.LocalStatus => HandleLocalStatusReport(),
+                CommandType.InputStatus => HandleInputStatusReport(),
+                CommandType.OutputStatus => HandleOutputStatusReport(),
+                CommandType.ReaderStatus => HandleReaderStatusReport(),
+                CommandType.OutputControl => HandleOutputControl(OutputControls.ParseData(command.Payload)),
+                CommandType.LEDControl => HandleReaderLEDControl(ReaderLedControls.ParseData(command.Payload)),
+                CommandType.BuzzerControl => HandleBuzzerControl(ReaderBuzzerControl.ParseData(command.Payload)),
+                CommandType.TextOutput => HandleTextOutput(ReaderTextOutput.ParseData(command.Payload)),
+                CommandType.CommunicationSet => HandleCommunicationSet(CommunicationConfiguration.ParseData(command.Payload)),
+                CommandType.BioRead => HandleBiometricRead(BiometricReadData.ParseData(command.Payload)),
+                CommandType.BioMatch => HandleBiometricMatch(BiometricTemplateData.ParseData(command.Payload)),
+                CommandType.KeySet => HandleKeySettings(EncryptionKeyConfiguration.ParseData(command.Payload)),
+                CommandType.SessionChallenge => HandleSessionChallenge(),
+                CommandType.ServerCryptogram => HandleServerCryptogram(),
+                CommandType.MaxReplySize => HandleMaxReplySize(ACUReceiveSize.ParseData(command.Payload)),
+                CommandType.FileTransfer => HandleFileTransfer(FileTransferFragment.ParseData(command.Payload)),
+                CommandType.ManufacturerSpecific => HandleManufacturerCommand(ManufacturerSpecific.ParseData(command.Payload)),
+                CommandType.Abort => HandleAbortRequest(),
+                CommandType.PivData => HandlePivData(GetPIVData.ParseData(command.Payload)),
+                CommandType.KeepActive => HandleKeepActive(KeepReaderActive.ParseData(command.Payload)),
+                _ => HandleUnknownCommand(command)
+            });
+    }
+
+    private PayloadData HandlePoll()
+    {
+        return _pendingPollReplies.TryDequeue(out var reply) ? reply : new Ack();
+    }
+
+    /// <summary>
+    /// Handles the ID Report Request command received from the OSDP device.
+    /// </summary>
+    /// <returns></returns>
+    protected virtual PayloadData HandleIdReport()
+    {
+        return HandleUnknownCommand(CommandType.IdReport);
+    }
+
+    /// <summary>
+    /// Handles the text output command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The incoming reader text output command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleTextOutput(ReaderTextOutput commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.TextOutput);
+    }
+
+    /// <summary>
+    /// Handles the reader buzzer control command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The incoming reader buzzer control command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleBuzzerControl(ReaderBuzzerControl commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.BuzzerControl);
+    }
+
+    /// <summary>
+    /// Handles the output controls command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The incoming output controls command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleOutputControl(OutputControls commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.OutputControl);
+    }
+
+    /// <summary>
+    /// Handles the output control command received from the OSDP device.
+    /// </summary>
+    /// <returns></returns>
+    protected virtual PayloadData HandleDeviceCapabilities()
+    {
+        return HandleUnknownCommand(CommandType.DeviceCapabilities);
+    }
+
+    /// <summary>
+    /// Handles the get PIV data command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The incoming get PIV data command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandlePivData(GetPIVData commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.PivData);
+    }
+
+    /// <summary>
+    /// Handles the manufacture command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The incoming manufacture command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleManufacturerCommand(ManufacturerSpecific commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.ManufacturerSpecific);
+    }
+
+    /// <summary>
+    /// Handles the keep active command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The incoming keep active command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleKeepActive(KeepReaderActive commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.KeepActive);
+    }
+
+    /// <summary>
+    /// Handles the abort request command received from the OSDP device.
+    /// </summary>
+    /// <returns></returns>
+    protected virtual PayloadData HandleAbortRequest()
+    {
+        return HandleUnknownCommand(CommandType.Abort);
+    }
+
+    /// <summary>
+    /// Handles the file transfer command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The incoming file transfer fragment command message.</param>
+    /// <returns></returns>
+    private PayloadData HandleFileTransfer(FileTransferFragment commandPayload)
+    {
+        _logger.LogInformation("Received a file transfer command: {CommandPayload}", commandPayload.ToString());
+        return HandleUnknownCommand(CommandType.FileTransfer);
+    }
+
+    /// <summary>
+    /// Handles the maximum ACU maximum receive size command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The ACU maximum receive size command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleMaxReplySize(ACUReceiveSize commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.MaxReplySize);
+    }
+
+    private PayloadData HandleSessionChallenge()
+    {
+        _logger.LogInformation("Received a session challenge command");
+        return HandleUnknownCommand(CommandType.SessionChallenge);
+    }
+
+    private PayloadData HandleServerCryptogram()
+    {
+        _logger.LogInformation("Received a server cryptogram command");
+        return HandleUnknownCommand(CommandType.ServerCryptogram);
+    }
+
+    /// <summary>
+    /// Handles the key settings command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The key settings command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleKeySettings(EncryptionKeyConfiguration commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.KeySet);
+    }
+
+    /// <summary>
+    /// Handles the biometric match command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The biometric match command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleBiometricMatch(BiometricTemplateData commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.BioMatch);
+    }
+
+    /// <summary>
+    /// Handles the biometric match command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The biometric match command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleBiometricRead(BiometricReadData commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.BioRead);
+    }
+
+    /// <summary>
+    /// Handles the communication set command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The communication set command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleCommunicationSet(CommunicationConfiguration commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.CommunicationSet);
+    }
+
+    /// <summary>
+    /// Handles the reader LED controls command received from the OSDP device.
+    /// </summary>
+    /// <param name="commandPayload">The reader LED controls command payload.</param>
+    /// <returns></returns>
+    protected virtual PayloadData HandleReaderLEDControl(ReaderLedControls commandPayload)
+    {
+        return HandleUnknownCommand(CommandType.LEDControl);
+    }
+
+    /// <summary>
+    /// Handles the reader status command received from the OSDP device.
+    /// </summary>
+    /// <returns></returns>
+    protected virtual PayloadData HandleReaderStatusReport()
+    {
+        return HandleUnknownCommand(CommandType.ReaderStatus);
+    }
+
+    /// <summary>
+    /// Handles the output status command received from the OSDP device.
+    /// </summary>
+    /// <returns></returns>
+    protected virtual PayloadData HandleOutputStatusReport()
+    {
+        return HandleUnknownCommand(CommandType.OutputStatus);
+    }
+
+    /// <summary>
+    /// Handles the input status command received from the OSDP device.
+    /// </summary>
+    /// <returns></returns>
+    protected virtual PayloadData HandleInputStatusReport()
+    {
+        return HandleUnknownCommand(CommandType.InputStatus);
+    }
+
+    /// <summary>
+    /// Handles the reader local status command received from the OSDP device.
+    /// </summary>
+    /// <returns></returns>
+    protected virtual PayloadData HandleLocalStatusReport()
+    {
+        return HandleUnknownCommand(CommandType.LocalStatus);
+    }
+
+    private PayloadData HandleUnknownCommand(IncomingMessage command)
+    {
+        _logger?.LogInformation("Unexpected Command: {CommandType}", (CommandType)command.Type);
+
+        return new Nak(ErrorCode.UnknownCommandCode);
+    }
+
+   private PayloadData HandleUnknownCommand(CommandType commandType)
+    {
+        _logger?.LogInformation("Unexpected Command: {CommandType}", commandType);
+
+        return new Nak(ErrorCode.UnknownCommandCode);
+    }
 
     /// <inheritdoc />
-    public int CompareTo(Device other)
+    public void Dispose()
     {
-        if (ReferenceEquals(this, other)) return 0;
-        if (ReferenceEquals(null, other)) return 1;
-        return Address.CompareTo(other.Address);
-    }
-
-    /// <summary>
-    /// Get the next command in the queue, setup security, or send a poll command
-    /// </summary>
-    /// <param name="isPolling">If false, only send commands in the queue</param>
-    /// <returns>The next command always if polling, could be null if not polling</returns>
-    public Command GetNextCommandData(bool isPolling)
-    {
-        if (_retryCommand != null)
-        {
-            var saveCommand = _retryCommand;
-            _retryCommand = null;
-            return saveCommand;
-        }
-            
-        if (isPolling)
-        {
-            // Don't send clear text polling if using secure channel
-            if (MessageControl.Sequence == 0 && !UseSecureChannel)
-            {
-                return new PollCommand(Address);
-            }
-                
-            if (UseSecureChannel && !_secureChannel.IsInitialized)
-            {
-                return new SecurityInitializationRequestCommand(Address,
-                    _secureChannel.ServerRandomNumber().ToArray(), IsDefaultKey);
-            }
-
-            if (UseSecureChannel && !_secureChannel.IsEstablished)
-            {
-                return new ServerCryptogramCommand(Address, _secureChannel.ServerCryptogram, IsDefaultKey);
-            }
-        }
-
-        if (!_commands.TryDequeue(out var command) && isPolling)
-        {
-            return new PollCommand(Address);
-        }
-
-        return command;
-    }
-
-    public void SendCommand(Command command)
-    {
-        _commands.Enqueue(command);
-    }
-
-    /// <summary>
-    /// Store command for retry
-    /// </summary>
-    /// <param name="command"></param>
-    public void RetryCommand(Command command)
-    {
-        if (_counter-- > 0)
-        {
-            _retryCommand = command;
-        }
-        else
-        {
-            _retryCommand = null;
-            _counter = RetryAmount;
-        }
-    }
-
-    public void ValidReplyHasBeenReceived(byte sequence)
-    {
-        MessageControl.IncrementSequence(sequence);
-            
-        // It's valid once sequences are above zero
-        if (sequence > 0) _lastValidReply = DateTime.UtcNow;
-            
-        // Reset retry counter
-        _counter = RetryAmount;
-    }
-
-    public void InitializeSecureChannel(Reply reply)
-    {
-        var replyData = reply.ExtractReplyData.ToArray();
-
-        _secureChannel.Initialize(replyData.Skip(8).Take(8).ToArray(),
-            replyData.Skip(16).Take(16).ToArray(), SecureChannelKey);
-    }
-
-    public bool ValidateSecureChannelEstablishment(Reply reply)
-    {
-        if (!reply.SecureCryptogramHasBeenAccepted())
-        {
-            return false;
-        }
-
-        _secureChannel.Establish(reply.ExtractReplyData.ToArray());
-
-        return true;
-    }
-
-    public ReadOnlySpan<byte> GenerateMac(ReadOnlySpan<byte> message, bool isCommand)
-    {
-        return _secureChannel.GenerateMac(message, isCommand);
-    }
-
-    public ReadOnlySpan<byte> EncryptData(ReadOnlySpan<byte> data)
-    {
-        return _secureChannel.EncryptData(data);
-    }
-
-    public IEnumerable<byte> DecryptData(ReadOnlySpan<byte> data)
-    {
-        return _secureChannel.DecryptData(data);
-    }
-
-    public void CreateNewRandomNumber()
-    {
-        _secureChannel.CreateNewRandomNumber();
+        _cancellationTokenSource?.Dispose();
+        _listenerTask?.Dispose();
     }
 }

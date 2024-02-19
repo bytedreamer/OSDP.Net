@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
-using OSDP.Net.Messages.ACU;
+using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tracing;
 #if NETSTANDARD2_0
@@ -25,25 +25,25 @@ namespace OSDP.Net
     /// </summary>
     internal class Bus : IDisposable
     {
-        private const byte DriverByte = 0xFF;
+        internal const byte DriverByte = 0xFF;
 
         public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
         
-        private readonly SortedSet<Device> _configuredDevices = new ();
+        private readonly SortedSet<DeviceProxy> _configuredDevices = new ();
         private readonly object _configuredDevicesLock = new ();
         private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
         private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
         private readonly ILogger<ControlPanel> _logger;
         private readonly TimeSpan _pollInterval;
-        private readonly BlockingCollection<Reply> _replies;
+        private readonly BlockingCollection<ReplyTracker> _replies;
         private readonly Action<TraceEntry> _tracer;
         private readonly AutoResetEvent _commandAvailableEvent = new (false);
         private readonly AutoResetEvent _shutdownComplete = new (false);
         
         private CancellationTokenSource _cancellationTokenSource;
 
-        public Bus(IOsdpConnection connection, BlockingCollection<Reply> replies, TimeSpan pollInterval,
+        public Bus(IOsdpConnection connection, BlockingCollection<ReplyTracker> replies, TimeSpan pollInterval,
             Action<TraceEntry> tracer,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
@@ -77,9 +77,9 @@ namespace OSDP.Net
             _cancellationTokenSource?.Dispose();
         }
 
-        private TimeSpan IdleLineDelay(int numberOfBytes)
+        private static TimeSpan IdleLineDelay(IOsdpConnection connection, int numberOfBytes)
         {
-            return TimeSpan.FromSeconds((1.0 / Connection.BaudRate) * (10.0 * numberOfBytes));
+            return TimeSpan.FromSeconds((1.0 / connection.BaudRate) * (10.0 * numberOfBytes));
         }
 
         /// <summary>
@@ -101,10 +101,11 @@ namespace OSDP.Net
         /// <summary>
         /// Send a command to a device
         /// </summary>
-        /// <param name="command">Details about the command</param>
-        public void SendCommand(Command command)
+        /// <param name="address">Address of the device to send the command</param>
+        /// <param name="command">The data for the command</param>
+        public void SendCommand(byte address, CommandData command)
         {
-            var foundDevice = _configuredDevices.First(device => device.Address == command.Address);            
+            var foundDevice = _configuredDevices.First(device => device.Address == address);            
             foundDevice.SendCommand(command);
             _commandAvailableEvent.Set();
         }
@@ -127,7 +128,7 @@ namespace OSDP.Net
                     _configuredDevices.Remove(foundDevice);
                 }
 
-                var addedDevice = new Device(address, useCrc, useSecureChannel, secureChannelKey);
+                var addedDevice = new DeviceProxy(address, useCrc, useSecureChannel, secureChannelKey);
 
                 _configuredDevices.Add(addedDevice);
             }
@@ -256,13 +257,13 @@ namespace OSDP.Net
                         continue;
                     }
                     
-                    var command = device.GetNextCommandData(IsPolling);
-                    if (command == null || WaitingForNextMultiMessage(command, device.IsSendingMultipartMessage))
+                    var commandMessage = device.GetNextCommandData(IsPolling);
+                    if (commandMessage == null || WaitingForNextMultiMessage(commandMessage.Code, device.IsSendingMultipartMessage))
                     {
                         continue;
                     }
                     
-                    Reply reply;
+                    ReplyTracker reply;
                     
                     try
                     {
@@ -278,22 +279,22 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, $"[{Connection}] Error while notifying connection status for address {command.Address}");
+                        _logger?.LogError(exception, $"[{Connection}] Error while notifying connection status for address {commandMessage.Address}");
                     }
 
                     try
                     {
-                        reply = await SendCommandAndReceiveReply(command, device, cancellationToken).ConfigureAwait(false);
+                        reply = await SendCommandAndReceiveReply(commandMessage, device, cancellationToken).ConfigureAwait(false);
 
                         // Prevent plain text message replies when secure channel has been established
                         // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
                         // Workaround for KeySet command sending back an clear text Ack
-                        if (reply.Type != ReplyType.Busy && reply.Type != ReplyType.Nak && device.UseSecureChannel &&
-                            device.IsSecurityEstablished && !reply.IsSecureMessage && command.Type != 0x75)
+                        if (reply.ReplyMessage.Type != (byte)ReplyType.Busy && reply.ReplyMessage.Type != (byte)ReplyType.Nak && device.UseSecureChannel &&
+                            device.IsSecurityEstablished && !reply.ReplyMessage.IsSecureMessage && commandMessage.Code != (byte)CommandType.KeySet)
                         {
                             _logger?.LogWarning(
                                 "A plain text message was received when the secure channel had been established");
-                            device.CreateNewRandomNumber();
+                            device.ResetSecureChannelSession();
                             ResetDevice(device);
                             continue;
                         }
@@ -303,12 +304,12 @@ namespace OSDP.Net
                         switch (IsPolling)
                         {
                             // Make sure the security is reset properly if reader goes offline
-                            case true when device.IsSecurityEstablished && !IsOnline(command.Address):
+                            case true when device.IsSecurityEstablished && !IsOnline(commandMessage.Address):
                                 ResetDevice(device);
                                 break;
                             default:
-                                _logger?.LogDebug($"[{Connection}] Retrying command {command} on connection {Id} because \"{exception.Message}\".");
-                                device.RetryCommand(command);
+                                _logger?.LogDebug($"[{Connection}] Retrying command {commandMessage} on connection {Id} because \"{exception.Message}\".");
+                                device.RetryCommand(commandMessage.PayloadData as CommandData);
                                 break;
                         }
 
@@ -319,7 +320,7 @@ namespace OSDP.Net
                         if (!cancellationToken.IsCancellationRequested)
                         {
                             _logger?.LogError(exception,
-                                $"[{Connection}] Error while sending command {command} to address {command.Address}. Connection {Id}");
+                                $"[{Connection}] Error while sending command {commandMessage} to address {commandMessage.Address}. Connection {Id}");
                         }
 
                         continue;
@@ -331,11 +332,11 @@ namespace OSDP.Net
                     }
                     catch (Exception exception)
                     {
-                        _logger?.LogError(exception, $"[{Connection}] Error while processing reply {reply} from address {reply.Address}");
+                        _logger?.LogError(exception, $"[{Connection}] Error while processing reply {reply} from address {reply.ReplyMessage.Address}");
                         continue;
                     }
 
-                    delayTime.WaitOne(IdleLineDelay(2));
+                    delayTime.WaitOne(IdleLineDelay(Connection, 2));
                 }
             }
 
@@ -350,9 +351,9 @@ namespace OSDP.Net
             }
         }
 
-        private static bool WaitingForNextMultiMessage(Command command, bool sendingMultiMessage)
+        private static bool WaitingForNextMultiMessage(byte messageCode, bool sendingMultiMessage)
         {
-            return sendingMultiMessage && command is not FileTransferCommand;
+            return sendingMultiMessage && messageCode == (byte)CommandType.FileTransfer;
         }
 
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
@@ -362,7 +363,7 @@ namespace OSDP.Net
         /// </summary>
         /// <param name="device"></param>
         /// <returns>Return true if the connection status changed</returns>
-        private bool UpdateConnectionStatus(Device device)
+        private bool UpdateConnectionStatus(DeviceProxy device)
         {
             bool isConnected = device.IsConnected;
             bool isSecureChannelEstablished = device.IsSecurityEstablished;
@@ -386,10 +387,10 @@ namespace OSDP.Net
             return true;
         }
 
-        private void ProcessReply(Reply reply, Device device)
+        private void ProcessReply(ReplyTracker reply, DeviceProxy device)
         {
             // Request from PD to reset connection
-            if (device.IsConnected && reply.Sequence == 0)
+            if (device.IsConnected && reply.ReplyMessage.ControlBlock.Sequence == 0)
             {
                 ResetDevice(device);
                 return;
@@ -400,46 +401,45 @@ namespace OSDP.Net
                 return;
             }
 
-            if (reply.IsSecureMessage)
+            if (reply.ReplyMessage.IsSecureMessage)
             {
-                var mac = device.GenerateMac(reply.MessageForMacGeneration.ToArray(), false);
-                if (!reply.IsValidMac(mac))
+                if (!reply.ReplyMessage.IsValidMac)
                 {
                     ResetDevice(device);
                     return;
                 }
             }
 
-            if (reply.Type != ReplyType.Busy)
+            if (reply.ReplyMessage.Type != (byte)ReplyType.Busy)
             {
-                device.ValidReplyHasBeenReceived(reply.Sequence);
+                device.ValidReplyHasBeenReceived(reply.ReplyMessage.Sequence);
             }
             else
             {
                 return;
             }
 
-            if (reply.Type == ReplyType.Nak)
+            if (reply.ReplyMessage.Type == (byte)ReplyType.Nak)
             {
-                var errorCode = (ErrorCode)reply.ExtractReplyData.First();
+                var errorCode = (ErrorCode)reply.ReplyMessage.Payload.First();
                 if (device.IsSecurityEstablished &&
                     errorCode is ErrorCode.DoesNotSupportSecurityBlock or ErrorCode.CommunicationSecurityNotMet
                         or ErrorCode.UnableToProcessCommand ||
-                    errorCode == ErrorCode.UnexpectedSequenceNumber && reply.Sequence > 0)
+                    errorCode == ErrorCode.UnexpectedSequenceNumber && reply.ReplyMessage.Sequence > 0)
                 {
                     ResetDevice(device);
                 }
             }
 
-            switch (reply.Type)
+            switch ((ReplyType)reply.ReplyMessage.Type)
             {
                 case ReplyType.CrypticData:
-                    device.InitializeSecureChannel(reply);
+                    device.InitializeSecureChannel(reply.ReplyMessage.Payload);
                     break;
                 case ReplyType.InitialRMac:
-                    if (!device.ValidateSecureChannelEstablishment(reply))
+                    if (!reply.ValidateSecureChannelEstablishment())
                     {
-                        _logger?.LogError($"[{Connection}] Cryptogram not accepted by address {reply.Address}");
+                        _logger?.LogError($"[{Connection}] Cryptogram not accepted by address {reply.ReplyMessage.Address}");
                     }
                     break;
             }
@@ -476,7 +476,7 @@ namespace OSDP.Net
             foundDevice.MessageControl.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
             if (isSendingMultiMessageNoSecureChannel)
             {
-                foundDevice.CreateNewRandomNumber();
+                foundDevice.ResetSecureChannelSession();
             }
         }
 
@@ -487,81 +487,73 @@ namespace OSDP.Net
             foundDevice.RequestDelay = requestDelay;
         }
 
-        private void ResetDevice(Device device)
+        private void ResetDevice(DeviceProxy device)
         {
             device.RequestDelay = DateTime.UtcNow + TimeSpan.FromSeconds(1);
             AddDevice(device.Address, device.MessageControl.UseCrc, device.UseSecureChannel, device.SecureChannelKey);
         }
 
-        private async Task<Reply> SendCommandAndReceiveReply(Command command, Device device, CancellationToken cancellationToken)
+        private async Task<ReplyTracker> SendCommandAndReceiveReply(OutgoingMessage command, DeviceProxy device, CancellationToken cancellationToken)
         {
             byte[] commandData;
             try
             {
-                commandData = command.BuildCommand(device);
+                commandData = command.BuildMessage(device.MessageSecureChannel);
             }
             catch (Exception exception)
             {
                 _logger?.LogError(exception, $"[{Connection}] Error while building command {command}");
                 throw;
             }
-
-            var buffer = new byte[commandData.Length + 1];
-
-            // Section 5.7 states that transmitting device shall guarantee an idle time between packets. This is
-            // accomplished by sending a character with all bits set to 1. The driver byte is required by
-            // converters and multiplexers to sense when line is idle.
-            buffer[0] = DriverByte;
-            Buffer.BlockCopy(commandData, 0, buffer, 1, commandData.Length);
  
-            await Connection.WriteAsync(buffer).ConfigureAwait(false);
+            await Connection.WriteAsync(commandData).ConfigureAwait(false);
 
-            _tracer(new TraceEntry(TraceDirection.Output, Id, commandData));
+            _tracer(new TraceEntry(TraceDirection.Output, Id, commandData.Skip(1).ToArray()));
             
             using var delayTime = new AutoResetEvent(false);
-            delayTime.WaitOne(IdleLineDelay(buffer.Length));
+            delayTime.WaitOne(IdleLineDelay(Connection, commandData.Length));
 
             return await ReceiveReply(command, device, cancellationToken);
         }
 
-        private async Task<Reply> ReceiveReply(Command command, Device device, CancellationToken cancellationToken)
+        private async Task<ReplyTracker> ReceiveReply(OutgoingMessage command, DeviceProxy device, CancellationToken cancellationToken)
         {
             var replyBuffer = new Collection<byte>();
 
-            if (!await WaitForStartOfMessage(replyBuffer, device.IsSendingMultipartMessage, cancellationToken).ConfigureAwait(false))
+            if (!await WaitForStartOfMessage(Connection, replyBuffer, device.IsSendingMultipartMessage, cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message");
             }
 
-            if (!await WaitForMessageLength(replyBuffer, cancellationToken).ConfigureAwait(false))
+            if (!await WaitForMessageLength(Connection, replyBuffer, cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for reply message length");
             }
 
-            if (!await WaitForRestOfMessage(replyBuffer, ExtractMessageLength(replyBuffer), cancellationToken).ConfigureAwait(false))
+            if (!await WaitForRestOfMessage(Connection, replyBuffer, ExtractMessageLength(replyBuffer), cancellationToken).ConfigureAwait(false))
             {
                 throw new TimeoutException("Timeout waiting for rest of reply message");
             }
             
             _tracer(new TraceEntry(TraceDirection.Input, Id, replyBuffer.ToArray()));
 
-            return Reply.Parse(replyBuffer.ToArray(), Id, command, device);
+            return new ReplyTracker(Id, new IncomingMessage(replyBuffer.ToArray(), device.MessageSecureChannel),  command, device);
         }
 
-        private static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
+        internal static ushort ExtractMessageLength(IReadOnlyList<byte> replyBuffer)
         {
             return Message.ConvertBytesToUnsignedShort(new[] {replyBuffer[2], replyBuffer[3]});
         }
 
-        private async Task<bool> WaitForRestOfMessage(ICollection<byte> replyBuffer, ushort replyLength, CancellationToken cancellationToken)
+        internal static async Task<bool> WaitForRestOfMessage(IOsdpConnection connection, ICollection<byte> replyBuffer, ushort replyLength, CancellationToken cancellationToken)
         {
             while (replyBuffer.Count < replyLength)
             {
-                int maxReadBufferLength = Connection.BaudRate / 40;
+                int maxReadBufferLength = connection.BaudRate / 40;
                 int remainingLength = replyLength - replyBuffer.Count;
                 byte[] readBuffer = new byte[Math.Min(maxReadBufferLength, remainingLength)];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout + IdleLineDelay(readBuffer.Length),
+                    await TimeOutReadAsync(connection, readBuffer, connection.ReplyTimeout + IdleLineDelay(connection, readBuffer.Length),
                             cancellationToken)
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
@@ -580,13 +572,13 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<bool> WaitForMessageLength(ICollection<byte> replyBuffer, CancellationToken cancellationToken)
+        internal static async Task<bool> WaitForMessageLength(IOsdpConnection connection, ICollection<byte> replyBuffer, CancellationToken cancellationToken)
         {
             while (replyBuffer.Count < 4)
             {
                 byte[] readBuffer = new byte[4];
                 int bytesRead =
-                    await TimeOutReadAsync(readBuffer, Connection.ReplyTimeout, cancellationToken)
+                    await TimeOutReadAsync(connection, readBuffer, connection.ReplyTimeout, cancellationToken)
                         .ConfigureAwait(false);
                 if (bytesRead > 0)
                 {
@@ -604,13 +596,13 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<bool> WaitForStartOfMessage(ICollection<byte> replyBuffer, bool waitLonger, CancellationToken cancellationToken)
+        internal static async Task<bool> WaitForStartOfMessage(IOsdpConnection connection, ICollection<byte> replyBuffer, bool waitLonger, CancellationToken cancellationToken)
         {
             while (true)
             {
                 byte[] readBuffer = new byte[1];
-                int bytesRead = await TimeOutReadAsync(readBuffer,
-                        Connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero),
+                int bytesRead = await TimeOutReadAsync(connection, readBuffer,
+                        connection.ReplyTimeout + (waitLonger ? TimeSpan.FromSeconds(1) : TimeSpan.Zero),
                         cancellationToken)
                     .ConfigureAwait(false);
                 if (bytesRead == 0)
@@ -630,17 +622,18 @@ namespace OSDP.Net
             return true;
         }
 
-        private async Task<int> TimeOutReadAsync(byte[] buffer, TimeSpan timeout, CancellationToken cancellationToken)
+        private static async Task<int> TimeOutReadAsync(IOsdpConnection connection, byte[] buffer, TimeSpan timeout, CancellationToken cancellationToken)
         {
             using var timedCancellationTokenSource = new CancellationTokenSource(timeout);
             using var linkedCancellationTokenSource =
                 CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timedCancellationTokenSource.Token);
             try
             {
-                return await Connection.ReadAsync(buffer, linkedCancellationTokenSource.Token).ConfigureAwait(false);
+                return await connection.ReadAsync(buffer, linkedCancellationTokenSource.Token).ConfigureAwait(false);
             }
             catch
             {
+                // TODO: be more selective with exception types?
                 return 0;
             }
         }
