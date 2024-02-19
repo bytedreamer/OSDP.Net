@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Numerics;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Model.ReplyData;
 
@@ -18,11 +19,26 @@ internal class Program
         var baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
         var deviceAddress = byte.Parse(osdpSection["DeviceAddress"] ?? "0");
 
-        var connection = new SerialPortOsdpConnection(portName, baudRate);
-        using var device = new MySampleDevice();
-        device.StartListening(connection);
+        var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder
+                .AddConsole(options =>
+                {
+                })
+                .SetMinimumLevel(LogLevel.Warning)
+                .AddFilter("CardReader.Program", LogLevel.Information)
+                .AddFilter("OSDP.Net", LogLevel.Debug);
+        });
+        var logger = loggerFactory.CreateLogger<Program>();
 
-        await Task.Factory.StartNew(() =>
+        // var connection = new SerialPortOsdpConnection(portName, baudRate);
+        var comms = new TcpOsdpServer(5000, baudRate);
+        using var device = new MySampleDevice(loggerFactory);
+        device.StartListening(comms);
+
+        logger.LogInformation("OSDP PD Device is listening on port 5000...");
+
+        await Task.Run(async () =>
         {
             // The card format number for this example is 128 bit (as raw card data)
             const string cardNumberHexValue = "30313233343536373839303030303032";
@@ -32,6 +48,8 @@ internal class Program
 
             while (true)
             {
+                await Task.Delay(500);
+
                 // ReSharper disable once AccessToDisposedClosure
                 if (!device.IsConnected) continue;
 

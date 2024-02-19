@@ -13,6 +13,7 @@ namespace OSDP.Net.Connections
         private readonly string _portName;
         private readonly int _baudRate;
         private SerialPort _serialPort;
+        private bool _disposedValue;
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.Connections.SerialPortOsdpConnection" /> class.</summary>
         /// <param name="portName">Name of the port.</param>
@@ -97,6 +98,25 @@ namespace OSDP.Net.Connections
         public override string ToString()
         {
             return _portName;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    Close();
+                }
+
+                _disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -12,6 +12,7 @@ namespace OSDP.Net.Connections
         private readonly int _portNumber;
         private readonly string _server;
         private TcpClient _tcpClient;
+        private bool _disposedValue;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TcpClientOsdpConnection"/> class.
@@ -90,6 +91,26 @@ namespace OSDP.Net.Connections
         public override string ToString()
         {
             return $"{_server}:{_portNumber}";
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    Close();
+                }
+
+                _disposedValue = true;
+            }
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

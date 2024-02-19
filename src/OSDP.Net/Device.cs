@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -19,80 +20,111 @@ namespace OSDP.Net;
 /// </summary>
 public class Device : IDisposable
 {
+    private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger _logger;
     private readonly ConcurrentQueue<PayloadData> _pendingPollReplies = new();
 
     private CancellationTokenSource _cancellationTokenSource;
-    private Task _listenerTask = Task.CompletedTask;
     private DateTime _lastValidReceivedCommand = DateTime.MinValue;
-    private bool _isDeviceListening;
+    private readonly ConcurrentDictionary<Task, byte> _clientListeners = new();
 
     /// <summary>
     /// Represents a Peripheral Device (PD) that communicates over the OSDP protocol.
     /// </summary>
-    public Device(ILogger<Device> logger = null)
+    public Device(ILoggerFactory loggerFactory = null)
     {
-        _logger = logger;
+        _loggerFactory = loggerFactory;
+        _logger = loggerFactory?.CreateLogger<Device>();
     }
 
     /// <summary>
     /// Gets a value indicating whether the device is currently connected.
     /// </summary>
     /// <value><c>true</c> if the device is connected; otherwise, <c>false</c>.</value>
-    public bool IsConnected =>
-        _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow && _isDeviceListening;
+    public bool IsConnected => _clientListeners.Count > 0 && (
+        _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow);
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            var _ = StopListening();
+        }
+    }
 
     /// <summary>
     /// Starts listening for commands from the OSDP device through the specified connection.
     /// </summary>
-    /// <param name="connection">The I/O connection used for communication with the OSDP device.</param>
-    public async void StartListening(IOsdpConnection connection)
+    /// <param name="server">The I/O server used for communication with the OSDP client.</param>
+    public async void StartListening(IOsdpServer server)
     {
+        if (_cancellationTokenSource != null) return;
         _cancellationTokenSource = new CancellationTokenSource();
 
-        _listenerTask = await Task.Factory.StartNew(async () =>
+        var cancellationTokenSource = _cancellationTokenSource;
+
+        server.Start(async (IOsdpConnection incomingConnection) =>
         {
-            try
-            {
-                connection.Open();
-                var channel = new PdMessageSecureChannel(connection);
-                _isDeviceListening = true;
+            _logger?.LogDebug("New OSDP connection opened - {}", _clientListeners.Count + 1);
 
-                while (!_cancellationTokenSource.IsCancellationRequested)
+            var listenTask = ClientListenLoop(incomingConnection);
+            _clientListeners.TryAdd(listenTask, 0);
+            await listenTask;
+            _clientListeners.TryRemove(listenTask, out _);
+
+            _logger?.LogDebug("OSDP connection terminated - {}", _clientListeners.Count);
+        });
+    }
+
+    private async Task ClientListenLoop(IOsdpConnection incomingConnection)
+    {
+        try
+        {
+            var channel = new PdMessageSecureChannel(incomingConnection, loggerFactory: _loggerFactory);
+
+            while (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                var command = await channel.ReadNextCommand(_cancellationTokenSource.Token);
+
+                if (command != null)
                 {
-                    var command = await channel.ReadNextCommand(_cancellationTokenSource.Token);
-                    if (command != null)
-                    {
-                        var reply = HandleCommand(command);
-                        await channel.SendReply(reply);
-                    }
+                    var reply = HandleCommand(command);
+                    await channel.SendReply(reply);
                 }
-
-                _isDeviceListening = false;
+                else if( !incomingConnection.IsOpen )
+                {
+                    _logger?.LogDebug("Detected clean OSDP connection termination");
+                    break;
+                }
             }
-            catch (Exception exception)
-            {
-                _isDeviceListening = false;
-                _logger?.LogError(exception, $"Unexpected exception in polling loop");
-            }
-        }, TaskCreationOptions.LongRunning);
+        }
+        catch (Exception exception)
+        {
+            // TODO: What about clean client disconnect? Let's make sure that one doesn't get reported as error.
+            _logger?.LogError(exception, $"Unexpected exception in polling loop");
+        }
+        finally
+        {
+            incomingConnection.Close();
+        }
     }
 
     /// <summary>
     /// Stops listening for OSDP messages on the device.
     /// </summary>
-    public async void StopListening()
+    public async Task StopListening()
     {
-        var cancellationTokenSource = _cancellationTokenSource;
-        if (cancellationTokenSource != null)
+        if (_cancellationTokenSource != null)
         {
-            cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Cancel();
 
-            // TODO: why not block indefinitely?
-            //_shutdownComplete.WaitOne(TimeSpan.FromSeconds(1));
-            await _listenerTask;
+            while (_clientListeners.Count > 0)
+            {
+                await Task.WhenAll(_clientListeners.Select((e) => e.Key));
+            }
+            
+            _cancellationTokenSource.Dispose();
             _cancellationTokenSource = null;
-            _isDeviceListening = false;
         }
     }
 

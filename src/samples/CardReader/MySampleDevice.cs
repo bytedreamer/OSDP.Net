@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using OSDP.Net;
 using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
@@ -6,6 +7,8 @@ namespace CardReader;
 
 internal class MySampleDevice : Device
 {
+    public MySampleDevice(ILoggerFactory loggerFactory) : base(loggerFactory) { }
+
     protected override PayloadData HandleIdReport()
     {
         return new DeviceIdentification([0x00, 0x00, 0x00], 0, 1, 0, 0, 0, 0);

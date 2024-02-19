@@ -74,8 +74,7 @@ namespace OSDP.Net.Messages.SecureChannel
                 throw new TimeoutException("Timeout waiting for command of reply message");
             }
 
-            // TODO: best way to log?
-            Debug.WriteLine("Incoming: " + BitConverter.ToString(commandBuffer.ToArray()));
+            Logger?.LogDebug("Incoming: " + BitConverter.ToString(commandBuffer.ToArray()));
 
             var command = new IncomingMessage(commandBuffer.ToArray().AsSpan(), this);
 
@@ -90,6 +89,8 @@ namespace OSDP.Net.Messages.SecureChannel
 
         internal async Task SendReply(OutgoingMessage reply)
         {
+            Logger?.LogInformation("Sending Reply: {reply}", Enum.GetName(typeof(ReplyType), reply.PayloadData.Code));
+
             await _connection.WriteAsync(reply.BuildMessage(this));
         }
 
@@ -105,7 +106,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             if (reply == null) return false;
 
-            await SendReply(new OutgoingMessage(           (byte)(command.Address | 0x80), command.ControlBlock, reply));
+            await SendReply(new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock, reply));
 
             if (command.Type == (byte)CommandType.ServerCryptogram)
             {
