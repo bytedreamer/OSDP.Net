@@ -17,10 +17,6 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DocumentationFile></DocumentationFile>
-  </PropertyGroup>
-
   <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
@@ -38,12 +34,5 @@
     <PackageReference Include="System.Text.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Utilities.cs" />
-  </ItemGroup>
-
-
-
 
 </Project>
