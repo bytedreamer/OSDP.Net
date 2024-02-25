@@ -39,7 +39,6 @@ namespace OSDP.Net.Tests
         {
             // Arrange
             var mockConnection = new MockConnection();
-            await mockConnection.Object.Open();
             
             var panel = new ControlPanel();
             Guid id = panel.StartConnection(mockConnection.Object);
