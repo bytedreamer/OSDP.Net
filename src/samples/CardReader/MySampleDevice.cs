@@ -11,7 +11,7 @@ internal class MySampleDevice : Device
 
     protected override PayloadData HandleIdReport()
     {
-        return new DeviceIdentification([0x00, 0x00, 0x00], 0, 1, 0, 0, 0, 0);
+        return new DeviceIdentification([0x01, 0x02, 0x03], 4, 5, 6, 7, 8, 9);
     }
 
     protected override PayloadData HandleDeviceCapabilities()

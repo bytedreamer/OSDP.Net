@@ -74,24 +74,29 @@ namespace OSDP.Net.Messages.SecureChannel
                 throw new TimeoutException("Timeout waiting for command of reply message");
             }
 
-            Logger?.LogDebug("Incoming: " + BitConverter.ToString(commandBuffer.ToArray()));
-
             var command = new IncomingMessage(commandBuffer.ToArray().AsSpan(), this);
 
             if (command.Type != (byte)CommandType.Poll)
             {
                 Logger?.LogInformation("Received Command: {CommandType}", Enum.GetName(typeof(CommandType), command.Type));
+                Logger?.LogDebug("Incoming: {data}", BitConverter.ToString(commandBuffer.ToArray()));
             }
 
             var commandHandled = await HandleCommand(command);
             return commandHandled ? await ReadNextCommand() : command;
         }
 
-        internal async Task SendReply(OutgoingMessage reply)
+        internal async Task SendReply(OutgoingReply reply)
         {
-            Logger?.LogInformation("Sending Reply: {reply}", Enum.GetName(typeof(ReplyType), reply.PayloadData.Code));
+            var replyBuffer = reply.BuildMessage(this);
 
-            await _connection.WriteAsync(reply.BuildMessage(this));
+            if (reply.Command.Type != (byte)CommandType.Poll)
+            {
+                Logger?.LogInformation("Sending Reply: {reply}", Enum.GetName(typeof(ReplyType), reply.PayloadData.Code));
+                Logger?.LogDebug("Outgoing: {data}", BitConverter.ToString(replyBuffer));
+            }
+
+            await _connection.WriteAsync(replyBuffer);
         }
 
         private async Task<bool> HandleCommand(IncomingMessage command)
@@ -106,7 +111,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             if (reply == null) return false;
 
-            await SendReply(new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock, reply));
+            await SendReply(new OutgoingReply(command, reply));
 
             if (command.Type == (byte)CommandType.ServerCryptogram)
             {

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Sockets;
 using System.Threading;
@@ -6,25 +7,20 @@ using System.Threading.Tasks;
 namespace OSDP.Net.Connections
 {
     /// <summary>Listens for a TCP/IP connection from a server.</summary>
-    public class TcpServerOsdpConnection : IOsdpConnection
+    public class TcpServerOsdpConnection : OsdpConnection
     {
         private readonly TcpListener _listener;
         private TcpClient _tcpClient;
-        private bool disposedValue;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TcpServerOsdpConnection"/> class.
         /// </summary>
         /// <param name="portNumber">The port number.</param>
         /// <param name="baudRate">The baud rate.</param>
-        public TcpServerOsdpConnection(int portNumber, int baudRate)
+        public TcpServerOsdpConnection(int portNumber, int baudRate) : base(baudRate)
         {
             _listener = TcpListener.Create(portNumber);
-            BaudRate = baudRate;
         }
-
-        /// <inheritdoc />
-        public int BaudRate { get; }
 
         /// <inheritdoc />
         public bool IsOpen
@@ -40,10 +36,10 @@ namespace OSDP.Net.Connections
         public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
 
         /// <inheritdoc />
-        public void Open()
+        public override async Task Open()
         {
             _listener.Start();
-            var newTcpClient = _listener.AcceptTcpClient();
+            var newTcpClient = await _listener.AcceptTcpClientAsync();
 
             Close();
 
@@ -51,16 +47,17 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public void Close()
+        public override Task Close()
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
             if (tcpClient?.Connected ?? false) tcpClient?.GetStream().Close();
             tcpClient?.Close();
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public async Task WriteAsync(byte[] buffer)
+        public override async Task WriteAsync(byte[] buffer)
         {
             var tcpClient = _tcpClient;
             if (tcpClient != null)
@@ -70,7 +67,7 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
+        public override async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
             var tcpClient = _tcpClient;
             if (tcpClient != null)
@@ -86,50 +83,22 @@ namespace OSDP.Net.Connections
         {
             return _listener?.LocalEndpoint.ToString();
         }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    Close();
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
     }
 
 
-    class TcpServerOsdpConnection2 : IOsdpConnection
+    internal class TcpServerOsdpConnection2 : OsdpConnection
     {
         private TcpClient _tcpClient;
         private NetworkStream _stream;
-        private bool disposedValue;
 
-        public TcpServerOsdpConnection2(TcpClient tcpClient, int baudRate)
+        public TcpServerOsdpConnection2(TcpClient tcpClient, int baudRate) : base(baudRate)
         {
             IsOpen = true;
-            BaudRate = baudRate;
             _tcpClient = tcpClient;
             _stream = tcpClient.GetStream();
         }
 
-        public int BaudRate { get; }
-
-        public bool IsOpen { get; private set; }
-
-        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
-
-        public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
+        public override async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
             try
             {
@@ -142,7 +111,7 @@ namespace OSDP.Net.Connections
             }
         }
 
-        public async Task WriteAsync(byte[] buffer)
+        public override async Task WriteAsync(byte[] buffer)
         {
             try
             {
@@ -155,52 +124,35 @@ namespace OSDP.Net.Connections
             }
         }
 
-        public void Open() => throw new NotSupportedException();
+        public override Task Open() => throw new NotSupportedException();
 
-        public void Close() => Dispose();
-
-        protected virtual void Dispose(bool disposing)
+        public override Task Close()
         {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    _stream.Dispose();
-                    _tcpClient.Dispose();
-                }
-
-                _stream = null;
-                _tcpClient = null;
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            _stream?.Dispose();
+            _tcpClient?.Dispose();
+            _stream = null;
+            _tcpClient = null;
+            return Task.CompletedTask;
         }
     }
 
 
-    public class TcpOsdpServer : IOsdpServer
+    public class TcpOsdpServer : OsdpServer
     {
         private TcpListener _listener;
         private int _baudRate;
         private bool _disposedValue;
 
-        public TcpOsdpServer(int portNumber, int baudRate)
+        public TcpOsdpServer(
+            int portNumber, int baudRate, ILoggerFactory loggerFactory = null) : base(loggerFactory)
         {
             _listener = TcpListener.Create(portNumber);
             _baudRate = baudRate;
         }
 
-        public bool IsRunning {get; private set;}
-
-        public void Start(Func<IOsdpConnection, Task> newConnectionHandler)
+        public override Task Start(Func<IOsdpConnection, Task> newConnectionHandler)
         {
-            if (IsRunning) return;
+            if (IsRunning) return Task.CompletedTask;
 
             IsRunning = true;
             _listener.Start();
@@ -212,36 +164,21 @@ namespace OSDP.Net.Connections
                     var client = await _listener.AcceptTcpClientAsync();
                     if (client != null)
                     {
-                        TcpServerOsdpConnection2 connection = new(client, _baudRate);
-
-                        // Intentionally let this function spin off on its own so that the caller
-                        // can work with the connection and let it go on their own
-                        var _ = newConnectionHandler(connection);
+                        var connection = new TcpServerOsdpConnection2(client, _baudRate);
+                        var task = newConnectionHandler(connection);
+                        RegisterConnection(connection, task);
                     }
                 }
             });
+
+            return Task.CompletedTask;
         }
 
-        public void Stop()
+        public override Task Stop()
         {
             IsRunning = false;
             _listener.Stop();
-        }
-
-        public void Dispose() => Dispose(true);
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    Stop();
-                }
-
-                _listener = null;
-                _disposedValue = true;
-            }
+            return base.Stop();
         }
     }
 }

@@ -24,9 +24,8 @@ public class Device : IDisposable
     private readonly ILogger _logger;
     private readonly ConcurrentQueue<PayloadData> _pendingPollReplies = new();
 
-    private CancellationTokenSource _cancellationTokenSource;
+    private IOsdpServer _osdpServer;
     private DateTime _lastValidReceivedCommand = DateTime.MinValue;
-    private readonly ConcurrentDictionary<Task, byte> _clientListeners = new();
 
     /// <summary>
     /// Represents a Peripheral Device (PD) that communicates over the OSDP protocol.
@@ -37,11 +36,18 @@ public class Device : IDisposable
         _logger = loggerFactory?.CreateLogger<Device>();
     }
 
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
     /// <summary>
     /// Gets a value indicating whether the device is currently connected.
     /// </summary>
     /// <value><c>true</c> if the device is connected; otherwise, <c>false</c>.</value>
-    public bool IsConnected => _clientListeners.Count > 0 && (
+    public bool IsConnected => _osdpServer?.ConnectionCount > 0 && (
         _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow);
 
     protected virtual void Dispose(bool disposing)
@@ -58,22 +64,12 @@ public class Device : IDisposable
     /// <param name="server">The I/O server used for communication with the OSDP client.</param>
     public async void StartListening(IOsdpServer server)
     {
-        if (_cancellationTokenSource != null) return;
-        _cancellationTokenSource = new CancellationTokenSource();
+        var cancellationTokenSource = new CancellationTokenSource();
 
-        var cancellationTokenSource = _cancellationTokenSource;
+        if (_osdpServer != null) return;
 
-        server.Start(async (IOsdpConnection incomingConnection) =>
-        {
-            _logger?.LogDebug("New OSDP connection opened - {}", _clientListeners.Count + 1);
-
-            var listenTask = ClientListenLoop(incomingConnection);
-            _clientListeners.TryAdd(listenTask, 0);
-            await listenTask;
-            _clientListeners.TryRemove(listenTask, out _);
-
-            _logger?.LogDebug("OSDP connection terminated - {}", _clientListeners.Count);
-        });
+        _osdpServer = server;
+        await _osdpServer.Start(ClientListenLoop);
     }
 
     private async Task ClientListenLoop(IOsdpConnection incomingConnection)
@@ -82,20 +78,14 @@ public class Device : IDisposable
         {
             var channel = new PdMessageSecureChannel(incomingConnection, loggerFactory: _loggerFactory);
 
-            while (!_cancellationTokenSource.IsCancellationRequested)
+            while (incomingConnection.IsOpen)
             {
-                var command = await channel.ReadNextCommand(_cancellationTokenSource.Token);
+                var command = await channel.ReadNextCommand();
 
-                if (command != null)
-                {
-                    var reply = HandleCommand(command);
-                    await channel.SendReply(reply);
-                }
-                else if( !incomingConnection.IsOpen )
-                {
-                    _logger?.LogDebug("Detected clean OSDP connection termination");
-                    break;
-                }
+                if (command == null) continue;
+
+                var reply = HandleCommand(command);
+                await channel.SendReply(reply);
             }
         }
         catch (Exception exception)
@@ -105,7 +95,7 @@ public class Device : IDisposable
         }
         finally
         {
-            incomingConnection.Close();
+            await incomingConnection.Close();
         }
     }
 
@@ -114,18 +104,8 @@ public class Device : IDisposable
     /// </summary>
     public async Task StopListening()
     {
-        if (_cancellationTokenSource != null)
-        {
-            _cancellationTokenSource.Cancel();
-
-            while (_clientListeners.Count > 0)
-            {
-                await Task.WhenAll(_clientListeners.Select((e) => e.Key));
-            }
-            
-            _cancellationTokenSource.Dispose();
-            _cancellationTokenSource = null;
-        }
+        await (_osdpServer?.Stop() ?? Task.CompletedTask);
+        _osdpServer = null;
     }
 
     /// <summary>
@@ -134,39 +114,38 @@ public class Device : IDisposable
     /// <param name="reply">The reply to enqueue.</param>
     public void EnqueuePollReply(PayloadData reply) => _pendingPollReplies.Enqueue(reply);
 
-    internal virtual OutgoingMessage HandleCommand(IncomingMessage command)
+    internal virtual OutgoingReply HandleCommand(IncomingMessage command)
     {
         if (command.IsDataCorrect && Enum.IsDefined(typeof(CommandType), command.Type))
             _lastValidReceivedCommand = DateTime.UtcNow;
 
-        return new OutgoingMessage((byte)(command.Address | 0x80), command.ControlBlock,
-            (CommandType)command.Type switch
-            {
-                CommandType.Poll => HandlePoll(),
-                CommandType.IdReport => HandleIdReport(),
-                CommandType.DeviceCapabilities => HandleDeviceCapabilities(),
-                CommandType.LocalStatus => HandleLocalStatusReport(),
-                CommandType.InputStatus => HandleInputStatusReport(),
-                CommandType.OutputStatus => HandleOutputStatusReport(),
-                CommandType.ReaderStatus => HandleReaderStatusReport(),
-                CommandType.OutputControl => HandleOutputControl(OutputControls.ParseData(command.Payload)),
-                CommandType.LEDControl => HandleReaderLEDControl(ReaderLedControls.ParseData(command.Payload)),
-                CommandType.BuzzerControl => HandleBuzzerControl(ReaderBuzzerControl.ParseData(command.Payload)),
-                CommandType.TextOutput => HandleTextOutput(ReaderTextOutput.ParseData(command.Payload)),
-                CommandType.CommunicationSet => HandleCommunicationSet(CommunicationConfiguration.ParseData(command.Payload)),
-                CommandType.BioRead => HandleBiometricRead(BiometricReadData.ParseData(command.Payload)),
-                CommandType.BioMatch => HandleBiometricMatch(BiometricTemplateData.ParseData(command.Payload)),
-                CommandType.KeySet => HandleKeySettings(EncryptionKeyConfiguration.ParseData(command.Payload)),
-                CommandType.SessionChallenge => HandleSessionChallenge(),
-                CommandType.ServerCryptogram => HandleServerCryptogram(),
-                CommandType.MaxReplySize => HandleMaxReplySize(ACUReceiveSize.ParseData(command.Payload)),
-                CommandType.FileTransfer => HandleFileTransfer(FileTransferFragment.ParseData(command.Payload)),
-                CommandType.ManufacturerSpecific => HandleManufacturerCommand(ManufacturerSpecific.ParseData(command.Payload)),
-                CommandType.Abort => HandleAbortRequest(),
-                CommandType.PivData => HandlePivData(GetPIVData.ParseData(command.Payload)),
-                CommandType.KeepActive => HandleKeepActive(KeepReaderActive.ParseData(command.Payload)),
-                _ => HandleUnknownCommand(command)
-            });
+        return new OutgoingReply(command, (CommandType)command.Type switch
+        {
+            CommandType.Poll => HandlePoll(),
+            CommandType.IdReport => HandleIdReport(),
+            CommandType.DeviceCapabilities => HandleDeviceCapabilities(),
+            CommandType.LocalStatus => HandleLocalStatusReport(),
+            CommandType.InputStatus => HandleInputStatusReport(),
+            CommandType.OutputStatus => HandleOutputStatusReport(),
+            CommandType.ReaderStatus => HandleReaderStatusReport(),
+            CommandType.OutputControl => HandleOutputControl(OutputControls.ParseData(command.Payload)),
+            CommandType.LEDControl => HandleReaderLEDControl(ReaderLedControls.ParseData(command.Payload)),
+            CommandType.BuzzerControl => HandleBuzzerControl(ReaderBuzzerControl.ParseData(command.Payload)),
+            CommandType.TextOutput => HandleTextOutput(ReaderTextOutput.ParseData(command.Payload)),
+            CommandType.CommunicationSet => HandleCommunicationSet(CommunicationConfiguration.ParseData(command.Payload)),
+            CommandType.BioRead => HandleBiometricRead(BiometricReadData.ParseData(command.Payload)),
+            CommandType.BioMatch => HandleBiometricMatch(BiometricTemplateData.ParseData(command.Payload)),
+            CommandType.KeySet => HandleKeySettings(EncryptionKeyConfiguration.ParseData(command.Payload)),
+            CommandType.SessionChallenge => HandleSessionChallenge(),
+            CommandType.ServerCryptogram => HandleServerCryptogram(),
+            CommandType.MaxReplySize => HandleMaxReplySize(ACUReceiveSize.ParseData(command.Payload)),
+            CommandType.FileTransfer => HandleFileTransfer(FileTransferFragment.ParseData(command.Payload)),
+            CommandType.ManufacturerSpecific => HandleManufacturerCommand(ManufacturerSpecific.ParseData(command.Payload)),
+            CommandType.Abort => HandleAbortRequest(),
+            CommandType.PivData => HandlePivData(GetPIVData.ParseData(command.Payload)),
+            CommandType.KeepActive => HandleKeepActive(KeepReaderActive.ParseData(command.Payload)),
+            _ => HandleUnknownCommand(command)
+        });
     }
 
     private PayloadData HandlePoll()

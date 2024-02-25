@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
@@ -8,21 +9,18 @@ using System.Threading.Tasks;
 namespace OSDP.Net.Connections
 {
     /// <summary>Connect using a serial port.</summary>
-    public class SerialPortOsdpConnection : IOsdpConnection
+    public class SerialPortOsdpConnection : OsdpConnection
     {
         private readonly string _portName;
-        private readonly int _baudRate;
         private SerialPort _serialPort;
-        private bool _disposedValue;
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.Connections.SerialPortOsdpConnection" /> class.</summary>
         /// <param name="portName">Name of the port.</param>
         /// <param name="baudRate">The baud rate.</param>
         /// <exception cref="T:System.ArgumentNullException">portName</exception>
-        public SerialPortOsdpConnection(string portName, int baudRate)
+        public SerialPortOsdpConnection(string portName, int baudRate) : base(baudRate)
         {
             _portName = portName ?? throw new ArgumentNullException(nameof(portName));
-            _baudRate = baudRate;
         }
 
         /// <summary>
@@ -40,38 +38,35 @@ namespace OSDP.Net.Connections
         /// given set of baud rates (see description of "rates" parameter)</returns>
         public static IEnumerable<SerialPortOsdpConnection> EnumBaudRates(string portName, int[] rates=null)
         {
-            rates ??= new[] { 9600, 19200, 38400, 57600, 115200, 230400 };
+            rates ??= [9600, 19200, 38400, 57600, 115200, 230400];
             return rates.AsEnumerable().Select((rate) => new SerialPortOsdpConnection(portName, rate));
         }
 
         /// <inheritdoc />
-        public int BaudRate => _baudRate;
-
-        /// <inheritdoc />
-        public bool IsOpen => _serialPort is { IsOpen: true };
-
-        /// <inheritdoc />
-        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
-
-        /// <inheritdoc />
-        public void Open()
+        public override Task Open()
         {
-            if (_serialPort != null) return;
-            _serialPort = new(_portName, _baudRate);
-            _serialPort.Open();
+            if (_serialPort == null)
+            {
+                _serialPort = new(_portName, BaudRate);
+                _serialPort.Open();
+                IsOpen = true;
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public void Close()
+        public override Task Close()
         {
-            if (_serialPort == null) return;
-            _serialPort.Close();
-            _serialPort.Dispose();
+            _serialPort?.Close();
+            _serialPort?.Dispose();
             _serialPort = null;
+            IsOpen = false;
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public async Task WriteAsync(byte[] buffer)
+        public override async Task WriteAsync(byte[] buffer)
         {
             // Found an issue where many timeouts would fill up the receive buffer.
             // When writing to the port, there should be nothing in the buffers.
@@ -82,7 +77,7 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
+        public override async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
             var task = _serialPort.BaseStream.ReadAsync(buffer, 0, buffer.Length, token);
 
@@ -99,24 +94,30 @@ namespace OSDP.Net.Connections
         {
             return _portName;
         }
+    }
 
-        protected virtual void Dispose(bool disposing)
+    public class SerialPortOsdpServer : OsdpServer
+    {
+        private readonly string _portName;
+        private readonly int _baudRate;
+
+        public SerialPortOsdpServer(
+            string portName, int baudRate, ILoggerFactory loggerFactory = null) : base(loggerFactory)
         {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    Close();
-                }
-
-                _disposedValue = true;
-            }
+            _portName = portName;
+            _baudRate = baudRate;
         }
 
-        public void Dispose()
+        public override Task Start(Func<IOsdpConnection, Task> newConnectionHandler)
         {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            IsRunning = true;
+            var connection = new SerialPortOsdpConnection(_portName, _baudRate);
+            connection.Open();
+            var task = newConnectionHandler(connection);
+            RegisterConnection(connection, task);
+            return Task.CompletedTask;
         }
+
+        public Task Stop() => base.Stop();
     }
 }

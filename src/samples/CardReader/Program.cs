@@ -32,7 +32,8 @@ internal class Program
         var logger = loggerFactory.CreateLogger<Program>();
 
         // var connection = new SerialPortOsdpConnection(portName, baudRate);
-        var comms = new TcpOsdpServer(5000, baudRate);
+        var comms = new TcpOsdpServer(5000, baudRate, loggerFactory);
+        // var comms = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
         using var device = new MySampleDevice(loggerFactory);
         device.StartListening(comms);
 
@@ -64,7 +65,7 @@ internal class Program
         Console.WriteLine("Press any key to finish the program.");
         Console.ReadKey();
 
-        device.StopListening();
+        await device.StopListening();
     }
 
     private static string BigIntegerToBinaryString(BigInteger value)
