@@ -50,6 +50,7 @@ public class Device : IDisposable
     public bool IsConnected => _osdpServer?.ConnectionCount > 0 && (
         _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow);
 
+    /// <inheritdoc/>
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
@@ -90,7 +91,6 @@ public class Device : IDisposable
         }
         catch (Exception exception)
         {
-            // TODO: What about clean client disconnect? Let's make sure that one doesn't get reported as error.
             _logger?.LogError(exception, $"Unexpected exception in polling loop");
         }
         finally
@@ -371,12 +371,5 @@ public class Device : IDisposable
         _logger?.LogInformation("Unexpected Command: {CommandType}", commandType);
 
         return new Nak(ErrorCode.UnknownCommandCode);
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _cancellationTokenSource?.Dispose();
-        _listenerTask?.Dispose();
     }
 }

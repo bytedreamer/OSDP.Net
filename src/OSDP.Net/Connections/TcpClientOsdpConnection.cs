@@ -39,7 +39,7 @@ namespace OSDP.Net.Connections
         /// <inheritdoc />
         public override async Task Open()
         {
-            Close();
+            await Close();
 
             _tcpClient = new TcpClient {NoDelay = true};
             await _tcpClient.ConnectAsync(_server, _portNumber);
@@ -58,7 +58,7 @@ namespace OSDP.Net.Connections
         /// <inheritdoc />
         public override async Task WriteAsync(byte[] buffer)
         {
-            if (!IsOpen) Open();
+            if (!IsOpen) await Open();
 
             var tcpClient = _tcpClient;
 

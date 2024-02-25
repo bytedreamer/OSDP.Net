@@ -31,13 +31,10 @@ internal class Program
         });
         var logger = loggerFactory.CreateLogger<Program>();
 
-        // var connection = new SerialPortOsdpConnection(portName, baudRate);
-        var comms = new TcpOsdpServer(5000, baudRate, loggerFactory);
-        // var comms = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
+        // var comms = new TcpOsdpServer(5000, baudRate, loggerFactory);
+        var comms = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
         using var device = new MySampleDevice(loggerFactory);
         device.StartListening(comms);
-
-        logger.LogInformation("OSDP PD Device is listening on port 5000...");
 
         await Task.Run(async () =>
         {
