@@ -43,7 +43,7 @@ internal class OutgoingMessage : Message
         buffer[currentLength++] = Address;
         buffer[currentLength++] = (byte)(totalLength & 0xff);
         buffer[currentLength++] = (byte)((totalLength >> 8) & 0xff);
-        buffer[currentLength++] = ControlBlock.ControlByte;
+        buffer[currentLength++] = (byte)(ControlBlock.ControlByte | (isSecurityBlockPresent ? 0x08 : 0x00));
 
         if (isSecurityBlockPresent)
         {
@@ -101,4 +101,15 @@ internal class OutgoingMessage : Message
     {
         return PayloadData.BuildData();
     }
+}
+
+
+internal class OutgoingReply : OutgoingMessage
+{
+    internal OutgoingReply(IncomingMessage command, PayloadData replyPayload) :
+        base((byte)(command.Address | 0x80), command.ControlBlock, replyPayload)
+    {
+        Command = command;
+    }
+    internal IncomingMessage Command { get; }
 }

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Sockets;
 using System.Threading;
@@ -5,8 +6,15 @@ using System.Threading.Tasks;
 
 namespace OSDP.Net.Connections
 {
-    /// <summary>Listens for a TCP/IP connection from a server.</summary>
-    public class TcpServerOsdpConnection : IOsdpConnection
+    /// <summary>
+    /// Initial implementation of TCP server OSDP connection which combines
+    /// the listener as well as the accepted connection in a single class.
+    /// 
+    /// The use of this class might be questionable as TCP/IP protocol 
+    /// inherently behaves differently enough that this class has some limitations
+    /// which have been addressed by TcpOsdpServer
+    /// </summary>
+    public class TcpServerOsdpConnection : OsdpConnection
     {
         private readonly TcpListener _listener;
         private TcpClient _tcpClient;
@@ -16,17 +24,13 @@ namespace OSDP.Net.Connections
         /// </summary>
         /// <param name="portNumber">The port number.</param>
         /// <param name="baudRate">The baud rate.</param>
-        public TcpServerOsdpConnection(int portNumber, int baudRate)
+        public TcpServerOsdpConnection(int portNumber, int baudRate) : base(baudRate)
         {
             _listener = TcpListener.Create(portNumber);
-            BaudRate = baudRate;
         }
 
         /// <inheritdoc />
-        public int BaudRate { get; }
-
-        /// <inheritdoc />
-        public bool IsOpen
+        public override bool IsOpen
         {
             get
             {
@@ -36,30 +40,28 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
-
-        /// <inheritdoc />
-        public void Open()
+        public override async Task Open()
         {
             _listener.Start();
-            var newTcpClient = _listener.AcceptTcpClient();
+            var newTcpClient = await _listener.AcceptTcpClientAsync();
 
-            Close();
+            await Close();
 
             _tcpClient = newTcpClient;
         }
 
         /// <inheritdoc />
-        public void Close()
+        public override Task Close()
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
             if (tcpClient?.Connected ?? false) tcpClient?.GetStream().Close();
             tcpClient?.Close();
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public async Task WriteAsync(byte[] buffer)
+        public override async Task WriteAsync(byte[] buffer)
         {
             var tcpClient = _tcpClient;
             if (tcpClient != null)
@@ -69,7 +71,7 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
+        public override async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
             var tcpClient = _tcpClient;
             if (tcpClient != null)
@@ -84,6 +86,62 @@ namespace OSDP.Net.Connections
         public override string ToString()
         {
             return _listener?.LocalEndpoint.ToString();
+        }
+    }
+
+
+    /// <summary>
+    /// Implements TCP/IP OSDP server which listens for incoming connections
+    /// </summary>
+    public class TcpOsdpServer : OsdpServer
+    {
+        private readonly TcpListener _listener;
+        private readonly int _baudRate;
+
+        /// <summary>
+        /// Creates a new instance of TcpOsdpServer
+        /// </summary>
+        /// <param name="portNumber">Port to listen on</param>
+        /// <param name="baudRate">Baud rate at which comms are expected to take place</param>
+        /// <param name="loggerFactory">Optional logger factory</param>
+        public TcpOsdpServer(
+            int portNumber, int baudRate, ILoggerFactory loggerFactory = null) : base(loggerFactory)
+        {
+            _listener = TcpListener.Create(portNumber);
+            _baudRate = baudRate;
+        }
+
+        /// <inheritdoc/>
+        public override Task Start(Func<IOsdpConnection, Task> newConnectionHandler)
+        {
+            if (IsRunning) return Task.CompletedTask;
+
+            IsRunning = true;
+            _listener.Start();
+
+            Logger?.LogInformation("Listening on {Endpoint} for incoming connections...", _listener.LocalEndpoint.ToString());
+
+            Task.Run(async () =>
+            {
+                while (IsRunning)
+                {
+                    var client = await _listener.AcceptTcpClientAsync();
+
+                    var connection = new TcpServerOsdpConnection2(client, _baudRate, LoggerFactory);
+                    var task = newConnectionHandler(connection);
+                    RegisterConnection(connection, task);
+                }
+            });
+
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public override Task Stop()
+        {
+            IsRunning = false;
+            _listener.Stop();
+            return base.Stop();
         }
     }
 }

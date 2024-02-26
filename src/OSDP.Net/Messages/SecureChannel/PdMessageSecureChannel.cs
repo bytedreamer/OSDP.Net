@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,23 +73,29 @@ namespace OSDP.Net.Messages.SecureChannel
                 throw new TimeoutException("Timeout waiting for command of reply message");
             }
 
-            // TODO: best way to log?
-            Debug.WriteLine("Incoming: " + BitConverter.ToString(commandBuffer.ToArray()));
-
             var command = new IncomingMessage(commandBuffer.ToArray().AsSpan(), this);
 
             if (command.Type != (byte)CommandType.Poll)
             {
                 Logger?.LogInformation("Received Command: {CommandType}", Enum.GetName(typeof(CommandType), command.Type));
+                Logger?.LogDebug("Incoming: {Data}", BitConverter.ToString(commandBuffer.ToArray()));
             }
 
             var commandHandled = await HandleCommand(command);
             return commandHandled ? await ReadNextCommand() : command;
         }
 
-        internal async Task SendReply(OutgoingMessage reply)
+        internal async Task SendReply(OutgoingReply reply)
         {
-            await _connection.WriteAsync(reply.BuildMessage(this));
+            var replyBuffer = reply.BuildMessage(this);
+
+            if (reply.Command.Type != (byte)CommandType.Poll)
+            {
+                Logger?.LogInformation("Sending Reply: {Reply}", Enum.GetName(typeof(ReplyType), reply.PayloadData.Code));
+                Logger?.LogDebug("Outgoing: {Data}", BitConverter.ToString(replyBuffer));
+            }
+
+            await _connection.WriteAsync(replyBuffer);
         }
 
         private async Task<bool> HandleCommand(IncomingMessage command)
@@ -105,7 +110,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
             if (reply == null) return false;
 
-            await SendReply(new OutgoingMessage(           (byte)(command.Address | 0x80), command.ControlBlock, reply));
+            await SendReply(new OutgoingReply(command, reply));
 
             if (command.Type == (byte)CommandType.ServerCryptogram)
             {

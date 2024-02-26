@@ -203,7 +203,7 @@ namespace OSDP.Net
                 {
                     try
                     {
-                        Connection.Open();
+                        await Connection.Open();
                     }
                     catch (Exception exception)
                     {
@@ -343,7 +343,7 @@ namespace OSDP.Net
             // Polling task is complete. Time to close the connection.
             try
             { 
-                Connection.Close();
+                await Connection.Close();
             }
             catch(Exception exception)
             {
