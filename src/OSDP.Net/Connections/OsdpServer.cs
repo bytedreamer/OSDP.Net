@@ -18,7 +18,7 @@ public abstract class OsdpServer : IOsdpServer
     /// Creates a new instance of OsdpServer
     /// </summary>
     /// <param name="loggerFactory">Optional logger factory</param>
-    public OsdpServer(ILoggerFactory loggerFactory = null)
+    protected OsdpServer(ILoggerFactory loggerFactory = null)
     {
         LoggerFactory = loggerFactory;
         Logger = loggerFactory?.CreateLogger<OsdpServer>();
@@ -28,7 +28,7 @@ public abstract class OsdpServer : IOsdpServer
     public bool IsRunning { get; protected set; }
 
     /// <inheritdoc/>
-    public int ConnectionCount { get => _connections.Count; }
+    public int ConnectionCount => _connections.Count;
 
     /// <summary>
     /// Logger factory if one was specified at instantitation
@@ -92,8 +92,7 @@ public abstract class OsdpServer : IOsdpServer
     /// <summary>
     /// Releases the resources used by the <see cref="OsdpServer"/> instance.
     /// </summary>
-    /// <param name="disposing">A boolean value indicating whether the method is being called from the <see cref="OsdpServer.Dispose"/> method or the finalizer.</param>
-    protected virtual void Dispose(bool disposing)
+   protected virtual void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {

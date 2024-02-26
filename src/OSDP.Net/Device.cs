@@ -68,9 +68,7 @@ public class Device : IDisposable
     /// <param name="server">The I/O server used for communication with the OSDP client.</param>
     public async void StartListening(IOsdpServer server)
     {
-        if (_osdpServer != null) return;
-
-        _osdpServer = server;
+        _osdpServer = server ?? throw new ArgumentNullException(nameof(server));
         await _osdpServer.Start(ClientListenLoop);
     }
 
