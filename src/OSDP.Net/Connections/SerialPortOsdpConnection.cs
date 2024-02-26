@@ -128,13 +128,10 @@ namespace OSDP.Net.Connections
         {
             IsRunning = true;
 
-            Logger?.LogInformation("Opening {port} @ {baud} serial port...", _portName, _baudRate);
+            Logger?.LogInformation("Opening {Port} @ {Baud} serial port...", _portName, _baudRate);
 
             await OpenSerialPort(newConnectionHandler);
         }
-
-        /// <inheritdoc/>
-        public override Task Stop() => base.Stop();
 
         private async Task OpenSerialPort(Func<IOsdpConnection, Task> newConnectionHandler)
         {

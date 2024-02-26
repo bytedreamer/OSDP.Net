@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,7 +78,7 @@ namespace OSDP.Net.Messages.SecureChannel
             if (command.Type != (byte)CommandType.Poll)
             {
                 Logger?.LogInformation("Received Command: {CommandType}", Enum.GetName(typeof(CommandType), command.Type));
-                Logger?.LogDebug("Incoming: {data}", BitConverter.ToString(commandBuffer.ToArray()));
+                Logger?.LogDebug("Incoming: {Data}", BitConverter.ToString(commandBuffer.ToArray()));
             }
 
             var commandHandled = await HandleCommand(command);
@@ -92,8 +91,8 @@ namespace OSDP.Net.Messages.SecureChannel
 
             if (reply.Command.Type != (byte)CommandType.Poll)
             {
-                Logger?.LogInformation("Sending Reply: {reply}", Enum.GetName(typeof(ReplyType), reply.PayloadData.Code));
-                Logger?.LogDebug("Outgoing: {data}", BitConverter.ToString(replyBuffer));
+                Logger?.LogInformation("Sending Reply: {Reply}", Enum.GetName(typeof(ReplyType), reply.PayloadData.Code));
+                Logger?.LogDebug("Outgoing: {Data}", BitConverter.ToString(replyBuffer));
             }
 
             await _connection.WriteAsync(replyBuffer);

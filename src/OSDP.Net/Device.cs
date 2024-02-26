@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
@@ -50,7 +48,12 @@ public class Device : IDisposable
     public bool IsConnected => _osdpServer?.ConnectionCount > 0 && (
         _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow);
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Disposes the Device instance.
+    /// </summary>
+    /// <remarks>
+    /// This method is responsible for releasing any resources used by the Device instance. 
+    /// </remarks>
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
@@ -65,8 +68,6 @@ public class Device : IDisposable
     /// <param name="server">The I/O server used for communication with the OSDP client.</param>
     public async void StartListening(IOsdpServer server)
     {
-        var cancellationTokenSource = new CancellationTokenSource();
-
         if (_osdpServer != null) return;
 
         _osdpServer = server;

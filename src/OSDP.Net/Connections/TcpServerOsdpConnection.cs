@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using System;
-using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -91,78 +90,6 @@ namespace OSDP.Net.Connections
     }
 
 
-    internal class TcpServerOsdpConnection2 : OsdpConnection
-    {
-        private readonly ILogger _logger;
-        private TcpClient _tcpClient;
-        private NetworkStream _stream;
-
-        public TcpServerOsdpConnection2(
-            TcpClient tcpClient, int baudRate, ILoggerFactory loggerFactory) : base(baudRate)
-        {
-            IsOpen = true;
-            _tcpClient = tcpClient;
-            _stream = tcpClient.GetStream();
-            _logger = loggerFactory?.CreateLogger<TcpServerOsdpConnection2>();
-        }
-
-        public override async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
-        {
-            try
-            {
-                var bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
-                if (bytes == 0) { IsOpen = false; }
-                return bytes;
-            }
-            catch (Exception ex) 
-            {
-                if (ex is not OperationCanceledException && IsOpen)
-                {
-                    if (ex is IOException && ex.InnerException is SocketException)
-                    {
-                        _logger?.LogInformation("Error reading tcp stream: {err}", ex.Message);
-                    } 
-                    else
-                    {
-                        _logger?.LogWarning(ex, "Error reading tcp stream");
-                    }
-                    
-                    IsOpen = false;
-                }
-                return 0;
-            }
-        }
-
-        public override async Task WriteAsync(byte[] buffer)
-        {
-            try
-            {
-                await _stream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                if (IsOpen)
-                {
-                    _logger?.LogWarning(ex, "Error writing tcp stream");
-                    IsOpen = false;
-                }
-            }
-        }
-
-        public override Task Open() => throw new NotSupportedException();
-
-        public override Task Close()
-        {
-            IsOpen = false;
-            _stream?.Dispose();
-            _tcpClient?.Dispose();
-            _stream = null;
-            _tcpClient = null;
-            return Task.CompletedTask;
-        }
-    }
-
-
     /// <summary>
     /// Implements TCP/IP OSDP server which listens for incoming connections
     /// </summary>
@@ -192,19 +119,17 @@ namespace OSDP.Net.Connections
             IsRunning = true;
             _listener.Start();
 
-            Logger?.LogInformation("Listening on {endpoint} for incoming connections...", _listener.LocalEndpoint);
+            Logger?.LogInformation("Listening on {Endpoint} for incoming connections...", _listener.LocalEndpoint.ToString());
 
             Task.Run(async () =>
             {
                 while (IsRunning)
                 {
                     var client = await _listener.AcceptTcpClientAsync();
-                    if (client != null)
-                    {
-                        var connection = new TcpServerOsdpConnection2(client, _baudRate, LoggerFactory);
-                        var task = newConnectionHandler(connection);
-                        RegisterConnection(connection, task);
-                    }
+
+                    var connection = new TcpServerOsdpConnection2(client, _baudRate, LoggerFactory);
+                    var task = newConnectionHandler(connection);
+                    RegisterConnection(connection, task);
                 }
             });
 

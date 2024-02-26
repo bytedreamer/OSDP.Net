@@ -11,8 +11,7 @@ internal class Program
 {
     private static async Task Main()
     {
-        var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true);
-        var config = builder.Build();
+        var config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
         var osdpSection = config.GetSection("OSDP");
 
         var portName = osdpSection["PortName"];
@@ -22,19 +21,16 @@ internal class Program
         var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
-                .AddConsole(options =>
-                {
-                })
+                .AddConsole()
                 .SetMinimumLevel(LogLevel.Warning)
                 .AddFilter("CardReader.Program", LogLevel.Information)
                 .AddFilter("OSDP.Net", LogLevel.Debug);
         });
-        var logger = loggerFactory.CreateLogger<Program>();
 
-        // var comms = new TcpOsdpServer(5000, baudRate, loggerFactory);
-        var comms = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
+        // var communications = new TcpOsdpServer(5000, baudRate, loggerFactory);
+        var communications = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
         using var device = new MySampleDevice(loggerFactory);
-        device.StartListening(comms);
+        device.StartListening(communications);
 
         await Task.Run(async () =>
         {
