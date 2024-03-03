@@ -16,7 +16,7 @@ variables:
   buildConfiguration: 'Release'
   major: 5
   minor: 0
-  patch: 0
+  patch: 1
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)-beta
 
@@ -100,16 +100,29 @@ steps:
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 
+#- task: DotNetCoreCLI@2
+#  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+#  displayName: 'dotnet publish for linux-arm'
+#  inputs:
+#    command: 'publish'
+#    publishWebProjects: false
+#    zipAfterPublish: false
+#    modifyOutputPath: false
+#    projects: 'src/Console/Console.csproj'
+#    arguments: '-r linux-arm --configuration $(BuildConfiguration) --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm'
+#    versioningScheme: 'byEnvVar'
+#    versionEnvVar: 'AssemblyVersion'
+    
 - task: DotNetCoreCLI@2
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  displayName: 'dotnet publish for linux-arm'
+  displayName: 'dotnet publish for linux-arm64'
   inputs:
     command: 'publish'
     publishWebProjects: false
     zipAfterPublish: false
     modifyOutputPath: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r linux-arm --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true --self-contained true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm'
+    arguments: '-r linux-arm64 --configuration $(BuildConfiguration) --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 
