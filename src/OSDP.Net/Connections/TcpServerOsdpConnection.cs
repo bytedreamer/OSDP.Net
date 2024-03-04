@@ -1,12 +1,18 @@
-using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace OSDP.Net.Connections
 {
-    /// <summary>Listens for a TCP/IP connection from a server.</summary>
-    public class TcpServerOsdpConnection : IOsdpConnection
+    /// <summary>
+    /// Initial implementation of TCP server OSDP connection which combines
+    /// the listener as well as the accepted connection in a single class.
+    /// 
+    /// The use of this class might be questionable as TCP/IP protocol 
+    /// inherently behaves differently enough that this class has some limitations
+    /// which have been addressed by TcpOsdpServer
+    /// </summary>
+    public class TcpServerOsdpConnection : OsdpConnection
     {
         private readonly TcpListener _listener;
         private TcpClient _tcpClient;
@@ -16,17 +22,13 @@ namespace OSDP.Net.Connections
         /// </summary>
         /// <param name="portNumber">The port number.</param>
         /// <param name="baudRate">The baud rate.</param>
-        public TcpServerOsdpConnection(int portNumber, int baudRate)
+        public TcpServerOsdpConnection(int portNumber, int baudRate) : base(baudRate)
         {
             _listener = TcpListener.Create(portNumber);
-            BaudRate = baudRate;
         }
 
         /// <inheritdoc />
-        public int BaudRate { get; }
-
-        /// <inheritdoc />
-        public bool IsOpen
+        public override bool IsOpen
         {
             get
             {
@@ -36,30 +38,28 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public TimeSpan ReplyTimeout { get; set; } = TimeSpan.FromMilliseconds(200);
-
-        /// <inheritdoc />
-        public void Open()
+        public override async Task Open()
         {
             _listener.Start();
-            var newTcpClient = _listener.AcceptTcpClient();
+            var newTcpClient = await _listener.AcceptTcpClientAsync();
 
-            Close();
+            await Close();
 
             _tcpClient = newTcpClient;
         }
 
         /// <inheritdoc />
-        public void Close()
+        public override Task Close()
         {
             var tcpClient = _tcpClient;
             _tcpClient = null;
             if (tcpClient?.Connected ?? false) tcpClient?.GetStream().Close();
             tcpClient?.Close();
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public async Task WriteAsync(byte[] buffer)
+        public override async Task WriteAsync(byte[] buffer)
         {
             var tcpClient = _tcpClient;
             if (tcpClient != null)
@@ -69,7 +69,7 @@ namespace OSDP.Net.Connections
         }
 
         /// <inheritdoc />
-        public async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
+        public override async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
         {
             var tcpClient = _tcpClient;
             if (tcpClient != null)

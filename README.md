@@ -11,7 +11,7 @@ Further information can be found at [SIA OSDP Homepage](https://www.securityindu
 
 ## Getting Started
 
-The OSDP.Net library provides a Nuget package to quickly add OSDP capablitity to a .NET Framework or Core project. 
+The OSDP.Net library provides a Nuget package to quickly add OSDP capability to a .NET Framework or Core project. 
 You can install it using the NuGet Package Console window:
 
 ```shell

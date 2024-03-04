@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Numerics;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Model.ReplyData;
 
@@ -10,19 +11,28 @@ internal class Program
 {
     private static async Task Main()
     {
-        var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true);
-        var config = builder.Build();
+        var config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
         var osdpSection = config.GetSection("OSDP");
 
         var portName = osdpSection["PortName"];
         var baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
         var deviceAddress = byte.Parse(osdpSection["DeviceAddress"] ?? "0");
 
-        var connection = new SerialPortOsdpConnection(portName, baudRate);
-        using var device = new MySampleDevice();
-        device.StartListening(connection);
+        var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder
+                .AddConsole()
+                .SetMinimumLevel(LogLevel.Warning)
+                .AddFilter("CardReader.Program", LogLevel.Information)
+                .AddFilter("OSDP.Net", LogLevel.Debug);
+        });
 
-        await Task.Factory.StartNew(() =>
+        // var communications = new TcpOsdpServer(5000, baudRate, loggerFactory);
+        var communications = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
+        using var device = new MySampleDevice(loggerFactory);
+        device.StartListening(communications);
+
+        await Task.Run(async () =>
         {
             // The card format number for this example is 128 bit (as raw card data)
             const string cardNumberHexValue = "30313233343536373839303030303032";
@@ -32,6 +42,8 @@ internal class Program
 
             while (true)
             {
+                await Task.Delay(500);
+
                 // ReSharper disable once AccessToDisposedClosure
                 if (!device.IsConnected) continue;
 
@@ -46,7 +58,7 @@ internal class Program
         Console.WriteLine("Press any key to finish the program.");
         Console.ReadKey();
 
-        device.StopListening();
+        await device.StopListening();
     }
 
     private static string BigIntegerToBinaryString(BigInteger value)

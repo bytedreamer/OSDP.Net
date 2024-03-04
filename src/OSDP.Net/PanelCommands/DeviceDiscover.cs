@@ -1,5 +1,4 @@
-﻿
-using OSDP.Net.Connections;
+﻿using OSDP.Net.Connections;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tracing;
 using System;
@@ -10,12 +9,6 @@ namespace OSDP.Net.PanelCommands
 {
     namespace DeviceDiscover
     {
-        /// <summary>
-        /// This namespace contains type definitions used specifically for 
-        /// <see cref="ControlPanel.DiscoverDevice(System.Collections.Generic.IEnumerable{IOsdpConnection}, DiscoveryOptions)"/>
-        /// </summary>
-        public static class NamespaceDoc;
-
         /// <summary>
         /// Represents an error condition encountered during device discovery
         /// </summary>
