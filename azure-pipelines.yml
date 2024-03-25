@@ -16,7 +16,7 @@ variables:
   buildConfiguration: 'Release'
   major: 5
   minor: 0
-  patch: 1
+  patch: 2
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)-beta
 
@@ -122,7 +122,7 @@ steps:
     zipAfterPublish: false
     modifyOutputPath: false
     projects: 'src/Console/Console.csproj'
-    arguments: '-r linux-arm64 --configuration $(BuildConfiguration) --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm'
+    arguments: '-r linux-arm64 --configuration $(BuildConfiguration) --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm64'
     versioningScheme: 'byEnvVar'
     versionEnvVar: 'AssemblyVersion'
 

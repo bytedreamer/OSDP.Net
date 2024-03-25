@@ -353,7 +353,8 @@ namespace OSDP.Net
 
         private static bool WaitingForNextMultiMessage(byte messageCode, bool sendingMultiMessage)
         {
-            return sendingMultiMessage && messageCode == (byte)CommandType.FileTransfer;
+            // File transfer override, it doesn't need to wait
+            return sendingMultiMessage && messageCode != (byte)CommandType.FileTransfer;
         }
 
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatusChanged;
