@@ -12,7 +12,7 @@ namespace OSDP.Net.Messages.SecureChannel;
 /// </summary>
 public class SecurityContext
 {
-    private readonly byte[] _securityKey;
+    private byte[] _securityKey = DefaultKey;
 
     /// <summary>
     /// Represents the default key used in the security context.
@@ -22,14 +22,27 @@ public class SecurityContext
     /// <summary>
     /// Represents a security context for OSDP secure channel.
     /// </summary>
-    public SecurityContext(byte[] securityKey = null)
-    {
-        CreateNewRandomNumber();
-        IsUsingDefaultKey = securityKey != null && securityKey != DefaultKey;
-        _securityKey = securityKey ?? DefaultKey;
+    public SecurityContext(byte[] securityKey = null) => Reset(securityKey);
 
+    /// <summary>
+    /// Resets secure channel back to its initial state
+    /// </summary>
+    /// <param name="securityKey">
+    /// Can be optionally passed in to change the security key. If null, existing
+    /// key (or default one, SCBK-D) will be used if one was never specified
+    /// currently used
+    /// </param>
+    public void Reset(byte[] securityKey = null)
+    {
+        if (securityKey != null)
+        {
+            _securityKey = securityKey;
+        }
+
+        IsUsingDefaultKey = !(_securityKey != null && !_securityKey.SequenceEqual(DefaultKey));
         IsInitialized = false;
         IsSecurityEstablished = false;
+        new Random().NextBytes(ServerRandomNumber);
     }
 
     /// <summary>
@@ -193,17 +206,6 @@ public class SecurityContext
         IsInitialized = true;
     }
 
-    /// <summary>
-    /// Generates a new random number in the SecurityContext.
-    /// </summary>
-    internal void CreateNewRandomNumber()
-    {
-        // Todo - this might be needed
-        // IsInitialized = false;
-        // IsEstablished = false;
-        new Random().NextBytes(ServerRandomNumber);
-    }
-    
     internal void Establish(byte[] rmac)
     {
         RMac = rmac;

@@ -75,16 +75,10 @@ public abstract class MessageSecureChannel : IMessageSecureChannel
     }
 
     /// <inheritdoc />
-    public void ResetSecureChannelSession()
-    {
-        Context.CreateNewRandomNumber();
-    }
+    public void ResetSecureChannelSession() => Context.Reset();
 
     /// <inheritdoc />
-    public void Establish(byte[] rmac)
-    {
-        Context.Establish(rmac);
-    }
+    public void Establish(byte[] rmac) => Context.Establish(rmac);
 
     /// <summary>
     /// Generates a MAC for a command message
