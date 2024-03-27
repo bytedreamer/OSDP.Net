@@ -1540,6 +1540,10 @@ namespace OSDP.Net
             /// Is the secure channel currently established
             /// </summary>
             public bool IsSecureChannelEstablished { get; }
+
+            /// <inheritdoc/>
+            public override string ToString() =>
+                $"{ConnectionId}:{Address} - Conn: {IsConnected}; Sec: {IsSecureChannelEstablished}";
         }
 
         /// <summary>

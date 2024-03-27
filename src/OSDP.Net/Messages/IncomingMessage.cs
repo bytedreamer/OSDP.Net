@@ -151,7 +151,7 @@ namespace OSDP.Net.Messages
         /// <summary>
         /// Raw security block bytes
         /// </summary>
-        protected IEnumerable<byte> SecureBlockData { get; }
+        public byte[] SecureBlockData { get; }
 
         /// <inheritdoc/>
         protected override ReadOnlySpan<byte> Data() => Payload.ToArray();
@@ -180,6 +180,6 @@ namespace OSDP.Net.Messages
         /// Checks whether the secure cryptogram has been accepted.
         /// </summary>
         /// <returns>Returns true if the secure cryptogram has been accepted; otherwise, false.</returns>
-        public bool SecureCryptogramHasBeenAccepted() => Convert.ToByte(SecureBlockData.First()) == 0x01;
+        public bool SecureCryptogramHasBeenAccepted() => SecureBlockData[0] == 0x01;
     }
 }

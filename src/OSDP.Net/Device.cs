@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
@@ -22,14 +23,17 @@ public class Device : IDisposable
     private readonly ILogger _logger;
     private readonly ConcurrentQueue<PayloadData> _pendingPollReplies = new();
 
+    private volatile int _connectionContextCounter = 0;
+    private DeviceConfiguration _deviceConfiguration;
     private IOsdpServer _osdpServer;
     private DateTime _lastValidReceivedCommand = DateTime.MinValue;
 
     /// <summary>
     /// Represents a Peripheral Device (PD) that communicates over the OSDP protocol.
     /// </summary>
-    public Device(ILoggerFactory loggerFactory = null)
+    public Device(DeviceConfiguration config, ILoggerFactory loggerFactory = null)
     {
+        _deviceConfiguration = config;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory?.CreateLogger<Device>();
     }
@@ -76,7 +80,10 @@ public class Device : IDisposable
     {
         try
         {
-            var channel = new PdMessageSecureChannel(incomingConnection, loggerFactory: _loggerFactory);
+            var currentContextCount = _connectionContextCounter;
+            var channel = new PdMessageSecureChannel(
+                incomingConnection, _deviceConfiguration.SecurityKey, loggerFactory: _loggerFactory);
+            channel.DefaultKeyAllowed = _deviceConfiguration.DefaultSecurityKeyAllowed;
 
             while (incomingConnection.IsOpen)
             {
@@ -86,6 +93,12 @@ public class Device : IDisposable
 
                 var reply = HandleCommand(command);
                 await channel.SendReply(reply);
+
+                if (currentContextCount != _connectionContextCounter)
+                {
+                    _logger?.LogInformation("Interruping existing connection due to 'force disconnect' flag");
+                    break;
+                }
             }
         }
         catch (Exception exception)
@@ -134,9 +147,7 @@ public class Device : IDisposable
             CommandType.CommunicationSet => HandleCommunicationSet(CommunicationConfiguration.ParseData(command.Payload)),
             CommandType.BioRead => HandleBiometricRead(BiometricReadData.ParseData(command.Payload)),
             CommandType.BioMatch => HandleBiometricMatch(BiometricTemplateData.ParseData(command.Payload)),
-            CommandType.KeySet => HandleKeySettings(EncryptionKeyConfiguration.ParseData(command.Payload)),
-            CommandType.SessionChallenge => HandleSessionChallenge(),
-            CommandType.ServerCryptogram => HandleServerCryptogram(),
+            CommandType.KeySet => _HandleKeySettings(EncryptionKeyConfiguration.ParseData(command.Payload)),
             CommandType.MaxReplySize => HandleMaxReplySize(ACUReceiveSize.ParseData(command.Payload)),
             CommandType.FileTransfer => HandleFileTransfer(FileTransferFragment.ParseData(command.Payload)),
             CommandType.ManufacturerSpecific => HandleManufacturerCommand(ManufacturerSpecific.ParseData(command.Payload)),
@@ -260,23 +271,31 @@ public class Device : IDisposable
         return HandleUnknownCommand(CommandType.MaxReplySize);
     }
 
-    private PayloadData HandleSessionChallenge()
+    private PayloadData _HandleKeySettings(EncryptionKeyConfiguration commandPayload)
     {
-        _logger.LogInformation("Received a session challenge command");
-        return HandleUnknownCommand(CommandType.SessionChallenge);
-    }
+        var response = HandleKeySettings(commandPayload);
 
-    private PayloadData HandleServerCryptogram()
-    {
-        _logger.LogInformation("Received a server cryptogram command");
-        return HandleUnknownCommand(CommandType.ServerCryptogram);
+        if (response.Code == (byte)ReplyType.Ack)
+        {
+            UpdateDeviceConfig(c => c.SecurityKey = commandPayload.KeyData);
+        }
+
+        return response;
     }
 
     /// <summary>
-    /// Handles the key settings command received from the OSDP device.
+    /// If deriving PD class is intending to support secure connections, it MUST override
+    /// this method in order to provide its own means of persisting a newly set security key which
+    /// which was sent by the ACU. The base `Device` class will automatically pick up the new key
+    /// for future connections if this function returns successful Ack response.
+    /// NOTE: Any existing connections will continue to use the previous key. It is up to the
+    /// ACU to drop connection and reconnect if it wishes to do so
     /// </summary>
     /// <param name="commandPayload">The key settings command payload.</param>
-    /// <returns></returns>
+    /// <returns>
+    /// Ack - if the new key was successfully accepted
+    /// Nak - if the new key was rejected
+    /// </returns>
     protected virtual PayloadData HandleKeySettings(EncryptionKeyConfiguration commandPayload)
     {
         return HandleUnknownCommand(CommandType.KeySet);
@@ -371,4 +390,51 @@ public class Device : IDisposable
 
         return new Nak(ErrorCode.UnknownCommandCode);
     }
+
+    private void UpdateDeviceConfig(Action<DeviceConfiguration> updateAction, bool resetConnection = false)
+    {
+        var configCopy = _deviceConfiguration.Clone();
+        updateAction(configCopy);
+        _deviceConfiguration = configCopy;
+
+        if (resetConnection)
+        {
+            Interlocked.Add(ref _connectionContextCounter, 1);
+        }
+    }
+}
+
+
+/// <summary>
+/// Represents a set of configuration options to be used when initializating 
+/// a new instance of the Device class
+/// </summary>
+public class DeviceConfiguration : ICloneable
+{
+    /// <summary>
+    /// Address the device is assigned 
+    /// </summary>
+    public byte Address { get; set; } = 0;
+
+    /// <summary>
+    /// As described in D.8: Field Deployment and Configuration, this flag enables
+    /// "installation mode" which will allow SCBK-D (i.e. default security key) to be
+    /// accepted even if a different key has already been set on the device. This flag
+    /// should be used during setup and NOT for the operation of the device
+    /// </summary>
+    public bool DefaultSecurityKeyAllowed { get; set; } = false;
+
+    /// <summary>
+    /// Security Key if one was previously set via osdp_KeySet command or some
+    /// other out-of-band means
+    /// </summary>
+    public byte[] SecurityKey { get; set; } = SecurityContext.DefaultKey;
+
+    /// <summary>
+    /// Creates a new object that is a copy of the current instance
+    /// </summary>
+    public DeviceConfiguration Clone() => (DeviceConfiguration)this.MemberwiseClone();
+
+    /// <inheritdoc/>
+    object ICloneable.Clone() => this.Clone();
 }

@@ -48,7 +48,7 @@ public abstract class OsdpServer : IOsdpServer
     {
         IsRunning = false;
 
-        Logger.LogDebug("Stopping OSDP Server connections...");
+        Logger?.LogDebug("Stopping OSDP Server connections...");
 
         while (true)
         {
@@ -59,7 +59,7 @@ public abstract class OsdpServer : IOsdpServer
             await Task.WhenAll(entries.Select(x => x.Key));
         }
 
-        Logger.LogDebug("OSDP Server STOPPED");
+        Logger?.LogDebug("OSDP Server STOPPED");
     }
 
     /// <inheritdoc/>
