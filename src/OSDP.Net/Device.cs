@@ -23,7 +23,7 @@ public class Device : IDisposable
     private readonly ILogger _logger;
     private readonly ConcurrentQueue<PayloadData> _pendingPollReplies = new();
 
-    private volatile int _connectionContextCounter = 0;
+    private volatile int _connectionContextCounter;
     private DeviceConfiguration _deviceConfiguration;
     private IOsdpServer _osdpServer;
     private DateTime _lastValidReceivedCommand = DateTime.MinValue;
