@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -81,7 +78,7 @@ public class PeripheryDeviceTest
 
             var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
 
-            panel.ConnectionStatusChanged += (sender, e) =>
+            panel.ConnectionStatusChanged += (_, e) =>
             {
                 TestContext.WriteLine($"Received event: {e}");
 
@@ -120,7 +117,7 @@ public class PeripheryDeviceTest
 
             var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
 
-            panel.ConnectionStatusChanged += (sender, e) =>
+            panel.ConnectionStatusChanged += (_, e) =>
             {
                 TestContext.WriteLine($"Received event: {e}");
 
@@ -161,7 +158,7 @@ public class PeripheryDeviceTest
 
             var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
 
-            panel.ConnectionStatusChanged += (sender, e) =>
+            panel.ConnectionStatusChanged += (_, e) =>
             {
                 TestContext.WriteLine($"Received event: {e}");
 
@@ -203,7 +200,7 @@ public class PeripheryDeviceTest
 
             var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
 
-            panel.ConnectionStatusChanged += (sender, e) =>
+            panel.ConnectionStatusChanged += (_, e) =>
             {
                 TestContext.WriteLine($"Received event: {e}");
 
@@ -243,12 +240,13 @@ public class PeripheryDeviceTest
 
             var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
 
-            panel.ConnectionStatusChanged += (sender, e) =>
+            panel.ConnectionStatusChanged += (_, e) =>
             {
                 TestContext.WriteLine($"Received event: {e}");
 
                 if (e.ConnectionId == connectionId && e.IsConnected)
                 {
+                    // ReSharper disable once AccessToModifiedClosure
                     tcsDeviceOnline.TrySetResult(true);
                 }
             };

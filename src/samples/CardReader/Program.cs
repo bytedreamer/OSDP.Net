@@ -29,8 +29,11 @@ internal class Program
         });
 
         var deviceConfiguration = new DeviceConfiguration();
-        var communications = new TcpOsdpServer(5000, baudRate, loggerFactory);
-        // var communications = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
+        
+        // Replace commented out code for test reader to listen on TCP port rather than serial
+        //var communications = new TcpOsdpServer(5000, baudRate, loggerFactory);
+        var communications = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
+
         using var device = new MySampleDevice(deviceConfiguration, loggerFactory);
         device.StartListening(communications);
 

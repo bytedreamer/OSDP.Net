@@ -1,10 +1,5 @@
 ﻿using NUnit.Framework;
 using OSDP.Net.Messages.SecureChannel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OSDP.Net.Tests.Messages.SecureChannel
 {
