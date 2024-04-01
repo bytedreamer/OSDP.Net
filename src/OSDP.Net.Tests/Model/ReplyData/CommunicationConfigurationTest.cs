@@ -1,10 +1,7 @@
 ﻿using NUnit.Framework;
 using OSDP.Net.Model.ReplyData;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace OSDP.Net.Tests.Model.ReplyData
 {

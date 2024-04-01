@@ -473,7 +473,7 @@ public class DeviceConfiguration : ICloneable
     /// <summary>
     /// Address the device is assigned 
     /// </summary>
-    public byte Address { get; set; } = 0;
+    public byte Address { get; set; }
 
     /// <summary>
     /// As described in D.8: Field Deployment and Configuration, this flag enables
@@ -481,7 +481,7 @@ public class DeviceConfiguration : ICloneable
     /// accepted even if a different key has already been set on the device. This flag
     /// should be used during setup and NOT for the operation of the device
     /// </summary>
-    public bool DefaultSecurityKeyAllowed { get; set; } = false;
+    public bool DefaultSecurityKeyAllowed { get; set; }
 
     /// <summary>
     /// Security Key if one was previously set via osdp_KeySet command or some

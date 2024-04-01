@@ -76,8 +76,8 @@ public class PeripheryDeviceTest
     [TearDown]
     public async Task Teardown() 
     {
-        await _targetPanel?.Shutdown();
-        await _targetDevice.StopListening();
+        await (_targetPanel?.Shutdown() ?? Task.CompletedTask);
+        await (_targetDevice?.StopListening() ?? Task.CompletedTask);
 
         _targetDevice?.Dispose();
         _loggerFactory?.Dispose();
@@ -119,7 +119,7 @@ public class PeripheryDeviceTest
         // Add device with a default key - this shouldn't connect
         AddDeviceToPanel();
 
-        await AssertPanelRemainsDisconnected(10000);
+        await AssertPanelRemainsDisconnected();
     }
 
     [Test]
@@ -234,7 +234,7 @@ public class PeripheryDeviceTest
             It.IsAny<object>(),
             It.IsAny<DeviceComSetUpdatedEventArgs>()), Times.Once);
 
-        var eventArgs = mockComSetUpdate.Invocations.First().Arguments[1] as DeviceComSetUpdatedEventArgs;
+        var eventArgs = (DeviceComSetUpdatedEventArgs)mockComSetUpdate.Invocations.First().Arguments[1];
         Assert.Multiple(() =>
         {
             Assert.AreEqual(0, eventArgs.OldAddress);
@@ -419,7 +419,7 @@ internal class TestDevice : Device
 
     protected override PayloadData HandleCommunicationSet(Net.Model.CommandData.CommunicationConfiguration commandPayload)
     {
-        var validBaudRates = new int[] { 9600, 19200, 115200 };
+        int[] validBaudRates = [9600, 19200, 115200];
         var newBaudRate = validBaudRates.Contains(commandPayload.BaudRate) ? commandPayload.BaudRate : validBaudRates[0];
 
         return new Net.Model.ReplyData.CommunicationConfiguration(commandPayload.Address, newBaudRate);
