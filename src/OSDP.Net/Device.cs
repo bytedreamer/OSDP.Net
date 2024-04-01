@@ -53,6 +53,21 @@ public class Device : IDisposable
         _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow);
 
     /// <summary>
+    /// Gets raised whenever osdp_ComSet command is successfully processed and there is 
+    /// a change in either device address or baud rate. Because baud rate is configured on
+    /// the OSDP connection/server that is passed down into the Device class, it is up to
+    /// the consumer of the Device class (i.e. whatever code that creates that class in the
+    /// first place) to properly handle this event, and re-initialize the Device with the
+    /// correct connection settings.
+    /// 
+    /// NOTE: In addition to this event, there's also `HandleCommunicationSet` which the
+    /// deriving class MUST override if it is to support osdp_ComSet properly. The overriding
+    /// allows the device to validate and accept/reject the command parameters which occurs
+    /// prior to this event
+    /// </summary>
+    public event EventHandler<DeviceComSetUpdatedEventArgs> DeviceComSetUpdated;
+
+    /// <summary>
     /// Disposes the Device instance.
     /// </summary>
     /// <remarks>
@@ -82,8 +97,11 @@ public class Device : IDisposable
         {
             var currentContextCount = _connectionContextCounter;
             var channel = new PdMessageSecureChannel(
-                incomingConnection, _deviceConfiguration.SecurityKey, loggerFactory: _loggerFactory);
-            channel.DefaultKeyAllowed = _deviceConfiguration.DefaultSecurityKeyAllowed;
+                incomingConnection, _deviceConfiguration.SecurityKey, loggerFactory: _loggerFactory)
+            { 
+                Address = _deviceConfiguration.Address,
+                DefaultKeyAllowed = _deviceConfiguration.DefaultSecurityKeyAllowed
+            };
 
             while (incomingConnection.IsOpen)
             {
@@ -144,7 +162,7 @@ public class Device : IDisposable
             CommandType.LEDControl => HandleReaderLEDControl(ReaderLedControls.ParseData(command.Payload)),
             CommandType.BuzzerControl => HandleBuzzerControl(ReaderBuzzerControl.ParseData(command.Payload)),
             CommandType.TextOutput => HandleTextOutput(ReaderTextOutput.ParseData(command.Payload)),
-            CommandType.CommunicationSet => HandleCommunicationSet(CommunicationConfiguration.ParseData(command.Payload)),
+            CommandType.CommunicationSet => _HandleCommunicationSet(CommunicationConfiguration.ParseData(command.Payload)),
             CommandType.BioRead => HandleBiometricRead(BiometricReadData.ParseData(command.Payload)),
             CommandType.BioMatch => HandleBiometricMatch(BiometricTemplateData.ParseData(command.Payload)),
             CommandType.KeySet => _HandleKeySettings(EncryptionKeyConfiguration.ParseData(command.Payload)),
@@ -321,6 +339,47 @@ public class Device : IDisposable
         return HandleUnknownCommand(CommandType.BioRead);
     }
 
+    private PayloadData _HandleCommunicationSet(CommunicationConfiguration commandPayload)
+    {
+        var response = HandleCommunicationSet(commandPayload);
+
+        if (response.Code == (byte)ReplyType.PdCommunicationsConfigurationReport)
+        {
+            var config = (Model.ReplyData.CommunicationConfiguration)response;
+            var previousAddress = _deviceConfiguration.Address;
+            var previousBaudRate = _osdpServer.BaudRate;
+
+            if (previousAddress != config.Address)
+            {
+                UpdateDeviceConfig(c => c.Address = config.Address);
+            }
+            
+            if (previousBaudRate != config.BaudRate || previousAddress != config.Address)
+            {
+                var updatedEvent = DeviceComSetUpdated;
+                if (updatedEvent != null) 
+                {
+                    // Decouple current call stack from the event invocation which could result
+                    // in the event subscriber resetting the entire connection so that the current
+                    // command has a chance to run to completion and we don't have any deadlock
+                    // situations.
+                    Task.Run(() =>
+                    {
+                        updatedEvent.Invoke(this, new DeviceComSetUpdatedEventArgs()
+                        {
+                            OldAddress = previousAddress,
+                            OldBaudRate = previousBaudRate,
+                            NewAddress = config.Address,
+                            NewBaudRate = config.BaudRate,
+                        });
+                    });
+                }
+            }
+        }
+
+        return response;
+    }
+
     /// <summary>
     /// Handles the communication set command received from the OSDP device.
     /// </summary>
@@ -437,4 +496,31 @@ public class DeviceConfiguration : ICloneable
 
     /// <inheritdoc/>
     object ICloneable.Clone() => this.Clone();
+}
+
+/// <summary>
+/// Event arguments for DevicecomSetUpdated event which is raised whenever ACU
+/// requests the device to update its address and/or baud rate
+/// </summary>
+public class DeviceComSetUpdatedEventArgs : EventArgs
+{
+    /// <summary>
+    /// Old address value
+    /// </summary>
+    public byte OldAddress { get; set; }
+
+    /// <summary>
+    /// New address value
+    /// </summary>
+    public byte NewAddress { get; set; }
+
+    /// <summary>
+    /// Old baud rate 
+    /// </summary>
+    public int OldBaudRate {  get; set; }
+
+    /// <summary>
+    /// New baud rate
+    /// </summary>
+    public int NewBaudRate { get; set; }
 }

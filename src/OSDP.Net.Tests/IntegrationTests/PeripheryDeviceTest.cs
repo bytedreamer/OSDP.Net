@@ -7,6 +7,9 @@ using OSDP.Net.Model;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using DeviceCapabilities = OSDP.Net.Model.ReplyData.DeviceCapabilities;
+using System.Linq;
+using Moq;
+using System.Collections.Concurrent;
 
 namespace OSDP.Net.Tests.IntegrationTests;
 
@@ -40,7 +43,20 @@ namespace OSDP.Net.Tests.IntegrationTests;
 [Category("Integration")]
 public class PeripheryDeviceTest
 {
+    private const int DefaultTestBaud = 9600;
+    private const byte DefaultTestDeviceAddr = 0;
+
     private ILoggerFactory _loggerFactory;
+    private ControlPanel _targetPanel;
+    private TestDevice _targetDevice;
+
+    private byte _deviceAddress;
+    private Guid _connectionId;
+
+    private TaskCompletionSource<bool> _deviceOnlineCompletionSource;
+    private ConcurrentQueue<EventCheckpoint> _eventCheckpoints = new();
+    private object _syncLock = new object();
+
 
     [SetUp]
     public void Setup()
@@ -58,237 +74,314 @@ public class PeripheryDeviceTest
     }
 
     [TearDown]
-    public void Teardown() 
+    public async Task Teardown() 
     {
+        await _targetPanel?.Shutdown();
+        await _targetDevice.StopListening();
+
+        _targetDevice?.Dispose();
         _loggerFactory?.Dispose();
     }
 
+    // TODO: This and next test can be parameterized
     [Test]
     public async Task TestEstablishingConnectionWithNonDefaultSecurityKey()
     {
         var securityKey = new byte[] { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x1, 0x2, 0x3, 0x4, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-        var deviceConfig = new DeviceConfiguration() { SecurityKey = securityKey };
-        using var device = new TestDevice(deviceConfig, _loggerFactory);
-        var panel = new ControlPanel(_loggerFactory.CreateLogger<ControlPanel>());
-        var tcsDeviceOnline = new TaskCompletionSource<bool>();
 
-        try
-        {
-            device.StartListening(new TcpOsdpServer(6000, 9600, _loggerFactory));
+        await InitTestTargets(cfg => cfg.SecurityKey = securityKey);
 
-            var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
+        AddDeviceToPanel(securityKey);
 
-            panel.ConnectionStatusChanged += (_, e) =>
-            {
-                TestContext.WriteLine($"Received event: {e}");
-
-                if (e.ConnectionId == connectionId && e.IsConnected)
-                {
-                    tcsDeviceOnline.TrySetResult(true);
-                }
-            };
-
-            panel.AddDevice(connectionId, 0, true, true, securityKey);
-
-            if (await Task.WhenAny(tcsDeviceOnline.Task, Task.Delay(10000)) != tcsDeviceOnline.Task)
-            {
-                Assert.Fail("Timeout waiting for connection to come online");
-            }
-        }
-        finally
-        {
-            await panel.Shutdown();
-            await device.StopListening();
-        }
+        await WaitForDeviceOnlineStatus();
     }
 
     [Test]
     public async Task TestEstablishingConnectionWhenScBkIsSameAsDefaultKey()
     {
         var securityKey = "0123456789:;<=>?"u8.ToArray();
-        var deviceConfig = new DeviceConfiguration() { SecurityKey = securityKey };
-        using var device = new TestDevice(deviceConfig, _loggerFactory);
-        var panel = new ControlPanel(_loggerFactory.CreateLogger<ControlPanel>());
-        var tcsDeviceOnline = new TaskCompletionSource<bool>();
 
-        try
-        {
-            device.StartListening(new TcpOsdpServer(6000, 9600, _loggerFactory));
+        await InitTestTargets(cfg => cfg.SecurityKey = securityKey);
 
-            var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
+        AddDeviceToPanel(securityKey);
 
-            panel.ConnectionStatusChanged += (_, e) =>
-            {
-                TestContext.WriteLine($"Received event: {e}");
-
-                if (e.ConnectionId == connectionId && e.IsConnected)
-                {
-                    tcsDeviceOnline.TrySetResult(true);
-                }
-            };
-
-            panel.AddDevice(connectionId, 0, true, true, securityKey);
-
-            if (await Task.WhenAny(tcsDeviceOnline.Task, Task.Delay(10000)) != tcsDeviceOnline.Task)
-            {
-                Assert.Fail("Timeout waiting for connection to come online");
-            }
-        }
-        finally
-        {
-            await panel.Shutdown();
-            await device.StopListening();
-        }
+        await WaitForDeviceOnlineStatus();
     }
 
     [Test]
     public async Task VerifyDefaultKeyIsRejectedWhenDefaultNotAllowed()
     {
-        // PD using non-default key
         var securityKey = new byte[] { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x1, 0x2, 0x3, 0x4, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-        var deviceConfig = new DeviceConfiguration() { SecurityKey = securityKey, DefaultSecurityKeyAllowed = false };
-        using var device = new TestDevice(deviceConfig, _loggerFactory);
 
-        var panel = new ControlPanel(_loggerFactory.CreateLogger<ControlPanel>());
-        var tcsDeviceOnline = new TaskCompletionSource<bool>();
+        // PD using non-default key and default key is NOT allowed
+        await InitTestTargets(cfg => { cfg.SecurityKey = securityKey; cfg.DefaultSecurityKeyAllowed = false; });
 
-        try
-        {
-            device.StartListening(new TcpOsdpServer(6000, 9600, _loggerFactory));
+        // Add device with a default key - this shouldn't connect
+        AddDeviceToPanel();
 
-            var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
-
-            panel.ConnectionStatusChanged += (_, e) =>
-            {
-                TestContext.WriteLine($"Received event: {e}");
-
-                if (e.ConnectionId == connectionId && e.IsConnected)
-                {
-                    tcsDeviceOnline.TrySetResult(true);
-                }
-            };
-
-            // Add device with a default key - this shouldn't connect
-            panel.AddDevice(connectionId, 0, true, true);
-
-            if (await Task.WhenAny(tcsDeviceOnline.Task, Task.Delay(10000)) == tcsDeviceOnline.Task)
-            {
-                Assert.Fail("This connections was expected to fail but IT DID NOT!!");
-            }
-        }
-        finally
-        {
-            await panel.Shutdown();
-            await device.StopListening();
-        }
+        await AssertPanelRemainsDisconnected(10000);
     }
 
     [Test]
     public async Task VerifyDefaultKeyWorksWhenConfigAllowsItsUse()
     {
-        // PD using non-default key but ALSO allows default key
         var securityKey = new byte[] { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x1, 0x2, 0x3, 0x4, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-        var deviceConfig = new DeviceConfiguration() { SecurityKey = securityKey, DefaultSecurityKeyAllowed = true };
-        using var device = new TestDevice(deviceConfig, _loggerFactory);
 
-        var panel = new ControlPanel(_loggerFactory.CreateLogger<ControlPanel>());
-        var tcsDeviceOnline = new TaskCompletionSource<bool>();
+        // PD using non-default key but ALSO allows default key
+        await InitTestTargets(cfg => { cfg.SecurityKey = securityKey; cfg.DefaultSecurityKeyAllowed = true; });
 
-        try
-        {
-            device.StartListening(new TcpOsdpServer(6000, 9600, _loggerFactory));
+        // Add device with a default key
+        AddDeviceToPanel();
 
-            var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
-
-            panel.ConnectionStatusChanged += (_, e) =>
-            {
-                TestContext.WriteLine($"Received event: {e}");
-
-                if (e.ConnectionId == connectionId && e.IsConnected)
-                {
-                    tcsDeviceOnline.TrySetResult(true);
-                }
-            };
-
-            // Add device with a default key
-            panel.AddDevice(connectionId, 0, true, true);
-
-            if (await Task.WhenAny(tcsDeviceOnline.Task, Task.Delay(10000)) != tcsDeviceOnline.Task)
-            {
-                Assert.Fail("Timeout waiting for connection to come online");
-            }
-        }
-        finally
-        {
-            await panel.Shutdown();
-            await device.StopListening();
-        }
+        await WaitForDeviceOnlineStatus();
     }
-
 
     [Test]
-    public async Task DeviceHandlesOsdpKeySetCommand()
+    public async Task VerifyDeviceWillIgnoreCommandsSentToDifferentAddress()
     {
-        var deviceConfig = new DeviceConfiguration();
-        using var device = new TestDevice(deviceConfig, _loggerFactory);
-        var panel = new ControlPanel(_loggerFactory.CreateLogger<ControlPanel>());
-        var tcsDeviceOnline = new TaskCompletionSource<bool>();
+        await InitTestTargets();
 
-        try
+        AddDeviceToPanel(address: 5);
+
+        await AssertPanelRemainsDisconnected();
+    }
+
+    [Test]
+    public async Task KeySetCommandAbleToChangeSecureChannelKey()
+    {
+        await InitTestTargets();
+
+        AddDeviceToPanel();
+
+        await WaitForDeviceOnlineStatus();
+
+        var newKey = new byte[] { 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
+        var result = await _targetPanel.EncryptionKeySet(_connectionId, 0, 
+            new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, newKey));
+        Assert.True(result);
+
+        await AssertPanelToDeviceCommsAreHealthy();
+
+        RemoveDeviceFromPanel();
+        AddDeviceToPanel(newKey);
+
+        await WaitForDeviceOnlineStatus();
+    }
+
+    [Test]
+    public async Task PanelIsAbleToChangeDeviceAddressWithComSetCommand()
+    {
+        await InitTestTargets();
+
+        AddDeviceToPanel();
+
+        await WaitForDeviceOnlineStatus();
+
+        byte newAddress = 20;
+        var commSettings = new Net.Model.CommandData.CommunicationConfiguration(newAddress, 9600);
+        var results = await _targetPanel.CommunicationConfiguration(_connectionId, 0, commSettings);
+
+        Assert.That(results.Address, Is.EqualTo(newAddress));
+
+        Assert.ThrowsAsync<TimeoutException>(() => AssertPanelToDeviceCommsAreHealthy());
+
+        RemoveDeviceFromPanel();
+        AddDeviceToPanel(address:  newAddress);
+
+        await WaitForDeviceOnlineStatus();
+
+        await AssertPanelToDeviceCommsAreHealthy();
+    }
+
+    [Test]
+    public async Task DeviceResetsItselfWhenPanelChangesBaudRateWithComSetCommand()
+    {
+        var mockComSetUpdate = new Mock<EventHandler<DeviceComSetUpdatedEventArgs>>();
+
+        await InitTestTargets();
+
+        _targetDevice.DeviceComSetUpdated += async (o, e) =>
         {
-            device.StartListening(new TcpOsdpServer(6000, 9600, _loggerFactory));
+            TestContext.WriteLine("----- Received Device ComSet Updated EVENT -----");
 
-            var connectionId = panel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, 9600));
+            // Record call results so that we can verify them as part of the test
+            mockComSetUpdate.Object.Invoke(o, e);
 
-            panel.ConnectionStatusChanged += (_, e) =>
+            // Simulate what a "real" client would do when it got the request to change comm settings
+            await _targetDevice.StopListening();
+            _targetDevice.Dispose();
+
+            // Re-init the device with new baud rate
+            InitTestTargetDevice(baudRate: e.NewBaudRate);
+        };
+
+        AddDeviceToPanel();
+
+        await WaitForDeviceOnlineStatus();
+
+        var connLostCheckpoint = SetupCheckpointForExpectedTestEvent(TestEventType.ConnectionLost);
+
+        int newBaudRate = 19200;
+        var commSettings = new Net.Model.CommandData.CommunicationConfiguration(_deviceAddress, newBaudRate);
+        var results = await _targetPanel.CommunicationConfiguration(_connectionId, 0, commSettings);
+
+        Assert.AreEqual(results.Address, _deviceAddress);
+        Assert.AreEqual(results.BaudRate, newBaudRate);
+
+        await connLostCheckpoint;
+
+        mockComSetUpdate.Verify(e => e(
+            It.IsAny<object>(),
+            It.IsAny<DeviceComSetUpdatedEventArgs>()), Times.Once);
+
+        var eventArgs = mockComSetUpdate.Invocations.First().Arguments[1] as DeviceComSetUpdatedEventArgs;
+        Assert.Multiple(() =>
+        {
+            Assert.AreEqual(0, eventArgs.OldAddress);
+            Assert.AreEqual(0, eventArgs.NewAddress);
+            Assert.AreEqual(9600, eventArgs.OldBaudRate);
+            Assert.AreEqual(19200, eventArgs.NewBaudRate);
+        });
+
+        RemoveDeviceFromPanel();
+        await RestartTargetPanelConnection(baudRate: newBaudRate);
+        
+        AddDeviceToPanel();
+
+        await WaitForDeviceOnlineStatus();
+    }
+
+    private async Task InitTestTargets(Action<DeviceConfiguration> configureDevice = null)
+    {
+        InitTestTargetDevice(configureDevice, baudRate: DefaultTestBaud);
+        await InitTestTargetPanel(baudRate: DefaultTestBaud);
+    }
+
+    private async Task InitTestTargetPanel(int baudRate = DefaultTestBaud)
+    {
+        _deviceOnlineCompletionSource = new TaskCompletionSource<bool>();
+
+        _targetPanel = new ControlPanel(_loggerFactory.CreateLogger<ControlPanel>());
+        _targetPanel.ConnectionStatusChanged += (_, e) =>
+        {
+            TestContext.WriteLine($"Received event: {e}");
+
+            if (e.ConnectionId != _connectionId) return;
+
+            lock (_syncLock)
             {
-                TestContext.WriteLine($"Received event: {e}");
+                TestEventType currentEventType;
 
-                if (e.ConnectionId == connectionId && e.IsConnected)
+                if (e.IsConnected)
                 {
-                    // ReSharper disable once AccessToModifiedClosure
-                    tcsDeviceOnline.TrySetResult(true);
+                    _deviceOnlineCompletionSource.TrySetResult(true);
+                    currentEventType = TestEventType.ConnectionEstablished;
                 }
-            };
+                else
+                {
+                    currentEventType = TestEventType.ConnectionLost;
+                    if (_deviceOnlineCompletionSource.Task.IsCompleted)
+                    {
+                        _deviceOnlineCompletionSource = new TaskCompletionSource<bool>();
+                    }
+                }
 
-            panel.AddDevice(connectionId, 0, true, true);
-
-            // In my tests it takes solid 2 sec for connection to get signalled ONLINE. Therefore,
-            // with some margin of safety we are using a 10sec timeout here to make sure tests don't 
-            // get permanently stuck but also have enough time for connection magic to happen. 
-            // 2 sec does seem awfully slow though
-            if (await Task.WhenAny(tcsDeviceOnline.Task, Task.Delay(10000)) != tcsDeviceOnline.Task)
-            {
-                Assert.Fail("Timeout waiting for connection to come online");
+                if (_eventCheckpoints.TryPeek(out var checkpoint) && checkpoint.EventType == currentEventType)
+                {
+                    _eventCheckpoints.TryDequeue(out var _);
+                    checkpoint.Tcs.TrySetResult(true);
+                }
             }
+        };
 
-            var newKey = new byte[] { 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-            var result = await panel.EncryptionKeySet(connectionId, 0, 
-                new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, newKey));
-            Assert.True(result);
+        await RestartTargetPanelConnection(baudRate);
+    }
 
-            await AssertPanelToDeviceCommsAreHealthy(panel, connectionId);
-
-            panel.RemoveDevice(connectionId, 0);
-            tcsDeviceOnline = new TaskCompletionSource<bool>();
-            panel.AddDevice(connectionId, 0, true, true, newKey);
-
-            if (await Task.WhenAny(tcsDeviceOnline.Task, Task.Delay(10000)) != tcsDeviceOnline.Task)
-            {
-                Assert.Fail("Timeout waiting for connection to come online");
-            }
-        }
-        finally
+    private async Task RestartTargetPanelConnection(int baudRate = DefaultTestBaud)
+    {
+        if (_connectionId != Guid.Empty)
         {
-            await panel.Shutdown();
-            await device.StopListening();
+            await _targetPanel.StopConnection(_connectionId);
+        }
+
+        _connectionId = _targetPanel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, baudRate));
+    }
+
+    private void InitTestTargetDevice(Action<DeviceConfiguration> configureDevice = null, int baudRate = DefaultTestBaud)
+    {
+        var deviceConfig = new DeviceConfiguration() { Address = DefaultTestDeviceAddr };
+        configureDevice?.Invoke(deviceConfig);
+
+        _deviceAddress = deviceConfig.Address;
+
+        _targetDevice = new TestDevice(deviceConfig, _loggerFactory);
+        _targetDevice.StartListening(new TcpOsdpServer(6000, baudRate, _loggerFactory));
+    }
+
+    private void AddDeviceToPanel(byte[] securityKey = null, byte? address = null)
+    {
+        if (address != null)
+        {
+            _deviceAddress = address.Value;
+        }
+
+        _deviceOnlineCompletionSource = new TaskCompletionSource<bool>();
+        _targetPanel.AddDevice(_connectionId, _deviceAddress, true, true, securityKey);
+    }
+
+    private void RemoveDeviceFromPanel()
+    {
+        _targetPanel.RemoveDevice(_connectionId, _deviceAddress);
+    }
+
+    private async Task WaitForDeviceOnlineStatus(int timeout = 10000)
+    {
+        var onlineTask = _deviceOnlineCompletionSource.Task;
+        if (await Task.WhenAny(onlineTask, Task.Delay(timeout)) != onlineTask)
+        {
+            Assert.Fail("Timeout waiting for device connection to come online");
         }
     }
 
-    private async Task AssertPanelToDeviceCommsAreHealthy(ControlPanel panel, Guid connectionId)
+    private async Task AssertPanelRemainsDisconnected(int timeout = 10000)
     {
-        var capabilities = await panel.DeviceCapabilities(connectionId, 0);
+        var onlineTask = _deviceOnlineCompletionSource.Task;
+        if (await Task.WhenAny(onlineTask, Task.Delay(timeout)) == onlineTask)
+        {
+            Assert.Fail("This connections was expected to fail but IT DID NOT!!");
+        }
+    }
+
+    private async Task AssertPanelToDeviceCommsAreHealthy()
+    {
+        var capabilities = await _targetPanel.DeviceCapabilities(_connectionId, _deviceAddress);
         Assert.NotNull(capabilities);
+    }
+
+    private async Task SetupCheckpointForExpectedTestEvent(TestEventType eventType, int timeout = 10000)
+    {
+        TaskCompletionSource<bool> tcs = new();
+
+        _eventCheckpoints.Enqueue(new EventCheckpoint() { EventType = eventType, Tcs = tcs });
+
+        var result = await Task.WhenAny(tcs.Task, Task.Delay(timeout));
+        if (result != tcs.Task)
+        {
+            Assert.Fail($"Timeout waiting for event checkpoint '{eventType}'");
+        }
+    }
+
+    private enum TestEventType
+    {
+        ConnectionLost,
+        ConnectionEstablished
+    }
+
+    private class EventCheckpoint
+    {
+        public TestEventType EventType { get; set; }
+        
+        public TaskCompletionSource<bool> Tcs { get; set; }
     }
 }
 
@@ -322,5 +415,13 @@ internal class TestDevice : Device
     protected override PayloadData HandleKeySettings(EncryptionKeyConfiguration commandPayload)
     {
         return new Ack();
+    }
+
+    protected override PayloadData HandleCommunicationSet(Net.Model.CommandData.CommunicationConfiguration commandPayload)
+    {
+        var validBaudRates = new int[] { 9600, 19200, 115200 };
+        var newBaudRate = validBaudRates.Contains(commandPayload.BaudRate) ? commandPayload.BaudRate : validBaudRates[0];
+
+        return new Net.Model.ReplyData.CommunicationConfiguration(commandPayload.Address, newBaudRate);
     }
 }

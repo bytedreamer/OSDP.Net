@@ -17,11 +17,13 @@ public abstract class OsdpServer : IOsdpServer
     /// <summary>
     /// Creates a new instance of OsdpServer
     /// </summary>
+    /// <param name="baudRate"></param>
     /// <param name="loggerFactory">Optional logger factory</param>
-    protected OsdpServer(ILoggerFactory loggerFactory = null)
+    protected OsdpServer(int baudRate, ILoggerFactory loggerFactory = null)
     {
         LoggerFactory = loggerFactory;
         Logger = loggerFactory?.CreateLogger<OsdpServer>();
+        BaudRate = baudRate;
     }
 
     /// <inheritdoc/>
@@ -39,6 +41,9 @@ public abstract class OsdpServer : IOsdpServer
     /// Logger instance used by the server if a factory was specified at instantiation
     /// </summary>
     protected ILogger Logger { get; }
+
+    /// <inheritdoc/>
+    public int BaudRate { get; }
 
     /// <inheritdoc/>
     public abstract Task Start(Func<IOsdpConnection, Task> newConnectionHandler);
