@@ -62,6 +62,8 @@ namespace OSDP.Net.Messages.SecureChannel
 
         public bool DefaultKeyAllowed { get; set; } = false;
 
+        public byte Address { get; set; }
+
         public async Task<IncomingMessage> ReadNextCommand(CancellationToken cancellationToken = default)
         {
             var commandBuffer = new Collection<byte>();
@@ -115,6 +117,8 @@ namespace OSDP.Net.Messages.SecureChannel
 
         private async Task<bool> HandleCommand(IncomingMessage command)
         {
+            if (command.Address != Address) return true;
+
             var reply = (command.IsValidMac, (CommandType)command.Type) switch
             {
                 (false, _) => HandleInvalidMac(),

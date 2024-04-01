@@ -11,7 +11,6 @@ namespace OSDP.Net.Connections;
 public class TcpOsdpServer : OsdpServer
 {
     private readonly TcpListener _listener;
-    private readonly int _baudRate;
 
     /// <summary>
     /// Creates a new instance of TcpOsdpServer
@@ -20,10 +19,9 @@ public class TcpOsdpServer : OsdpServer
     /// <param name="baudRate">Baud rate at which comms are expected to take place</param>
     /// <param name="loggerFactory">Optional logger factory</param>
     public TcpOsdpServer(
-        int portNumber, int baudRate, ILoggerFactory loggerFactory = null) : base(loggerFactory)
+        int portNumber, int baudRate, ILoggerFactory loggerFactory = null) : base(baudRate, loggerFactory)
     {
         _listener = TcpListener.Create(portNumber);
-        _baudRate = baudRate;
     }
 
     /// <inheritdoc/>
@@ -42,7 +40,7 @@ public class TcpOsdpServer : OsdpServer
             {
                 var client = await _listener.AcceptTcpClientAsync();
 
-                var connection = new TcpServerOsdpConnection2(client, _baudRate, LoggerFactory);
+                var connection = new TcpServerOsdpConnection2(client, BaudRate, LoggerFactory);
                 var task = newConnectionHandler(connection);
                 RegisterConnection(connection, task);
             }

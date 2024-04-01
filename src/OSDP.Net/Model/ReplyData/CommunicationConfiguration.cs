@@ -1,28 +1,43 @@
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using OSDP.Net.Messages;
+using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Model.ReplyData
 {
     /// <summary>
     /// The actual communication configuration of the PD sent as a reply.
     /// </summary>
-    public class CommunicationConfiguration
+    public class CommunicationConfiguration : PayloadData
     {
-        private CommunicationConfiguration()
+        /// <summary>
+        /// Initializes a new instance of CommunicationConfiguration class
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="baudRate"></param>
+        public CommunicationConfiguration(byte address, int baudRate)
         {
+            Address = address;
+            BaudRate = baudRate;
         }
+
+        /// <inheritdoc/>
+        public override byte Code => (byte)ReplyType.PdCommunicationsConfigurationReport;
 
         /// <summary>
         /// Gets the address.
         /// </summary>
-        public byte Address { get; private set; }
+        public byte Address { get; }
 
         /// <summary>
         /// Gets the baud rate.
         /// </summary>
-        public int BaudRate { get; private set; }
+        public int BaudRate { get; }
+
+        /// <inheritdoc />
+        public override ReadOnlySpan<byte> SecurityControlBlock() => SecurityBlock.ReplyMessageWithDataSecurity;
 
         /// <summary>Parses the message payload bytes</summary>
         /// <param name="data">Message payload as bytes</param>
@@ -35,12 +50,13 @@ namespace OSDP.Net.Model.ReplyData
                 throw new Exception("Invalid size for the data");
             }
 
-            return new CommunicationConfiguration
-            {
-                Address = dataArray[0],
-                BaudRate = Message.ConvertBytesToInt(dataArray.Skip(1).ToArray())
-            };
+            return new CommunicationConfiguration(dataArray[0], Message.ConvertBytesToInt(dataArray.Skip(1).ToArray()));
         }
+
+        /// <inheritdoc/>
+        public override byte[] BuildData() => [
+            Address, (byte)(BaudRate & 0xff),(byte)((BaudRate >> 8) & 0xff),
+            (byte)((BaudRate >> 16) & 0xff), (byte)((BaudRate >> 24) & 0xff)];
 
         /// <inheritdoc />
         public override string ToString()
