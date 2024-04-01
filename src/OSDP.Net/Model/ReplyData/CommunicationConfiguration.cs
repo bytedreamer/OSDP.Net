@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using OSDP.Net.Messages;
 using OSDP.Net.Messages.SecureChannel;
