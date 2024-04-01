@@ -7,7 +7,8 @@ namespace CardReader;
 
 internal class MySampleDevice : Device
 {
-    public MySampleDevice(ILoggerFactory loggerFactory) : base(loggerFactory) { }
+    public MySampleDevice(DeviceConfiguration config, ILoggerFactory loggerFactory)
+        : base(config, loggerFactory) { }
 
     protected override PayloadData HandleIdReport()
     {

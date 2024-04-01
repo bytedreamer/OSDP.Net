@@ -2,6 +2,7 @@
 using System.Numerics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Model.ReplyData;
 
@@ -27,9 +28,13 @@ internal class Program
                 .AddFilter("OSDP.Net", LogLevel.Debug);
         });
 
-        // var communications = new TcpOsdpServer(5000, baudRate, loggerFactory);
+        var deviceConfiguration = new DeviceConfiguration();
+        
+        // Replace commented out code for test reader to listen on TCP port rather than serial
+        //var communications = new TcpOsdpServer(5000, baudRate, loggerFactory);
         var communications = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
-        using var device = new MySampleDevice(loggerFactory);
+
+        using var device = new MySampleDevice(deviceConfiguration, loggerFactory);
         device.StartListening(communications);
 
         await Task.Run(async () =>

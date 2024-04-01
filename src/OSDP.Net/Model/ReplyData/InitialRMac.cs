@@ -12,12 +12,13 @@ namespace OSDP.Net.Model.ReplyData
         /// <summary>
         /// Creates a new instance of InitialRMac
         /// </summary>
-        /// <param name="rmac"></param>
-        /// <param name="isDefaultKey"></param>
-        public InitialRMac(byte[] rmac, bool isDefaultKey)
+        /// <param name="rmac">Initial R-MAC value to send back to the ACU</param>
+        /// <param name="serverCryptogramAccepted">Flag indicating whether or not 
+        /// server cryptogram was accepted by the PD</param>
+        public InitialRMac(byte[] rmac, bool serverCryptogramAccepted)
         {
             RMac = rmac;
-            IsDefaultKey = isDefaultKey;
+            ServerCryptogramAccepted = serverCryptogramAccepted;
         }
 
         /// <summary>
@@ -26,7 +27,7 @@ namespace OSDP.Net.Model.ReplyData
         /// </summary>
         public byte[] RMac { get; }
         
-        public bool IsDefaultKey { get; }
+        public bool ServerCryptogramAccepted { get; }
 
         /// <inheritdoc/>
         public override byte Code => (byte)ReplyType.InitialRMac;
@@ -41,7 +42,7 @@ namespace OSDP.Net.Model.ReplyData
             {
                 0x03,
                 (byte)SecurityBlockType.SecureConnectionSequenceStep2,
-                (byte)(IsDefaultKey ? 0x00 : 0x01)
+                (byte)(ServerCryptogramAccepted ? 0x01 : 0xff)
             };
         }
 
