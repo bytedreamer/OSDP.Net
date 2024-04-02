@@ -43,7 +43,7 @@ internal class OutgoingMessage : Message
         buffer[currentLength++] = Address;
         buffer[currentLength++] = (byte)(totalLength & 0xff);
         buffer[currentLength++] = (byte)((totalLength >> 8) & 0xff);
-        buffer[currentLength++] = (byte)(ControlBlock.ControlByte | (isSecurityBlockPresent ? 0x08 : 0x00));
+        buffer[currentLength++] = (byte)((ControlBlock.ControlByte & 0x07) | (isSecurityBlockPresent ? 0x08 : 0x00));
 
         if (isSecurityBlockPresent)
         {

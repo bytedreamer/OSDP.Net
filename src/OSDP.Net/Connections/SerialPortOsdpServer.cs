@@ -16,7 +16,6 @@ namespace OSDP.Net.Connections;
 public class SerialPortOsdpServer : OsdpServer
 {
     private readonly string _portName;
-    private readonly int _baudRate;
 
     /// <summary>
     /// Creates a new instance of SerialPortOsdpServer
@@ -25,10 +24,9 @@ public class SerialPortOsdpServer : OsdpServer
     /// <param name="baudRate">Baud rate at which to communicate</param>
     /// <param name="loggerFactory">Optional logger factory</param>
     public SerialPortOsdpServer(
-        string portName, int baudRate, ILoggerFactory loggerFactory = null) : base(loggerFactory)
+        string portName, int baudRate, ILoggerFactory loggerFactory = null) : base(baudRate, loggerFactory)
     {
         _portName = portName;
-        _baudRate = baudRate;
     }
 
     /// <inheritdoc/>
@@ -36,14 +34,14 @@ public class SerialPortOsdpServer : OsdpServer
     {
         IsRunning = true;
 
-        Logger?.LogInformation("Opening {Port} @ {Baud} serial port...", _portName, _baudRate);
+        Logger?.LogInformation("Opening {Port} @ {Baud} serial port...", _portName, BaudRate);
 
         await OpenSerialPort(newConnectionHandler);
     }
 
     private async Task OpenSerialPort(Func<IOsdpConnection, Task> newConnectionHandler)
     {
-        var connection = new SerialPortOsdpConnection(_portName, _baudRate);
+        var connection = new SerialPortOsdpConnection(_portName, BaudRate);
         await connection.Open();
         var task = Task.Run(async () =>
         {
