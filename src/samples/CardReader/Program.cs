@@ -15,9 +15,9 @@ internal class Program
         var config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
         var osdpSection = config.GetSection("OSDP");
 
-        var portName = osdpSection["PortName"];
-        var baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
-        var deviceAddress = byte.Parse(osdpSection["DeviceAddress"] ?? "0");
+        string portName = osdpSection["PortName"] ?? throw new NullReferenceException("A port name is required in the configuration file.");
+        int baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
+        byte deviceAddress = byte.Parse(osdpSection["DeviceAddress"] ?? "0");
 
         var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -35,6 +35,22 @@ internal class Program
         var communications = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
 
         using var device = new MySampleDevice(deviceConfiguration, loggerFactory);
+        device.DeviceComSetUpdated += async (sender, args) =>
+        {
+            Console.WriteLine("A command has been processed to update the communication settings.");
+            Console.WriteLine($"Old settings - Baud Rate {args.OldBaudRate} - Address {args.OldAddress}");
+            Console.WriteLine($"New settings - Baud Rate {args.NewBaudRate} - Address {args.NewAddress}");
+            Console.WriteLine("A command has been processed to update the communication settings.");
+
+            if (sender is MySampleDevice mySampleDevice && args.OldBaudRate != args.NewBaudRate)
+            {
+                Console.WriteLine("Restarting communications with new baud rate");
+                communications = new SerialPortOsdpServer(portName, args.NewBaudRate, loggerFactory);
+                await mySampleDevice.StopListening();
+                mySampleDevice.StartListening(communications);
+            }
+        };
+        
         device.StartListening(communications);
 
         await Task.Run(async () =>
