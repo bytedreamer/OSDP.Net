@@ -381,10 +381,19 @@ public class Device : IDisposable
     }
 
     /// <summary>
-    /// Handles the communication set command received from the OSDP device.
+    /// If deriving PD class is intending to support updating the communication settings, it MUST override
+    /// this method in order to provide its own means of persisting a new baud rate and address which
+    /// which was sent by the ACU.
+    /// 
+    /// NOTE: The consumer will need to listen to the DeviceComSetUpdated event. It allows it to reinitialize the
+    /// connection after successfully sending the reply.
     /// </summary>
-    /// <param name="commandPayload">The communication set command payload.</param>
-    /// <returns></returns>
+    /// <param name="commandPayload">The requested communication settings command payload.</param>
+    /// <returns>
+    /// PdCommunicationsConfigurationReport - if updated communication settings are successfully accepted. Populate
+    /// the data with the new values.
+    /// Nak - if the communication settings are rejected
+    /// </returns>
     protected virtual PayloadData HandleCommunicationSet(CommunicationConfiguration commandPayload)
     {
         return HandleUnknownCommand(CommandType.CommunicationSet);

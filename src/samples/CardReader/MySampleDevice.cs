@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using OSDP.Net;
 using OSDP.Net.Model;
 using OSDP.Net.Model.ReplyData;
+using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 
 namespace CardReader;
 
@@ -29,5 +30,12 @@ internal class MySampleDevice : Device
         });
 
         return deviceCapabilities;
+    }
+
+    protected override PayloadData HandleCommunicationSet(CommunicationConfiguration commandPayload)
+    {
+        // Update the settings in persistent storage
+        
+        return new OSDP.Net.Model.ReplyData.CommunicationConfiguration(commandPayload.Address, commandPayload.BaudRate);
     }
 }
