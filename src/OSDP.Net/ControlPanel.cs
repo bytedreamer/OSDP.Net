@@ -24,7 +24,7 @@ namespace OSDP.Net
     /// </summary>
     public class ControlPanel
     {
-        private const byte ConfigurationAddress = 0x7f;
+        internal const byte ConfigurationAddress = 0x7f;
 
         private readonly object _lockBusCreation = new ();
         private readonly ConcurrentDictionary<Guid, Bus> _buses = new();
