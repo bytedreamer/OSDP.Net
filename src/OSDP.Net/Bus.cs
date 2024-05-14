@@ -40,11 +40,12 @@ namespace OSDP.Net
         private readonly Action<TraceEntry> _tracer;
         private readonly AutoResetEvent _commandAvailableEvent = new (false);
         private readonly AutoResetEvent _shutdownComplete = new (false);
+        private readonly IDeviceProxyFactory _deviceProxyFactory;
         
         private CancellationTokenSource _cancellationTokenSource;
 
         public Bus(IOsdpConnection connection, BlockingCollection<ReplyTracker> replies, TimeSpan pollInterval,
-            Action<TraceEntry> tracer,
+            Action<TraceEntry> tracer, IDeviceProxyFactory deviceProxyFactory,
             // ReSharper disable once ContextualLoggerProblem
             ILogger<ControlPanel> logger = null)
         {
@@ -54,6 +55,7 @@ namespace OSDP.Net
             _tracer = tracer;
             Id = Guid.NewGuid();
             _logger = logger;
+            _deviceProxyFactory = deviceProxyFactory;
         }
 
         private bool IsPolling => _pollInterval > TimeSpan.Zero;
@@ -128,7 +130,7 @@ namespace OSDP.Net
                     _configuredDevices.Remove(foundDevice);
                 }
 
-                var addedDevice = new DeviceProxy(address, useCrc, useSecureChannel, secureChannelKey);
+                var addedDevice = _deviceProxyFactory.Create(address, useCrc, useSecureChannel, secureChannelKey);
 
                 _configuredDevices.Add(addedDevice);
             }

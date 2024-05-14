@@ -10,6 +10,7 @@ using DeviceCapabilities = OSDP.Net.Model.ReplyData.DeviceCapabilities;
 using System.Linq;
 using Moq;
 using System.Collections.Concurrent;
+using System.Collections;
 
 namespace OSDP.Net.Tests.IntegrationTests;
 
@@ -41,99 +42,49 @@ namespace OSDP.Net.Tests.IntegrationTests;
 
 [TestFixture]
 [Category("Integration")]
-public class PeripheryDeviceTest
+public class PeripheryDeviceTest : IntegrationTestFixtureBase
 {
-    private const int DefaultTestBaud = 9600;
-    private const byte DefaultTestDeviceAddr = 0;
+    public static TestCaseData[] EstablishingAcuToPdConnectionTestCases => [
+        //// PD requires Security; ACU opens secure channel; both use same key ==> OK
+        new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.NonDefaultSCBK, true, true, true),
+        new (IntegrationConsts.DefaultSCBK, IntegrationConsts.DefaultSCBK, true, true, true),
 
-    private ILoggerFactory _loggerFactory;
-    private ControlPanel _targetPanel;
-    private TestDevice _targetDevice;
+        //// PD requires Security; ACU opens secure channel; one side uses default key; other uses different key ==> NO
+        new (IntegrationConsts.DefaultSCBK, IntegrationConsts.NonDefaultSCBK, true, true, false),
+        new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.DefaultSCBK, true, true, false),
 
-    private byte _deviceAddress;
-    private Guid _connectionId;
+        //// PD doesn't require Security; ACU doesn't use secure channel; two sides use different keys ==> OK
+        new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.DefaultSCBK, false, false, true),
 
-    private TaskCompletionSource<bool> _deviceOnlineCompletionSource;
-    private ConcurrentQueue<EventCheckpoint> _eventCheckpoints = new();
-    private object _syncLock = new object();
+        //// PD doesn't requires Security; ACU opens secure channel; two sides use different keys ==> NO
+        new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.DefaultSCBK, false, true, false),
+        new (IntegrationConsts.DefaultSCBK, IntegrationConsts.NonDefaultSCBK, false, true, false),
 
+        //// PD doesn't requires Security; ACU opens secure channel; both sides use same key ==> OK
+        new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.NonDefaultSCBK, false, true, true),
+        new (IntegrationConsts.DefaultSCBK, IntegrationConsts.DefaultSCBK, false, true, true),
+    ];
 
-    [SetUp]
-    public void Setup()
+    [TestCaseSource(nameof(EstablishingAcuToPdConnectionTestCases))]
+    public async Task TestEstablishingAcuToPdConnection(
+        byte[] deviceKey, byte[] panelKey, 
+        bool pdRequireSecurity, bool panelUseSecureChannel, bool expectConnectSuccess)
     {
-        // Each test gets spun up with its own console capture so we have to create
-        // a new logger factory instance for every single test. Otherwise, the test runner
-        // isn't able to associate stdout output with the particular test
-        _loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder
-                .AddFilter("OSDP.Net", LogLevel.Debug)
-                .SetMinimumLevel(LogLevel.Debug)
-                .AddConsole();
+        await InitTestTargets(cfg => {
+            cfg.SecurityKey = deviceKey;
+            cfg.RequireSecurity = pdRequireSecurity;
         });
-    }
 
-    [TearDown]
-    public async Task Teardown() 
-    {
-        await (_targetPanel?.Shutdown() ?? Task.CompletedTask);
-        await (_targetDevice?.StopListening() ?? Task.CompletedTask);
+        AddDeviceToPanel(panelKey, useSecureChannel: panelUseSecureChannel);
 
-        _targetDevice?.Dispose();
-        _loggerFactory?.Dispose();
-    }
-
-    // TODO: This and next test can be parameterized
-    [Test]
-    public async Task TestEstablishingConnectionWithNonDefaultSecurityKey()
-    {
-        var securityKey = new byte[] { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x1, 0x2, 0x3, 0x4, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-
-        await InitTestTargets(cfg => cfg.SecurityKey = securityKey);
-
-        AddDeviceToPanel(securityKey);
-
-        await WaitForDeviceOnlineStatus();
-    }
-
-    [Test]
-    public async Task TestEstablishingConnectionWhenScBkIsSameAsDefaultKey()
-    {
-        var securityKey = "0123456789:;<=>?"u8.ToArray();
-
-        await InitTestTargets(cfg => cfg.SecurityKey = securityKey);
-
-        AddDeviceToPanel(securityKey);
-
-        await WaitForDeviceOnlineStatus();
-    }
-
-    [Test]
-    public async Task VerifyDefaultKeyIsRejectedWhenDefaultNotAllowed()
-    {
-        var securityKey = new byte[] { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x1, 0x2, 0x3, 0x4, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-
-        // PD using non-default key and default key is NOT allowed
-        await InitTestTargets(cfg => { cfg.SecurityKey = securityKey; cfg.DefaultSecurityKeyAllowed = false; });
-
-        // Add device with a default key - this shouldn't connect
-        AddDeviceToPanel();
-
-        await AssertPanelRemainsDisconnected();
-    }
-
-    [Test]
-    public async Task VerifyDefaultKeyWorksWhenConfigAllowsItsUse()
-    {
-        var securityKey = new byte[] { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x1, 0x2, 0x3, 0x4, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-
-        // PD using non-default key but ALSO allows default key
-        await InitTestTargets(cfg => { cfg.SecurityKey = securityKey; cfg.DefaultSecurityKeyAllowed = true; });
-
-        // Add device with a default key
-        AddDeviceToPanel();
-
-        await WaitForDeviceOnlineStatus();
+        if (expectConnectSuccess)
+        {
+            await WaitForDeviceOnlineStatus();
+        }
+        else
+        {
+            await AssertPanelRemainsDisconnected();
+        }
     }
 
     [Test]
@@ -250,143 +201,10 @@ public class PeripheryDeviceTest
 
         await WaitForDeviceOnlineStatus();
     }
-
-    private async Task InitTestTargets(Action<DeviceConfiguration> configureDevice = null)
-    {
-        InitTestTargetDevice(configureDevice, baudRate: DefaultTestBaud);
-        await InitTestTargetPanel(baudRate: DefaultTestBaud);
-    }
-
-    private async Task InitTestTargetPanel(int baudRate = DefaultTestBaud)
-    {
-        _deviceOnlineCompletionSource = new TaskCompletionSource<bool>();
-
-        _targetPanel = new ControlPanel(_loggerFactory.CreateLogger<ControlPanel>());
-        _targetPanel.ConnectionStatusChanged += (_, e) =>
-        {
-            TestContext.WriteLine($"Received event: {e}");
-
-            if (e.ConnectionId != _connectionId) return;
-
-            lock (_syncLock)
-            {
-                TestEventType currentEventType;
-
-                if (e.IsConnected)
-                {
-                    _deviceOnlineCompletionSource.TrySetResult(true);
-                    currentEventType = TestEventType.ConnectionEstablished;
-                }
-                else
-                {
-                    currentEventType = TestEventType.ConnectionLost;
-                    if (_deviceOnlineCompletionSource.Task.IsCompleted)
-                    {
-                        _deviceOnlineCompletionSource = new TaskCompletionSource<bool>();
-                    }
-                }
-
-                if (_eventCheckpoints.TryPeek(out var checkpoint) && checkpoint.EventType == currentEventType)
-                {
-                    _eventCheckpoints.TryDequeue(out var _);
-                    checkpoint.Tcs.TrySetResult(true);
-                }
-            }
-        };
-
-        await RestartTargetPanelConnection(baudRate);
-    }
-
-    private async Task RestartTargetPanelConnection(int baudRate = DefaultTestBaud)
-    {
-        if (_connectionId != Guid.Empty)
-        {
-            await _targetPanel.StopConnection(_connectionId);
-        }
-
-        _connectionId = _targetPanel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, baudRate));
-    }
-
-    private void InitTestTargetDevice(Action<DeviceConfiguration> configureDevice = null, int baudRate = DefaultTestBaud)
-    {
-        var deviceConfig = new DeviceConfiguration() { Address = DefaultTestDeviceAddr };
-        configureDevice?.Invoke(deviceConfig);
-
-        _deviceAddress = deviceConfig.Address;
-
-        _targetDevice = new TestDevice(deviceConfig, _loggerFactory);
-        _targetDevice.StartListening(new TcpOsdpServer(6000, baudRate, _loggerFactory));
-    }
-
-    private void AddDeviceToPanel(byte[] securityKey = null, byte? address = null)
-    {
-        if (address != null)
-        {
-            _deviceAddress = address.Value;
-        }
-
-        _deviceOnlineCompletionSource = new TaskCompletionSource<bool>();
-        _targetPanel.AddDevice(_connectionId, _deviceAddress, true, true, securityKey);
-    }
-
-    private void RemoveDeviceFromPanel()
-    {
-        _targetPanel.RemoveDevice(_connectionId, _deviceAddress);
-    }
-
-    private async Task WaitForDeviceOnlineStatus(int timeout = 10000)
-    {
-        var onlineTask = _deviceOnlineCompletionSource.Task;
-        if (await Task.WhenAny(onlineTask, Task.Delay(timeout)) != onlineTask)
-        {
-            Assert.Fail("Timeout waiting for device connection to come online");
-        }
-    }
-
-    private async Task AssertPanelRemainsDisconnected(int timeout = 10000)
-    {
-        var onlineTask = _deviceOnlineCompletionSource.Task;
-        if (await Task.WhenAny(onlineTask, Task.Delay(timeout)) == onlineTask)
-        {
-            Assert.Fail("This connections was expected to fail but IT DID NOT!!");
-        }
-    }
-
-    private async Task AssertPanelToDeviceCommsAreHealthy()
-    {
-        var capabilities = await _targetPanel.DeviceCapabilities(_connectionId, _deviceAddress);
-        Assert.NotNull(capabilities);
-    }
-
-    private async Task SetupCheckpointForExpectedTestEvent(TestEventType eventType, int timeout = 10000)
-    {
-        TaskCompletionSource<bool> tcs = new();
-
-        _eventCheckpoints.Enqueue(new EventCheckpoint() { EventType = eventType, Tcs = tcs });
-
-        var result = await Task.WhenAny(tcs.Task, Task.Delay(timeout));
-        if (result != tcs.Task)
-        {
-            Assert.Fail($"Timeout waiting for event checkpoint '{eventType}'");
-        }
-    }
-
-    private enum TestEventType
-    {
-        ConnectionLost,
-        ConnectionEstablished
-    }
-
-    private class EventCheckpoint
-    {
-        public TestEventType EventType { get; set; }
-        
-        public TaskCompletionSource<bool> Tcs { get; set; }
-    }
 }
 
 
-internal class TestDevice : Device
+public class TestDevice : Device
 {
     public TestDevice(DeviceConfiguration config, ILoggerFactory loggerFactory)
         : base(config, loggerFactory) { }
@@ -423,5 +241,30 @@ internal class TestDevice : Device
         var newBaudRate = validBaudRates.Contains(commandPayload.BaudRate) ? commandPayload.BaudRate : validBaudRates[0];
 
         return new Net.Model.ReplyData.CommunicationConfiguration(commandPayload.Address, newBaudRate);
+    }
+
+    protected override PayloadData HandleLocalStatusReport()
+    {
+        return new LocalStatus(false, false);
+    }
+
+    protected override PayloadData HandleInputStatusReport()
+    {
+        return new InputStatus([false]);
+    }
+
+    protected override PayloadData HandleOutputStatusReport()
+    {
+        return new OutputStatus([false]);
+    }
+
+    protected override PayloadData HandleReaderStatusReport()
+    {
+        return new ReaderStatus([ReaderTamperStatus.Normal]);
+    }
+
+    protected override PayloadData HandleOutputControl(OutputControls commandPayload)
+    {
+        return new OutputStatus([false]);
     }
 }
