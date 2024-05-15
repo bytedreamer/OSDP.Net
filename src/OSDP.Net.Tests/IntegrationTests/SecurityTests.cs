@@ -43,9 +43,10 @@ namespace OSDP.Net.Tests.IntegrationTests
                 foreach (var commandType in disallowedCommands)
                 {
                     var command = BuildTestCommand(commandType);
-                    var ex = Assert.ThrowsAsync<NackReplyException>(() => command.Run(), $"command: {commandType}");
+                    var exception = Assert.ThrowsAsync<NackReplyException>(() => command.Run(), $"command: {commandType}");
+                    Assert.That(exception, Is.Not.Null);
                     Assert.That(
-                        ex.Reply.ErrorCode,
+                        exception.Reply.ErrorCode,
                         Is.EqualTo(Net.Model.ReplyData.ErrorCode.CommunicationSecurityNotMet),
                         $"command: {commandType}");
                 }
@@ -75,9 +76,10 @@ namespace OSDP.Net.Tests.IntegrationTests
 
             AddDeviceToPanel(IntegrationConsts.NonDefaultSCBK);
 
-            var ex = Assert.ThrowsAsync<NackReplyException>(() => TargetPanel.IdReport(_connectionId, _deviceAddress));
+            var exception = Assert.ThrowsAsync<NackReplyException>(() => TargetPanel.IdReport(ConnectionId, DeviceAddress));
+            Assert.That(exception, Is.Not.Null);
             Assert.That(
-                ex.Reply.ErrorCode,
+                exception.Reply.ErrorCode,
                 Is.EqualTo(Net.Model.ReplyData.ErrorCode.CommunicationSecurityNotMet));
         }
 
@@ -118,9 +120,10 @@ namespace OSDP.Net.Tests.IntegrationTests
                 foreach (var commandType in disallowedCommands)
                 {
                     var command = BuildTestCommand(commandType);
-                    var ex = Assert.ThrowsAsync<NackReplyException>(() => command.Run(), $"command: {commandType}");
+                    var exception = Assert.ThrowsAsync<NackReplyException>(() => command.Run(), $"command: {commandType}");
+                    Assert.That(exception, Is.Not.Null);
                     Assert.That(
-                        ex.Reply.ErrorCode,
+                        exception.Reply.ErrorCode,
                         Is.EqualTo(Net.Model.ReplyData.ErrorCode.CommunicationSecurityNotMet),
                         $"command: {commandType}");
                 }
@@ -222,9 +225,10 @@ namespace OSDP.Net.Tests.IntegrationTests
 
             AddDeviceToPanel(IntegrationConsts.NonDefaultSCBK);
 
-            var ex = Assert.ThrowsAsync<NackReplyException>(() => TargetPanel.IdReport(_connectionId, _deviceAddress));
+            var exception = Assert.ThrowsAsync<NackReplyException>(() => TargetPanel.IdReport(ConnectionId, DeviceAddress));
+            Assert.That(exception, Is.Not.Null);
             Assert.That(
-                ex.Reply.ErrorCode,
+                exception.Reply.ErrorCode,
                 Is.EqualTo(Net.Model.ReplyData.ErrorCode.CommunicationSecurityNotMet));
         }
     }

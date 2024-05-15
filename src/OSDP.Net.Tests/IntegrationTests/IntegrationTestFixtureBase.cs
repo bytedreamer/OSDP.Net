@@ -3,18 +3,14 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using OSDP.Net.Connections;
-using OSDP.Net.Model;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using DeviceCapabilities = OSDP.Net.Model.ReplyData.DeviceCapabilities;
-using System.Linq;
-using Moq;
 using System.Collections.Concurrent;
 using OSDP.Net.Messages;
 using OSDP.Net.Messages.SecureChannel;
 
 namespace OSDP.Net.Tests.IntegrationTests;
-
 
 public sealed class IntegrationConsts
 {
@@ -26,19 +22,17 @@ public sealed class IntegrationConsts
 
 public class IntegrationTestFixtureBase
 {
-    protected ILoggerFactory _loggerFactory;
-    protected ControlPanel _targetPanel;
-    protected TestDevice _targetDevice;
+    protected ILoggerFactory LoggerFactory;
 
-    protected byte _deviceAddress;
-    protected Guid _connectionId;
+    protected byte DeviceAddress;
+    protected Guid ConnectionId;
 
     private TaskCompletionSource<bool> _deviceOnlineCompletionSource;
-    private ConcurrentQueue<EventCheckpoint> _eventCheckpoints = new();
-    private object _syncLock = new object();
+    private readonly ConcurrentQueue<EventCheckpoint> _eventCheckpoints = new();
+    private readonly object _syncLock = new();
 
-    protected ControlPanel TargetPanel { get => _targetPanel; }
-    protected TestDevice TargetDevice { get => _targetDevice; }
+    protected ControlPanel TargetPanel { get; private set; }
+    protected TestDevice TargetDevice { get; private set; }
 
     [SetUp]
     public void Setup()
@@ -46,7 +40,7 @@ public class IntegrationTestFixtureBase
         // Each test gets spun up with its own console capture so we have to create
         // a new logger factory instance for every single test. Otherwise, the test runner
         // isn't able to associate stdout output with the particular test
-        _loggerFactory = LoggerFactory.Create(builder =>
+        LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
         {
             builder
                 .AddFilter("OSDP.Net", LogLevel.Debug)
@@ -58,11 +52,11 @@ public class IntegrationTestFixtureBase
     [TearDown]
     public async Task Teardown()
     {
-        await (_targetPanel?.Shutdown() ?? Task.CompletedTask);
-        await (_targetDevice?.StopListening() ?? Task.CompletedTask);
+        await (TargetPanel?.Shutdown() ?? Task.CompletedTask);
+        await (TargetDevice?.StopListening() ?? Task.CompletedTask);
 
-        _targetDevice?.Dispose();
-        _loggerFactory?.Dispose();
+        TargetDevice?.Dispose();
+        LoggerFactory?.Dispose();
     }
 
     protected async Task InitTestTargets(
@@ -80,15 +74,15 @@ public class IntegrationTestFixtureBase
 
         _deviceOnlineCompletionSource = new TaskCompletionSource<bool>();
 
-        _targetPanel = new ControlPanel(
+        TargetPanel = new ControlPanel(
             panelConfiguration.TestDeviceProxyNeeded ? new TestDeviceProxyFactory(panelConfiguration) : null,
-            _loggerFactory.CreateLogger<ControlPanel>());
+            LoggerFactory.CreateLogger<ControlPanel>());
 
-        _targetPanel.ConnectionStatusChanged += (_, e) =>
+        TargetPanel.ConnectionStatusChanged += (_, e) =>
         {
             TestContext.WriteLine($"Received event: {e}");
 
-            if (e.ConnectionId != _connectionId) return;
+            if (e.ConnectionId != ConnectionId) return;
 
             lock (_syncLock)
             {
@@ -121,13 +115,13 @@ public class IntegrationTestFixtureBase
 
     protected async Task RestartTargetPanelConnection(int baudRate = IntegrationConsts.DefaultTestBaud)
     {
-        if (_connectionId != Guid.Empty)
+        if (ConnectionId != Guid.Empty)
         {
-            await _targetPanel.StopConnection(_connectionId);
+            await TargetPanel.StopConnection(ConnectionId);
         }
 
 
-        _connectionId = _targetPanel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, baudRate));
+        ConnectionId = TargetPanel.StartConnection(new TcpClientOsdpConnection("localhost", 6000, baudRate));
     }
 
     protected void InitTestTargetDevice(
@@ -136,10 +130,10 @@ public class IntegrationTestFixtureBase
         var deviceConfig = new DeviceConfiguration() { Address = IntegrationConsts.DefaultTestDeviceAddr };
         configureDevice?.Invoke(deviceConfig);
 
-        _deviceAddress = deviceConfig.Address;
+        DeviceAddress = deviceConfig.Address;
 
-        _targetDevice = new TestDevice(deviceConfig, _loggerFactory);
-        _targetDevice.StartListening(new TcpOsdpServer(6000, baudRate, _loggerFactory));
+        TargetDevice = new TestDevice(deviceConfig, LoggerFactory);
+        TargetDevice.StartListening(new TcpOsdpServer(6000, baudRate, LoggerFactory));
     }
 
     protected void AddDeviceToPanel(
@@ -147,16 +141,16 @@ public class IntegrationTestFixtureBase
     {
         if (address != null)
         {
-            _deviceAddress = address.Value;
+            DeviceAddress = address.Value;
         }
 
         _deviceOnlineCompletionSource = new TaskCompletionSource<bool>();
-        _targetPanel.AddDevice(_connectionId, _deviceAddress, useCrc, useSecureChannel, securityKey);
+        TargetPanel.AddDevice(ConnectionId, DeviceAddress, useCrc, useSecureChannel, securityKey);
     }
 
     protected void RemoveDeviceFromPanel()
     {
-        _targetPanel.RemoveDevice(_connectionId, _deviceAddress);
+        TargetPanel.RemoveDevice(ConnectionId, DeviceAddress);
     }
 
     protected async Task WaitForDeviceOnlineStatus(int timeout = 10000)
@@ -179,7 +173,7 @@ public class IntegrationTestFixtureBase
 
     protected async Task AssertPanelToDeviceCommsAreHealthy()
     {
-        var capabilities = await _targetPanel.DeviceCapabilities(_connectionId, _deviceAddress);
+        var capabilities = await TargetPanel.DeviceCapabilities(ConnectionId, DeviceAddress);
         Assert.NotNull(capabilities);
     }
 
@@ -209,16 +203,15 @@ public class IntegrationTestFixtureBase
             CommandType.OutputControl => new OutputControlCommand(),
 
             CommandType.CommunicationSet => new CommunicationSetCommand(),
-            _ => null
+            _ => throw new Exception("Unsupported command type")
         };
-
-        command.Panel = _targetPanel;
-        command.ConnectionId = _connectionId;
-        command.DeviceAddress= _deviceAddress;
+        
+        command.Panel = TargetPanel;
+        command.ConnectionId = ConnectionId;
+        command.DeviceAddress = DeviceAddress;
 
         return command;
     }
-
 
     protected enum TestEventType
     {
@@ -228,9 +221,9 @@ public class IntegrationTestFixtureBase
 
     private class EventCheckpoint
     {
-        public TestEventType EventType { get; set; }
+        public TestEventType EventType { get; init; }
 
-        public TaskCompletionSource<bool> Tcs { get; set; }
+        public TaskCompletionSource<bool> Tcs { get; init; }
     }
 }
 

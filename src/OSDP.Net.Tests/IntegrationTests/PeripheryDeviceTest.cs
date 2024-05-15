@@ -2,15 +2,12 @@
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using OSDP.Net.Connections;
 using OSDP.Net.Model;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using DeviceCapabilities = OSDP.Net.Model.ReplyData.DeviceCapabilities;
 using System.Linq;
 using Moq;
-using System.Collections.Concurrent;
-using System.Collections;
 
 namespace OSDP.Net.Tests.IntegrationTests;
 
@@ -107,7 +104,7 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
         await WaitForDeviceOnlineStatus();
 
         var newKey = new byte[] { 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-        var result = await _targetPanel.EncryptionKeySet(_connectionId, 0, 
+        var result = await _targetPanel.EncryptionKeySet(ConnectionId, 0, 
             new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, newKey));
         Assert.True(result);
 
@@ -130,7 +127,7 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
 
         byte newAddress = 20;
         var commSettings = new Net.Model.CommandData.CommunicationConfiguration(newAddress, 9600);
-        var results = await _targetPanel.CommunicationConfiguration(_connectionId, 0, commSettings);
+        var results = await _targetPanel.CommunicationConfiguration(ConnectionId, 0, commSettings);
 
         Assert.That(results.Address, Is.EqualTo(newAddress));
 
@@ -173,10 +170,10 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
         var connLostCheckpoint = SetupCheckpointForExpectedTestEvent(TestEventType.ConnectionLost);
 
         int newBaudRate = 19200;
-        var commSettings = new Net.Model.CommandData.CommunicationConfiguration(_deviceAddress, newBaudRate);
-        var results = await _targetPanel.CommunicationConfiguration(_connectionId, 0, commSettings);
+        var commSettings = new Net.Model.CommandData.CommunicationConfiguration(DeviceAddress, newBaudRate);
+        var results = await _targetPanel.CommunicationConfiguration(ConnectionId, 0, commSettings);
 
-        Assert.AreEqual(results.Address, _deviceAddress);
+        Assert.AreEqual(results.Address, DeviceAddress);
         Assert.AreEqual(results.BaudRate, newBaudRate);
 
         await connLostCheckpoint;
