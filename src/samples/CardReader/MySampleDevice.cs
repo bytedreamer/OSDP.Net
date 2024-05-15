@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Logging;
 using OSDP.Net;
 using OSDP.Net.Model;
+using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
+using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfiguration;
 
 namespace CardReader;
 
@@ -29,5 +31,20 @@ internal class MySampleDevice : Device
         });
 
         return deviceCapabilities;
+    }
+
+    protected override PayloadData HandleCommunicationSet(CommunicationConfiguration commandPayload)
+    {
+        // Update the settings in persistent storage
+        
+        return new OSDP.Net.Model.ReplyData.CommunicationConfiguration(commandPayload.Address, commandPayload.BaudRate);
+    }
+
+    protected override PayloadData HandleKeySettings(EncryptionKeyConfiguration commandPayload)
+    {
+        // Update the encryption key settings in persistent storage
+        Console.WriteLine("Received a KeySet command with a key of - " + BitConverter.ToString(commandPayload.KeyData));
+
+        return new Ack();
     }
 }

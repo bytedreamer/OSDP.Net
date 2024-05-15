@@ -119,7 +119,7 @@ namespace OSDP.Net.Messages.SecureChannel
 
         private async Task<bool> HandleCommand(IncomingMessage command)
         {
-            if (command.Address != Address) return true;
+            if (command.Address != Address && command.Address != ControlPanel.ConfigurationAddress) return true;
 
             var reply = (command.IsValidMac, (CommandType)command.Type) switch
             {

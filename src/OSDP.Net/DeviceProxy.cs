@@ -100,7 +100,7 @@ internal class DeviceProxy : IComparable<DeviceProxy>
             _retryCommand = null;
             return new OutgoingMessage(Address, MessageControl, saveCommand);
         }
-            
+
         if (isPolling)
         {
             // Don't send clear text polling if using secure channel
@@ -108,7 +108,7 @@ internal class DeviceProxy : IComparable<DeviceProxy>
             {
                 return new OutgoingMessage(Address, MessageControl, new NoPayloadCommandData(CommandType.Poll));
             }
-                
+
             if (UseSecureChannel && !MessageSecureChannel.IsInitialized)
             {
                 return new OutgoingMessage(Address, MessageControl,
@@ -127,7 +127,9 @@ internal class DeviceProxy : IComparable<DeviceProxy>
             return new OutgoingMessage(Address, MessageControl, new NoPayloadCommandData(CommandType.Poll));
         }
 
-        return new OutgoingMessage(Address, MessageControl, command);
+        return command != null
+            ? new OutgoingMessage(Address, MessageControl, command)
+            : new OutgoingMessage(Address, MessageControl, new NoPayloadCommandData(CommandType.Poll));
     }
 
     internal void SendCommand(CommandData command)

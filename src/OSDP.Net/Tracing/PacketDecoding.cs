@@ -48,7 +48,7 @@ public static class PacketDecoding
 
             DateTime dateTime = new DateTime(1970, 1, 1).AddSeconds(Double.Parse(entry.timeSec.ToString()))
                 .AddTicks(long.Parse(entry.timeNano.ToString()) / 100L);
-            TraceDirection.TryParse(entry.io.ToString(), true, out TraceDirection io);
+            Enum.TryParse(entry.io.ToString(), true, out TraceDirection io);
             string data = entry.data.ToString();
 
             var rawData = BinaryUtils.HexToBytes(data).ToArray();

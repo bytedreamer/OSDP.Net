@@ -28,6 +28,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PivDataReader", "samples\Pi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardReader", "samples\CardReader\CardReader.csproj", "{B6E1FC35-3DEC-495F-8FD2-A0CB9C3B4C6A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{B139D674-6612-4E3A-931E-511D09A0F18F}"
+	ProjectSection(SolutionItems) = preProject
+		..\ci\build.yml = ..\ci\build.yml
+		..\ci\package.yml = ..\ci\package.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

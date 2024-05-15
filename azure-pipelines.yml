@@ -20,122 +20,18 @@ variables:
   AssemblyVersion: $(major).$(minor).$(patch)
   NugetVersion: $(major).$(minor).$(patch)-beta
 
-steps:
-- task: UseDotNet@2
-  displayName: 'Install .NET 8 SDK'
-  inputs:
-    packageType: 'sdk'
-    version: '8.x'
+jobs:
+  - job: build
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+      - template: ci/build.yml
 
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet build'
-  inputs:
-    command: 'build'
-    projects: '**/*.csproj'
-    arguments: '--configuration $(buildConfiguration)'
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: 'AssemblyVersion'
-
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet test'
-  inputs:
-    command: 'test'
-    nobuild: true
-    projects: '**/*Tests/*.csproj'
-    arguments: '--configuration $(buildConfiguration)'
-
-- task: ResharperCli@2
-  displayName: 'ReSharper Inspection'
-  inputs:
-    solutionOrProjectPath: 'src/OSDP.Net.sln'
-    failBuildLevelSelector: 'Warning'
-    additionalArguments: '--build'
-
-- task: DotNetCoreCLI@2
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  displayName: 'dotnet pack'
-  inputs:
-    command: 'pack'
-    arguments: '--configuration $(buildConfiguration)'
-    packagesToPack: 'src/OSDP.Net/OSDP.Net.csproj'
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: 'NugetVersion'
-
-- task: DotNetCoreCLI@2
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  displayName: 'dotnet publish for osx-x64'
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    projects: 'src/Console/Console.csproj'
-    arguments: '-r osx-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true --self-contained true --output $(Build.ArtifactStagingDirectory)/TestConsole/osx-x64'
-    zipAfterPublish: false
-    modifyOutputPath: false
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: 'AssemblyVersion'
-
-- task: DotNetCoreCLI@2
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  displayName: 'dotnet publish for win-x64'
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    zipAfterPublish: false
-    modifyOutputPath: false
-    projects: 'src/Console/Console.csproj'
-    arguments: '-r win-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true --self-contained true --output $(Build.ArtifactStagingDirectory)/TestConsole/win-x64'
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: 'AssemblyVersion'
-
-- task: DotNetCoreCLI@2
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  displayName: 'dotnet publish for linux-x64'
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    zipAfterPublish: false
-    modifyOutputPath: false
-    projects: 'src/Console/Console.csproj'
-    arguments: '-r linux-x64 --configuration $(BuildConfiguration) /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true --self-contained true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-x64'
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: 'AssemblyVersion'
-
-#- task: DotNetCoreCLI@2
-#  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-#  displayName: 'dotnet publish for linux-arm'
-#  inputs:
-#    command: 'publish'
-#    publishWebProjects: false
-#    zipAfterPublish: false
-#    modifyOutputPath: false
-#    projects: 'src/Console/Console.csproj'
-#    arguments: '-r linux-arm --configuration $(BuildConfiguration) --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm'
-#    versioningScheme: 'byEnvVar'
-#    versionEnvVar: 'AssemblyVersion'
-    
-- task: DotNetCoreCLI@2
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  displayName: 'dotnet publish for linux-arm64'
-  inputs:
-    command: 'publish'
-    publishWebProjects: false
-    zipAfterPublish: false
-    modifyOutputPath: false
-    projects: 'src/Console/Console.csproj'
-    arguments: '-r linux-arm64 --configuration $(BuildConfiguration) --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true --output $(Build.ArtifactStagingDirectory)/TestConsole/linux-arm64'
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: 'AssemblyVersion'
-
-- task: ArchiveFiles@2
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  inputs:
-    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/TestConsole'
-    includeRootFolder: false
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/OSDPTestConsole.zip'
-    replaceExistingArchive: true
-
-- task: PublishPipelineArtifact@1
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  inputs:
-    targetPath: '$(Build.ArtifactStagingDirectory)'
+  - job: package
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    pool:
+      vmImage: 'windows-latest'
+    dependsOn:
+      build
+    steps:
+      - template: ci/package.yml  

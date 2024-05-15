@@ -425,10 +425,10 @@ namespace OSDP.Net
             if (reply.ReplyMessage.Type == (byte)ReplyType.Nak)
             {
                 var errorCode = (ErrorCode)reply.ReplyMessage.Payload.First();
-                if (device.IsSecurityEstablished &&
+                if ((device.IsSecurityEstablished &&
                     errorCode is ErrorCode.DoesNotSupportSecurityBlock or ErrorCode.CommunicationSecurityNotMet
-                        or ErrorCode.UnableToProcessCommand ||
-                    errorCode == ErrorCode.UnexpectedSequenceNumber && reply.ReplyMessage.Sequence > 0)
+                        or ErrorCode.UnableToProcessCommand) ||
+                    (errorCode == ErrorCode.UnexpectedSequenceNumber && reply.ReplyMessage.Sequence > 0))
                 {
                     ResetDevice(device);
                 }
