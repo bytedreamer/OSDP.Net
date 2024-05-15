@@ -104,7 +104,7 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
         await WaitForDeviceOnlineStatus();
 
         var newKey = new byte[] { 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
-        var result = await _targetPanel.EncryptionKeySet(ConnectionId, 0, 
+        var result = await TargetPanel.EncryptionKeySet(ConnectionId, 0, 
             new EncryptionKeyConfiguration(KeyType.SecureChannelBaseKey, newKey));
         Assert.True(result);
 
@@ -127,7 +127,7 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
 
         byte newAddress = 20;
         var commSettings = new Net.Model.CommandData.CommunicationConfiguration(newAddress, 9600);
-        var results = await _targetPanel.CommunicationConfiguration(ConnectionId, 0, commSettings);
+        var results = await TargetPanel.CommunicationConfiguration(ConnectionId, 0, commSettings);
 
         Assert.That(results.Address, Is.EqualTo(newAddress));
 
@@ -148,7 +148,7 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
 
         await InitTestTargets();
 
-        _targetDevice.DeviceComSetUpdated += async (o, e) =>
+        TargetDevice.DeviceComSetUpdated += async (o, e) =>
         {
             TestContext.WriteLine("----- Received Device ComSet Updated EVENT -----");
 
@@ -156,8 +156,8 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
             mockComSetUpdate.Object.Invoke(o, e);
 
             // Simulate what a "real" client would do when it got the request to change comm settings
-            await _targetDevice.StopListening();
-            _targetDevice.Dispose();
+            await TargetDevice.StopListening();
+            TargetDevice.Dispose();
 
             // Re-init the device with new baud rate
             InitTestTargetDevice(baudRate: e.NewBaudRate);
@@ -171,7 +171,7 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
 
         int newBaudRate = 19200;
         var commSettings = new Net.Model.CommandData.CommunicationConfiguration(DeviceAddress, newBaudRate);
-        var results = await _targetPanel.CommunicationConfiguration(ConnectionId, 0, commSettings);
+        var results = await TargetPanel.CommunicationConfiguration(ConnectionId, 0, commSettings);
 
         Assert.AreEqual(results.Address, DeviceAddress);
         Assert.AreEqual(results.BaudRate, newBaudRate);
