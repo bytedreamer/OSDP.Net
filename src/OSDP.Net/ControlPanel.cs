@@ -33,13 +33,17 @@ namespace OSDP.Net
         private TimeSpan _replyResponseTimeout = TimeSpan.FromSeconds(8);
         private readonly ConcurrentDictionary<int, SemaphoreSlim> _requestLocks = new();
         private readonly TimeSpan _timeToWaitToCheckOnData = TimeSpan.FromMilliseconds(10);
+        private readonly IDeviceProxyFactory _deviceProxyFactory;
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
         /// <param name="logger">The logger definition used for logging.</param>
-        public ControlPanel(ILogger<ControlPanel> logger = null)
+        public ControlPanel(ILogger<ControlPanel> logger = null) : this(null, logger) { }
+
+        internal ControlPanel(IDeviceProxyFactory deviceProxyFactory, ILogger<ControlPanel> logger = null)
         {
             _logger = logger;
-            
+            _deviceProxyFactory = deviceProxyFactory ?? new DeviceProxyFactory();
+
             Task.Factory.StartNew(() =>
             {
                 foreach (var reply in _replies.GetConsumingEnumerable())
@@ -117,6 +121,7 @@ namespace OSDP.Net
                     _replies,
                     pollInterval,
                     tracer,
+                    _deviceProxyFactory,
                     _logger);
 
                 _buses[newBus.Id] = newBus;

@@ -24,18 +24,20 @@ internal class OutgoingMessage : Message
     internal byte[] BuildMessage(IMessageSecureChannel secureChannel)
     {
         var payload = PayloadData.BuildData();
-        if (secureChannel.IsSecurityEstablished && payload.Length > 0)
+        var securityEstablished = secureChannel != null && secureChannel.IsSecurityEstablished;
+
+        if (securityEstablished && payload.Length > 0)
         {
             payload = PadTheData(payload, 16, FirstPaddingByte);
         }
 
-        bool isSecurityBlockPresent = secureChannel.IsSecurityEstablished || PayloadData.IsSecurityInitialization;
+        bool isSecurityBlockPresent = securityEstablished || PayloadData.IsSecurityInitialization;
         var securityBlock = isSecurityBlockPresent ? PayloadData.SecurityControlBlock() : Array.Empty<byte>();
 
         int headerLength = StartOfMessageLength + securityBlock.Length + sizeof(ReplyType);
         int totalLength = headerLength + payload.Length +
                           (ControlBlock.UseCrc ? 2 : 1) +
-                          (secureChannel.IsSecurityEstablished ? MacSize : 0);
+                          (securityEstablished ? MacSize : 0);
         var buffer = new byte[totalLength];
         int currentLength = 0;
 
@@ -53,7 +55,7 @@ internal class OutgoingMessage : Message
 
         buffer[currentLength++] = PayloadData.Code;
 
-        if (secureChannel.IsSecurityEstablished)
+        if (securityEstablished)
         {
             secureChannel.EncodePayload(payload, buffer.AsSpan(currentLength));
             currentLength += payload.Length;

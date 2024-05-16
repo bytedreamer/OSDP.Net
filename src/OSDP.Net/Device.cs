@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -100,7 +101,13 @@ public class Device : IDisposable
                 incomingConnection, _deviceConfiguration.SecurityKey, loggerFactory: _loggerFactory)
             { 
                 Address = _deviceConfiguration.Address,
-                DefaultKeyAllowed = _deviceConfiguration.DefaultSecurityKeyAllowed
+                SecurityMode = !_deviceConfiguration.RequireSecurity
+                    ? SecurityMode.Unsecured
+                    : (_deviceConfiguration.SecurityKey == null ||
+                       _deviceConfiguration.SecurityKey.SequenceEqual(SecurityContext.DefaultKey))
+                    ? SecurityMode.InstallMode
+                    : SecurityMode.FullSecurity,
+                AllowUnsecured = _deviceConfiguration.AllowUnsecured ?? [],
             };
 
             while (incomingConnection.IsOpen)
@@ -485,18 +492,27 @@ public class DeviceConfiguration : ICloneable
     public byte Address { get; set; }
 
     /// <summary>
-    /// As described in D.8: Field Deployment and Configuration, this flag enables
-    /// "installation mode" which will allow SCBK-D (i.e. default security key) to be
-    /// accepted even if a different key has already been set on the device. This flag
-    /// should be used during setup and NOT for the operation of the device
+    /// Indicates whether or not device will require establishment of a secure
+    /// channel. When this value is 'true', PD will be initialized with SCBK (non-default 
+    /// SecurityKey) in full-security mode; or with SCBK_D in "installation
+    /// mode" if SecurityKey is not set to non-default installation value.
     /// </summary>
-    public bool DefaultSecurityKeyAllowed { get; set; }
+    public bool RequireSecurity { get; set; } = true;
 
     /// <summary>
     /// Security Key if one was previously set via osdp_KeySet command or some
     /// other out-of-band means
     /// </summary>
     public byte[] SecurityKey { get; set; } = SecurityContext.DefaultKey;
+
+    /// <summary>
+    /// List of commands the PD will allow to be sent unsecured when device is operating
+    /// in "Full Security" mode as defined by the OSDP spec. NOTE: per OSDP committee's
+    /// decision by default this list will include IdReport, DeviceCapabilities and CommSet
+    /// commands, but PD manufacturer can use this property to override that default
+    /// </summary>
+    public CommandType[] AllowUnsecured { get; set; } = [
+        CommandType.IdReport, CommandType.DeviceCapabilities, CommandType.CommunicationSet];
 
     /// <summary>
     /// Creates a new object that is a copy of the current instance

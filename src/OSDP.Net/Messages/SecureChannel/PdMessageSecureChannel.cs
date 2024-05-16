@@ -60,9 +60,11 @@ namespace OSDP.Net.Messages.SecureChannel
             _securityKey = securityKey;
         }
 
-        public bool DefaultKeyAllowed { get; set; } = false;
-
         public byte Address { get; set; }
+
+        public SecurityMode SecurityMode { get; set; } = SecurityMode.Unsecured;
+
+        public CommandType[] AllowUnsecured { get; set; } = [];
 
         public async Task<IncomingMessage> ReadNextCommand(CancellationToken cancellationToken = default)
         {
@@ -97,14 +99,14 @@ namespace OSDP.Net.Messages.SecureChannel
             return commandHandled ? await ReadNextCommand() : command;
         }
 
-        internal async Task SendReply(OutgoingReply reply)
+        internal async Task SendReply(OutgoingReply reply, bool sendUnsecured = false)
         {
             if (reply.Command.Type == (byte)CommandType.KeySet && reply.Code == (byte)ReplyType.Ack)
             {
                 HandleKeySetUpdate(reply);
             }
 
-            var replyBuffer = reply.BuildMessage(this);
+            var replyBuffer = reply.BuildMessage(sendUnsecured ? null : this);
 
             if (reply.Command.Type != (byte)CommandType.Poll)
             {
@@ -124,12 +126,14 @@ namespace OSDP.Net.Messages.SecureChannel
                 (false, _) => HandleInvalidMac(),
                 (true, CommandType.SessionChallenge) => HandleSessionChallenge(command),
                 (true, CommandType.ServerCryptogram) => HandleSCrypt(command),
-                _ => null
+                _ => ValidateCommandSecurity(command)
             };
 
             if (reply == null) return false;
 
-            await SendReply(new OutgoingReply(command, reply));
+            // If we return NAK from here, it is generally because command didn't pass secure channel validation
+            // in this case, we can only send the reply unsecured
+            await SendReply(new OutgoingReply(command, reply), reply.Code == (byte)ReplyType.Nak);
 
             if (command.Type == (byte)CommandType.ServerCryptogram)
             {
@@ -153,7 +157,7 @@ namespace OSDP.Net.Messages.SecureChannel
             // Per Section D.1.3
             bool useDefaultKey = command.SecureBlockData[0] == 0;
 
-            if (useDefaultKey && !DefaultKeyAllowed && 
+            if (useDefaultKey && 
                 !_securityKey.SequenceEqual(SecurityContext.DefaultKey))
             {
                 // We want to fail only when device has already been configured with a
@@ -222,11 +226,35 @@ namespace OSDP.Net.Messages.SecureChannel
             return new Nak(ErrorCode.DoesNotSupportSecurityBlock);
         }
 
+        private PayloadData ValidateCommandSecurity(IncomingMessage command)
+        {
+            if (IsSecurityEstablished)
+            {
+                return command.IsSecureMessage ? null : new Nak(ErrorCode.CommunicationSecurityNotMet);
+            }
+            else if (SecurityMode != SecurityMode.FullSecurity)
+            {
+                return null;
+            }
+            else 
+            {
+                return AllowUnsecured.Contains((CommandType)command.Type) ?
+                    null : new Nak(ErrorCode.CommunicationSecurityNotMet);
+            }
+        }
+
         private void HandleKeySetUpdate(OutgoingReply reply)
         {
             var keySetPayload = EncryptionKeyConfiguration.ParseData(reply.Command.Payload);
 
             _securityKey = keySetPayload.KeyData;
         }
+    }
+
+    internal enum SecurityMode
+    {
+        Unsecured,
+        InstallMode,
+        FullSecurity
     }
 }

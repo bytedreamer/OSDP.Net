@@ -18,7 +18,7 @@ internal class Program
         string portName = osdpSection["PortName"] ?? throw new NullReferenceException("A port name is required in the configuration file.");
         int baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
         byte deviceAddress = byte.Parse(osdpSection["DeviceAddress"] ?? "0");
-        bool defaultSecurityKeyAllowed = bool.Parse(osdpSection["DefaultSecurityKeyAllowed"] ?? "False");
+        bool requireSecurity = bool.Parse(osdpSection["RequireSecurity"] ?? "False");
         var securityKey = System.Text.Encoding.ASCII.GetBytes(osdpSection["SecurityKey"] ?? "0011223344556677889900AABBCCDDEEFF");
 
         var loggerFactory = LoggerFactory.Create(builder =>
@@ -33,7 +33,7 @@ internal class Program
         var deviceConfiguration = new DeviceConfiguration
         {
             Address = deviceAddress,
-            DefaultSecurityKeyAllowed = defaultSecurityKeyAllowed,
+            RequireSecurity = requireSecurity,
             SecurityKey = securityKey
         };
         

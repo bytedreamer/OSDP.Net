@@ -92,7 +92,7 @@ internal class DeviceProxy : IComparable<DeviceProxy>
     /// </summary>
     /// <param name="isPolling">If false, only send commands in the queue</param>
     /// <returns>The next command always if polling, could be null if not polling</returns>
-    internal OutgoingMessage GetNextCommandData(bool isPolling)
+    internal virtual OutgoingMessage GetNextCommandData(bool isPolling)
     {
         if (_retryCommand != null)
         {
@@ -194,4 +194,16 @@ internal class DeviceProxy : IComparable<DeviceProxy>
     {
         return MessageSecureChannel.DecodePayload(payload.ToArray());
     }
+}
+
+internal interface IDeviceProxyFactory
+{
+    DeviceProxy Create(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null);
+}
+
+internal class DeviceProxyFactory : IDeviceProxyFactory
+{
+    public DeviceProxy Create(
+        byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
+        => new DeviceProxy(address, useCrc, useSecureChannel, secureChannelKey);
 }
