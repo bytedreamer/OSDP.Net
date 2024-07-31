@@ -17,11 +17,13 @@ public abstract class OsdpServer : IOsdpServer
     /// <summary>
     /// Creates a new instance of OsdpServer
     /// </summary>
+    /// <param name="baudRate"></param>
     /// <param name="loggerFactory">Optional logger factory</param>
-    protected OsdpServer(ILoggerFactory loggerFactory = null)
+    protected OsdpServer(int baudRate, ILoggerFactory loggerFactory = null)
     {
         LoggerFactory = loggerFactory;
         Logger = loggerFactory?.CreateLogger<OsdpServer>();
+        BaudRate = baudRate;
     }
 
     /// <inheritdoc/>
@@ -41,6 +43,9 @@ public abstract class OsdpServer : IOsdpServer
     protected ILogger Logger { get; }
 
     /// <inheritdoc/>
+    public int BaudRate { get; }
+
+    /// <inheritdoc/>
     public abstract Task Start(Func<IOsdpConnection, Task> newConnectionHandler);
 
     /// <inheritdoc/>
@@ -48,7 +53,7 @@ public abstract class OsdpServer : IOsdpServer
     {
         IsRunning = false;
 
-        Logger.LogDebug("Stopping OSDP Server connections...");
+        Logger?.LogDebug("Stopping OSDP Server connections...");
 
         while (true)
         {
@@ -59,7 +64,7 @@ public abstract class OsdpServer : IOsdpServer
             await Task.WhenAll(entries.Select(x => x.Key));
         }
 
-        Logger.LogDebug("OSDP Server STOPPED");
+        Logger?.LogDebug("OSDP Server STOPPED");
     }
 
     /// <inheritdoc/>

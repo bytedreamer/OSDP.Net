@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
 using OSDP.Net.Model;
+using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 
 namespace OSDP.Net.Messages.SecureChannel
@@ -45,12 +46,25 @@ namespace OSDP.Net.Messages.SecureChannel
     {
         private readonly IOsdpConnection _connection;
         private byte[] _expectedServerCryptogram;
+        private byte[] _securityKey;
 
         public PdMessageSecureChannel(IOsdpConnection connection, SecurityContext context = null, ILoggerFactory loggerFactory = null)
             : base(context, loggerFactory) 
         {
             _connection = connection;
         }
+
+        public PdMessageSecureChannel(IOsdpConnection connection, byte[] securityKey, ILoggerFactory loggerFactory = null)
+            : this(connection, context: null, loggerFactory)
+        {
+            _securityKey = securityKey;
+        }
+
+        public byte Address { get; set; }
+
+        public SecurityMode SecurityMode { get; set; } = SecurityMode.Unsecured;
+
+        public CommandType[] AllowUnsecured { get; set; } = [];
 
         public async Task<IncomingMessage> ReadNextCommand(CancellationToken cancellationToken = default)
         {
@@ -85,9 +99,14 @@ namespace OSDP.Net.Messages.SecureChannel
             return commandHandled ? await ReadNextCommand() : command;
         }
 
-        internal async Task SendReply(OutgoingReply reply)
+        internal async Task SendReply(OutgoingReply reply, bool sendUnsecured = false)
         {
-            var replyBuffer = reply.BuildMessage(this);
+            if (reply.Command.Type == (byte)CommandType.KeySet && reply.Code == (byte)ReplyType.Ack)
+            {
+                HandleKeySetUpdate(reply);
+            }
+
+            var replyBuffer = reply.BuildMessage(sendUnsecured ? null : this);
 
             if (reply.Command.Type != (byte)CommandType.Poll)
             {
@@ -100,17 +119,21 @@ namespace OSDP.Net.Messages.SecureChannel
 
         private async Task<bool> HandleCommand(IncomingMessage command)
         {
+            if (command.Address != Address && command.Address != ControlPanel.ConfigurationAddress) return true;
+
             var reply = (command.IsValidMac, (CommandType)command.Type) switch
             {
                 (false, _) => HandleInvalidMac(),
                 (true, CommandType.SessionChallenge) => HandleSessionChallenge(command),
                 (true, CommandType.ServerCryptogram) => HandleSCrypt(command),
-                _ => null
+                _ => ValidateCommandSecurity(command)
             };
 
             if (reply == null) return false;
 
-            await SendReply(new OutgoingReply(command, reply));
+            // If we return NAK from here, it is generally because command didn't pass secure channel validation
+            // in this case, we can only send the reply unsecured
+            await SendReply(new OutgoingReply(command, reply), reply.Code == (byte)ReplyType.Nak);
 
             if (command.Type == (byte)CommandType.ServerCryptogram)
             {
@@ -131,13 +154,21 @@ namespace OSDP.Net.Messages.SecureChannel
         /// <returns>A message representing a reply to the SessionChallenge</returns>
         protected PayloadData HandleSessionChallenge(IncomingMessage command)
         {
-            // It is possible that ACU may decide to re-challenge us after a channel was already set up.
-            // In that case, let's make sure we clear this flag to indicate that we do NOT in fact have security
-            // established
-            Context.IsSecurityEstablished = false;
+            // Per Section D.1.3
+            bool useDefaultKey = command.SecureBlockData[0] == 0;
+
+            if (useDefaultKey && 
+                !_securityKey.SequenceEqual(SecurityContext.DefaultKey))
+            {
+                // We want to fail only when device has already been configured with a
+                // non-default key AND the use of the default key isn't allowed.
+                return new Nak(ErrorCode.DoesNotSupportSecurityBlock);
+            }
+
+            Context.Reset(useDefaultKey ? SecurityContext.DefaultKey : _securityKey);
 
             // generate a set of session keys: S-ENC, S-MAC1, S-MAC2 using command.Payload (which is RND.A)
-            var crypto = Context.CreateCypher(true, SecurityContext.DefaultKey);
+            using var crypto = Context.CreateCypher(true);
             byte[] rndA = command.Payload;
 
             // TODO: we should validate payload and SCB type
@@ -157,7 +188,7 @@ namespace OSDP.Net.Messages.SecureChannel
             _expectedServerCryptogram = SecurityContext.GenerateKey(crypto, rndB, rndA);
 
             // reply with osdp_CCRYPT, returning PD's Id (cUID), its random number and the client cryptogram
-            return new ChallengeResponse(cUID, rndB, clientCryptogram, Context.IsUsingDefaultKey);
+            return new ChallengeResponse(cUID, rndB, clientCryptogram, useDefaultKey);
         }
         
         /// <summary>
@@ -189,10 +220,41 @@ namespace OSDP.Net.Messages.SecureChannel
                 crypto.Key = Context.SMac2;
                 Context.RMac = SecurityContext.GenerateKey(crypto, Context.RMac);
 
-                return new InitialRMac(Context.RMac, Context.IsUsingDefaultKey);
+                return new InitialRMac(Context.RMac, true);
             }
 
             return new Nak(ErrorCode.DoesNotSupportSecurityBlock);
         }
+
+        private PayloadData ValidateCommandSecurity(IncomingMessage command)
+        {
+            if (IsSecurityEstablished)
+            {
+                return command.IsSecureMessage ? null : new Nak(ErrorCode.CommunicationSecurityNotMet);
+            }
+            else if (SecurityMode != SecurityMode.FullSecurity)
+            {
+                return null;
+            }
+            else 
+            {
+                return AllowUnsecured.Contains((CommandType)command.Type) ?
+                    null : new Nak(ErrorCode.CommunicationSecurityNotMet);
+            }
+        }
+
+        private void HandleKeySetUpdate(OutgoingReply reply)
+        {
+            var keySetPayload = EncryptionKeyConfiguration.ParseData(reply.Command.Payload);
+
+            _securityKey = keySetPayload.KeyData;
+        }
+    }
+
+    internal enum SecurityMode
+    {
+        Unsecured,
+        InstallMode,
+        FullSecurity
     }
 }

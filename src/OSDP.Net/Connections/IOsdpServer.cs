@@ -11,6 +11,11 @@ namespace OSDP.Net.Connections;
 public interface IOsdpServer : IDisposable
 {
     /// <summary>
+    /// Baud rate for the current connection
+    /// </summary>
+    int BaudRate { get; }
+
+    /// <summary>
     /// Starts listening for incoming connections
     /// </summary>
     /// <param name="newConnectionHandler">Callback to be invoked whenever a new connection is accepted</param>

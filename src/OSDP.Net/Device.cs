@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSDP.Net.Connections;
@@ -22,14 +24,17 @@ public class Device : IDisposable
     private readonly ILogger _logger;
     private readonly ConcurrentQueue<PayloadData> _pendingPollReplies = new();
 
+    private volatile int _connectionContextCounter;
+    private DeviceConfiguration _deviceConfiguration;
     private IOsdpServer _osdpServer;
     private DateTime _lastValidReceivedCommand = DateTime.MinValue;
 
     /// <summary>
     /// Represents a Peripheral Device (PD) that communicates over the OSDP protocol.
     /// </summary>
-    public Device(ILoggerFactory loggerFactory = null)
+    public Device(DeviceConfiguration config, ILoggerFactory loggerFactory = null)
     {
+        _deviceConfiguration = config;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory?.CreateLogger<Device>();
     }
@@ -47,6 +52,21 @@ public class Device : IDisposable
     /// <value><c>true</c> if the device is connected; otherwise, <c>false</c>.</value>
     public bool IsConnected => _osdpServer?.ConnectionCount > 0 && (
         _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow);
+
+    /// <summary>
+    /// Gets raised whenever osdp_ComSet command is successfully processed and there is 
+    /// a change in either device address or baud rate. Because baud rate is configured on
+    /// the OSDP connection/server that is passed down into the Device class, it is up to
+    /// the consumer of the Device class (i.e. whatever code that creates that class in the
+    /// first place) to properly handle this event, and re-initialize the Device with the
+    /// correct connection settings.
+    /// 
+    /// NOTE: In addition to this event, there's also `HandleCommunicationSet` which the
+    /// deriving class MUST override if it is to support osdp_ComSet properly. The overriding
+    /// allows the device to validate and accept/reject the command parameters which occurs
+    /// prior to this event
+    /// </summary>
+    public event EventHandler<DeviceComSetUpdatedEventArgs> DeviceComSetUpdated;
 
     /// <summary>
     /// Disposes the Device instance.
@@ -76,7 +96,19 @@ public class Device : IDisposable
     {
         try
         {
-            var channel = new PdMessageSecureChannel(incomingConnection, loggerFactory: _loggerFactory);
+            var currentContextCount = _connectionContextCounter;
+            var channel = new PdMessageSecureChannel(
+                incomingConnection, _deviceConfiguration.SecurityKey, loggerFactory: _loggerFactory)
+            { 
+                Address = _deviceConfiguration.Address,
+                SecurityMode = !_deviceConfiguration.RequireSecurity
+                    ? SecurityMode.Unsecured
+                    : (_deviceConfiguration.SecurityKey == null ||
+                       _deviceConfiguration.SecurityKey.SequenceEqual(SecurityContext.DefaultKey))
+                    ? SecurityMode.InstallMode
+                    : SecurityMode.FullSecurity,
+                AllowUnsecured = _deviceConfiguration.AllowUnsecured ?? [],
+            };
 
             while (incomingConnection.IsOpen)
             {
@@ -86,6 +118,12 @@ public class Device : IDisposable
 
                 var reply = HandleCommand(command);
                 await channel.SendReply(reply);
+
+                if (currentContextCount != _connectionContextCounter)
+                {
+                    _logger?.LogInformation("Interruping existing connection due to 'force disconnect' flag");
+                    break;
+                }
             }
         }
         catch (Exception exception)
@@ -131,12 +169,10 @@ public class Device : IDisposable
             CommandType.LEDControl => HandleReaderLEDControl(ReaderLedControls.ParseData(command.Payload)),
             CommandType.BuzzerControl => HandleBuzzerControl(ReaderBuzzerControl.ParseData(command.Payload)),
             CommandType.TextOutput => HandleTextOutput(ReaderTextOutput.ParseData(command.Payload)),
-            CommandType.CommunicationSet => HandleCommunicationSet(CommunicationConfiguration.ParseData(command.Payload)),
+            CommandType.CommunicationSet => _HandleCommunicationSet(CommunicationConfiguration.ParseData(command.Payload)),
             CommandType.BioRead => HandleBiometricRead(BiometricReadData.ParseData(command.Payload)),
             CommandType.BioMatch => HandleBiometricMatch(BiometricTemplateData.ParseData(command.Payload)),
-            CommandType.KeySet => HandleKeySettings(EncryptionKeyConfiguration.ParseData(command.Payload)),
-            CommandType.SessionChallenge => HandleSessionChallenge(),
-            CommandType.ServerCryptogram => HandleServerCryptogram(),
+            CommandType.KeySet => _HandleKeySettings(EncryptionKeyConfiguration.ParseData(command.Payload)),
             CommandType.MaxReplySize => HandleMaxReplySize(ACUReceiveSize.ParseData(command.Payload)),
             CommandType.FileTransfer => HandleFileTransfer(FileTransferFragment.ParseData(command.Payload)),
             CommandType.ManufacturerSpecific => HandleManufacturerCommand(ManufacturerSpecific.ParseData(command.Payload)),
@@ -260,23 +296,31 @@ public class Device : IDisposable
         return HandleUnknownCommand(CommandType.MaxReplySize);
     }
 
-    private PayloadData HandleSessionChallenge()
+    private PayloadData _HandleKeySettings(EncryptionKeyConfiguration commandPayload)
     {
-        _logger.LogInformation("Received a session challenge command");
-        return HandleUnknownCommand(CommandType.SessionChallenge);
-    }
+        var response = HandleKeySettings(commandPayload);
 
-    private PayloadData HandleServerCryptogram()
-    {
-        _logger.LogInformation("Received a server cryptogram command");
-        return HandleUnknownCommand(CommandType.ServerCryptogram);
+        if (response.Code == (byte)ReplyType.Ack)
+        {
+            UpdateDeviceConfig(c => c.SecurityKey = commandPayload.KeyData);
+        }
+
+        return response;
     }
 
     /// <summary>
-    /// Handles the key settings command received from the OSDP device.
+    /// If deriving PD class is intending to support secure connections, it MUST override
+    /// this method in order to provide its own means of persisting a newly set security key which
+    /// which was sent by the ACU. The base `Device` class will automatically pick up the new key
+    /// for future connections if this function returns successful Ack response.
+    /// NOTE: Any existing connections will continue to use the previous key. It is up to the
+    /// ACU to drop connection and reconnect if it wishes to do so
     /// </summary>
     /// <param name="commandPayload">The key settings command payload.</param>
-    /// <returns></returns>
+    /// <returns>
+    /// Ack - if the new key was successfully accepted
+    /// Nak - if the new key was rejected
+    /// </returns>
     protected virtual PayloadData HandleKeySettings(EncryptionKeyConfiguration commandPayload)
     {
         return HandleUnknownCommand(CommandType.KeySet);
@@ -302,11 +346,61 @@ public class Device : IDisposable
         return HandleUnknownCommand(CommandType.BioRead);
     }
 
+    private PayloadData _HandleCommunicationSet(CommunicationConfiguration commandPayload)
+    {
+        var response = HandleCommunicationSet(commandPayload);
+
+        if (response.Code == (byte)ReplyType.PdCommunicationsConfigurationReport)
+        {
+            var config = (Model.ReplyData.CommunicationConfiguration)response;
+            var previousAddress = _deviceConfiguration.Address;
+            var previousBaudRate = _osdpServer.BaudRate;
+
+            if (previousAddress != config.Address)
+            {
+                UpdateDeviceConfig(c => c.Address = config.Address);
+            }
+            
+            if (previousBaudRate != config.BaudRate || previousAddress != config.Address)
+            {
+                var updatedEvent = DeviceComSetUpdated;
+                if (updatedEvent != null) 
+                {
+                    // Decouple current call stack from the event invocation which could result
+                    // in the event subscriber resetting the entire connection so that the current
+                    // command has a chance to run to completion and we don't have any deadlock
+                    // situations.
+                    Task.Run(() =>
+                    {
+                        updatedEvent.Invoke(this, new DeviceComSetUpdatedEventArgs()
+                        {
+                            OldAddress = previousAddress,
+                            OldBaudRate = previousBaudRate,
+                            NewAddress = config.Address,
+                            NewBaudRate = config.BaudRate,
+                        });
+                    });
+                }
+            }
+        }
+
+        return response;
+    }
+
     /// <summary>
-    /// Handles the communication set command received from the OSDP device.
+    /// If deriving PD class is intending to support updating the communication settings, it MUST override
+    /// this method in order to provide its own means of persisting a new baud rate and address which
+    /// which was sent by the ACU.
+    /// 
+    /// NOTE: The consumer will need to listen to the DeviceComSetUpdated event. It allows it to reinitialize the
+    /// connection after successfully sending the reply.
     /// </summary>
-    /// <param name="commandPayload">The communication set command payload.</param>
-    /// <returns></returns>
+    /// <param name="commandPayload">The requested communication settings command payload.</param>
+    /// <returns>
+    /// PdCommunicationsConfigurationReport - if updated communication settings are successfully accepted. Populate
+    /// the data with the new values.
+    /// Nak - if the communication settings are rejected
+    /// </returns>
     protected virtual PayloadData HandleCommunicationSet(CommunicationConfiguration commandPayload)
     {
         return HandleUnknownCommand(CommandType.CommunicationSet);
@@ -371,4 +465,87 @@ public class Device : IDisposable
 
         return new Nak(ErrorCode.UnknownCommandCode);
     }
+
+    private void UpdateDeviceConfig(Action<DeviceConfiguration> updateAction, bool resetConnection = false)
+    {
+        var configCopy = _deviceConfiguration.Clone();
+        updateAction(configCopy);
+        _deviceConfiguration = configCopy;
+
+        if (resetConnection)
+        {
+            Interlocked.Add(ref _connectionContextCounter, 1);
+        }
+    }
+}
+
+
+/// <summary>
+/// Represents a set of configuration options to be used when initializating 
+/// a new instance of the Device class
+/// </summary>
+public class DeviceConfiguration : ICloneable
+{
+    /// <summary>
+    /// Address the device is assigned 
+    /// </summary>
+    public byte Address { get; set; }
+
+    /// <summary>
+    /// Indicates whether or not device will require establishment of a secure
+    /// channel. When this value is 'true', PD will be initialized with SCBK (non-default 
+    /// SecurityKey) in full-security mode; or with SCBK_D in "installation
+    /// mode" if SecurityKey is not set to non-default installation value.
+    /// </summary>
+    public bool RequireSecurity { get; set; } = true;
+
+    /// <summary>
+    /// Security Key if one was previously set via osdp_KeySet command or some
+    /// other out-of-band means
+    /// </summary>
+    public byte[] SecurityKey { get; set; } = SecurityContext.DefaultKey;
+
+    /// <summary>
+    /// List of commands the PD will allow to be sent unsecured when device is operating
+    /// in "Full Security" mode as defined by the OSDP spec. NOTE: per OSDP committee's
+    /// decision by default this list will include IdReport, DeviceCapabilities and CommSet
+    /// commands, but PD manufacturer can use this property to override that default
+    /// </summary>
+    public CommandType[] AllowUnsecured { get; set; } = [
+        CommandType.IdReport, CommandType.DeviceCapabilities, CommandType.CommunicationSet];
+
+    /// <summary>
+    /// Creates a new object that is a copy of the current instance
+    /// </summary>
+    public DeviceConfiguration Clone() => (DeviceConfiguration)this.MemberwiseClone();
+
+    /// <inheritdoc/>
+    object ICloneable.Clone() => this.Clone();
+}
+
+/// <summary>
+/// Event arguments for DevicecomSetUpdated event which is raised whenever ACU
+/// requests the device to update its address and/or baud rate
+/// </summary>
+public class DeviceComSetUpdatedEventArgs : EventArgs
+{
+    /// <summary>
+    /// Old address value
+    /// </summary>
+    public byte OldAddress { get; set; }
+
+    /// <summary>
+    /// New address value
+    /// </summary>
+    public byte NewAddress { get; set; }
+
+    /// <summary>
+    /// Old baud rate 
+    /// </summary>
+    public int OldBaudRate {  get; set; }
+
+    /// <summary>
+    /// New baud rate
+    /// </summary>
+    public int NewBaudRate { get; set; }
 }

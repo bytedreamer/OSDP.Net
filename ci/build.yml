@@ -1,0 +1,38 @@
+steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET 8 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '8.x'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet build'
+    inputs:
+      command: 'build'
+      projects: '**/*.csproj'
+      arguments: '--configuration $(buildConfiguration)'
+      versioningScheme: 'byEnvVar'
+      versionEnvVar: 'AssemblyVersion'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet test'
+    inputs:
+      command: 'test'
+      nobuild: true
+      projects: '**/*Tests/*.csproj'
+      arguments: '--configuration $(buildConfiguration)'
+      
+  - task: CmdLine@2
+    displayName: 'Install ReSharper Tools'
+    inputs:
+      script: 'dotnet tool install -g JetBrains.ReSharper.GlobalTools --arch arm64'
+      
+  - task: CmdLine@2
+    displayName: 'Perform code inspection'
+    inputs:
+      script: 'jb inspectcode src/OSDP.Net.sln -o=$(Build.ArtifactStagingDirectory)/Resharper.sarif'
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)'
+      artifactName: CodeAnalysisLogs

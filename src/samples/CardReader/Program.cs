@@ -2,6 +2,7 @@
 using System.Numerics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Model.ReplyData;
 
@@ -14,9 +15,11 @@ internal class Program
         var config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
         var osdpSection = config.GetSection("OSDP");
 
-        var portName = osdpSection["PortName"];
-        var baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
-        var deviceAddress = byte.Parse(osdpSection["DeviceAddress"] ?? "0");
+        string portName = osdpSection["PortName"] ?? throw new NullReferenceException("A port name is required in the configuration file.");
+        int baudRate = int.Parse(osdpSection["BaudRate"] ?? "9600");
+        byte deviceAddress = byte.Parse(osdpSection["DeviceAddress"] ?? "0");
+        bool requireSecurity = bool.Parse(osdpSection["RequireSecurity"] ?? "False");
+        var securityKey = System.Text.Encoding.ASCII.GetBytes(osdpSection["SecurityKey"] ?? "0011223344556677889900AABBCCDDEEFF");
 
         var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -27,9 +30,34 @@ internal class Program
                 .AddFilter("OSDP.Net", LogLevel.Debug);
         });
 
-        // var communications = new TcpOsdpServer(5000, baudRate, loggerFactory);
+        var deviceConfiguration = new DeviceConfiguration
+        {
+            Address = deviceAddress,
+            RequireSecurity = requireSecurity,
+            SecurityKey = securityKey
+        };
+        
+        // Replace commented out code for test reader to listen on TCP port rather than serial
+        //var communications = new TcpOsdpServer(5000, baudRate, loggerFactory);
         var communications = new SerialPortOsdpServer(portName, baudRate, loggerFactory);
-        using var device = new MySampleDevice(loggerFactory);
+
+        using var device = new MySampleDevice(deviceConfiguration, loggerFactory);
+        device.DeviceComSetUpdated += async (sender, args) =>
+        {
+            Console.WriteLine("A command has been processed to update the communication settings.");
+            Console.WriteLine($"Old settings - Baud Rate {args.OldBaudRate} - Address {args.OldAddress}");
+            Console.WriteLine($"New settings - Baud Rate {args.NewBaudRate} - Address {args.NewAddress}");
+            Console.WriteLine("A command has been processed to update the communication settings.");
+
+            if (sender is MySampleDevice mySampleDevice && args.OldBaudRate != args.NewBaudRate)
+            {
+                Console.WriteLine("Restarting communications with new baud rate");
+                communications = new SerialPortOsdpServer(portName, args.NewBaudRate, loggerFactory);
+                await mySampleDevice.StopListening();
+                mySampleDevice.StartListening(communications);
+            }
+        };
+        
         device.StartListening(communications);
 
         await Task.Run(async () =>
