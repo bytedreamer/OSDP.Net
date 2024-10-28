@@ -66,9 +66,8 @@ internal static class Program
             
         var factory = new LoggerFactory();
         factory.AddLog4Net();
-        _panelLogger = factory.CreateLogger<ControlPanel>();
 
-        _controlPanel = new ControlPanel(_panelLogger);
+        _controlPanel = new ControlPanel(factory);
 
         _settings = GetConnectionSettings();
 
@@ -98,8 +97,6 @@ internal static class Program
                     SaveConfigurationSettings(_settings);
 
                     Application.RequestStop();
-                        
-                    Environment.Exit(Environment.ExitCode);
                 })
             }),
             new MenuBarItem("Co_nnections", new[]

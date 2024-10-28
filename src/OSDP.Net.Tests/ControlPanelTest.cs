@@ -3,6 +3,8 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 using OSDP.Net.Connections;
@@ -24,7 +26,7 @@ namespace OSDP.Net.Tests
             // Arrange
             var mockConnection = new MockConnection();
             
-            var panel = new ControlPanel();
+            var panel = new ControlPanel(NullLoggerFactory.Instance);
             Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
 
@@ -40,7 +42,7 @@ namespace OSDP.Net.Tests
             // Arrange
             var mockConnection = new MockConnection();
             
-            var panel = new ControlPanel();
+            var panel = new ControlPanel(NullLoggerFactory.Instance);
             Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
 
@@ -59,7 +61,7 @@ namespace OSDP.Net.Tests
         {
             // Arrange
             var mockConnection = new MockConnection();
-            var panel = new ControlPanel();
+            var panel = new ControlPanel(NullLoggerFactory.Instance);
 
             // Act
             Guid id = panel.StartConnection(mockConnection.Object);
@@ -75,7 +77,7 @@ namespace OSDP.Net.Tests
         {
             // Arrange
             var mockConnection = new MockConnection();
-            var panel = new ControlPanel();
+            var panel = new ControlPanel(NullLoggerFactory.Instance);
             var id = panel.StartConnection(mockConnection.Object);
 
             // Act/Assert
@@ -91,7 +93,7 @@ namespace OSDP.Net.Tests
             // Arrange
             var mockConnection = new MockConnection();
             var instance = mockConnection.Object;
-            var panel = new ControlPanel();
+            var panel = new ControlPanel(NullLoggerFactory.Instance);
 
             // Act
             var tasks = Enumerable
@@ -115,7 +117,7 @@ namespace OSDP.Net.Tests
         {
             // Arrange
             var mockConnection = new MockConnection();
-            var panel = new ControlPanel();
+            var panel = new ControlPanel(NullLoggerFactory.Instance);
             var id = panel.StartConnection(mockConnection.Object);
 
             // Act
@@ -139,7 +141,7 @@ namespace OSDP.Net.Tests
         {
             // Arrange
             var mockConnection = new MockConnection();
-            var panel = new ControlPanel();
+            var panel = new ControlPanel(NullLoggerFactory.Instance);
 
             // Act
             var id1 = panel.StartConnection(mockConnection.Object);
@@ -157,7 +159,7 @@ namespace OSDP.Net.Tests
         {
             // Arrange
             var mockConnection = new MockConnection();
-            var panel = new ControlPanel();
+            var panel = new ControlPanel(NullLoggerFactory.Instance);
 
             Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
