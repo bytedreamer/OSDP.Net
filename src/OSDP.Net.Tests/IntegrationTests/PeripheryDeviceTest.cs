@@ -11,7 +11,6 @@ using Moq;
 
 namespace OSDP.Net.Tests.IntegrationTests;
 
-
 //
 // NOTE: Majority of naming/structure in this file is very much a work-in-progress
 // and will be updated if we continue to build out a set of integration tests

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using OSDP.Net;
 using OSDP.Net.Connections;
 using OSDP.Net.Model.CommandData;
@@ -30,7 +31,7 @@ internal class Program
         byte elementId = Convert.FromHexString(pivDataSection["ElementId"]!)[0];
         ushort offset = ushort.Parse(pivDataSection["Offset"]!);
         
-        var panel = new ControlPanel();
+        var panel = new ControlPanel(NullLoggerFactory.Instance);
         panel.ConnectionStatusChanged += async (_, eventArgs) =>
         {
             Console.WriteLine();

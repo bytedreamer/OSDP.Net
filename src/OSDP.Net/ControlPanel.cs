@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using OSDP.Net.Connections;
 using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
@@ -37,11 +38,32 @@ namespace OSDP.Net
 
         /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
         /// <param name="logger">The logger definition used for logging.</param>
+        [Obsolete("Sending a ILogger is deprecated, please send ILoggerFactory instead.")]
         public ControlPanel(ILogger<ControlPanel> logger = null) : this(null, logger) { }
+
+        /// <summary>Initializes a new instance of the <see cref="T:OSDP.Net.ControlPanel" /> class.</summary>
+        /// <param name="loggerFactory">The logger factory used to create logging facilities.</param>
+        public ControlPanel(ILoggerFactory loggerFactory = null) : this(null, loggerFactory) { }
 
         internal ControlPanel(IDeviceProxyFactory deviceProxyFactory, ILogger<ControlPanel> logger = null)
         {
-            _logger = logger;
+            _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<ControlPanel>();
+            _deviceProxyFactory = deviceProxyFactory ?? new DeviceProxyFactory();
+
+            Task.Factory.StartNew(() =>
+            {
+                foreach (var reply in _replies.GetConsumingEnumerable())
+                {
+                    OnReplyReceived(reply);
+                }
+            }, TaskCreationOptions.LongRunning);
+        }
+
+        internal ControlPanel(IDeviceProxyFactory deviceProxyFactory, ILoggerFactory loggerFactory = null)
+        {
+            _logger = loggerFactory != null
+                ? loggerFactory.CreateLogger<ControlPanel>()
+                : NullLoggerFactory.Instance.CreateLogger<ControlPanel>();
             _deviceProxyFactory = deviceProxyFactory ?? new DeviceProxyFactory();
 
             Task.Factory.StartNew(() =>
