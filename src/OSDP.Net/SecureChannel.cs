@@ -219,7 +219,7 @@ internal class SecureChannel
             throw new Exception("Unable to create key algorithm");
         }
 
-        keyAlgorithm.Mode = CipherMode.ECB;
+        keyAlgorithm.Mode = CipherMode.CBC;
         keyAlgorithm.KeySize = 128;
         keyAlgorithm.BlockSize = 128;
         keyAlgorithm.Padding = PaddingMode.Zeros;
