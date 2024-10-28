@@ -13,6 +13,7 @@ using OSDP.Net.Messages;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
 using OSDP.Net.Tracing;
+
 #if NETSTANDARD2_0
 using OSDP.Net.Utilities;
 #endif

@@ -180,7 +180,7 @@ namespace OSDP.Net.Tests
             [Test]
             public async Task ReturnsValidReportTest()
             {
-                var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
+                var panel = new ControlPanel(NullLoggerFactory.Instance);
                 var idReportCommand = new IdReport();
                 var deviceIdentificationReply =
                     new DeviceIdentification([0x5C, 0x26, 0x23], 0x19, 0x02, 719912960, 0x03, 0x00, 0x00);
@@ -205,7 +205,7 @@ namespace OSDP.Net.Tests
             [Test]
             public void ThrowOnNakReplyTest()
             {
-                var panel = new ControlPanel(GlobalSetup.CreateLogger<ControlPanel>());
+                var panel = new ControlPanel(NullLoggerFactory.Instance);
                 var idReportCommand = new IdReport();
                 var nakReply = new Nak(ErrorCode.UnknownCommandCode);
 
