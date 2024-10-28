@@ -30,7 +30,6 @@ namespace Console;
 
 internal static class Program
 {
-    private static ILogger<ControlPanel> _panelLogger;
     private static ControlPanel _controlPanel;
     private static readonly Queue<string> Messages = new ();
     private static readonly object MessageLock = new ();
@@ -58,7 +57,7 @@ internal static class Program
     private static async Task Main()
     {
         XmlConfigurator.Configure(
-            LogManager.GetRepository(Assembly.GetAssembly(typeof(LogManager))),
+            LogManager.GetRepository(Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly()),
             new FileInfo("log4net.config"));
 
         _lastConfigFilePath = Path.Combine(Environment.CurrentDirectory, "appsettings.config");
@@ -95,8 +94,8 @@ internal static class Program
                 new MenuItem("_Quit", "", () =>
                 {
                     SaveConfigurationSettings(_settings);
-
-                    Application.RequestStop();
+                    
+                    Application.Shutdown();
                 })
             }),
             new MenuBarItem("Co_nnections", new[]
