@@ -163,7 +163,14 @@ internal static class Program
             
         RegisterEvents();
 
-        Application.Run();
+        try
+        {
+            Application.Run();
+        }
+        catch
+        {
+            // ignored
+        }
 
         await _controlPanel.Shutdown();
     }
