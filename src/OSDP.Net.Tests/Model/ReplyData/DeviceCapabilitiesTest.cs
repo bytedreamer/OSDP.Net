@@ -26,8 +26,8 @@ namespace OSDP.Net.Tests.Model.ReplyData
         [Test]
         public void ParsesOutFunctionCodes()
         {
-            #pragma warning disable CS0618 // Type or member is obsolete
-            var expectedFuncCodes = new []
+#pragma warning disable CS0618 // Type or member is obsolete
+            var expectedFuncCodes = new[]
             {
                 CapabilityFunction.CardDataFormat,
                 CapabilityFunction.ReaderLEDControl,
@@ -38,10 +38,10 @@ namespace OSDP.Net.Tests.Model.ReplyData
                 CapabilityFunction.CommunicationSecurity,
                 CapabilityFunction.ReceiveBufferSize,
                 CapabilityFunction.Biometrics,
-                CapabilityFunction.SecurePINEntry, 
+                CapabilityFunction.SecurePINEntry,
                 CapabilityFunction.OSDPVersion
             };
-            #pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning restore CS0618 // Type or member is obsolete
 
             var actual = DeviceCapabilities.ParseData(_rawCapsFromDennisBrivoKeypad);
 
@@ -64,17 +64,17 @@ namespace OSDP.Net.Tests.Model.ReplyData
         {
             var actual = DeviceCapabilities.ParseData(_rawCapsFromDennisBrivoKeypad.AsSpan().Slice(18, 9));
             var expectedText =
-                "  Function: Communication Security\r\n" +
-                "Supports AES-128: True\r\n" +
-                "Uses Default Key: True\r\n" + 
-                "\r\n" + 
-                "  Function: Receive Buffer Size\r\n" +
-                "      Size: 450\r\n" +
-                "\r\n" +
-                "  Function: Biometrics\r\n" +
-                "Compliance: 0\r\n" +
-                " Number Of: 0\r\n" +
-                "\r\n";
+                $"  Function: Communication Security{Environment.NewLine}" +
+                $"Supports AES-128: True{Environment.NewLine}" +
+                $"Uses Default Key: True{Environment.NewLine}" +
+                Environment.NewLine +
+                $"  Function: Receive Buffer Size{Environment.NewLine}" +
+                $"      Size: 450{Environment.NewLine}" +
+                Environment.NewLine +
+                $"  Function: Biometrics{Environment.NewLine}" +
+                $"Compliance: 0{Environment.NewLine}" +
+                $" Number Of: 0{Environment.NewLine}" +
+                Environment.NewLine;
 
             Assert.That(actual.ToString(), Is.EqualTo(expectedText).NoClip);
         }
