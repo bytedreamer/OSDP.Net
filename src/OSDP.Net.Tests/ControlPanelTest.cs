@@ -24,7 +24,7 @@ namespace OSDP.Net.Tests
         {
             // Arrange
             var mockConnection = new MockConnection();
-            
+
             var panel = new ControlPanel(NullLoggerFactory.Instance);
             Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
@@ -40,7 +40,7 @@ namespace OSDP.Net.Tests
         {
             // Arrange
             var mockConnection = new MockConnection();
-            
+
             var panel = new ControlPanel(NullLoggerFactory.Instance);
             Guid id = panel.StartConnection(mockConnection.Object);
             panel.AddDevice(id, 0, true, false);
@@ -193,11 +193,11 @@ namespace OSDP.Net.Tests
                 var response = await panel.IdReport(id, 0);
 
                 Assert.That(response.ToString(), Is.EqualTo(
-                    "     Vendor Code: 5C-26-23\r\n" +
-                    "    Model Number: 25\r\n" +
-                    "         Version: 2\r\n" +
-                    "   Serial Number: 00-00-E9-2A\r\n" +
-                    "Firmware Version: 3.0.0\r\n"
+                    $"     Vendor Code: 5C-26-23{Environment.NewLine}" +
+                    $"    Model Number: 25{Environment.NewLine}" +
+                    $"         Version: 2{Environment.NewLine}" +
+                    $"   Serial Number: 00-00-E9-2A{Environment.NewLine}" +
+                    $"Firmware Version: 3.0.0{Environment.NewLine}"
                 ));
             }
 
