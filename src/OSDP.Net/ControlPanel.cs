@@ -1471,6 +1471,7 @@ namespace OSDP.Net
         /// <summary>
         /// Occurs when formatted card data reply is received.
         /// </summary>
+        [Obsolete("Use Raw Card Data for incoming card reads.")]
         public event EventHandler<FormattedCardDataReplyEventArgs> FormattedCardDataReplyReceived;
 
         /// <summary>
