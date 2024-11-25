@@ -509,8 +509,17 @@ internal static class Program
                 return;
             }
 
-            var builder = BuildTextFromEntries(PacketDecoding.OSDPCapParser(json, key).Where(entry =>
-                FilterAddress(entry, address) && IgnorePollsAndAcks(entry)));
+            StringBuilder builder;
+            try
+            {
+                builder = BuildTextFromEntries(PacketDecoding.OSDPCapParser(json, key).Where(entry =>
+                    FilterAddress(entry, address) && IgnorePollsAndAcks(entry)));
+            }
+            catch (Exception exception)
+            {
+                MessageBox.ErrorQuery(40, 10, "Error", $"Unable to parse. {exception.Message}", "OK");
+                return;
+            }
 
             var saveDialog = new SaveDialog("Save Parsed File",
                 "Successfully completed parsing of file, select location to save file.", new List<string> { ".txt" });

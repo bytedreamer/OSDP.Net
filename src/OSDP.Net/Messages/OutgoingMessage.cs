@@ -24,7 +24,8 @@ internal class OutgoingMessage : Message
     internal byte[] BuildMessage(IMessageSecureChannel secureChannel)
     {
         var payload = PayloadData.BuildData();
-        var securityEstablished = secureChannel != null && secureChannel.IsSecurityEstablished;
+
+        var securityEstablished = secureChannel is { IsSecurityEstablished: true };
 
         if (securityEstablished && payload.Length > 0)
         {

@@ -52,11 +52,11 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
         //// PD doesn't require Security; ACU doesn't use secure channel; two sides use different keys ==> OK
         new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.DefaultSCBK, false, false, true),
 
-        //// PD doesn't requires Security; ACU opens secure channel; two sides use different keys ==> NO
+        //// PD doesn't require Security; ACU opens secure channel; two sides use different keys ==> NO
         new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.DefaultSCBK, false, true, false),
         new (IntegrationConsts.DefaultSCBK, IntegrationConsts.NonDefaultSCBK, false, true, false),
 
-        //// PD doesn't requires Security; ACU opens secure channel; both sides use same key ==> OK
+        //// PD doesn't require Security; ACU opens secure channel; both sides use same key ==> OK
         new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.NonDefaultSCBK, false, true, true),
         new (IntegrationConsts.DefaultSCBK, IntegrationConsts.DefaultSCBK, false, true, true),
     ];
