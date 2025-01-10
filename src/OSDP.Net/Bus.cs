@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -30,8 +31,6 @@ namespace OSDP.Net
 
         public static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(200);
         
-        private readonly SortedSet<DeviceProxy> _configuredDevices = new ();
-        private readonly object _configuredDevicesLock = new ();
         private readonly Dictionary<byte, bool> _lastOnlineConnectionStatus = new ();
         private readonly Dictionary<byte, bool> _lastSecureConnectionStatus = new ();
 
@@ -44,6 +43,7 @@ namespace OSDP.Net
         private readonly IDeviceProxyFactory _deviceProxyFactory;
         
         private CancellationTokenSource _cancellationTokenSource;
+        private  ImmutableSortedSet<DeviceProxy> _configuredDevices = ImmutableSortedSet<DeviceProxy>.Empty;
 
         public Bus(IOsdpConnection connection, BlockingCollection<ReplyTracker> replies, TimeSpan pollInterval,
             Action<TraceEntry> tracer, IDeviceProxyFactory deviceProxyFactory,
@@ -71,7 +71,7 @@ namespace OSDP.Net
         /// </summary>
         public IOsdpConnection Connection { get; private set; }
 
-        public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.ToArray().Select(device => device.Address);
+        public IEnumerable<byte> ConfigureDeviceAddresses => _configuredDevices.Select(device => device.Address);
 
         public void Dispose()
         {
@@ -108,7 +108,7 @@ namespace OSDP.Net
         /// <param name="command">The data for the command</param>
         public void SendCommand(byte address, CommandData command)
         {
-            var foundDevice = _configuredDevices.ToArray().First(device => device.Address == address);            
+            var foundDevice = _configuredDevices.First(device => device.Address == address);            
             foundDevice.SendCommand(command);
             _commandAvailableEvent.Set();
         }
@@ -122,19 +122,20 @@ namespace OSDP.Net
         /// <param name="secureChannelKey">Set the secure channel key, default is used if not specified</param>
         public void AddDevice(byte address, bool useCrc, bool useSecureChannel, byte[] secureChannelKey = null)
         {
-            lock (_configuredDevicesLock)
+            var configuredDevices = _configuredDevices.ToImmutableSortedSet();
+            
+            var foundDevice = configuredDevices.FirstOrDefault(device => device.Address == address);
+
+            if (foundDevice != null)
             {
-                var foundDevice = _configuredDevices.ToArray().FirstOrDefault(device => device.Address == address);
-                
-                if (foundDevice != null)
-                {
-                    _configuredDevices.Remove(foundDevice);
-                }
-
-                var addedDevice = _deviceProxyFactory.Create(address, useCrc, useSecureChannel, secureChannelKey);
-
-                _configuredDevices.Add(addedDevice);
+                configuredDevices = configuredDevices.Remove(foundDevice);
             }
+
+            var addedDevice = _deviceProxyFactory.Create(address, useCrc, useSecureChannel, secureChannelKey);
+
+            configuredDevices = configuredDevices.Add(addedDevice);
+            
+            _configuredDevices = configuredDevices;
         }
 
         /// <summary>
@@ -143,13 +144,14 @@ namespace OSDP.Net
         /// <param name="address">Address of the device</param>
         public void RemoveDevice(byte address)
         {
-            lock (_configuredDevicesLock)
-            {
-                var foundDevice = _configuredDevices.ToArray().FirstOrDefault(device => device.Address == address);
-                if (foundDevice == null) return;
-                
-                _configuredDevices.Remove(foundDevice);
-            }
+            var configuredDevices = _configuredDevices.ToImmutableSortedSet();
+            
+            var foundDevice = configuredDevices.FirstOrDefault(device => device.Address == address);
+            if (foundDevice == null) return;
+
+            configuredDevices = configuredDevices.Remove(foundDevice);
+            
+            _configuredDevices = configuredDevices;
         }
 
         /// <summary>
@@ -159,7 +161,7 @@ namespace OSDP.Net
         /// <returns>True if the device is online</returns>
         public bool IsOnline(byte address)
         {
-            var foundDevice = _configuredDevices.ToArray().First(device => device.Address == address);
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
             
             return  foundDevice.IsConnected;
         }
@@ -192,7 +194,7 @@ namespace OSDP.Net
         }
 
         /// <summary>
-        /// Poll the the devices on the bus
+        /// Poll the devices on the bus
         /// </summary>
         /// <returns></returns>
         private async Task PollingLoop(CancellationToken cancellationToken)
@@ -211,7 +213,7 @@ namespace OSDP.Net
                     catch (Exception exception)
                     {
                         _logger?.LogError(exception, $"[{Connection}] Error while opening connection");
-                        foreach (var device in _configuredDevices.ToArray())
+                        foreach (var device in _configuredDevices)
                         {
                             ResetDevice(device);
                             UpdateConnectionStatus(device);
@@ -225,19 +227,17 @@ namespace OSDP.Net
 
                 if (IsPolling)
                 {
-                    var configuredDevices = _configuredDevices.ToArray();
-                    
                     // Allow for immediate processing of commands in queue or incoming multipart messages
                     while (_pollInterval - (DateTime.UtcNow - lastMessageSentTime) > TimeSpan.Zero &&
-                           !configuredDevices.Any(device1 => device1.HasQueuedCommand) && 
-                           !configuredDevices.Any(device2 => device2.IsReceivingMultipartMessage))
+                           !_configuredDevices.Any(device1 => device1.HasQueuedCommand) && 
+                           !_configuredDevices.Any(device2 => device2.IsReceivingMultipartMessage))
                     {
                         delayTime.WaitOne(TimeSpan.FromMilliseconds(10));
                     }
 
                     lastMessageSentTime = DateTime.UtcNow;
 
-                    if (!configuredDevices.Any())
+                    if (!_configuredDevices.Any())
                     {
                         continue;
                     }
@@ -248,7 +248,7 @@ namespace OSDP.Net
                     _commandAvailableEvent.WaitOne(TimeSpan.FromMilliseconds(10));
                 }
 
-                foreach (var device in _configuredDevices.ToArray())
+                foreach (var device in _configuredDevices)
                 {
                     // Right now it always sends sequence 0
                     if (!IsPolling)
@@ -293,7 +293,7 @@ namespace OSDP.Net
 
                         // Prevent plain text message replies when secure channel has been established
                         // The busy and Nak reply types are a special case which is allowed to be sent as insecure message on a secure channel
-                        // Workaround for KeySet command sending back an clear text Ack
+                        // Workaround for KeySet command sending back a clear text Ack
                         if (reply.ReplyMessage.Type != (byte)ReplyType.Busy && reply.ReplyMessage.Type != (byte)ReplyType.Nak && device.UseSecureChannel &&
                             device.IsSecurityEstablished && !reply.ReplyMessage.IsSecureMessage && commandMessage.Code != (byte)CommandType.KeySet)
                         {
@@ -455,28 +455,28 @@ namespace OSDP.Net
 
         public void ResetDevice(int address)
         {
-            var foundDevice = _configuredDevices.ToArray().First(device => device.Address == address);
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
             
             ResetDevice(foundDevice);
         }
 
         public void SetSendingMultipartMessage(byte address, bool isSendingMultipartMessage)
         {
-            var foundDevice = _configuredDevices.ToArray().First(device => device.Address == address);
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
 
             foundDevice.IsSendingMultipartMessage = isSendingMultipartMessage;
         }
         
         public void SetReceivingMultipartMessage(byte address, bool isReceivingMultipartMessage)
         {
-            var foundDevice = _configuredDevices.ToArray().First(device => device.Address == address);
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
 
             foundDevice.IsReceivingMultipartMessage = isReceivingMultipartMessage;
         }
 
         public void SetSendingMultiMessageNoSecureChannel(byte address, bool isSendingMultiMessageNoSecureChannel)
         {
-            var foundDevice = _configuredDevices.ToArray().First(device => device.Address == address);
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
 
             foundDevice.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
             foundDevice.MessageControl.IsSendingMultiMessageNoSecureChannel = isSendingMultiMessageNoSecureChannel;
@@ -488,7 +488,7 @@ namespace OSDP.Net
 
         public void SetRequestDelay(byte address, DateTime requestDelay)
         {
-            var foundDevice = _configuredDevices.ToArray().First(device => device.Address == address);
+            var foundDevice = _configuredDevices.First(device => device.Address == address);
 
             foundDevice.RequestDelay = requestDelay;
         }
