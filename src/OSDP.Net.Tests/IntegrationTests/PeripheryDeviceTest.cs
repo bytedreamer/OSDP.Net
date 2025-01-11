@@ -12,7 +12,7 @@ using Moq;
 namespace OSDP.Net.Tests.IntegrationTests;
 
 //
-// NOTE: Majority of naming/structure in this file is very much a work-in-progress
+// NOTE: The Majority of naming/structure in this file is very much a work-in-progress
 // and will be updated if we continue to build out a set of integration tests
 //
 // Presently this is a POC experiment to see how far we can take a test harness that
@@ -24,7 +24,7 @@ namespace OSDP.Net.Tests.IntegrationTests;
 // need to be added to make it easy/clear to write assertions which wait for certain
 // events to occur (e.g. device came online).
 //
-// NOTE: Integration tests by nature are SLOWER than unit tests. Hence why they are 
+// NOTE: Integration tests by nature are SLOWER than unit tests. Hence, why they are 
 // tagged with "Integration" category as we might want to exclude them at some point if
 // the default PR test checks become too slow. There's only 5 tests here and they already
 // take 25 sec to run. Then again, this might also highlight improvement opportunity
@@ -212,7 +212,7 @@ public class TestDevice : Device
 
     protected override PayloadData HandleDeviceCapabilities()
     {
-        var deviceCapabilities = new DeviceCapabilities(new[]
+        var deviceCapabilities = new DeviceCapabilities(ew[]
         {
             new DeviceCapability(CapabilityFunction.CardDataFormat, 1, 0),
             new DeviceCapability(CapabilityFunction.ReaderLEDControl, 1, 0),

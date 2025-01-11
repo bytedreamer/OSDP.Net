@@ -1029,7 +1029,7 @@ namespace OSDP.Net
             void EventHandler(object sender, ReplyEventArgs replyEventArgs)
             {
                 var reply = replyEventArgs.Reply;
-                if (!reply.MatchIssuingCommand(command.Code)) return;
+                if (!reply.MatchIssuingCommand(address, command.Code)) return;
 
                 if (throwOnNak && replyEventArgs.Reply.ReplyMessage.Type == (byte)ReplyType.Nak)
                 {
