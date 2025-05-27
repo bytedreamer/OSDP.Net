@@ -20,7 +20,7 @@ namespace OSDP.Net.Model.ReplyData
         }
 
         /// <inheritdoc />
-        public override byte Code => (byte)ReplyType.InputStatusReport;
+        public override byte Code => (byte)ReplyType.OutputStatusReport;
 
         /// <summary>
         /// Gets the all the PDs output statuses as an array ordered by output number.
