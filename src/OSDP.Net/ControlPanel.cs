@@ -1029,7 +1029,7 @@ namespace OSDP.Net
             void EventHandler(object sender, ReplyEventArgs replyEventArgs)
             {
                 var reply = replyEventArgs.Reply;
-                if (!reply.MatchIssuingCommand(command.Code)) return;
+                if (!reply.MatchIssuingCommand(address, command.Code)) return;
 
                 if (throwOnNak && replyEventArgs.Reply.ReplyMessage.Type == (byte)ReplyType.Nak)
                 {
@@ -1393,6 +1393,11 @@ namespace OSDP.Net
                         new RawCardDataReplyEventArgs(reply.ConnectionId, reply.ReplyMessage.Address,
                             RawCardData.ParseData(reply.ReplyMessage.Payload)));
                     break;
+                case ReplyType.FormattedReaderData:
+                    FormattedCardDataReplyReceived?.Invoke(this,
+                        new FormattedCardDataReplyEventArgs(reply.ConnectionId, reply.ReplyMessage.Address,
+                            FormattedCardData.ParseData(reply.ReplyMessage.Payload)));
+                    break;
                 case ReplyType.ManufactureSpecific:
                     ManufacturerSpecificReplyReceived?.Invoke(this,
                         new ManufacturerSpecificReplyEventArgs(reply.ConnectionId, reply.ReplyMessage.Address,
@@ -1462,6 +1467,12 @@ namespace OSDP.Net
         /// Occurs when raw card data reply is received.
         /// </summary>
         public event EventHandler<RawCardDataReplyEventArgs> RawCardDataReplyReceived;
+
+        /// <summary>
+        /// Occurs when formatted card data reply is received.
+        /// </summary>
+        [Obsolete("Use Raw Card Data for incoming card reads.")]
+        public event EventHandler<FormattedCardDataReplyEventArgs> FormattedCardDataReplyReceived;
 
         /// <summary>
         /// Occurs when manufacturer specific reply is received.
@@ -1741,6 +1752,40 @@ namespace OSDP.Net
             /// A raw card data reply.
             /// </summary>
             public RawCardData RawCardData { get; }
+        }
+
+        /// <summary>
+        /// The formatted card data reply has been received.
+        /// </summary>
+        public class FormattedCardDataReplyEventArgs : EventArgs
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="FormattedCardDataReplyEventArgs"/> class.
+            /// </summary>
+            /// <param name="connectionId">Identify the connection for communicating to the device.</param>
+            /// <param name="address">Address assigned to the device.</param>
+            /// <param name="formattedCardData">A formatted card data reply.</param>
+            public FormattedCardDataReplyEventArgs(Guid connectionId, byte address, FormattedCardData formattedCardData)
+            {
+                ConnectionId = connectionId;
+                Address = address;
+                FormattedCardData = formattedCardData;
+            }
+
+            /// <summary>
+            /// Identify the connection for communicating to the device.
+            /// </summary>
+            public Guid ConnectionId { get; }
+
+            /// <summary>
+            /// Address assigned to the device.
+            /// </summary>
+            public byte Address { get; }
+
+            /// <summary>
+            /// A formatted card data reply.
+            /// </summary>
+            public FormattedCardData FormattedCardData { get; }
         }
 
         /// <summary>

@@ -54,6 +54,8 @@ namespace OSDP.Net.Messages
                 while (lastByteIdx > 0 && paddedPayload[--lastByteIdx] != FirstPaddingByte)
                 {
                 }
+                
+                if (lastByteIdx == 0) throw new Exception("The encrypted payload is missing a padding byte");
 
                 Payload = paddedPayload.AsSpan().Slice(0, lastByteIdx).ToArray();
             }

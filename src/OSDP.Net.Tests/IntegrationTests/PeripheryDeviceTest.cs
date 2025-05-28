@@ -12,7 +12,7 @@ using Moq;
 namespace OSDP.Net.Tests.IntegrationTests;
 
 //
-// NOTE: Majority of naming/structure in this file is very much a work-in-progress
+// NOTE: The Majority of naming/structure in this file is very much a work-in-progress
 // and will be updated if we continue to build out a set of integration tests
 //
 // Presently this is a POC experiment to see how far we can take a test harness that
@@ -24,7 +24,7 @@ namespace OSDP.Net.Tests.IntegrationTests;
 // need to be added to make it easy/clear to write assertions which wait for certain
 // events to occur (e.g. device came online).
 //
-// NOTE: Integration tests by nature are SLOWER than unit tests. Hence why they are 
+// NOTE: Integration tests by nature are SLOWER than unit tests. Hence, why they are 
 // tagged with "Integration" category as we might want to exclude them at some point if
 // the default PR test checks become too slow. There's only 5 tests here and they already
 // take 25 sec to run. Then again, this might also highlight improvement opportunity
@@ -52,11 +52,11 @@ public class PeripheryDeviceTest : IntegrationTestFixtureBase
         //// PD doesn't require Security; ACU doesn't use secure channel; two sides use different keys ==> OK
         new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.DefaultSCBK, false, false, true),
 
-        //// PD doesn't requires Security; ACU opens secure channel; two sides use different keys ==> NO
+        //// PD doesn't require Security; ACU opens secure channel; two sides use different keys ==> NO
         new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.DefaultSCBK, false, true, false),
         new (IntegrationConsts.DefaultSCBK, IntegrationConsts.NonDefaultSCBK, false, true, false),
 
-        //// PD doesn't requires Security; ACU opens secure channel; both sides use same key ==> OK
+        //// PD doesn't require Security; ACU opens secure channel; both sides use same key ==> OK
         new (IntegrationConsts.NonDefaultSCBK, IntegrationConsts.NonDefaultSCBK, false, true, true),
         new (IntegrationConsts.DefaultSCBK, IntegrationConsts.DefaultSCBK, false, true, true),
     ];
@@ -212,8 +212,7 @@ public class TestDevice : Device
 
     protected override PayloadData HandleDeviceCapabilities()
     {
-        var deviceCapabilities = new DeviceCapabilities(new[]
-        {
+        var deviceCapabilities = new DeviceCapabilities([
             new DeviceCapability(CapabilityFunction.CardDataFormat, 1, 0),
             new DeviceCapability(CapabilityFunction.ReaderLEDControl, 1, 0),
             new DeviceCapability(CapabilityFunction.ReaderTextOutput, 0, 0),
@@ -221,7 +220,7 @@ public class TestDevice : Device
             new DeviceCapability(CapabilityFunction.CommunicationSecurity, 1, 1),
             new DeviceCapability(CapabilityFunction.ReceiveBufferSize, 0, 1),
             new DeviceCapability(CapabilityFunction.OSDPVersion, 2, 0)
-        });
+        ]);
 
         return deviceCapabilities;
     }

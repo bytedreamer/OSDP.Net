@@ -208,7 +208,7 @@ namespace OSDP.Net.Messages
 
         internal static byte[] PadTheData(ReadOnlySpan<byte> data, byte cryptoLength, byte paddingStart)
         {
-            int paddingLength = data.Length + 16 - data.Length % 16;
+            int paddingLength = data.Length + cryptoLength - data.Length % cryptoLength;
 
             Span<byte> buffer = stackalloc byte[paddingLength];
             buffer.Clear();
