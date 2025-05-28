@@ -212,8 +212,7 @@ public class TestDevice : Device
 
     protected override PayloadData HandleDeviceCapabilities()
     {
-        var deviceCapabilities = new DeviceCapabilities(ew[]
-        {
+        var deviceCapabilities = new DeviceCapabilities([
             new DeviceCapability(CapabilityFunction.CardDataFormat, 1, 0),
             new DeviceCapability(CapabilityFunction.ReaderLEDControl, 1, 0),
             new DeviceCapability(CapabilityFunction.ReaderTextOutput, 0, 0),
@@ -221,7 +220,7 @@ public class TestDevice : Device
             new DeviceCapability(CapabilityFunction.CommunicationSecurity, 1, 1),
             new DeviceCapability(CapabilityFunction.ReceiveBufferSize, 0, 1),
             new DeviceCapability(CapabilityFunction.OSDPVersion, 2, 0)
-        });
+        ]);
 
         return deviceCapabilities;
     }
