@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
@@ -7,21 +7,37 @@ using Microsoft.Extensions.Logging;
 
 namespace OSDP.Net.Connections;
 
-internal sealed class TcpServerOsdpConnection2 : OsdpConnection
+/// <summary>
+/// Represents a TCP-based OSDP connection that wraps an already-established TCP client connection.
+/// </summary>
+/// <remarks>
+/// This class is designed to work with connection listeners that accept TCP connections and then
+/// create instances of this class to handle the OSDP communication over the established TCP connection.
+/// It does not handle the listening aspect - that responsibility belongs to connection listeners
+/// like TcpConnectionListener.
+/// </remarks>
+internal sealed class TcpOsdpConnection : OsdpConnection
 {
     private readonly ILogger _logger;
     private TcpClient _tcpClient;
     private NetworkStream _stream;
 
-    public TcpServerOsdpConnection2(
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TcpOsdpConnection"/> class.
+    /// </summary>
+    /// <param name="tcpClient">An already-connected TCP client.</param>
+    /// <param name="baudRate">The simulated baud rate for OSDP communication timing.</param>
+    /// <param name="loggerFactory">Optional logger factory for diagnostic logging.</param>
+    public TcpOsdpConnection(
         TcpClient tcpClient, int baudRate, ILoggerFactory loggerFactory) : base(baudRate)
     {
         IsOpen = true;
         _tcpClient = tcpClient;
         _stream = tcpClient.GetStream();
-        _logger = loggerFactory?.CreateLogger<TcpServerOsdpConnection2>();
+        _logger = loggerFactory?.CreateLogger<TcpOsdpConnection>();
     }
 
+    /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, CancellationToken token)
     {
         try
@@ -36,11 +52,11 @@ internal sealed class TcpServerOsdpConnection2 : OsdpConnection
             {
                 if (exception is IOException && exception.InnerException is SocketException)
                 {
-                    _logger?.LogInformation("Error reading tcp stream: {ExceptionMessage}", exception.Message);
+                    _logger?.LogInformation("Error reading TCP stream: {ExceptionMessage}", exception.Message);
                 } 
                 else
                 {
-                    _logger?.LogWarning(exception, "Error reading tcp stream");
+                    _logger?.LogWarning(exception, "Error reading TCP stream");
                 }
                     
                 IsOpen = false;
@@ -49,6 +65,7 @@ internal sealed class TcpServerOsdpConnection2 : OsdpConnection
         }
     }
 
+    /// <inheritdoc />
     public override async Task WriteAsync(byte[] buffer)
     {
         try
@@ -59,15 +76,19 @@ internal sealed class TcpServerOsdpConnection2 : OsdpConnection
         {
             if (IsOpen)
             {
-                _logger?.LogWarning(ex, "Error writing tcp stream");
+                _logger?.LogWarning(ex, "Error writing TCP stream");
                 IsOpen = false;
             }
         }
     }
         
     /// <inheritdoc />
-    public override Task Open() => throw new NotSupportedException();
+    /// <remarks>
+    /// This method is not supported because the connection is already established when this class is instantiated.
+    /// </remarks>
+    public override Task Open() => throw new NotSupportedException("Connection is already established");
 
+    /// <inheritdoc />
     public override Task Close()
     {
         IsOpen = false;

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(dotnet build)",
+      "Bash(dotnet test:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": false
+}

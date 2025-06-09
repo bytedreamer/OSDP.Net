@@ -26,7 +26,7 @@ public class Device : IDisposable
 
     private volatile int _connectionContextCounter;
     private DeviceConfiguration _deviceConfiguration;
-    private IOsdpServer _osdpServer;
+    private IOsdpConnectionListener _connectionListener;
     private DateTime _lastValidReceivedCommand = DateTime.MinValue;
 
     /// <summary>
@@ -50,7 +50,7 @@ public class Device : IDisposable
     /// Gets a value indicating whether the device is currently connected.
     /// </summary>
     /// <value><c>true</c> if the device is connected; otherwise, <c>false</c>.</value>
-    public bool IsConnected => _osdpServer?.ConnectionCount > 0 && (
+    public bool IsConnected => _connectionListener?.ConnectionCount > 0 && (
         _lastValidReceivedCommand + TimeSpan.FromSeconds(8) >= DateTime.UtcNow);
 
     /// <summary>
@@ -83,13 +83,13 @@ public class Device : IDisposable
     }
 
     /// <summary>
-    /// Starts listening for commands from the OSDP device through the specified connection.
+    /// Starts listening for commands from the ACU through the specified connection listener.
     /// </summary>
-    /// <param name="server">The I/O server used for communication with the OSDP client.</param>
-    public async void StartListening(IOsdpServer server)
+    /// <param name="connectionListener">The connection listener used to accept incoming connections from ACUs.</param>
+    public async void StartListening(IOsdpConnectionListener connectionListener)
     {
-        _osdpServer = server ?? throw new ArgumentNullException(nameof(server));
-        await _osdpServer.Start(ClientListenLoop);
+        _connectionListener = connectionListener ?? throw new ArgumentNullException(nameof(connectionListener));
+        await _connectionListener.Start(ClientListenLoop);
     }
 
     private async Task ClientListenLoop(IOsdpConnection incomingConnection)
@@ -141,8 +141,8 @@ public class Device : IDisposable
     /// </summary>
     public async Task StopListening()
     {
-        await (_osdpServer?.Stop() ?? Task.CompletedTask);
-        _osdpServer = null;
+        await (_connectionListener?.Stop() ?? Task.CompletedTask);
+        _connectionListener = null;
     }
 
     /// <summary>
@@ -354,7 +354,7 @@ public class Device : IDisposable
         {
             var config = (Model.ReplyData.CommunicationConfiguration)response;
             var previousAddress = _deviceConfiguration.Address;
-            var previousBaudRate = _osdpServer.BaudRate;
+            var previousBaudRate = _connectionListener.BaudRate;
 
             if (previousAddress != config.Address)
             {

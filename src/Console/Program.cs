@@ -31,6 +31,7 @@ namespace Console;
 internal static class Program
 {
     private static ControlPanel _controlPanel;
+    private static ILoggerFactory _loggerFactory;
     private static readonly Queue<string> Messages = new ();
     private static readonly object MessageLock = new ();
 
@@ -63,10 +64,10 @@ internal static class Program
         _lastConfigFilePath = Path.Combine(Environment.CurrentDirectory, "appsettings.config");
         _lastOsdpConfigFilePath = Environment.CurrentDirectory;
             
-        var factory = new LoggerFactory();
-        factory.AddLog4Net();
+        _loggerFactory = new LoggerFactory();
+        _loggerFactory.AddLog4Net();
 
-        _controlPanel = new ControlPanel(factory);
+        _controlPanel = new ControlPanel(_loggerFactory);
 
         _settings = GetConnectionSettings();
 
@@ -324,7 +325,7 @@ internal static class Program
             _settings.TcpServerConnectionSettings.ReplyTimeout = replyTimeout;
 
             await StartConnection(new TcpServerOsdpConnection(_settings.TcpServerConnectionSettings.PortNumber,
-                    _settings.TcpServerConnectionSettings.BaudRate)
+                    _settings.TcpServerConnectionSettings.BaudRate, _loggerFactory)
                 { ReplyTimeout = TimeSpan.FromMilliseconds(_settings.TcpServerConnectionSettings.ReplyTimeout) });
 
             Application.RequestStop();
