@@ -6,7 +6,15 @@
       "Bash(dotnet test:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(mkdir:*)",
+      "Bash(dotnet build:*)",
+      "Bash(timeout:*)",
+      "Bash(chmod:*)",
+      "Bash(./test-integration.sh:*)",
+      "Bash(bash:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(ls:*)"
     ]
   },
   "enableAllProjectMcpServers": false
