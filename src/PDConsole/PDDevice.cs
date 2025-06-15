@@ -11,52 +11,37 @@ using CommunicationConfiguration = OSDP.Net.Model.CommandData.CommunicationConfi
 
 namespace PDConsole
 {
-    public class PDDevice : Device
+    public class PDDevice(DeviceConfiguration config, DeviceSettings settings, ILoggerFactory loggerFactory = null)
+        : Device(config, loggerFactory)
     {
-        private readonly DeviceSettings _settings;
         private readonly List<CommandEvent> _commandHistory = new();
-        private bool _simulateTamper;
         
         public event EventHandler<CommandEvent> CommandReceived;
-        
-        public PDDevice(DeviceConfiguration config, DeviceSettings settings, ILoggerFactory loggerFactory)
-            : base(config, loggerFactory)
-        {
-            _settings = settings;
-        }
-        
-        public IReadOnlyList<CommandEvent> CommandHistory => _commandHistory;
-        
-        public bool SimulateTamper
-        {
-            get => _simulateTamper;
-            set => _simulateTamper = value;
-        }
         
         protected override PayloadData HandleIdReport()
         {
             LogCommand("ID Report");
             
-            var vendorCode = ConvertHexStringToBytes(_settings.VendorCode, 3);
+            var vendorCode = ConvertHexStringToBytes(settings.VendorCode, 3);
             return new DeviceIdentification(
                 vendorCode,
-                (byte)_settings.Model[0],
-                _settings.FirmwareMajor,
-                _settings.FirmwareMinor,
-                _settings.FirmwareBuild,
-                (byte)ConvertStringToBytes(_settings.SerialNumber, 4),
-                _settings.FirmwareBuild);
+                (byte)settings.Model[0],
+                settings.FirmwareMajor,
+                settings.FirmwareMinor,
+                settings.FirmwareBuild,
+                (byte)ConvertStringToBytes(settings.SerialNumber, 4),
+                settings.FirmwareBuild);
         }
         
         protected override PayloadData HandleDeviceCapabilities()
         {
             LogCommand("Device Capabilities");
-            return new DeviceCapabilities(_settings.Capabilities.ToArray());
+            return new DeviceCapabilities(settings.Capabilities.ToArray());
         }
         
         protected override PayloadData HandleCommunicationSet(CommunicationConfiguration commandPayload)
         {
-            LogCommand($"Communication Set - Address: {commandPayload.Address}, Baud: {commandPayload.BaudRate}");
+            LogCommand("Communication Set");
             
             return new OSDP.Net.Model.ReplyData.CommunicationConfiguration(
                 commandPayload.Address,
@@ -65,7 +50,7 @@ namespace PDConsole
         
         protected override PayloadData HandleKeySettings(EncryptionKeyConfiguration commandPayload)
         {
-            LogCommand($"Key Settings - Type: {commandPayload.KeyType}, Length: {commandPayload.KeyData.Length}");
+            LogCommand("Key Settings");
             return new Ack();
         }
         
@@ -96,43 +81,43 @@ namespace PDConsole
         
         protected override PayloadData HandleReaderLEDControl(ReaderLedControls commandPayload)
         {
-            LogCommand($"LED Control - Received command");
+            LogCommand("LED Control");
             return new Ack();
         }
         
         protected override PayloadData HandleBuzzerControl(ReaderBuzzerControl commandPayload)
         {
-            LogCommand($"Buzzer Control - Tone: {commandPayload.ToneCode}");
+            LogCommand("Buzzer Control");
             return new Ack();
         }
         
         protected override PayloadData HandleTextOutput(ReaderTextOutput commandPayload)
         {
-            LogCommand($"Text Output - Row: {commandPayload.Row}, Col: {commandPayload.Column}");
+            LogCommand("Text Output");
             return new Ack();
         }
         
         protected override PayloadData HandleOutputControl(OutputControls commandPayload)
         {
-            LogCommand($"Output Control - Received command");
+            LogCommand("Output Control");
             return new Ack();
         }
         
         protected override PayloadData HandleBiometricRead(BiometricReadData commandPayload)
         {
-            LogCommand($"Biometric Read - Received command");
+            LogCommand("Biometric Read");
             return new Nak(ErrorCode.UnableToProcessCommand);
         }
         
         protected override PayloadData HandleManufacturerCommand(OSDP.Net.Model.CommandData.ManufacturerSpecific commandPayload)
         {
-            LogCommand($"Manufacturer Specific - Vendor: {BitConverter.ToString(commandPayload.VendorCode)}");
+            LogCommand("Manufacturer Specific");
             return new Ack();
         }
         
         protected override PayloadData HandlePivData(GetPIVData commandPayload)
         {
-            LogCommand($"Get PIV Data - Received command");
+            LogCommand("Get PIV Data");
             return new Nak(ErrorCode.UnableToProcessCommand);
         }
         
@@ -142,7 +127,7 @@ namespace PDConsole
             return new Ack();
         }
         
-        // Method to send simulated card read
+        // Method to send a simulated card read
         public void SendSimulatedCardRead(string cardData)
         {
             if (!string.IsNullOrEmpty(cardData))
@@ -154,30 +139,29 @@ namespace PDConsole
                     
                     // Enqueue the card data reply for the next poll
                     EnqueuePollReply(new RawCardData(0, FormatCode.NotSpecified, bitArray));
-                    LogCommand($"Simulated card read: {cardData}");
+                    LogCommand("Simulated Card Read");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    LogCommand($"Error simulating card read: {ex.Message}");
+                    LogCommand("Error Simulating Card Read");
                 }
             }
         }
         
-        // Method to simulate keypad entry (using formatted card data as workaround)
+        // Method to simulate keypad entry (using formatted card data as a workaround)
         public void SimulateKeypadEntry(string keys)
         {
-            if (!string.IsNullOrEmpty(keys))
+            if (string.IsNullOrEmpty(keys)) return;
+            
+            try
             {
-                try
-                {
-                    // Note: KeypadData doesn't inherit from PayloadData, so we use FormattedCardData as workaround
-                    EnqueuePollReply(new FormattedCardData(0, ReadDirection.Forward, keys));
-                    LogCommand($"Simulated keypad entry: {keys}");
-                }
-                catch (Exception ex)
-                {
-                    LogCommand($"Error simulating keypad entry: {ex.Message}");
-                }
+                // Note: KeypadData doesn't inherit from PayloadData, so we use FormattedCardData as a workaround
+                EnqueuePollReply(new FormattedCardData(0, ReadDirection.Forward, keys));
+                LogCommand("Simulated Keypad Entry");
+            }
+            catch (Exception)
+            {
+                LogCommand("Error Simulating Keypad Entry");
             }
         }
         
@@ -190,7 +174,7 @@ namespace PDConsole
             };
             
             _commandHistory.Add(commandEvent);
-            if (_commandHistory.Count > 100) // Keep only last 100 commands
+            if (_commandHistory.Count > 100) // Keep only the last 100 commands
             {
                 _commandHistory.RemoveAt(0);
             }

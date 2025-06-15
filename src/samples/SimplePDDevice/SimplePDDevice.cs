@@ -1,6 +1,4 @@
-using Microsoft.Extensions.Logging;
 using OSDP.Net;
-using OSDP.Net.Messages;
 using OSDP.Net.Model;
 using OSDP.Net.Model.CommandData;
 using OSDP.Net.Model.ReplyData;
@@ -11,11 +9,8 @@ namespace SimplePDDevice;
 /// <summary>
 /// Simplified OSDP Peripheral Device implementation with only essential handlers
 /// </summary>
-public class SimplePDDevice : Device
+public class SimplePDDevice(DeviceConfiguration config) : Device(config)
 {
-    public SimplePDDevice(DeviceConfiguration config, ILoggerFactory loggerFactory)
-        : base(config, loggerFactory) { }
-
     /// <summary>
     /// Handle ID Report command - returns basic device identification
     /// </summary>
@@ -38,8 +33,7 @@ public class SimplePDDevice : Device
     /// </summary>
     protected override PayloadData HandleDeviceCapabilities()
     {
-        var deviceCapabilities = new DeviceCapabilities(new[]
-        {
+        var deviceCapabilities = new DeviceCapabilities([
             new DeviceCapability(CapabilityFunction.CardDataFormat, 1, 0),
             new DeviceCapability(CapabilityFunction.ReaderLEDControl, 1, 0),
             new DeviceCapability(CapabilityFunction.ReaderTextOutput, 0, 0),
@@ -47,7 +41,7 @@ public class SimplePDDevice : Device
             new DeviceCapability(CapabilityFunction.CommunicationSecurity, 1, 1),
             new DeviceCapability(CapabilityFunction.ReceiveBufferSize, 0, 1),
             new DeviceCapability(CapabilityFunction.OSDPVersion, 2, 0)
-        });
+        ]);
 
         return deviceCapabilities;
     }

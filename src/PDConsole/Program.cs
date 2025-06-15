@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -23,11 +24,11 @@ namespace PDConsole
         private static ListView _commandHistoryView;
         private static Label _statusLabel;
         private static Label _connectionLabel;
-        private static CheckBox _tamperCheckbox;
         private static TextField _cardDataField;
         private static TextField _keypadField;
+        private static readonly List<string> CommandHistoryItems = [];
         
-        static void Main(string[] args)
+        static void Main()
         {
             ConfigureLogging();
             LoadSettings();
@@ -48,21 +49,18 @@ namespace PDConsole
                 };
                 top.Add(win);
                 
-                // Create menu bar
-                var menu = new MenuBar(new MenuBarItem[]
-                {
-                    new MenuBarItem("_File", new MenuItem[]
-                    {
+                // Create a menu bar
+                var menu = new MenuBar([
+                    new MenuBarItem("_File", [
                         new MenuItem("_Settings", "", ShowSettingsDialog),
-                        new MenuItem("_Quit", "", () => RequestStop())
-                    }),
-                    new MenuBarItem("_Device", new MenuItem[]
-                    {
+                        new MenuItem("_Quit", "", RequestStop)
+                    ]),
+                    new MenuBarItem("_Device", [
                         new MenuItem("_Start", "", StartDevice),
                         new MenuItem("S_top", "", StopDevice),
                         new MenuItem("_Clear History", "", ClearHistory)
-                    })
-                });
+                    ])
+                ]);
                 top.Add(menu);
                 
                 // Device status frame
@@ -95,35 +93,21 @@ namespace PDConsole
                     X = 0,
                     Y = Pos.Bottom(statusFrame),
                     Width = Dim.Fill(),
-                    Height = 8
+                    Height = 6
                 };
                 win.Add(simulationFrame);
-                
-                _tamperCheckbox = new CheckBox("Simulate Tamper")
-                {
-                    X = 1,
-                    Y = 1
-                };
-                _tamperCheckbox.Toggled += (old) =>
-                {
-                    if (_device != null)
-                    {
-                        _device.SimulateTamper = !old;
-                    }
-                };
-                simulationFrame.Add(_tamperCheckbox);
                 
                 var cardDataLabel = new Label("Card Data (Hex):")
                 {
                     X = 1,
-                    Y = 3
+                    Y = 1
                 };
                 simulationFrame.Add(cardDataLabel);
                 
                 _cardDataField = new TextField("0123456789ABCDEF")
                 {
                     X = Pos.Right(cardDataLabel) + 1,
-                    Y = 3,
+                    Y = 1,
                     Width = 30
                 };
                 simulationFrame.Add(_cardDataField);
@@ -131,7 +115,7 @@ namespace PDConsole
                 var sendCardButton = new Button("Send Card")
                 {
                     X = Pos.Right(_cardDataField) + 1,
-                    Y = 3
+                    Y = 1
                 };
                 sendCardButton.Clicked += () =>
                 {
@@ -145,14 +129,14 @@ namespace PDConsole
                 var keypadLabel = new Label("Keypad Data:")
                 {
                     X = 1,
-                    Y = 5
+                    Y = 3
                 };
                 simulationFrame.Add(keypadLabel);
                 
                 _keypadField = new TextField("1234")
                 {
                     X = Pos.Right(keypadLabel) + 1,
-                    Y = 5,
+                    Y = 3,
                     Width = 20
                 };
                 simulationFrame.Add(_keypadField);
@@ -160,7 +144,7 @@ namespace PDConsole
                 var sendKeypadButton = new Button("Send Keypad")
                 {
                     X = Pos.Right(_keypadField) + 1,
-                    Y = 5
+                    Y = 3
                 };
                 sendKeypadButton.Clicked += () =>
                 {
@@ -181,7 +165,7 @@ namespace PDConsole
                 };
                 win.Add(historyFrame);
                 
-                _commandHistoryView = new ListView()
+                _commandHistoryView = new ListView(CommandHistoryItems)
                 {
                     X = 0,
                     Y = 0,
@@ -260,7 +244,7 @@ namespace PDConsole
             {
                 _cancellationTokenSource = new CancellationTokenSource();
                 
-                // Create simple logger factory
+                // Create a simple logger factory
                 var loggerFactory = new LoggerFactory();
                 
                 // Create device configuration
@@ -275,13 +259,7 @@ namespace PDConsole
                 _device = new PDDevice(deviceConfig, _settings.Device, loggerFactory);
                 _device.CommandReceived += OnCommandReceived;
                 
-                // Update UI state
-                if (_tamperCheckbox != null)
-                {
-                    _device.SimulateTamper = _tamperCheckbox.Checked;
-                }
-                
-                // Create connection listener based on type
+                // Create a connection listener based on type
                 switch (_settings.Connection.Type)
                 {
                     case ConnectionType.Serial:
@@ -348,24 +326,25 @@ namespace PDConsole
         {
             Application.MainLoop.Invoke(() =>
             {
-                var items = _commandHistoryView.Source?.ToList() ?? new System.Collections.Generic.List<string>();
-                items.Add($"{e.Timestamp:HH:mm:ss.fff} - {e.Description}");
+                CommandHistoryItems.Add($"{e.Timestamp:HH:mm:ss.fff} - {e.Description}");
                 
-                // Keep only last 100 items in UI
-                if (items.Count > 100)
+                // Keep only the last 100 items in UI
+                if (CommandHistoryItems.Count > 100)
                 {
-                    items.RemoveAt(0);
+                    CommandHistoryItems.RemoveAt(0);
                 }
                 
-                _commandHistoryView.SetSource(items);
-                _commandHistoryView.SelectedItem = items.Count - 1;
+                // Refresh the ListView to show the new item
+                _commandHistoryView.SetNeedsDisplay();
+                _commandHistoryView.SelectedItem = CommandHistoryItems.Count - 1;
                 _commandHistoryView.EnsureSelectedItemVisible();
             });
         }
         
         private static void ClearHistory()
         {
-            _commandHistoryView.SetSource(new System.Collections.Generic.List<string>());
+            CommandHistoryItems.Clear();
+            _commandHistoryView.SetNeedsDisplay();
         }
         
         private static void ShowSettingsDialog()

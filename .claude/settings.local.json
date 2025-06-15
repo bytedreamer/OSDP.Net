@@ -14,7 +14,10 @@
       "Bash(./test-integration.sh:*)",
       "Bash(bash:*)",
       "Bash(dotnet sln:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git reset:*)",
+      "Bash(git stash:*)"
     ]
   },
   "enableAllProjectMcpServers": false

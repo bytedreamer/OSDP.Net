@@ -10,7 +10,7 @@ namespace SimplePDDevice;
 /// </summary>
 internal class Program
 {
-    private static async Task Main(string[] args)
+    private static async Task Main()
     {
         Console.WriteLine("Simple OSDP Peripheral Device");
         Console.WriteLine("============================");
@@ -49,10 +49,10 @@ internal class Program
         };
 
         // Setup TCP connection listener
-        var connectionListener = new TcpConnectionListener(tcpPort, 9600, loggerFactory);
+        var connectionListener = new TcpConnectionListener(tcpPort, 9600);
 
         // Create and start the device
-        using var device = new SimplePDDevice(deviceConfiguration, loggerFactory);
+        using var device = new SimplePDDevice(deviceConfiguration);
         
         logger.LogInformation("Starting OSDP Peripheral Device on TCP port {Port}", tcpPort);
         logger.LogInformation("Device Address: {Address}", deviceAddress);
@@ -63,7 +63,7 @@ internal class Program
         logger.LogInformation("Device is now listening for ACU connections...");
         logger.LogInformation("Press 'q' to quit");
 
-        // Simple console loop - check for 'q' or run for 30 seconds then exit
+        // Simple console loop - check for 'q' or run for 30 seconds, then exit
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         
         try
@@ -71,15 +71,10 @@ internal class Program
             while (!cts.Token.IsCancellationRequested)
             {
                 await Task.Delay(1000, cts.Token);
-                
-                if (device.IsConnected)
-                {
-                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Device is connected to ACU");
-                }
-                else
-                {
-                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Waiting for ACU connection...");
-                }
+
+                Console.WriteLine(device.IsConnected
+                    ? $"[{DateTime.Now:HH:mm:ss}] Device is connected to ACU"
+                    : $"[{DateTime.Now:HH:mm:ss}] Waiting for ACU connection...");
             }
         }
         catch (OperationCanceledException)
