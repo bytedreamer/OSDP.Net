@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using log4net;
@@ -26,7 +27,7 @@ namespace PDConsole
         private static Label _connectionLabel;
         private static TextField _cardDataField;
         private static TextField _keypadField;
-        private static readonly List<string> CommandHistoryItems = [];
+        private static readonly List<CommandEvent> CommandHistoryItems = [];
         
         static void Main()
         {
@@ -165,13 +166,15 @@ namespace PDConsole
                 };
                 win.Add(historyFrame);
                 
-                _commandHistoryView = new ListView(CommandHistoryItems)
+                _commandHistoryView = new ListView()
                 {
                     X = 0,
                     Y = 0,
                     Width = Dim.Fill(),
                     Height = Dim.Fill()
                 };
+                UpdateCommandHistoryView();
+                _commandHistoryView.OpenSelectedItem += ShowCommandDetails;
                 historyFrame.Add(_commandHistoryView);
                 
                 Application.Run();
@@ -326,7 +329,7 @@ namespace PDConsole
         {
             Application.MainLoop.Invoke(() =>
             {
-                CommandHistoryItems.Add($"{e.Timestamp:HH:mm:ss.fff} - {e.Description}");
+                CommandHistoryItems.Add(e);
                 
                 // Keep only the last 100 items in UI
                 if (CommandHistoryItems.Count > 100)
@@ -334,8 +337,7 @@ namespace PDConsole
                     CommandHistoryItems.RemoveAt(0);
                 }
                 
-                // Refresh the ListView to show the new item
-                _commandHistoryView.SetNeedsDisplay();
+                UpdateCommandHistoryView();
                 _commandHistoryView.SelectedItem = CommandHistoryItems.Count - 1;
                 _commandHistoryView.EnsureSelectedItemVisible();
             });
@@ -344,7 +346,67 @@ namespace PDConsole
         private static void ClearHistory()
         {
             CommandHistoryItems.Clear();
-            _commandHistoryView.SetNeedsDisplay();
+            UpdateCommandHistoryView();
+        }
+        
+        private static void UpdateCommandHistoryView()
+        {
+            var displayItems = CommandHistoryItems
+                .Select(e => $"{e.Timestamp:T} - {e.Description}")
+                .ToList();
+            _commandHistoryView.SetSource(displayItems);
+        }
+        
+        private static void ShowCommandDetails(ListViewItemEventArgs e)
+        {
+            if (e.Item >= 0 && e.Item < CommandHistoryItems.Count)
+            {
+                var commandEvent = CommandHistoryItems[e.Item];
+                var details = string.IsNullOrEmpty(commandEvent.Details) 
+                    ? "No additional details available." 
+                    : commandEvent.Details;
+                
+                // Create a custom dialog for left-justified text
+                var dialog = new Dialog("Command Details")
+                {
+                    Width = Dim.Percent(80),
+                    Height = Dim.Percent(70)
+                };
+                
+                // Create a TextView for the details content
+                var textView = new TextView()
+                {
+                    X = 1,
+                    Y = 1,
+                    Width = Dim.Fill(1),
+                    Height = Dim.Fill(2),
+                    ReadOnly = true,
+                    Text = $" Command: {commandEvent.Description}\n" +
+                              $"    Time: {commandEvent.Timestamp:s} {commandEvent.Timestamp:t}\n" +
+                              $"\n" +
+                              $" {new string('─', 60)}\n" +
+                              $"\n" +
+                              string.Join("\n", details.Split('\n').Select(line => $" {line}"))
+                };
+                
+                dialog.Add(textView);
+                
+                // Add OK button
+                var okButton = new Button("OK")
+                {
+                    X = Pos.Center(),
+                    Y = Pos.Bottom(dialog) - 3,
+                    IsDefault = true
+                };
+                okButton.Clicked += () => Application.RequestStop(dialog);
+                
+                dialog.Add(okButton);
+                
+                // Make the dialog focusable and handle escape key
+                dialog.AddButton(okButton);
+                
+                Application.Run(dialog);
+            }
         }
         
         private static void ShowSettingsDialog()

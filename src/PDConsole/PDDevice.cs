@@ -41,7 +41,7 @@ namespace PDConsole
         
         protected override PayloadData HandleCommunicationSet(CommunicationConfiguration commandPayload)
         {
-            LogCommand("Communication Set");
+            LogCommand("Communication Set", commandPayload.ToString());
             
             return new OSDP.Net.Model.ReplyData.CommunicationConfiguration(
                 commandPayload.Address,
@@ -50,7 +50,7 @@ namespace PDConsole
         
         protected override PayloadData HandleKeySettings(EncryptionKeyConfiguration commandPayload)
         {
-            LogCommand("Key Settings");
+            LogCommand("Key Settings", commandPayload);
             return new Ack();
         }
         
@@ -81,43 +81,43 @@ namespace PDConsole
         
         protected override PayloadData HandleReaderLEDControl(ReaderLedControls commandPayload)
         {
-            LogCommand("LED Control");
+            LogCommand("LED Control", commandPayload);
             return new Ack();
         }
         
         protected override PayloadData HandleBuzzerControl(ReaderBuzzerControl commandPayload)
         {
-            LogCommand("Buzzer Control");
+            LogCommand("Buzzer Control", commandPayload);
             return new Ack();
         }
         
         protected override PayloadData HandleTextOutput(ReaderTextOutput commandPayload)
         {
-            LogCommand("Text Output");
+            LogCommand("Text Output", commandPayload);
             return new Ack();
         }
         
         protected override PayloadData HandleOutputControl(OutputControls commandPayload)
         {
-            LogCommand("Output Control");
+            LogCommand("Output Control", commandPayload);
             return new Ack();
         }
         
         protected override PayloadData HandleBiometricRead(BiometricReadData commandPayload)
         {
-            LogCommand("Biometric Read");
+            LogCommand("Biometric Read", commandPayload);
             return new Nak(ErrorCode.UnableToProcessCommand);
         }
         
         protected override PayloadData HandleManufacturerCommand(OSDP.Net.Model.CommandData.ManufacturerSpecific commandPayload)
         {
-            LogCommand("Manufacturer Specific");
+            LogCommand("Manufacturer Specific", commandPayload);
             return new Ack();
         }
         
         protected override PayloadData HandlePivData(GetPIVData commandPayload)
         {
-            LogCommand("Get PIV Data");
+            LogCommand("Get PIV Data", commandPayload);
             return new Nak(ErrorCode.UnableToProcessCommand);
         }
         
@@ -139,7 +139,7 @@ namespace PDConsole
                     
                     // Enqueue the card data reply for the next poll
                     EnqueuePollReply(new RawCardData(0, FormatCode.NotSpecified, bitArray));
-                    LogCommand("Simulated Card Read");
+                    LogCommand("Simulated Card Read", new { CardData = cardData });
                 }
                 catch (Exception)
                 {
@@ -157,7 +157,7 @@ namespace PDConsole
             {
                 // Note: KeypadData doesn't inherit from PayloadData, so we use FormattedCardData as a workaround
                 EnqueuePollReply(new FormattedCardData(0, ReadDirection.Forward, keys));
-                LogCommand("Simulated Keypad Entry");
+                LogCommand("Simulated Keypad Entry", new { Keys = keys });
             }
             catch (Exception)
             {
@@ -165,12 +165,13 @@ namespace PDConsole
             }
         }
         
-        private void LogCommand(string commandDescription)
+        private void LogCommand(string commandDescription, object payload = null)
         {
             var commandEvent = new CommandEvent
             {
                 Timestamp = DateTime.Now,
-                Description = commandDescription
+                Description = commandDescription,
+                Details = payload?.ToString() ?? string.Empty
             };
             
             _commandHistory.Add(commandEvent);
@@ -208,7 +209,8 @@ namespace PDConsole
     
     public class CommandEvent
     {
-        public DateTime Timestamp { get; set; }
-        public string Description { get; set; }
+        public DateTime Timestamp { get; init; }
+        public string Description { get; init; }
+        public string Details { get; init; }
     }
 }
