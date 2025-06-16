@@ -24,10 +24,10 @@ namespace OSDP.Net.Model.CommandData
         {
             ObjectId = objectId switch
             {
-                Model.CommandData.ObjectId.CardholderUniqueIdentifier => new byte[] { 0x5F, 0xC1, 0x02 },
-                Model.CommandData.ObjectId.CertificateForPIVAuthentication => new byte[] { 0x5F, 0xC1, 0x05 },
-                Model.CommandData.ObjectId.CertificateForCardAuthentication => new byte[] { 0xDF, 0xC1, 0x01 },
-                Model.CommandData.ObjectId.CardholderFingerprintTemplate => new byte[] { 0xDF, 0xC1, 0x03 },
+                Model.CommandData.ObjectId.CardholderUniqueIdentifier => [0x5F, 0xC1, 0x02],
+                Model.CommandData.ObjectId.CertificateForPIVAuthentication => [0x5F, 0xC1, 0x05],
+                Model.CommandData.ObjectId.CertificateForCardAuthentication => [0xDF, 0xC1, 0x01],
+                Model.CommandData.ObjectId.CardholderFingerprintTemplate => [0xDF, 0xC1, 0x03],
                 _ => throw new ArgumentOutOfRangeException()
             };
 
