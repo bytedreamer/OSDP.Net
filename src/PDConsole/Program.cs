@@ -1,9 +1,6 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using log4net;
-using log4net.Config;
-using Microsoft.Extensions.Logging;
 using PDConsole.Configuration;
 using Terminal.Gui;
 
@@ -14,24 +11,18 @@ namespace PDConsole
     /// </summary>
     class Program
     {
-        private static readonly ILog Logger = LogManager.GetLogger(typeof(Program));
         private static PDConsoleController _controller;
         private static PDConsoleView _view;
 
         static void Main()
         {
-            ConfigureLogging();
-            
             try
             {
                 // Load settings
                 var settings = LoadSettings();
                 
-                // Create a logger factory
-                var loggerFactory = new LoggerFactory();
-                
                 // Create controller (ViewModel)
-                _controller = new PDConsoleController(settings, loggerFactory);
+                _controller = new PDConsoleController(settings);
                 
                 // Initialize Terminal.Gui
                 Application.Init();
@@ -48,19 +39,12 @@ namespace PDConsole
             }
             catch (Exception ex)
             {
-                Logger.Fatal("Fatal error occurred", ex);
                 Console.WriteLine($"Fatal error: {ex.Message}");
             }
             finally
             {
                 Cleanup();
             }
-        }
-
-        private static void ConfigureLogging()
-        {
-            var logRepository = LogManager.GetRepository(System.Reflection.Assembly.GetEntryAssembly());
-            XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
         }
 
         private static Settings LoadSettings()
@@ -79,7 +63,7 @@ namespace PDConsole
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("Error loading settings", ex);
+                    Console.WriteLine($"Fatal error: {ex.Message}");
                     return new Settings();
                 }
             }
@@ -103,7 +87,7 @@ namespace PDConsole
             }
             catch (Exception ex)
             {
-                Logger.Error("Error saving settings", ex);
+                Console.WriteLine($"Fatal error: {ex.Message}");
             }
         }
 
@@ -116,7 +100,7 @@ namespace PDConsole
             }
             catch (Exception ex)
             {
-                Logger.Error("Error during cleanup", ex);
+                Console.WriteLine($"Fatal error: {ex.Message}");
             }
         }
     }

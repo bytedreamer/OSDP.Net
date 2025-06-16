@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using OSDP.Net;
 using OSDP.Net.Connections;
 using PDConsole.Configuration;
@@ -13,21 +10,14 @@ namespace PDConsole
     /// <summary>
     /// Controller class that manages the PDConsole business logic and device interactions
     /// </summary>
-    public class PDConsoleController : IPDConsoleController
+    public class PDConsoleController(Settings settings) : IPDConsoleController
     {
-        private readonly Settings _settings;
-        private readonly ILoggerFactory _loggerFactory;
+        private readonly Settings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         private readonly List<CommandEvent> _commandHistory = new();
         
         private PDDevice _device;
         private IOsdpConnectionListener _connectionListener;
         private CancellationTokenSource _cancellationTokenSource;
-
-        public PDConsoleController(Settings settings, ILoggerFactory loggerFactory = null)
-        {
-            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            _loggerFactory = loggerFactory ?? new LoggerFactory();
-        }
 
         // Events
         public event EventHandler<CommandEvent> CommandReceived;
@@ -61,10 +51,10 @@ namespace PDConsole
                 };
 
                 // Create the device
-                _device = new PDDevice(deviceConfig, _settings.Device, _loggerFactory);
+                _device = new PDDevice(deviceConfig, _settings.Device);
                 _device.CommandReceived += OnDeviceCommandReceived;
 
-                // Create connection listener based on type
+                // Create a connection listener based on type
                 _connectionListener = CreateConnectionListener();
 
                 // Start listening
@@ -164,8 +154,7 @@ namespace PDConsole
                 case ConnectionType.TcpServer:
                     return new TcpConnectionListener(
                         _settings.Connection.TcpServerPort,
-                        9600, // Default baud rate for TCP
-                        _loggerFactory);
+                        9600);
 
                 default:
                     throw new NotSupportedException($"Connection type {_settings.Connection.Type} not supported");
@@ -186,7 +175,7 @@ namespace PDConsole
         {
             _commandHistory.Add(e);
             
-            // Keep only last 100 commands
+            // Keep only the last 100 commands
             if (_commandHistory.Count > 100)
             {
                 _commandHistory.RemoveAt(0);
